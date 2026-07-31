@@ -1,0 +1,9 @@
+{
+  "name": "@abyssinia/database",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "migrate": "node ../../tools/migrate.js",
+    "seed": "node ../../tools/seed.js"
+  }
+}
