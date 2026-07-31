@@ -3,8 +3,7 @@
  * Student classroom with video player and curriculum sidebar
  * Path: apps/web/pages/portal/index.jsx
  */
-
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import SEOHead from '../../components/shared/SEOHead';
 import PageLayout from '../../components/shared/PageLayout';
 import VideoPlayer from '../../components/portal/VideoPlayer';
@@ -15,28 +14,34 @@ import CurriculumSidebar from '../../components/portal/CurriculumSidebar';
 import CompleteButton from '../../components/portal/CompleteButton';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
+import useProgress from '../../hooks/useProgress';
 import { Video } from 'lucide-react';
 
 /**
  * PortalPage - Student learning portal matching Gemini foundation
- * Uses config data for curriculum, API only for progress
+ * Now uses useProgress hook for real database-persisted progress
  */
 const PortalPage = () => {
   const { t } = useLanguage();
   const { isEnrolled } = useAuth();
+  
+  // 🚀 REAL PROGRESS HOOK - Replaces local useState
+  const { completedLessons, toggleLesson, calculateProgress, loading: progressLoading } = useProgress();
 
   const [activeLesson, setActiveLesson] = useState(null);
   const [activeTab, setActiveTab] = useState('sessions');
-  const [completedLessons, setCompletedLessons] = useState(['p1-w1-l1']);
 
   /**
-   * Toggle lesson completion
+   * Handle lesson completion toggle via API
    */
-  const handleToggleComplete = (lessonId) => {
-    setCompletedLessons((prev) =>
-      prev.includes(lessonId) ? prev.filter((id) => id !== lessonId) : [...prev, lessonId]
-    );
+  const handleToggleComplete = async (lessonId) => {
+    await toggleLesson(lessonId);
   };
+
+  // Note: To calculate real progress, we need all lesson IDs for the current course.
+  // For now, we'll show 0% or calculate based on a known total if available.
+  // In a full implementation, you'd fetch the course curriculum and pass all IDs to calculateProgress().
+  const progressPercentage = 0; // Placeholder until course data is fully wired
 
   return (
     <>
@@ -61,10 +66,10 @@ const PortalPage = () => {
             <div className="progress-bar-wrapper">
               <div className="progress-bar-text">
                 <p className="progress-bar-label">{t.portal?.progressLabel || 'Your Learning Progress'}</p>
-                <p className="progress-bar-percent">35% Complete</p>
+                <p className="progress-bar-percent">{progressPercentage}% Complete</p>
               </div>
               <div className="progress-bar-track">
-                <div className="progress-bar-fill" style={{ width: '35%' }} />
+                <div className="progress-bar-fill" style={{ width: `${progressPercentage}%` }} />
               </div>
             </div>
           </div>
@@ -74,7 +79,6 @@ const PortalPage = () => {
             {/* Left Column */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
               <VideoPlayer lesson={activeLesson} isEnrolled={isEnrolled} />
-
               {activeLesson && (
                 <div className="lesson-details">
                   <div className="lesson-details-header">
@@ -87,9 +91,9 @@ const PortalPage = () => {
                     <CompleteButton
                       isCompleted={completedLessons.includes(activeLesson.id)}
                       onToggle={() => handleToggleComplete(activeLesson.id)}
+                      loading={progressLoading}
                     />
                   </div>
-
                   <div className="lesson-tabs">
                     <div className="lesson-tabs-nav">
                       <button
@@ -111,7 +115,6 @@ const PortalPage = () => {
                         {t.portal?.instructorNotes || 'Instructor Notes'}
                       </button>
                     </div>
-
                     {activeTab === 'sessions' && <SessionList sessions={activeLesson.sessions || []} />}
                     {activeTab === 'resources' && <ResourceDownload resources={activeLesson.resources || []} />}
                     {activeTab === 'notes' && <LessonNotes notes={activeLesson.notes || ''} />}
