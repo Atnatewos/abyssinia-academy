@@ -11,20 +11,13 @@
     "dev": "concurrently \"npm run dev:api\" \"npm run dev:web\"",
     "dev:web": "npm run dev --workspace=apps/web",
     "dev:api": "npm run dev --workspace=apps/api",
-    "build": "npm run build --workspaces",
-    "start": "npm run start --workspace=apps/api",
+    "build": "npm run build --workspace=apps/web",
+    "start": "npm run start --workspace=apps/web",
     "db:migrate": "node tools/migrate.js",
     "db:seed": "node tools/seed.js",
-    "db:backup": "node tools/backup.js",
-    "docker:up": "docker-compose up -d",
-    "docker:down": "docker-compose down",
-    "lint": "eslint apps packages --ext .js,.jsx",
-    "format": "prettier --write \"**/*.{js,jsx,css,json,md}\""
+    "vercel-build": "cd apps/web && npm install && npm run build"
   },
   "devDependencies": {
-    "concurrently": "^8.2.2",
-    "eslint": "^8.56.0",
-    "eslint-config-next": "^14.0.4",
-    "prettier": "^3.2.4"
+    "concurrently": "^8.2.2"
   }
 }
