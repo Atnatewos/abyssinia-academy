@@ -1,14 +1,16 @@
 /**
  * @fileoverview Get Course Progress API Route
- * Calculates the percentage of completed lessons for a specific course
  * Path: apps/web/pages/api/progress/courses/[courseId].js
  */
+
 import { Pool } from 'pg';
 import jwt from 'jsonwebtoken';
 
+const isNeon = process.env.DATABASE_URL && process.env.DATABASE_URL.includes('neon.tech');
+
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false },
+  ssl: isNeon ? { rejectUnauthorized: false } : false,
 });
 
 export default async function handler(req, res) {
@@ -25,25 +27,23 @@ export default async function handler(req, res) {
     const token = authHeader.split(' ')[1];
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    // Verify user exists and is enrolled
     const userResult = await pool.query(
       'SELECT id, is_enrolled FROM users WHERE id = $1',
       [decoded.userId]
     );
 
-    if (userResult.rows.length === 0) {
+    if (!userResult.rows[0]) {
       return res.status(401).json({ success: false, message: 'User not found.' });
     }
 
     if (!userResult.rows[0].is_enrolled) {
-      return res.status(403).json({ success: false, message: 'Enrollment required to access progress.' });
+      return res.status(403).json({ success: false, message: 'Enrollment required.' });
     }
 
     const { courseId } = req.query;
     const userId = decoded.userId;
 
-    // Get total lessons for the course
-    const totalLessonsResult = await pool.query(
+    const totalResult = await pool.query(
       `SELECT COUNT(l.id) as total
        FROM lessons l
        JOIN weeks w ON l.week_id = w.id
@@ -52,14 +52,7 @@ export default async function handler(req, res) {
       [courseId]
     );
 
-    const totalLessons = parseInt(totalLessonsResult.rows[0].total, 10);
-
-    if (totalLessons === 0) {
-      return res.json({ success: true, data: { progress: 0 } });
-    }
-
-    // Get completed lessons for the course
-    const completedLessonsResult = await pool.query(
+    const completedResult = await pool.query(
       `SELECT COUNT(cl.id) as completed
        FROM completed_lessons cl
        JOIN lessons l ON cl.lesson_id = l.id
@@ -69,15 +62,13 @@ export default async function handler(req, res) {
       [userId, courseId]
     );
 
-    const completedLessons = parseInt(completedLessonsResult.rows[0].completed, 10);
-    const progress = Math.round((completedLessons / totalLessons) * 100);
+    const total = parseInt(totalResult.rows[0].total, 10);
+    const completed = parseInt(completedResult.rows[0].completed, 10);
+    const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
 
     res.json({ success: true, data: { progress } });
   } catch (error) {
-    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
-      return res.status(401).json({ success: false, message: 'Invalid or expired token.' });
-    }
-    console.error('Error fetching course progress:', error);
-    res.status(500).json({ success: false, message: 'Internal server error.' });
+    console.error('Course progress error:', error);
+    res.status(500).json({ success: false, message: 'Failed to calculate progress.' });
   }
 }

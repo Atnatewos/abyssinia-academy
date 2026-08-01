@@ -1,27 +1,19 @@
 /**
  * @fileoverview Get All Courses API Route
+ * Imports course data directly from shared packages
  * Path: apps/web/pages/api/courses/index.js
  */
 
-import { Pool } from 'pg';
+import CourseLoader from '../../../../../packages/shared/courses/index';
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false },
-});
-
-export default async function handler(req, res) {
+export default function handler(req, res) {
   if (req.method !== 'GET') {
     return res.status(405).json({ success: false, message: 'Method not allowed' });
   }
 
   try {
-    const result = await pool.query(
-      `SELECT id, slug, title, title_am, description, description_am, level, duration, badge, icon, thumbnail_url
-       FROM courses WHERE is_published = true ORDER BY order_index ASC, created_at DESC`
-    );
-
-    res.json({ success: true, data: { courses: result.rows } });
+    const courses = CourseLoader.getAll('en');
+    res.json({ success: true, data: { courses } });
   } catch (error) {
     console.error('Courses error:', error);
     res.status(500).json({ success: false, message: 'Failed to load courses.' });

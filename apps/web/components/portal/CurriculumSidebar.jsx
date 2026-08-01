@@ -3,7 +3,6 @@
  * Phase/Week/Lesson tree navigation for the learning portal
  * Path: apps/web/components/portal/CurriculumSidebar.jsx
  */
-
 import { CheckCircle, Lock, PlayCircle } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 
@@ -18,17 +17,19 @@ const CurriculumSidebar = ({ phases = [], activeLesson, onSelectLesson, complete
       </h3>
       <div className="curriculum-list custom-scrollbar">
         {phases.map((phase) => (
-          <div key={phase.id} style={{ marginBottom: '0.5rem' }}>
+          <div key={phase.id || phase.phaseNumber} style={{ marginBottom: '0.5rem' }}>
             <div className="curriculum-phase">
-              Phase {phase.phase_number}: {language === 'am' && phase.title_am ? phase.title_am : phase.title}
+              Phase {phase.phaseNumber || phase.phase_number}: {phase.title}
             </div>
             {phase.weeks && phase.weeks.map((week) => (
-              <div key={week.id || week.week_number}>
-                <div className="curriculum-week">Week {week.week_number}</div>
+              <div key={week.id || week.number}>
+                <div className="curriculum-week">Week {week.number || week.week_number}</div>
                 {week.lessons && week.lessons.map((lesson) => {
                   const isCurrent = activeLesson && activeLesson.id === lesson.id;
                   const isDone = completedLessons.includes(lesson.id);
-                  const isLocked = !isEnrolled && !lesson.is_free_preview;
+                  // Config uses isFreePreview, fallback to is_free_preview for safety
+                  const isLocked = !isEnrolled && !lesson.isFreePreview && !lesson.is_free_preview;
+
                   return (
                     <div
                       key={lesson.id}
@@ -39,12 +40,14 @@ const CurriculumSidebar = ({ phases = [], activeLesson, onSelectLesson, complete
                       onKeyDown={(e) => { if (e.key === 'Enter') onSelectLesson(lesson); }}
                     >
                       <div className="curriculum-lesson-left">
-                        {isDone ? <CheckCircle size={16} className="icon-completed" /> :
-                         isLocked ? <Lock size={16} className="icon-locked" /> :
-                         <PlayCircle size={16} className="icon-play" />}
-                        <span className="curriculum-lesson-name">
-                          {language === 'am' && lesson.title_am ? lesson.title_am : lesson.title}
-                        </span>
+                        {isDone ? (
+                          <CheckCircle size={16} className="icon-completed" />
+                        ) : isLocked ? (
+                          <Lock size={16} className="icon-locked" />
+                        ) : (
+                          <PlayCircle size={16} className="icon-play" />
+                        )}
+                        <span className="curriculum-lesson-name">{lesson.title}</span>
                       </div>
                       <span className="curriculum-lesson-duration">{lesson.duration}</span>
                     </div>
@@ -55,7 +58,9 @@ const CurriculumSidebar = ({ phases = [], activeLesson, onSelectLesson, complete
           </div>
         ))}
         {phases.length === 0 && (
-          <p style={{ fontSize: '0.75rem', color: 'var(--text-dim)', textAlign: 'center', padding: '2rem 0' }}>No curriculum data available.</p>
+          <p style={{ fontSize: '0.75rem', color: 'var(--text-dim)', textAlign: 'center', padding: '2rem 0' }}>
+            No curriculum data available.
+          </p>
         )}
       </div>
     </div>

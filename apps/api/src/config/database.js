@@ -3,15 +3,14 @@
  * PostgreSQL connection pool using Neon serverless PostgreSQL
  * Path: apps/api/src/config/database.js
  */
-
 const { Pool } = require('pg');
 const { platform } = require('../../../../packages/shared/config');
 
+const isNeonUrl = process.env.DATABASE_URL && process.env.DATABASE_URL.includes('neon.tech');
+
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL || `postgresql://${platform.database.user}:${platform.database.password}@${platform.database.host}:${platform.database.port}/${platform.database.name}`,
-  ssl: {
-    rejectUnauthorized: false,
-  },
+  ssl: isNeonUrl ? { rejectUnauthorized: false } : false,
   max: platform.database.maxConnections,
   idleTimeoutMillis: platform.database.idleTimeoutMillis,
   connectionTimeoutMillis: platform.database.connectionTimeoutMillis,
@@ -53,15 +52,13 @@ const query = async (text, params) => {
   try {
     const result = await pool.query(text, params);
     const duration = Date.now() - start;
-
     if (platform.env === 'development' && duration > 100) {
-      console.log('📝 Slow query:', {
+      console.log(' Slow query:', {
         text: text.substring(0, 80),
         duration: `${duration}ms`,
         rows: result.rowCount,
       });
     }
-
     return result;
   } catch (error) {
     console.error('❌ Query error:', error.message);

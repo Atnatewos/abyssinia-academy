@@ -3,8 +3,9 @@
  * Seeds initial data for development
  * Path: apps/api/src/database/seeds/seed.js
  */
+// ✅ FIXED: Go up 3 levels to reach apps/api/.env
+require('dotenv').config({ path: require('path').resolve(__dirname, '../../../.env') });
 
-require('dotenv').config({ path: require('path').join(__dirname, '..', '..', '.env') });
 const bcrypt = require('bcryptjs');
 const { query, testConnection } = require('../pool');
 
@@ -37,7 +38,6 @@ const seedDatabase = async () => {
 
     // Check if courses already exist
     const existingCourses = await query('SELECT COUNT(*) FROM courses');
-    
     if (parseInt(existingCourses.rows[0].count, 10) === 0) {
       // Create Full-Stack course
       const courseResult = await query(
@@ -56,7 +56,6 @@ const seedDatabase = async () => {
           'Code2'
         ]
       );
-
       const courseId = courseResult.rows[0].id;
 
       // Create Phase 1
@@ -76,12 +75,11 @@ const seedDatabase = async () => {
           'Code2'
         ]
       );
-
       const phaseId = phaseResult.rows[0].id;
 
       // Create outcomes for Phase 1
       await query(
-        `INSERT INTO outcomes (phase_id, text, order_index) VALUES 
+        `INSERT INTO outcomes (phase_id, text, order_index) VALUES
          ($1, 'Semantic HTML5 & Web Accessibility (a11y)', 1),
          ($1, 'Responsive CSS Flexbox & Multi-dimensional CSS Grid', 2),
          ($1, 'Professional Git branching, pull requests, and GitHub workflows', 3)`,
@@ -95,7 +93,6 @@ const seedDatabase = async () => {
          RETURNING id`,
         [phaseId, 1, 'HTML5 Semantics & Web Mechanics', 'HTML5 እና የዌብ አሰራር መሰረቶች']
       );
-
       const weekId = weekResult.rows[0].id;
 
       // Create Lesson 1
@@ -114,12 +111,11 @@ const seedDatabase = async () => {
           1
         ]
       );
-
       const lessonId = lessonResult.rows[0].id;
 
       // Create sessions for Lesson 1
       await query(
-        `INSERT INTO sessions (lesson_id, name, time, order_index) VALUES 
+        `INSERT INTO sessions (lesson_id, name, time, order_index) VALUES
          ($1, '01. Client-Server Architecture Overview', '00:00', 1),
          ($1, '02. HTML5 Semantic Elements Demystified', '14:20', 2),
          ($1, '03. Accessibility (a11y) Best Practices', '30:15', 3)`,
@@ -128,7 +124,7 @@ const seedDatabase = async () => {
 
       // Create resources for Lesson 1
       await query(
-        `INSERT INTO resources (lesson_id, name, type, order_index) VALUES 
+        `INSERT INTO resources (lesson_id, name, type, order_index) VALUES
          ($1, 'HTML5_Architecture_CheatSheet.pdf', 'pdf', 1),
          ($1, 'Semantic_Layout_Starter.zip', 'zip', 2)`,
         [lessonId]

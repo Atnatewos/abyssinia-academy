@@ -6,9 +6,11 @@
 import { Pool } from 'pg';
 import jwt from 'jsonwebtoken';
 
+const isNeon = process.env.DATABASE_URL && process.env.DATABASE_URL.includes('neon.tech');
+
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false },
+  ssl: isNeon ? { rejectUnauthorized: false } : false,
 });
 
 export default async function handler(req, res) {

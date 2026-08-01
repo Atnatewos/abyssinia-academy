@@ -8,9 +8,11 @@ import { Pool } from 'pg';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
+const isNeon = process.env.DATABASE_URL && process.env.DATABASE_URL.includes('neon.tech');
+
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false },
+  ssl: isNeon ? { rejectUnauthorized: false } : false,
 });
 
 export default async function handler(req, res) {
@@ -22,18 +24,25 @@ export default async function handler(req, res) {
     const { fullName, phone, email, password } = req.body;
 
     if (!fullName || !phone || !password) {
-      return res.status(400).json({ success: false, message: 'Full name, phone, and password are required.' });
+      return res.status(400).json({
+        success: false,
+        message: 'Full name, phone, and password are required.',
+      });
     }
 
     const existingUser = await pool.query('SELECT id FROM users WHERE phone = $1', [phone]);
     if (existingUser.rows.length > 0) {
-      return res.status(409).json({ success: false, message: 'An account with this phone number already exists.' });
+      return res.status(409).json({
+        success: false,
+        message: 'An account with this phone number already exists.',
+      });
     }
 
     const hashedPassword = await bcrypt.hash(password, 12);
 
     const result = await pool.query(
-      `INSERT INTO users (full_name, phone, email, password) VALUES ($1, $2, $3, $4) 
+      `INSERT INTO users (full_name, phone, email, password)
+       VALUES ($1, $2, $3, $4)
        RETURNING id, full_name, phone, email, is_enrolled, payment_status`,
       [fullName, phone, email || null, hashedPassword]
     );

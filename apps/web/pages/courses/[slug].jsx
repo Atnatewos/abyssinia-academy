@@ -1,3 +1,9 @@
+/**
+ * @fileoverview Course Detail Page Component
+ * Displays a single course with its phase breakdown
+ * Path: apps/web/pages/courses/[slug].jsx
+ */
+
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import SEOHead from '../../components/shared/SEOHead';

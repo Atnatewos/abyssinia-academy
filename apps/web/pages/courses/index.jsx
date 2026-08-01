@@ -1,9 +1,8 @@
 /**
  * @fileoverview Courses Catalog Page
- * Displays all available courses in a grid
+ * Displays all available courses in a grid with phase drilldown
  * Path: apps/web/pages/courses/index.jsx
  */
-
 import { useState } from 'react';
 import SEOHead from '../../components/shared/SEOHead';
 import PageLayout from '../../components/shared/PageLayout';
@@ -22,7 +21,7 @@ const CoursesPage = () => {
   const [selectedCourse, setSelectedCourse] = useState(null);
 
   /**
-   * Handle back button click
+   * Handle back button click to reset selection
    */
   const handleBack = () => {
     setSelectedCourse(null);
@@ -47,7 +46,7 @@ const CoursesPage = () => {
                   {t.courses?.subheading || 'Select a course program to explore its 5 structured learning phases.'}
                 </p>
               </div>
-
+              
               {loading ? (
                 <div className="spinner">
                   <div className="spinner-circle" />
@@ -77,7 +76,7 @@ const CoursesPage = () => {
                   Selected Program: <strong>{selectedCourse.title}</strong>
                 </span>
               </div>
-
+              
               <div className="section-header" style={{ marginTop: '2rem', marginBottom: '2rem' }}>
                 <div className="section-tag">
                   {t.courses?.phasesInCourse || 'Course Roadmap & Phases'}
@@ -89,7 +88,7 @@ const CoursesPage = () => {
                   {t.courses?.phasesSubheading || 'Comprehensive phase breakdown designed to take you from core basics to cloud deployment.'}
                 </p>
               </div>
-
+              
               <div className="phases-grid">
                 {(selectedCourse.phases || []).map((phase, index) => (
                   <PhaseCard key={phase.id} phase={phase} index={index} />

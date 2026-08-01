@@ -7,10 +7,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import apiClient from '../lib/api';
 
-/**
- * Custom hook for fetching all published courses
- * @returns {object} { courses, loading, error, refetch }
- */
 const useCourses = () => {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -44,12 +40,6 @@ const useCourses = () => {
   return { courses, loading, error, refetch: fetchCourses };
 };
 
-/**
- * Custom hook for fetching a single course by slug
- * Only fetches when slug is available (not undefined)
- * @param {string} slug - Course URL slug
- * @returns {object} { course, loading, error }
- */
 const useCourseBySlug = (slug) => {
   const [course, setCourse] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -68,9 +58,7 @@ const useCourseBySlug = (slug) => {
       setError(null);
 
       try {
-        console.log('🔍 Fetching course:', slug);
         const response = await apiClient.get(`/courses/${slug}`);
-        console.log('📥 Course response:', response);
 
         if (!cancelled) {
           if (response && response.success) {
@@ -84,7 +72,6 @@ const useCourseBySlug = (slug) => {
           }
         }
       } catch (err) {
-        console.error('Failed to fetch course:', err);
         if (!cancelled) {
           setError('Unable to load course details.');
           setCourse(null);

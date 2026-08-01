@@ -21,7 +21,7 @@ const HeroSection = () => {
       </div>
 
       <h1 className="hero-title">
-        {t.hero?.title || 'Master Professional Software Engineering at'}{' '}
+        {t.hero?.title || 'Master Full Stack Application Development at'}{' '}
         <br className="hero-title-break" />
         <span className="text-gradient-gold">ABYSSiNIA</span>
       </h1>

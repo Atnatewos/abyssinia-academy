@@ -1,14 +1,17 @@
 /**
  * @fileoverview Toggle Lesson Completion API Route
- * Marks a lesson as complete or incomplete for the authenticated user
+ * Works with config-based string lesson IDs (e.g., "p1-w1-l1")
  * Path: apps/web/pages/api/progress/lessons/[id]/toggle.js
  */
+
 import { Pool } from 'pg';
 import jwt from 'jsonwebtoken';
 
+const isNeon = process.env.DATABASE_URL && process.env.DATABASE_URL.includes('neon.tech');
+
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false },
+  ssl: isNeon ? { rejectUnauthorized: false } : false,
 });
 
 export default async function handler(req, res) {
@@ -25,39 +28,35 @@ export default async function handler(req, res) {
     const token = authHeader.split(' ')[1];
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    // Verify user exists and is enrolled
     const userResult = await pool.query(
       'SELECT id, is_enrolled FROM users WHERE id = $1',
       [decoded.userId]
     );
 
-    if (userResult.rows.length === 0) {
+    if (!userResult.rows[0]) {
       return res.status(401).json({ success: false, message: 'User not found.' });
     }
 
     if (!userResult.rows[0].is_enrolled) {
-      return res.status(403).json({ success: false, message: 'Enrollment required to update progress.' });
+      return res.status(403).json({ success: false, message: 'Enrollment required.' });
     }
 
     const { id: lessonId } = req.query;
     const userId = decoded.userId;
 
-    // Check if lesson is already marked as complete
     const existing = await pool.query(
-      'SELECT id FROM completed_lessons WHERE user_id = $1 AND lesson_id = $2',
+      'SELECT id FROM completed_lessons WHERE user_id = $1 AND lesson_id::text = $2',
       [userId, lessonId]
     );
 
-    let completed = false;
+    let completed;
     if (existing.rows.length > 0) {
-      // Unmark lesson
       await pool.query(
-        'DELETE FROM completed_lessons WHERE user_id = $1 AND lesson_id = $2',
+        'DELETE FROM completed_lessons WHERE user_id = $1 AND lesson_id::text = $2',
         [userId, lessonId]
       );
       completed = false;
     } else {
-      // Mark lesson
       await pool.query(
         'INSERT INTO completed_lessons (user_id, lesson_id) VALUES ($1, $2)',
         [userId, lessonId]
@@ -68,13 +67,10 @@ export default async function handler(req, res) {
     res.json({
       success: true,
       message: completed ? 'Lesson marked as complete.' : 'Lesson marked as incomplete.',
-      data: { completed }
+      data: { completed },
     });
   } catch (error) {
-    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
-      return res.status(401).json({ success: false, message: 'Invalid or expired token.' });
-    }
-    console.error('Error toggling lesson completion:', error);
-    res.status(500).json({ success: false, message: 'Internal server error.' });
+    console.error('Toggle progress error:', error.message);
+    res.status(500).json({ success: false, message: 'Failed to update progress.' });
   }
 }

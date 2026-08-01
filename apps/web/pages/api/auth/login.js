@@ -1,6 +1,6 @@
 /**
  * @fileoverview Login API Route
- * Serverless function for user login
+ * Serverless function for user authentication
  * Path: apps/web/pages/api/auth/login.js
  */
 
@@ -10,7 +10,9 @@ import jwt from 'jsonwebtoken';
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false },
+  ssl: process.env.DATABASE_URL && process.env.DATABASE_URL.includes('neon.tech')
+    ? { rejectUnauthorized: false }
+    : false,
 });
 
 export default async function handler(req, res) {
@@ -24,6 +26,9 @@ export default async function handler(req, res) {
     if (!phone || !password) {
       return res.status(400).json({ success: false, message: 'Phone and password are required.' });
     }
+
+    console.log('🔐 Login attempt for:', phone);
+    console.log('📡 DATABASE_URL exists:', !!process.env.DATABASE_URL);
 
     const result = await pool.query('SELECT * FROM users WHERE phone = $1', [phone]);
     const user = result.rows[0];
@@ -47,7 +52,7 @@ export default async function handler(req, res) {
       data: { user: safeUser, token },
     });
   } catch (error) {
-    console.error('Login error:', error);
-    res.status(500).json({ success: false, message: 'Login failed.' });
+    console.error('Login error:', error.message);
+    res.status(500).json({ success: false, message: 'Login failed. Please try again.' });
   }
 }

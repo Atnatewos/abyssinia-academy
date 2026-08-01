@@ -1,194 +1,213 @@
 /**
- * @fileoverview Learning Portal Page
- * Main student classroom with video player and curriculum sidebar
+ * @fileoverview Learning Portal Page - Phase 1 Redesign
+ * Features sticky video player, Up Next queue, and session chapter switching
  * Path: apps/web/pages/portal/index.jsx
  */
-
-import { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo } from 'react';
 import SEOHead from '../../components/shared/SEOHead';
-import FloatingGlow from '../../components/shared/FloatingGlow';
-import Navigation from '../../components/shared/Navigation';
-import Footer from '../../components/shared/Footer';
-import PortalHeader from '../../components/portal/PortalHeader';
+import PageLayout from '../../components/shared/PageLayout';
 import VideoPlayer from '../../components/portal/VideoPlayer';
-import SessionList from '../../components/portal/SessionList';
-import ResourceDownload from '../../components/portal/ResourceDownload';
-import LessonNotes from '../../components/portal/LessonNotes';
-import CurriculumSidebar from '../../components/portal/CurriculumSidebar';
 import CompleteButton from '../../components/portal/CompleteButton';
-import Tabs from '../../components/shared/Tabs';
-import Spinner from '../../components/shared/Spinner';
+import PortalNavigationSidebar from '../../components/portal/PortalNavigationSidebar';
+import WeekAccordion from '../../components/portal/WeekAccordion';
+import UpNextCard from '../../components/portal/UpNextCard';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
-import { useCourseBySlug } from '../../hooks/useCourses';
 import useProgress from '../../hooks/useProgress';
+import usePortalCourse from '../../hooks/usePortalCourse';
+import { Video, X } from 'lucide-react';
 
-/**
- * PortalPage - Main student learning portal
- * Displays video player, curriculum, and lesson details
- */
 const PortalPage = () => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { isEnrolled } = useAuth();
-  const { completedLessons, toggleLesson, isLessonCompleted, calculateProgress, loading: progressLoading } = useProgress();
+  const { phases, loading: courseLoading } = usePortalCourse('fullstack-web-engineering-masterclass');
+  const { completedLessons, toggleLesson, calculateProgress, loading: progressLoading } = useProgress();
 
-  const [activeTab, setActiveTab] = useState('sessions');
   const [activeLesson, setActiveLesson] = useState(null);
-  const [toggleLoading, setToggleLoading] = useState(false);
+  const [showVideo, setShowVideo] = useState(false);
+  const [activeVideoId, setActiveVideoId] = useState(null);
+  const [expandedWeeks, setExpandedWeeks] = useState({});
+  const [selectedWeek, setSelectedWeek] = useState(null);
+  const [expandedClassSections, setExpandedClassSections] = useState({});
+  const [checklistItems, setChecklistItems] = useState({});
 
-  const { course, loading: courseLoading } = useCourseBySlug('fullstack-web-engineering-masterclass');
-
-  const phases = course?.phases || [];
-
-  /**
-   * Collect all lesson IDs for progress calculation
-   */
-  const allLessonIds = useMemo(() => {
-    const ids = [];
+  // Flatten all lessons for sequential navigation
+  const allLessons = useMemo(() => {
+    const lessons = [];
     phases.forEach((phase) => {
       phase.weeks?.forEach((week) => {
         week.lessons?.forEach((lesson) => {
-          ids.push(lesson.id);
+          lessons.push(lesson);
         });
       });
     });
-    return ids;
+    return lessons;
   }, [phases]);
 
-  const progressPercentage = useMemo(() => {
-    return calculateProgress(allLessonIds);
-  }, [calculateProgress, allLessonIds]);
+  const allLessonIds = useMemo(() => allLessons.map((l) => l.id), [allLessons]);
+  const progressPercentage = calculateProgress(allLessonIds);
 
-  /**
-   * Set initial lesson when curriculum loads
-   */
-  useMemo(() => {
-    if (!activeLesson && phases.length > 0) {
-      const firstPhase = phases[0];
-      const firstWeek = firstPhase.weeks?.[0];
-      const firstLesson = firstWeek?.lessons?.[0];
-      if (firstLesson) {
-        setActiveLesson(firstLesson);
-      }
+  // Find the next lesson in the sequence
+  const nextLesson = useMemo(() => {
+    if (!activeLesson) return null;
+    const currentIndex = allLessons.findIndex((l) => l.id === activeLesson.id);
+    if (currentIndex !== -1 && currentIndex < allLessons.length - 1) {
+      return allLessons[currentIndex + 1];
     }
-  }, [phases, activeLesson]);
+    return null;
+  }, [activeLesson, allLessons]);
 
-  /**
-   * Handle lesson selection from sidebar
-   * @param {object} lesson - Selected lesson object
-   */
-  const handleSelectLesson = useCallback((lesson) => {
+  const handleSelectLesson = (lesson) => {
     setActiveLesson(lesson);
-    setActiveTab('sessions');
-  }, []);
+    setActiveVideoId(lesson.mainVideo?.youtubeId);
+    setShowVideo(true);
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
 
-  /**
-   * Handle lesson completion toggle
-   */
-  const handleToggleComplete = useCallback(async () => {
-    if (!activeLesson) return;
-    setToggleLoading(true);
-    await toggleLesson(activeLesson.id);
-    setToggleLoading(false);
-  }, [activeLesson, toggleLesson]);
+  const handleSelectSession = (youtubeId) => {
+    setActiveVideoId(youtubeId);
+  };
 
-  const isCompleted = activeLesson ? isLessonCompleted(activeLesson.id) : false;
+  const handleCloseVideo = () => {
+    setShowVideo(false);
+    setActiveLesson(null);
+    setActiveVideoId(null);
+  };
 
-  const tabs = [
-    { id: 'sessions', label: t.portal?.sessionBreakdown || 'Session Breakdown' },
-    {
-      id: 'resources',
-      label: `${t.portal?.codeResources || 'Code & Assets'} (${activeLesson?.resources?.length || 0})`,
-      count: activeLesson?.resources?.length || 0,
-    },
-    { id: 'notes', label: t.portal?.instructorNotes || 'Instructor Notes' },
-  ];
+  const handleToggleComplete = async (lessonId) => {
+    await toggleLesson(lessonId);
+  };
+
+  const toggleWeek = (weekId) => {
+    setExpandedWeeks((prev) => ({ ...prev, [weekId]: !prev[weekId] }));
+  };
+
+  const toggleClassSection = (sectionKey) => {
+    setExpandedClassSections((prev) => ({ ...prev, [sectionKey]: !prev[sectionKey] }));
+  };
+
+  const toggleChecklist = (itemKey) => {
+    setChecklistItems((prev) => ({ ...prev, [itemKey]: !prev[itemKey] }));
+  };
+
+  if (courseLoading) {
+    return (
+      <PageLayout>
+        <div className="portal-page-redesigned">
+          <div className="spinner" style={{ marginTop: '3rem' }}>
+            <div className="spinner-circle" />
+          </div>
+        </div>
+      </PageLayout>
+    );
+  }
 
   return (
     <>
       <SEOHead title={t.portal?.title || 'Classroom Portal'} />
-
-      <div className="min-h-screen font-sans transition-colors duration-300 flex flex-col relative overflow-x-hidden bg-[#070b14] text-slate-100">
-        <FloatingGlow />
-        <Navigation />
-
-        <main className="flex-1 relative z-10 py-6 px-4">
-          <div className="max-w-7xl mx-auto space-y-6">
-            {/* Portal Header with Progress */}
-            <PortalHeader progressPercentage={progressPercentage} />
-
-            {/* Loading State */}
-            {courseLoading && (
-              <div className="flex justify-center py-20">
-                <Spinner size="lg" />
+      <PageLayout>
+        <div className="portal-page-redesigned">
+          {/* Portal Header */}
+          <header className="portal-header-redesigned">
+            <div className="portal-header-info">
+              <div className="portal-header-icon"><Video /></div>
+              <div>
+                <h1 className="portal-header-title">{t.portal?.title || 'Abyssinia Student Classroom'}</h1>
+                <p className="portal-header-subtitle">{t.portal?.subtitle || 'Select a class to start learning'}</p>
               </div>
-            )}
+            </div>
+            <div className="progress-bar-wrapper">
+              <div className="progress-bar-text">
+                <p className="progress-bar-label">{t.portal?.progressLabel || 'Your Progress'}</p>
+                <p className="progress-bar-percent">{progressPercentage}% Complete</p>
+              </div>
+              <div className="progress-bar-track">
+                <div className="progress-bar-fill" style={{ width: `${progressPercentage}%` }} />
+              </div>
+            </div>
+          </header>
 
-            {/* Main Portal Grid */}
-            {!courseLoading && (
-              <div className="grid lg:grid-cols-12 gap-6">
-                {/* Left Column: Video Player + Lesson Details */}
-                <div className="lg:col-span-8 space-y-6">
-                  {/* Video Player */}
-                  <VideoPlayer lesson={activeLesson} isEnrolled={isEnrolled} />
+          <div className="portal-grid-redesigned">
+            {/* Left Sidebar */}
+            <aside className="portal-navigation-sidebar">
+              <PortalNavigationSidebar
+                phases={phases}
+                selectedWeek={selectedWeek}
+                onSelectWeek={setSelectedWeek}
+                activeLesson={activeLesson}
+                onSelectLesson={handleSelectLesson}
+                completedLessons={completedLessons}
+              />
+            </aside>
 
-                  {/* Lesson Details */}
-                  {activeLesson && (
-                    <div className="glass-card p-6 rounded-2xl space-y-4 border-amber-500/20">
-                      <div className="flex flex-wrap items-center justify-between gap-4">
-                        <div>
-                          <span className="text-xs font-bold text-amber-500 uppercase tracking-widest">
-                            {t.portal?.currentlyPlaying || 'Currently Playing'}
-                          </span>
-                          <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white">
-                            {activeLesson.title}
-                          </h2>
-                        </div>
-
-                        <CompleteButton
-                          isCompleted={isCompleted}
-                          onToggle={handleToggleComplete}
-                          loading={toggleLoading}
-                        />
+            {/* Main Content Area */}
+            <main className="portal-main-content">
+              {/* Sticky Video Player Section */}
+              {showVideo && activeLesson && (
+                <div className="sticky-video-wrapper">
+                  <div className="video-player-container">
+                    <div className="video-player-topbar">
+                      <div className="video-player-lesson-info">
+                        <span className="video-player-lesson-label">{t.portal?.currentlyPlaying || 'Now Playing'}</span>
+                        <h2 className="video-player-lesson-title">
+                          {language === 'am' && activeLesson.title_am ? activeLesson.title_am : activeLesson.title}
+                        </h2>
                       </div>
-
-                      {/* Tabs */}
-                      <div className="border-t border-slate-700/30 pt-4">
-                        <Tabs tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
-
-                        <div className="mt-4">
-                          {activeTab === 'sessions' && (
-                            <SessionList sessions={activeLesson.sessions || []} />
-                          )}
-                          {activeTab === 'resources' && (
-                            <ResourceDownload resources={activeLesson.resources || []} />
-                          )}
-                          {activeTab === 'notes' && (
-                            <LessonNotes notes={activeLesson.notes || ''} />
-                          )}
-                        </div>
+                      <div className="video-player-actions">
+                        <CompleteButton
+                          isCompleted={completedLessons.includes(activeLesson.id)}
+                          onToggle={() => handleToggleComplete(activeLesson.id)}
+                          loading={progressLoading}
+                        />
+                        <button className="video-player-close-btn" onClick={handleCloseVideo} aria-label="Close video">
+                          <X size={20} />
+                        </button>
                       </div>
                     </div>
-                  )}
+                    <VideoPlayer lesson={activeLesson} activeVideoId={activeVideoId} isEnrolled={isEnrolled} />
+                  </div>
+                  {/* Up Next Smart Queue */}
+                  <UpNextCard nextLesson={nextLesson} onSelectLesson={handleSelectLesson} />
                 </div>
+              )}
 
-                {/* Right Column: Curriculum Sidebar */}
-                <div className="lg:col-span-4">
-                  <CurriculumSidebar
-                    phases={phases}
-                    activeLesson={activeLesson}
-                    onSelectLesson={handleSelectLesson}
-                    completedLessons={completedLessons}
-                    isEnrolled={isEnrolled}
-                  />
-                </div>
+              {/* Week Accordions */}
+              <div className="weeks-accordion-container">
+                {phases.map((phase) => (
+                  <div key={phase.id || `phase-${phase.number}`} className="phase-section">
+                    <h3 className="phase-title">Phase {phase.number}: {phase.title}</h3>
+                    {phase.weeks && phase.weeks.map((week) => (
+                      <WeekAccordion
+                        key={week.id || `week-${week.number}`}
+                        week={week}
+                        isExpanded={expandedWeeks[week.id || `week-${week.number}`]}
+                        onToggle={() => toggleWeek(week.id || `week-${week.number}`)}
+                        activeLesson={activeLesson}
+                        onSelectLesson={handleSelectLesson}
+                        completedLessons={completedLessons}
+                        isEnrolled={isEnrolled}
+                        expandedClassSections={expandedClassSections}
+                        onToggleClassSection={toggleClassSection}
+                        checklistItems={checklistItems}
+                        onToggleChecklist={toggleChecklist}
+                        activeVideoId={activeVideoId}
+                        onSelectSession={handleSelectSession}
+                      />
+                    ))}
+                  </div>
+                ))}
+                {phases.length === 0 && (
+                  <div className="empty-state">
+                    <p style={{ color: 'var(--text-dim)', fontSize: '0.875rem' }}>No curriculum data available.</p>
+                  </div>
+                )}
               </div>
-            )}
+            </main>
           </div>
-        </main>
-
-        <Footer />
-      </div>
+        </div>
+      </PageLayout>
     </>
   );
 };
