@@ -1,13 +1,15 @@
 /**
- * @fileoverview Pricing Page — Fully Config-Driven with Countdown Timer & Checkout Modal
- * Modern timeline-based phase selection with sticky cart sidebar
+ * @fileoverview Pricing Page — Fully Config-Driven with Referral & Discount Support
+ * Modern timeline-based phase selection with sticky cart sidebar.
  * ALL display text from i18n → t.pricing.* and t.phasePurchase.*
- * ALL data from payments.config.js + course config
+ * ALL data from payments.config.js + course config.
+ * Supports referral discount display and discount code badge.
  * Path: apps/web/pages/pricing/index.jsx
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
 import {
   Check,
   ArrowRight,
@@ -21,18 +23,23 @@ import {
   ShoppingCart,
   Shield,
   Zap,
+  Gift,
 } from 'lucide-react';
 import SEOHead from '../../components/shared/SEOHead';
 import PageLayout from '../../components/shared/PageLayout';
 import PhaseCartSummary from '../../components/checkout/PhaseCartSummary';
 import CountdownBanner from '../../components/pricing/CountdownBanner';
 import CheckoutModal from '../../components/payment/CheckoutModal';
+import DiscountCodeBadge from '../../components/discount/DiscountCodeBadge';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
-import { getPricing, getCountdownTimerConfig } from '../../lib/config';
+import { getPricing, getCountdownTimerConfig, calculateReferredDiscount } from '../../lib/config';
 import useCart from '../../hooks/useCart';
 import usePortalCourse from '../../hooks/usePortalCourse';
 
+/*
+ * Phase color palette
+ */
 const PHASE_COLORS = [
   { accent: '#f59e0b', bg: 'rgba(245,158,11,0.06)', border: 'rgba(245,158,11,0.2)' },
   { accent: '#3b82f6', bg: 'rgba(59,130,246,0.06)', border: 'rgba(59,130,246,0.2)' },
@@ -41,9 +48,13 @@ const PHASE_COLORS = [
   { accent: '#ec4899', bg: 'rgba(236,72,153,0.06)', border: 'rgba(236,72,153,0.2)' },
 ];
 
+/**
+ * PricingPage — Professional pricing experience with referral discount support.
+ */
 const PricingPage = () => {
+  const router = useRouter();
   const { t, language } = useLanguage();
-  const { isAuthenticated, isEnrolled } = useAuth();
+  const { isAuthenticated, isEnrolled, user } = useAuth();
   const cart = useCart();
 
   const { phases: coursePhases } = usePortalCourse('fullstack-web-engineering-masterclass');
@@ -57,6 +68,24 @@ const PricingPage = () => {
   const [expandedPhase, setExpandedPhase] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  /*
+   * Referral discount state
+   */
+  const [referralDiscountPercent, setReferralDiscountPercent] = useState(0);
+  const [referralCode, setReferralCode] = useState('');
+
+  /*
+   * Check if user has a referral discount from their own registration
+   */
+  useEffect(() => {
+    if (user?.referral_discount_percent && user.referral_discount_percent > 0) {
+      setReferralDiscountPercent(user.referral_discount_percent);
+    }
+  }, [user]);
+
+  /*
+   * Merge course phase data with purchase prerequisites
+   */
   const phasesWithMeta = useMemo(() => {
     if (!coursePhases || coursePhases.length === 0) return [];
     return coursePhases.map((coursePhase, index) => {
@@ -69,6 +98,9 @@ const PricingPage = () => {
     });
   }, [coursePhases, cart.allPhases]);
 
+  /*
+   * Full course features
+   */
   const fullCourseFeatures = [
     { icon: Layers, text: t.pricing?.instantAccess || 'Instant access to all 5 phases & course modules' },
     { icon: Zap, text: t.pricing?.hdPlaylists || 'Unlisted HD YouTube pre-recorded video masterclasses' },
@@ -78,7 +110,7 @@ const PricingPage = () => {
   ];
 
   /*
-   * Open the checkout modal — handles auth check internally
+   * Open the checkout modal
    */
   const handleOpenCheckout = (mode = 'full-course') => {
     if (!isAuthenticated) {
@@ -112,12 +144,25 @@ const PricingPage = () => {
     <>
       <SEOHead title={t.pricing?.heading || 'Tuition'} />
       <PageLayout>
+
         {/* Countdown Banner */}
         {timerConfig.enabled !== false && <CountdownBanner />}
 
         <div className="pricing-modern">
+
           {/* Header */}
           <header className="pricing-modern-header">
+
+            {/* Referral Discount Badge */}
+            {referralDiscountPercent > 0 && (
+              <div style={{ marginBottom: '1rem' }}>
+                <DiscountCodeBadge
+                  type="referral"
+                  referralPercent={referralDiscountPercent}
+                />
+              </div>
+            )}
+
             <span className="pricing-modern-eyebrow">
               {t.pricing?.tuitionEyebrow || 'Tuition'}
             </span>
@@ -188,10 +233,7 @@ const PricingPage = () => {
                     onClick={() => setPurchaseMode('full-course')}
                   >
                     {purchaseMode === 'full-course' ? (
-                      <>
-                        <Check size={18} />
-                        {t.pricing?.selected || 'Selected'}
-                      </>
+                      <><Check size={18} />{t.pricing?.selected || 'Selected'}</>
                     ) : (
                       t.pricing?.selectFullCourse || 'Select Full Course'
                     )}
@@ -236,15 +278,9 @@ const PricingPage = () => {
                 onClick={() => setPurchaseMode('individual-phases')}
               >
                 {purchaseMode === 'individual-phases' ? (
-                  <>
-                    <Check size={16} />
-                    {t.pricing?.customModeActive || 'Custom Mode Active'}
-                  </>
+                  <><Check size={16} />{t.pricing?.customModeActive || 'Custom Mode Active'}</>
                 ) : (
-                  <>
-                    <Layers size={16} />
-                    {t.pricing?.switchToCustom || 'Switch to Custom'}
-                  </>
+                  <><Layers size={16} />{t.pricing?.switchToCustom || 'Switch to Custom'}</>
                 )}
               </button>
             </div>
@@ -348,6 +384,8 @@ const PricingPage = () => {
           purchaseMode={purchaseMode}
           selectedPhases={purchaseMode === 'individual-phases' ? cart.selectedPhases : []}
           coursePhases={coursePhases || []}
+          referralDiscountPercent={referralDiscountPercent}
+          referralCode={user?.referred_by_code || ''}
         />
       </PageLayout>
     </>

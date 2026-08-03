@@ -1,11 +1,16 @@
 /**
  * @fileoverview Payment Submission API Route
- * Handles payment proof submission with support for both full course and individual phase purchases
+ * Handles payment proof submission with full support for:
+ * - Full course and individual phase purchases
+ * - Referral code processing (credit earning, tier updates)
+ * - Discount code validation and usage tracking
+ * - Credit application from referral earnings
  * Path: apps/web/pages/api/payments/submit.js
  */
 
 import { Pool } from 'pg';
 import jwt from 'jsonwebtoken';
+import { getReferralTierByCount, getCreditCapConfig, getCommissionConfig } from '../../../lib/config';
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -21,8 +26,7 @@ export const config = {
 };
 
 /**
- * Parse multipart form data from the request
- * Simple parser for FormData with file upload support
+ * Parse multipart form data
  */
 async function parseFormData(req) {
   return new Promise((resolve, reject) => {
@@ -75,13 +79,15 @@ async function parseFormData(req) {
 }
 
 export default async function handler(req, res) {
+
   if (req.method !== 'POST') {
     return res.status(405).json({ success: false, message: 'Method not allowed' });
   }
 
   try {
+
     /*
-     * Authenticate the request
+     * Authenticate
      */
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -91,10 +97,11 @@ export default async function handler(req, res) {
     const token = authHeader.split(' ')[1];
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    /*
-     * Verify user exists
-     */
-    const userResult = await pool.query('SELECT id, full_name, phone FROM users WHERE id = $1', [decoded.userId]);
+    const userResult = await pool.query(
+      'SELECT id, full_name, phone, referred_by_code, referral_discount_percent FROM users WHERE id = $1',
+      [decoded.userId]
+    );
+
     if (!userResult.rows[0]) {
       return res.status(401).json({ success: false, message: 'User not found.' });
     }
@@ -112,13 +119,18 @@ export default async function handler(req, res) {
       paymentMethod,
       transactionRef,
       purchaseMode = 'full-course',
-      courseId = 'fullstack-web-engineering-masterclass',
       selectedPhases: selectedPhasesRaw,
       amount: amountRaw,
+      referralCode: referralCodeRaw,
+      referralDiscountPercent: referralDiscountPercentRaw,
+      referralDiscountAmount: referralDiscountAmountRaw,
+      discountCode: discountCodeRaw,
+      discountCodeAmount: discountCodeAmountRaw,
+      creditApplied: creditAppliedRaw,
     } = fields;
 
     /*
-     * Parse selected phases if provided
+     * Parse values
      */
     let selectedPhases = null;
     if (purchaseMode === 'individual-phases' && selectedPhasesRaw) {
@@ -130,6 +142,11 @@ export default async function handler(req, res) {
     }
 
     const amount = parseInt(amountRaw, 10) || 0;
+    const referralDiscountPercent = parseFloat(referralDiscountPercentRaw) || 0;
+    const referralDiscountAmount = parseInt(referralDiscountAmountRaw, 10) || 0;
+    const discountCode = discountCodeRaw?.trim().toUpperCase() || null;
+    const discountCodeAmount = parseInt(discountCodeAmountRaw, 10) || 0;
+    const creditApplied = parseInt(creditAppliedRaw, 10) || 0;
 
     /*
      * Validate required fields
@@ -141,22 +158,30 @@ export default async function handler(req, res) {
       });
     }
 
-    if (purchaseMode === 'individual-phases' && (!selectedPhases || selectedPhases.length === 0)) {
-      return res.status(400).json({
-        success: false,
-        message: 'At least one phase must be selected for individual phase purchase.',
-      });
-    }
-
     /*
      * Create payment record
      */
     const paymentResult = await pool.query(
-      `INSERT INTO payments (user_id, amount, method, status, reference, created_at)
-       VALUES ($1, $2, $3, 'pending', $4, CURRENT_TIMESTAMP)
+      `INSERT INTO payments (
+         user_id, amount, method, status, reference,
+         referral_discount_amount, discount_code_used, discount_code_amount,
+         credit_applied, created_at
+       )
+       VALUES ($1, $2, $3, 'pending', $4, $5, $6, $7, $8, CURRENT_TIMESTAMP)
        RETURNING id`,
-      [user.id, amount, paymentMethod, transactionRef]
+      [
+        user.id,
+        amount,
+        paymentMethod,
+        transactionRef,
+        referralDiscountAmount,
+        discountCode,
+        discountCodeAmount,
+        creditApplied,
+      ]
     );
+
+    const paymentId = paymentResult.rows[0].id;
 
     /*
      * Update user payment status
@@ -173,20 +198,212 @@ export default async function handler(req, res) {
     );
 
     /*
-     * TODO: Handle screenshot upload to Cloudinary when file is present
-     * This will be implemented when Cloudinary upload is configured for API routes
+     * Process referral — if this user was referred, update the referral record
      */
+    if (user.referred_by_code) {
+
+      /*
+       * Find the pending referral record
+       */
+      const referralResult = await pool.query(
+        `SELECT id, referrer_id FROM referrals
+         WHERE referred_user_id = $1 AND status = 'registered'
+         ORDER BY created_at DESC LIMIT 1`,
+        [user.id]
+      );
+
+      if (referralResult.rows.length > 0) {
+        const referral = referralResult.rows[0];
+
+        /*
+         * Update the referral record
+         */
+        await pool.query(
+          `UPDATE referrals
+           SET status = 'completed',
+               discount_amount = $1,
+               completed_at = CURRENT_TIMESTAMP,
+               payment_id = $2
+           WHERE id = $3`,
+          [referralDiscountAmount, paymentId, referral.id]
+        );
+
+        /*
+         * Calculate referrer rewards
+         */
+        const earningsResult = await pool.query(
+          `SELECT successful_referrals FROM referral_earnings WHERE user_id = $1`,
+          [referral.referrer_id]
+        );
+
+        const successfulReferrals = parseInt(
+          earningsResult.rows[0]?.successful_referrals || 0,
+          10
+        );
+
+        const currentTier = getReferralTierByCount(successfulReferrals);
+        const creditCapConfig = getCreditCapConfig();
+        const commissionConfig = getCommissionConfig();
+
+        /*
+         * Calculate credit amount for this referral
+         */
+        const referrerCoursePrice = 2499; // Full course price for credit calculation
+        const creditEarned = Math.round(
+          referrerCoursePrice * (currentTier.creditPercent / 100)
+        );
+
+        /*
+         * Check credit cap
+         */
+        const currentAvailableCredit = parseFloat(
+          (await pool.query(
+            'SELECT available_credit FROM referral_earnings WHERE user_id = $1',
+            [referral.referrer_id]
+          )).rows[0]?.available_credit || 0
+        );
+
+        const creditCapAmount = Math.round(
+          referrerCoursePrice * (creditCapConfig.maxPercent / 100)
+        );
+
+        let creditToAdd = creditEarned;
+        let commissionEarned = 0;
+
+        if (currentAvailableCredit + creditEarned > creditCapAmount) {
+          const creditSpace = Math.max(0, creditCapAmount - currentAvailableCredit);
+          creditToAdd = creditSpace;
+
+          if (creditCapConfig.behavior === 'commission' && commissionConfig.enabled) {
+            const excessValue = creditEarned - creditSpace;
+            commissionEarned = Math.round(
+              excessValue * (commissionConfig.percentOfPayment / 100)
+            );
+          }
+        }
+
+        /*
+         * Update referrer earnings
+         */
+        await pool.query(
+          `UPDATE referral_earnings
+           SET total_credit_earned = total_credit_earned + $1,
+               available_credit = available_credit + $1,
+               total_commission_earned = total_commission_earned + $2,
+               pending_commission = pending_commission + $2,
+               successful_referrals = successful_referrals + 1,
+               current_tier = $3,
+               tier_updated_at = CURRENT_TIMESTAMP,
+               updated_at = CURRENT_TIMESTAMP
+           WHERE user_id = $4`,
+          [creditToAdd, commissionEarned, currentTier.name, referral.referrer_id]
+        );
+
+        /*
+         * Update the referral record with credit/commission amounts
+         */
+        await pool.query(
+          `UPDATE referrals
+           SET referrer_credit_percent = $1,
+               referrer_credit_amount = $2,
+               commission_earned = $3
+           WHERE id = $4`,
+          [currentTier.creditPercent, creditToAdd, commissionEarned, referral.id]
+        );
+      }
+    }
+
+    /*
+     * Process discount code — record usage
+     */
+    if (discountCode && discountCodeAmount > 0) {
+
+      const discountCodeResult = await pool.query(
+        `SELECT id FROM discount_codes WHERE code = $1 AND is_deleted = false`,
+        [discountCode]
+      );
+
+      if (discountCodeResult.rows.length > 0) {
+        const dcId = discountCodeResult.rows[0].id;
+
+        /*
+         * Increment usage count
+         */
+        await pool.query(
+          `UPDATE discount_codes
+           SET current_total_uses = current_total_uses + 1,
+               updated_at = CURRENT_TIMESTAMP
+           WHERE id = $1`,
+          [dcId]
+        );
+
+        /*
+         * Record usage
+         */
+        await pool.query(
+          `INSERT INTO discount_code_usage (
+             discount_code_id, user_id, payment_id,
+             discount_amount, original_amount, final_amount,
+             ip_address, user_agent
+           )
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+          [
+            dcId,
+            user.id,
+            paymentId,
+            discountCodeAmount,
+            amount + discountCodeAmount + referralDiscountAmount + creditApplied,
+            amount,
+            req.headers['x-forwarded-for'] || req.socket.remoteAddress || null,
+            req.headers['user-agent'] || null,
+          ]
+        );
+      }
+    }
+
+    /*
+     * Deduct credit from referrer's balance if credit was applied
+     */
+    if (creditApplied > 0 && user.referred_by_code) {
+      /*
+       * Find the user who referred this user
+       */
+      const referrerResult = await pool.query(
+        `SELECT referrer_id FROM referrals
+         WHERE referred_user_id = $1 AND status = 'completed'
+         ORDER BY completed_at DESC LIMIT 1`,
+        [user.id]
+      );
+
+      if (referrerResult.rows.length > 0) {
+        /*
+         * This user is using their own credit — deduct from their earnings
+         */
+        await pool.query(
+          `UPDATE referral_earnings
+           SET available_credit = GREATEST(0, available_credit - $1),
+               total_credit_used = total_credit_used + $1,
+               updated_at = CURRENT_TIMESTAMP
+           WHERE user_id = $2`,
+          [creditApplied, user.id]
+        );
+      }
+    }
 
     res.status(200).json({
       success: true,
       message: 'Payment proof submitted successfully. Waiting for admin approval.',
       data: {
-        paymentId: paymentResult.rows[0].id,
+        paymentId,
         status: 'pending',
         purchaseMode,
         selectedPhases,
+        referralProcessed: !!user.referred_by_code,
+        discountCodeApplied: !!discountCode,
+        creditApplied: creditApplied > 0,
       },
     });
+
   } catch (error) {
     console.error('Payment submission error:', error.message);
     res.status(500).json({

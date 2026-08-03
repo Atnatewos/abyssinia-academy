@@ -568,7 +568,7 @@ const en = {
     commissionEarned: 'Commission Earned',
     pendingPayout: 'Pending Payout',
     totalValueEarned: 'Total Value Earned',
-    creditCapReached: 'Credit cap reached — earning cash commission!',
+    creditCapReached: 'Credit cap reached, earning cash commission!',
 
     /*
      * Referral History
@@ -644,6 +644,116 @@ const en = {
     selfReferral: 'You cannot use your own referral code.',
     codeAlreadyUsed: 'This referral code has already been used for your account.',
     loadError: 'Failed to load referral data. Please try again.',
+  },
+
+    /*
+   * Discount Code System
+   * Code input, validation messages, checkout integration, admin labels
+   */
+  discounts: {
+
+    /*
+     * Discount Code Input
+     */
+    enterCode: 'Enter discount code',
+    applyCode: 'Apply',
+    applyingCode: 'Applying...',
+    removeCode: 'Remove',
+    codeApplied: 'Code applied!',
+    codeRemoved: 'Code removed.',
+
+    /*
+     * Validation Messages
+     */
+    invalidCode: 'Invalid discount code. Please check and try again.',
+    codeExpired: 'This discount code has expired.',
+    codeNotYetValid: 'This discount code is not yet valid.',
+    codeUsageLimitReached: 'This discount code has reached its maximum usage limit.',
+    codeAlreadyUsed: 'You have already used this discount code.',
+    codePaused: 'This discount code is currently paused.',
+    codeDisabled: 'This discount code is no longer active.',
+    minPurchaseNotMet: 'Minimum purchase of {amount} ETB required for this code.',
+    notEligibleForCourse: 'This code cannot be used for the selected course or phases.',
+    firstTimeOnly: 'This code is only available for first-time enrollees.',
+    rateLimited: 'Too many attempts. Please wait a moment and try again.',
+    suspiciousActivity: 'This action has been flagged for security review.',
+
+    /*
+     * Checkout Integration
+     */
+    discountCodeLabel: 'Discount Code',
+    discountCodeLineItem: 'Discount Code ({code})',
+    youSave: 'You save',
+    availableCodes: 'Available Discount Codes',
+    noActiveCodes: 'No active discount codes at this time.',
+
+    /*
+     * Admin — Discount Code Management
+     */
+    adminTitle: 'Discount Codes',
+    adminCreate: 'Create Discount Code',
+    adminEdit: 'Edit Discount Code',
+    adminDelete: 'Delete',
+    adminDeleteConfirm: 'Are you sure you want to delete this discount code?',
+    adminCode: 'Code',
+    adminType: 'Type',
+    adminValue: 'Value',
+    adminUses: 'Used',
+    adminMaxUses: 'Max Uses',
+    adminStatus: 'Status',
+    adminExpires: 'Expires',
+    adminActions: 'Actions',
+    adminActive: 'Active',
+    adminPaused: 'Paused',
+    adminDisabled: 'Disabled',
+    adminPercentage: 'Percentage',
+    adminFixedAmount: 'Fixed Amount',
+    adminUnlimited: 'Unlimited',
+    adminNoExpiration: 'Never',
+    adminUsageHistory: 'Usage History',
+    adminStats: 'Statistics',
+    adminTotalCodes: 'Total Codes',
+    adminTotalUses: 'Total Uses',
+    adminTotalDiscounts: 'Total Discounts Given',
+    adminAbuseLog: 'Abuse Log',
+    adminAbuseLogEmpty: 'No abuse events recorded.',
+
+    /*
+     * Admin — Create/Edit Form
+     */
+    formCode: 'Discount Code',
+    formCodePlaceholder: 'e.g., LAUNCH2026',
+    formType: 'Discount Type',
+    formValue: 'Discount Value',
+    formValuePercent: 'Percentage (%)',
+    formValueFixed: 'Amount (ETB)',
+    formMaxUses: 'Maximum Total Uses',
+    formMaxUsesPerUser: 'Maximum Uses Per User',
+    formMinPurchase: 'Minimum Purchase Amount (ETB)',
+    formEligibleFor: 'Eligible For',
+    formFullCourse: 'Full Course',
+    formSpecificPhases: 'Specific Phases',
+    formFirstTimeOnly: 'First-Time Enrollees Only',
+    formValidFrom: 'Valid From',
+    formValidUntil: 'Valid Until',
+    formDescription: 'Description (Internal Notes)',
+    formStatus: 'Status',
+    formSave: 'Save Discount Code',
+    formSaving: 'Saving...',
+    formCreated: 'Discount code created successfully!',
+    formUpdated: 'Discount code updated successfully!',
+    formDeleted: 'Discount code deleted successfully.',
+
+    /*
+     * Admin — Validation Errors
+     */
+    codeRequired: 'Discount code is required.',
+    codeTooShort: 'Code must be at least {min} characters.',
+    codeTooLong: 'Code must be at most {max} characters.',
+    codeInvalidChars: 'Code can only contain letters and numbers.',
+    valueRequired: 'Discount value is required.',
+    valueTooHigh: 'Maximum discount is {max}%.',
+    valueTooHighFixed: 'Maximum fixed discount is {max} ETB.',
   },
 
 };

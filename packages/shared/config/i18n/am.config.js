@@ -551,7 +551,7 @@ const am = {
     commissionEarned: 'የተገኘ ኮሚሽን',
     pendingPayout: 'በመጠባበቅ ላይ ያለ ክፍያ',
     totalValueEarned: 'ጠቅላላ የተገኘ ዋጋ',
-    creditCapReached: 'የክሬዲት ጣሪያ ላይ ደርሰዋል — አሁን የጥሬ ገንዘብ ኮሚሽን ያገኛሉ!',
+    creditCapReached: 'የክሬዲት ጣሪያ ላይ ደርሰዋል፣ አሁን የጥሬ ገንዘብ ኮሚሽን ያገኛሉ!',
 
     /*
      * Referral History — የማጣቀሻ ታሪክ
@@ -610,7 +610,7 @@ const am = {
     shareTitle: 'ያጋሩ እና ያግኙ',
     shareSubtitle: 'በአንድ ማጣቀሻ {percent}% ክሬዲት ለማግኘት ሊንክዎን ያጋሩ!',
     shareMessage: '🚀 በአቢሲኒያ አካዳሚ ይቀላቀሉና {discount}% ቅናሽ ያግኙ! ፉል-ስታክ ዌብ ዴቨሎፕመንት ይማሩ: ',
-    shareMessageAm: '🚀 በአቢሲኒያ አካዳሚ ይቀላቀሉና {discount}% ቅናሽ ያግኙ! ፉል-ስታክ ዌብ ዴቨሎፕመንት ይማሩ: ',
+    shareMessageAm: '🚀 Join me at Abyssinia Academy and get {discount}% off your enrollment! Learn Full-Stack Web Development: ',
 
     /*
      * Share Platform Labels — የማጋሪያ መድረክ ስሞች
@@ -629,7 +629,115 @@ const am = {
     loadError: 'የማጣቀሻ ውሂብ መጫን አልተሳካም። እባክዎ እንደገና ይሞክሩ።',
   },
 
-  
+    /*
+   * Discount Code System — የቅናሽ ኮድ ስርዓት
+   */
+  discounts: {
+
+    /*
+     * Discount Code Input — የቅናሽ ኮድ ማስገቢያ
+     */
+    enterCode: 'የቅናሽ ኮድ ያስገቡ',
+    applyCode: 'ይተግብሩ',
+    applyingCode: 'በመተግበር ላይ...',
+    removeCode: 'ያስወግዱ',
+    codeApplied: 'ኮድ ተተግብሯል!',
+    codeRemoved: 'ኮድ ተወግዷል።',
+
+    /*
+     * Validation Messages — የማረጋገጫ መልዕክቶች
+     */
+    invalidCode: 'ልክ ያልሆነ የቅናሽ ኮድ። እባክዎ ያረጋግጡ እና እንደገና ይሞክሩ።',
+    codeExpired: 'ይህ የቅናሽ ኮድ ጊዜው አልፎበታል።',
+    codeNotYetValid: 'ይህ የቅናሽ ኮድ ገና የሚሰራበት ጊዜ አልደረሰም።',
+    codeUsageLimitReached: 'ይህ የቅናሽ ኮድ ከፍተኛውን የአጠቃቀም ገደብ ላይ ደርሷል።',
+    codeAlreadyUsed: 'ይህን የቅናሽ ኮድ አስቀድመው ተጠቅመዋል።',
+    codePaused: 'ይህ የቅናሽ ኮድ ለጊዜው ቆሟል።',
+    codeDisabled: 'ይህ የቅናሽ ኮድ ከአሁን በኋላ ንቁ አይደለም።',
+    minPurchaseNotMet: 'ለዚህ ኮድ ቢያንስ የ{amount} ETB ግዢ ያስፈልጋል።',
+    notEligibleForCourse: 'ይህ ኮድ ለተመረጠው ኮርስ ወይም ምዕራፍ መጠቀም አይቻልም።',
+    firstTimeOnly: 'ይህ ኮድ ለመጀመሪያ ጊዜ ለሚመዘገቡ ብቻ ነው።',
+    rateLimited: 'በጣም ብዙ ሙከራዎች። እባክዎ ትንሽ ይጠብቁ እና እንደገና ይሞክሩ።',
+    suspiciousActivity: 'ይህ እርምጃ ለደህንነት ምርመራ ምልክት ተደርጎበታል።',
+
+    /*
+     * Checkout Integration — የክፍያ ውህደት
+     */
+    discountCodeLabel: 'የቅናሽ ኮድ',
+    discountCodeLineItem: 'የቅናሽ ኮድ ({code})',
+    youSave: 'ይቆጥባሉ',
+    availableCodes: 'የሚገኙ የቅናሽ ኮዶች',
+    noActiveCodes: 'በአሁኑ ጊዜ ምንም ንቁ የቅናሽ ኮዶች የሉም።',
+
+    /*
+     * Admin — Discount Code Management — የአስተዳዳሪ ቅናሽ ኮድ አስተዳደር
+     */
+    adminTitle: 'የቅናሽ ኮዶች',
+    adminCreate: 'የቅናሽ ኮድ ይፍጠሩ',
+    adminEdit: 'የቅናሽ ኮድ ያርትዑ',
+    adminDelete: 'አጥፋ',
+    adminDeleteConfirm: 'ይህን የቅናሽ ኮድ መሰረዝዎን እርግጠኛ ነዎት?',
+    adminCode: 'ኮድ',
+    adminType: 'አይነት',
+    adminValue: 'ዋጋ',
+    adminUses: 'ተጠቅሟል',
+    adminMaxUses: 'ከፍተኛ አጠቃቀም',
+    adminStatus: 'ሁኔታ',
+    adminExpires: 'የሚያበቃበት',
+    adminActions: 'እርምጃዎች',
+    adminActive: 'ንቁ',
+    adminPaused: 'ቆሟል',
+    adminDisabled: 'ተሰናክሏል',
+    adminPercentage: 'መቶኛ',
+    adminFixedAmount: 'ቋሚ መጠን',
+    adminUnlimited: 'ያልተገደበ',
+    adminNoExpiration: 'በጭራሽ',
+    adminUsageHistory: 'የአጠቃቀም ታሪክ',
+    adminStats: 'ስታቲስቲክስ',
+    adminTotalCodes: 'ጠቅላላ ኮዶች',
+    adminTotalUses: 'ጠቅላላ አጠቃቀም',
+    adminTotalDiscounts: 'ጠቅላላ የተሰጠ ቅናሽ',
+    adminAbuseLog: 'የአላግባብ መዝገብ',
+    adminAbuseLogEmpty: 'ምንም የአላግባብ ክስተቶች አልተመዘገቡም።',
+
+    /*
+     * Admin — Create/Edit Form — የመፍጠር/ማርትዕ ቅጽ
+     */
+    formCode: 'የቅናሽ ኮድ',
+    formCodePlaceholder: 'ለምሳሌ: LAUNCH2026',
+    formType: 'የቅናሽ አይነት',
+    formValue: 'የቅናሽ ዋጋ',
+    formValuePercent: 'መቶኛ (%)',
+    formValueFixed: 'መጠን (ETB)',
+    formMaxUses: 'ከፍተኛ ጠቅላላ አጠቃቀም',
+    formMaxUsesPerUser: 'ከፍተኛ የአንድ ተጠቃሚ አጠቃቀም',
+    formMinPurchase: 'አነስተኛ የግዢ መጠን (ETB)',
+    formEligibleFor: 'ብቁ የሚሆንበት',
+    formFullCourse: 'ሙሉ ኮርስ',
+    formSpecificPhases: 'የተወሰኑ ምዕራፎች',
+    formFirstTimeOnly: 'ለመጀመሪያ ጊዜ ተማሪዎች ብቻ',
+    formValidFrom: 'የሚሰራበት ከ',
+    formValidUntil: 'የሚሰራበት እስከ',
+    formDescription: 'መግለጫ (የውስጥ ማስታወሻዎች)',
+    formStatus: 'ሁኔታ',
+    formSave: 'የቅናሽ ኮድ ያስቀምጡ',
+    formSaving: 'በማስቀመጥ ላይ...',
+    formCreated: 'የቅናሽ ኮድ በተሳካ ሁኔታ ተፈጥሯል!',
+    formUpdated: 'የቅናሽ ኮድ በተሳካ ሁኔታ ተዘምኗል!',
+    formDeleted: 'የቅናሽ ኮድ በተሳካ ሁኔታ ተሰርዟል።',
+
+    /*
+     * Admin — Validation Errors — የማረጋገጫ ስህተቶች
+     */
+    codeRequired: 'የቅናሽ ኮድ ያስፈልጋል።',
+    codeTooShort: 'ኮድ ቢያንስ {min} ቁምፊዎች መሆን አለበት።',
+    codeTooLong: 'ኮድ ቢበዛ {max} ቁምፊዎች መሆን አለበት።',
+    codeInvalidChars: 'ኮድ ፊደላት',
+    codeInvalidChars: 'ኮድ ፊደላት እና ቁጥሮች ብቻ ሊይዝ ይችላል።',
+    valueRequired: 'የቅናሽ ዋጋ ያስፈልጋል።',
+    valueTooHigh: 'ከፍተኛው ቅናሽ {max}% ነው።',
+    valueTooHighFixed: 'ከፍተኛው ቋሚ ቅናሽ {max} ETB ነው።',
+  },
 
 };
 

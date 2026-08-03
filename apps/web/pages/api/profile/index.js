@@ -17,6 +17,9 @@ const pool = new Pool({
 
 export default async function handler(req, res) {
 
+  /*
+   * Authenticate the request via JWT Bearer token
+   */
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -65,6 +68,9 @@ export default async function handler(req, res) {
 
       const user = userResult.rows[0];
 
+      /*
+       * Fetch enrollment data
+       */
       let enrollment = null;
 
       if (user.is_enrolled) {
@@ -93,6 +99,9 @@ export default async function handler(req, res) {
         }
       }
 
+      /*
+       * Fetch progress
+       */
       const progressResult = await pool.query(
         `SELECT progress AS overall_progress, updated_at
          FROM course_progress
@@ -108,6 +117,9 @@ export default async function handler(req, res) {
         [userId]
       );
 
+      /*
+       * Fetch payment history
+       */
       const paymentsResult = await pool.query(
         `SELECT id, amount, method, status, reference, transaction_id, created_at
          FROM payments
