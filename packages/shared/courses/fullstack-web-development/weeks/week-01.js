@@ -16,7 +16,7 @@ const { createLesson, mainVideo, sessionVideo, resource } = require('../shared/h
 const WEEK_01 = {
   number: 1,
   phaseNumber: 1,
-  title: 'Week 1: Basic Computer Skills',
+  title: 'Basic Computer Skills',
 
   lessons: [
 

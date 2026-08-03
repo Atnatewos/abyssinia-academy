@@ -5001,3 +5001,2339 @@
 .senior-class-accordion-arrow.open {
   color: var(--accent-gold);
 }
+
+/* ============================================================
+   CHECKOUT FORM — PAYMENT INFO WITH COPY BUTTON
+   ============================================================ */
+
+/* Payment method name heading */
+.checkout-payment-method-name {
+  margin-bottom: 0.5rem;
+}
+
+.checkout-payment-method-name .label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--accent-gold);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Account number row — flex container for label + number + copy button */
+.checkout-payment-account-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  padding: 0.625rem 0.75rem;
+  background: rgba(245, 158, 11, 0.06);
+  border: 1px solid rgba(245, 158, 11, 0.15);
+  border-radius: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.checkout-payment-account-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.checkout-payment-account-number {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  color: var(--text-main);
+  letter-spacing: 0.02em;
+  user-select: all;
+}
+
+/* Copy button — icon-only, minimal footprint */
+.copy-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 0.375rem;
+  background: rgba(148, 163, 184, 0.06);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.copy-btn:hover {
+  background: rgba(245, 158, 11, 0.12);
+  border-color: rgba(245, 158, 11, 0.3);
+  color: var(--accent-gold);
+}
+
+.copy-btn:active {
+  transform: scale(0.92);
+  transition: transform 0.1s ease;
+}
+
+/* Account name — secondary info */
+.checkout-payment-account-name {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-bottom: 0.75rem;
+}
+
+.checkout-payment-account-name span {
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+/* Payment instructions — helper text */
+.checkout-payment-instructions {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  line-height: 1.6;
+  margin-top: 0.25rem;
+}
+
+/* Optional field label modifier */
+.checkout-field-optional {
+  color: var(--text-dim);
+  font-weight: 400;
+  font-size: 0.75rem;
+}
+
+/* ============================================================
+   PURCHASE MODE SELECTOR
+   ============================================================ */
+
+.purchase-mode-selector {
+  margin-bottom: 2rem;
+}
+
+.purchase-mode-header {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.purchase-mode-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-main);
+  margin-bottom: 0.5rem;
+}
+
+.purchase-mode-subtitle {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  max-width: 28rem;
+  margin: 0 auto;
+}
+
+.purchase-mode-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1rem;
+  max-width: 40rem;
+  margin: 0 auto;
+}
+
+.purchase-mode-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 1.5rem;
+  background: rgba(15, 23, 42, 0.6);
+  border: 2px solid rgba(148, 163, 184, 0.15);
+  border-radius: 1rem;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  gap: 0.5rem;
+}
+
+.purchase-mode-card:hover {
+  border-color: rgba(245, 158, 11, 0.3);
+  background: rgba(245, 158, 11, 0.05);
+}
+
+.purchase-mode-card.selected {
+  border-color: var(--accent-gold);
+  background: rgba(245, 158, 11, 0.08);
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.1);
+}
+
+.purchase-mode-badge {
+  position: absolute;
+  top: -0.625rem;
+  right: 1rem;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #020617;
+  font-size: 0.625rem;
+  font-weight: 800;
+  padding: 0.25rem 0.75rem;
+  border-radius: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.purchase-mode-icon {
+  color: var(--accent-gold);
+}
+
+.purchase-mode-label {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.purchase-mode-desc {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.purchase-mode-price {
+  display: flex;
+  align-items: baseline;
+  gap: 0.375rem;
+  margin-top: 0.5rem;
+}
+
+.purchase-mode-price-amount {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--text-main);
+}
+
+.purchase-mode-price-unit {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+}
+
+.purchase-mode-price-original {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  text-decoration: line-through;
+}
+
+.purchase-mode-savings {
+  font-size: 0.688rem;
+  font-weight: 700;
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.1);
+  padding: 0.125rem 0.5rem;
+  border-radius: 0.25rem;
+}
+
+.purchase-mode-radio {
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 50%;
+  border: 2px solid rgba(148, 163, 184, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 0.5rem;
+}
+
+.purchase-mode-radio.checked {
+  border-color: var(--accent-gold);
+  background: var(--accent-gold);
+}
+
+.purchase-mode-radio-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: #020617;
+}
+
+/* ============================================================
+   PHASE SELECTOR
+   ============================================================ */
+
+.phase-selector {
+  margin-bottom: 1.5rem;
+}
+
+.phase-selector-header {
+  margin-bottom: 1rem;
+}
+
+.phase-selector-header h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-main);
+  margin-bottom: 0.25rem;
+}
+
+.phase-selector-header p {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.phase-selector-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.phase-selector-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.875rem 1rem;
+  background: rgba(15, 23, 42, 0.4);
+  border: 1px solid rgba(148, 163, 184, 0.1);
+  border-radius: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+  width: 100%;
+}
+
+.phase-selector-item:hover:not(.locked) {
+  border-color: rgba(245, 158, 11, 0.25);
+  background: rgba(245, 158, 11, 0.04);
+}
+
+.phase-selector-item.selected {
+  border-color: rgba(245, 158, 11, 0.4);
+  background: rgba(245, 158, 11, 0.06);
+}
+
+.phase-selector-item.locked {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.phase-selector-checkbox {
+  width: 1.375rem;
+  height: 1.375rem;
+  border-radius: 0.25rem;
+  border: 2px solid rgba(148, 163, 184, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.phase-selector-checkbox.checked {
+  background: var(--accent-gold);
+  border-color: var(--accent-gold);
+  color: #020617;
+}
+
+.phase-selector-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.phase-selector-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.phase-selector-number {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.phase-selector-prereq-met {
+  color: #10b981;
+  display: flex;
+  align-items: center;
+}
+
+.phase-selector-prereq-locked {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.688rem;
+  color: var(--text-dim);
+}
+
+.phase-selector-no-prereq {
+  display: block;
+  font-size: 0.688rem;
+  color: #10b981;
+  margin-top: 0.125rem;
+}
+
+.phase-selector-price {
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.phase-selector-price-amount {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.phase-selector-arrow {
+  color: var(--text-dim);
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.phase-selector-arrow.rotated {
+  transform: rotate(90deg);
+}
+
+.phase-selector-empty {
+  text-align: center;
+  padding: 2rem;
+  color: var(--text-dim);
+}
+
+/* ============================================================
+   PHASE CART SUMMARY
+   ============================================================ */
+
+.phase-cart-summary {
+  background: rgba(15, 23, 42, 0.5);
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  border-radius: 0.75rem;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.phase-cart-empty {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-dim);
+  font-size: 0.875rem;
+  justify-content: center;
+  padding: 0.75rem;
+}
+
+.phase-cart-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.375rem 0;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
+
+.phase-cart-count {
+  font-weight: 600;
+  color: var(--text-main);
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.08);
+  margin-bottom: 0.375rem;
+}
+
+.phase-cart-discount {
+  color: #10b981;
+}
+
+.phase-cart-total {
+  font-weight: 700;
+  color: var(--text-main);
+  font-size: 0.9375rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid rgba(148, 163, 184, 0.12);
+  margin-top: 0.25rem;
+}
+
+.phase-cart-nudge {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin-top: 0.75rem;
+  padding: 0.625rem 0.75rem;
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  border-radius: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--accent-gold);
+}
+
+/* ============================================================
+   PRICING PAGE — INDIVIDUAL PHASES LAYOUT
+   ============================================================ */
+
+.pricing-cards-container {
+  max-width: 40rem;
+  margin: 0 auto;
+}
+
+.pricing-individual-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.pricing-card-full {
+  max-width: 28rem;
+  margin: 0 auto;
+}
+
+.pricing-card-individual {
+  max-width: 100%;
+}
+
+.pricing-badge-outline {
+  background: transparent;
+  border: 1px solid var(--accent-gold);
+  color: var(--accent-gold);
+}
+
+.pricing-btn.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* ============================================================
+   CHECKOUT — PURCHASE SUMMARY
+   ============================================================ */
+
+.checkout-purchase-summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background: rgba(245, 158, 11, 0.06);
+  border: 1px solid rgba(245, 158, 11, 0.15);
+  border-radius: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.checkout-purchase-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.checkout-purchase-value {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--accent-gold);
+}
+
+/* ============================================================
+   PHASE DETAIL CARDS — Pricing Page
+   ============================================================ */
+
+.phase-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.phase-detail-card {
+  background: rgba(15, 23, 42, 0.5);
+  border: 1px solid rgba(148, 163, 184, 0.1);
+  border-radius: 0.875rem;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  transition: all 0.25s ease;
+  position: relative;
+}
+
+.phase-detail-card:hover {
+  border-color: rgba(245, 158, 11, 0.2);
+  background: rgba(15, 23, 42, 0.7);
+}
+
+.phase-detail-card.selected {
+  border-color: rgba(245, 158, 11, 0.5);
+  background: rgba(245, 158, 11, 0.06);
+  box-shadow: 0 0 24px rgba(245, 158, 11, 0.06);
+}
+
+.phase-detail-card.locked {
+  opacity: 0.55;
+}
+
+.phase-detail-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.phase-detail-number {
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent-gold);
+  background: rgba(245, 158, 11, 0.1);
+  padding: 0.25rem 0.625rem;
+  border-radius: 0.375rem;
+}
+
+.phase-detail-selected-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.688rem;
+  font-weight: 700;
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.1);
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.375rem;
+}
+
+.phase-detail-locked-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.688rem;
+  font-weight: 600;
+  color: var(--text-dim);
+  background: rgba(148, 163, 184, 0.1);
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.375rem;
+}
+
+.phase-detail-title {
+  font-size: 1.0625rem;
+  font-weight: 700;
+  color: var(--text-main);
+  line-height: 1.3;
+  margin: 0;
+}
+
+.phase-detail-subtitle {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+  margin: 0;
+}
+
+.phase-detail-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.phase-detail-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.688rem;
+  color: var(--text-dim);
+}
+
+.phase-detail-desc {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* Learning Outcomes */
+.phase-detail-outcomes {
+  background: rgba(16, 185, 129, 0.04);
+  border: 1px solid rgba(16, 185, 129, 0.1);
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+}
+
+.phase-detail-outcomes-label {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.688rem;
+  font-weight: 700;
+  color: #10b981;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.5rem;
+}
+
+.phase-detail-outcomes-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.phase-detail-outcome-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.375rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.phase-detail-outcome-item svg {
+  color: #10b981;
+  flex-shrink: 0;
+  margin-top: 0.125rem;
+}
+
+/* Prerequisite Warning */
+.phase-detail-prereq-warning {
+  background: rgba(251, 191, 36, 0.06);
+  border: 1px solid rgba(251, 191, 36, 0.15);
+  border-radius: 0.375rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.688rem;
+  color: #fbbf24;
+  font-weight: 500;
+}
+
+/* Select / Deselect Button */
+.phase-detail-btn {
+  width: 100%;
+  padding: 0.625rem 1rem;
+  border-radius: 0.5rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+  margin-top: auto;
+}
+
+.phase-detail-btn.select {
+  background: rgba(245, 158, 11, 0.1);
+  border-color: rgba(245, 158, 11, 0.3);
+  color: var(--accent-gold);
+}
+
+.phase-detail-btn.select:hover {
+  background: rgba(245, 158, 11, 0.18);
+  border-color: var(--accent-gold);
+}
+
+.phase-detail-btn.deselect {
+  background: rgba(16, 185, 129, 0.1);
+  border-color: rgba(16, 185, 129, 0.3);
+  color: #10b981;
+}
+
+.phase-detail-btn.deselect:hover {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+}
+
+.phase-detail-btn.locked {
+  background: rgba(148, 163, 184, 0.05);
+  border-color: rgba(148, 163, 184, 0.1);
+  color: var(--text-dim);
+  cursor: not-allowed;
+}
+
+/* ============================================================
+   PRICING PAGE — FULL COURSE PHASE TAGS
+   ============================================================ */
+
+.pricing-phases-summary {
+  background: rgba(245, 158, 11, 0.04);
+  border: 1px solid rgba(245, 158, 11, 0.1);
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+}
+
+.pricing-phases-summary-label {
+  display: block;
+  font-size: 0.688rem;
+  font-weight: 700;
+  color: var(--accent-gold);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.5rem;
+}
+
+.pricing-phases-summary-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.pricing-phase-tag {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.pricing-phase-tag svg {
+  color: #10b981;
+  flex-shrink: 0;
+}
+
+/* ============================================================
+   PRICING PAGE — LAYOUT HELPERS
+   ============================================================ */
+
+.pricing-cards-container {
+  max-width: 34rem;
+  margin: 0 auto;
+}
+
+.pricing-individual-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  max-width: 64rem;
+  margin: 0 auto;
+}
+
+.pricing-card-full {
+  max-width: 100%;
+}
+
+.pricing-cart-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  max-width: 28rem;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.pricing-btn.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.pricing-cta-main {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.875rem 1.5rem;
+  font-size: 0.9375rem;
+}
+
+/* ============================================================
+   PRICING PAGE — RESPONSIVE
+   ============================================================ */
+
+@media (max-width: 768px) {
+  .phase-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .pricing-individual-container {
+    max-width: 100%;
+  }
+
+  .pricing-cart-sidebar {
+    max-width: 100%;
+  }
+}
+
+@media (min-width: 1024px) {
+  .pricing-individual-container {
+    flex-direction: row;
+    align-items: flex-start;
+  }
+
+  .phase-detail-grid {
+    flex: 1;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  }
+
+  .pricing-cart-sidebar {
+    position: sticky;
+    top: 6rem;
+    width: 300px;
+    flex-shrink: 0;
+  }
+}
+
+/* ============================================================
+   PRICING PAGE — FULL COURSE SECTION
+   ============================================================ */
+
+.pricing-full-course-section {
+  max-width: 34rem;
+  margin: 0 auto 3rem;
+}
+
+.pricing-card-full {
+  position: relative;
+}
+
+.pricing-card-full.highlighted {
+  border-color: var(--accent-gold);
+  box-shadow: 0 0 32px rgba(245, 158, 11, 0.12);
+}
+
+.pricing-card-badge-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.5rem;
+}
+
+.pricing-badge-best {
+  font-size: 0.625rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.12);
+  padding: 0.2rem 0.625rem;
+  border-radius: 1rem;
+}
+
+.pricing-card-cta {
+  margin-top: 1.25rem;
+}
+
+.pricing-card-cta .pricing-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+/* ============================================================
+   PRICING PAGE — ALL PHASES SECTION
+   ============================================================ */
+
+.pricing-phases-section {
+  max-width: 72rem;
+  margin: 0 auto;
+}
+
+.pricing-phases-section-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.pricing-phases-heading {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-main);
+  margin-bottom: 0.5rem;
+}
+
+.pricing-phases-subheading {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+/* ============================================================
+   PHASE DETAIL CARD — PRICE TAG & HEADER RIGHT
+   ============================================================ */
+
+.phase-detail-header-right {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.phase-detail-price-tag {
+  font-size: 0.9375rem;
+  font-weight: 800;
+  color: var(--accent-gold);
+  background: rgba(245, 158, 11, 0.08);
+  padding: 0.2rem 0.625rem;
+  border-radius: 0.375rem;
+  border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+/* ============================================================
+   PRICING PAGE — CART SECTION (Individual Mode)
+   ============================================================ */
+
+.pricing-cart-section {
+  max-width: 28rem;
+  margin: 2rem auto 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.pricing-cart-section .pricing-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1.5rem;
+  font-size: 0.9375rem;
+}
+
+/* ============================================================
+   PRICING PAGE — RESPONSIVE
+   ============================================================ */
+
+@media (max-width: 768px) {
+  .phase-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .pricing-full-course-section {
+    max-width: 100%;
+  }
+
+  .pricing-cart-section {
+    max-width: 100%;
+  }
+}
+
+/* ============================================================
+   PRICING MODERN — FULL REDESIGN
+   ============================================================ */
+
+.pricing-modern {
+  max-width: 56rem;
+  margin: 0 auto;
+  padding: 2rem 1rem 4rem;
+}
+
+/* Header */
+.pricing-modern-header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.pricing-modern-eyebrow {
+  display: inline-block;
+  font-size: 0.6875rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--accent-gold);
+  background: rgba(245, 158, 11, 0.08);
+  padding: 0.3rem 0.875rem;
+  border-radius: 2rem;
+  margin-bottom: 1rem;
+}
+
+.pricing-modern-title {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--text-main);
+  line-height: 1.2;
+  margin: 0 0 0.75rem;
+}
+
+.pricing-modern-subtitle {
+  font-size: 0.9375rem;
+  color: var(--text-muted);
+  max-width: 32rem;
+  margin: 0 auto;
+  line-height: 1.5;
+}
+
+/* ============================================================
+   FULL COURSE HERO CARD
+   ============================================================ */
+
+.pricing-hero-card-wrapper {
+  margin-bottom: 3.5rem;
+}
+
+.pricing-hero-card {
+  position: relative;
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  border-radius: 1.25rem;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.pricing-hero-card.active {
+  border-color: rgba(245, 158, 11, 0.4);
+  box-shadow: 0 0 48px rgba(245, 158, 11, 0.08);
+}
+
+.pricing-hero-glow {
+  position: absolute;
+  top: -50%;
+  right: -20%;
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(245, 158, 11, 0.06) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.pricing-hero-content {
+  display: flex;
+  gap: 2rem;
+  padding: 2rem;
+  position: relative;
+  z-index: 1;
+}
+
+.pricing-hero-left {
+  flex: 1;
+}
+
+.pricing-hero-right {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  min-width: 200px;
+  text-align: center;
+}
+
+.pricing-hero-badges {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.pricing-hero-badge-best {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.6875rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.1);
+  padding: 0.3rem 0.75rem;
+  border-radius: 2rem;
+}
+
+.pricing-hero-badge-pass {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: var(--accent-gold);
+  background: rgba(245, 158, 11, 0.1);
+  padding: 0.3rem 0.75rem;
+  border-radius: 2rem;
+}
+
+.pricing-hero-name {
+  font-size: 1.375rem;
+  font-weight: 800;
+  color: var(--text-main);
+  margin: 0 0 0.375rem;
+}
+
+.pricing-hero-desc {
+  font-size: 0.8125rem;
+  color: var(--text-dim);
+  margin: 0 0 1.25rem;
+}
+
+.pricing-hero-features {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.pricing-hero-features li {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
+
+.pricing-hero-features li svg {
+  color: var(--accent-gold);
+  flex-shrink: 0;
+}
+
+.pricing-hero-price-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.pricing-hero-save-badge {
+  font-size: 0.6875rem;
+  font-weight: 800;
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.12);
+  padding: 0.2rem 0.625rem;
+  border-radius: 2rem;
+  margin-bottom: 0.25rem;
+}
+
+.pricing-hero-price {
+  display: flex;
+  align-items: baseline;
+  gap: 0.25rem;
+}
+
+.pricing-hero-amount {
+  font-size: 2.5rem;
+  font-weight: 900;
+  color: var(--text-main);
+  line-height: 1;
+}
+
+.pricing-hero-currency {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.pricing-hero-original {
+  font-size: 0.8125rem;
+  color: var(--text-dim);
+  text-decoration: line-through;
+}
+
+.pricing-hero-select-btn {
+  width: 100%;
+  padding: 0.75rem 1.25rem;
+  border-radius: 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  border: 2px solid rgba(148, 163, 184, 0.2);
+  background: transparent;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.pricing-hero-select-btn:hover {
+  border-color: rgba(245, 158, 11, 0.3);
+  color: var(--accent-gold);
+}
+
+.pricing-hero-select-btn.selected {
+  background: rgba(245, 158, 11, 0.12);
+  border-color: var(--accent-gold);
+  color: var(--accent-gold);
+}
+
+/* ============================================================
+   ROADMAP SECTION
+   ============================================================ */
+
+.pricing-roadmap-section {
+  margin-bottom: 2rem;
+}
+
+.pricing-roadmap-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.pricing-roadmap-title {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--text-main);
+  margin: 0 0 0.375rem;
+}
+
+.pricing-roadmap-subtitle {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.pricing-roadmap-subtitle strong {
+  color: var(--accent-gold);
+}
+
+.pricing-roadmap-mode-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.125rem;
+  border-radius: 0.625rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  border: 2px solid rgba(148, 163, 184, 0.15);
+  background: transparent;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.pricing-roadmap-mode-btn:hover {
+  border-color: rgba(245, 158, 11, 0.25);
+  color: var(--accent-gold);
+}
+
+.pricing-roadmap-mode-btn.active {
+  background: rgba(245, 158, 11, 0.1);
+  border-color: var(--accent-gold);
+  color: var(--accent-gold);
+}
+
+/* ============================================================
+   TIMELINE
+   ============================================================ */
+
+.pricing-timeline {
+  position: relative;
+  padding-left: 2.5rem;
+}
+
+.pricing-timeline-line {
+  position: absolute;
+  left: 1.125rem;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: linear-gradient(to bottom,
+    rgba(148, 163, 184, 0.15) 0%,
+    rgba(148, 163, 184, 0.08) 100%
+  );
+}
+
+.pricing-timeline-item {
+  position: relative;
+  margin-bottom: 1rem;
+}
+
+.pricing-timeline-marker {
+  position: absolute;
+  left: -2.5rem;
+  top: 1.25rem;
+  z-index: 2;
+}
+
+.pricing-timeline-dot {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  background: rgba(15, 23, 42, 1);
+  border: 2px solid rgba(148, 163, 184, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  color: var(--text-dim);
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.pricing-timeline-item.selected .pricing-timeline-dot {
+  background: var(--phase-accent, #f59e0b);
+  border-color: var(--phase-accent, #f59e0b);
+  color: #020617;
+}
+
+.pricing-timeline-item.expanded .pricing-timeline-dot {
+  border-color: var(--phase-accent, #f59e0b);
+  box-shadow: 0 0 16px color-mix(in srgb, var(--phase-accent, #f59e0b) 30%, transparent);
+}
+
+.pricing-timeline-dot-locked {
+  font-size: 0.875rem;
+  font-weight: 900;
+  color: var(--text-dim);
+}
+
+/* Timeline Card */
+.pricing-timeline-card {
+  background: rgba(15, 23, 42, 0.5);
+  border: 1px solid rgba(148, 163, 184, 0.08);
+  border-radius: 0.875rem;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.pricing-timeline-item.selected .pricing-timeline-card {
+  border-color: var(--phase-border, rgba(245, 158, 11, 0.2));
+  background: var(--phase-bg, rgba(245, 158, 11, 0.04));
+}
+
+.pricing-timeline-item.expanded .pricing-timeline-card {
+  border-color: var(--phase-border, rgba(245, 158, 11, 0.25));
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
+}
+
+.pricing-timeline-item.locked .pricing-timeline-card {
+  opacity: 0.6;
+}
+
+.pricing-timeline-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  color: inherit;
+  transition: background 0.2s ease;
+}
+
+.pricing-timeline-card-header:hover {
+  background: rgba(255, 255, 255, 0.015);
+}
+
+.pricing-timeline-card-header-left {
+  flex: 1;
+  min-width: 0;
+}
+
+.pricing-timeline-phase-label {
+  font-size: 0.625rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--phase-accent, #f59e0b);
+}
+
+.pricing-timeline-phase-title {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--text-main);
+  margin: 0.125rem 0 0.375rem;
+  line-height: 1.3;
+}
+
+.pricing-timeline-phase-meta {
+  display: flex;
+  gap: 0.875rem;
+  flex-wrap: wrap;
+}
+
+.pricing-timeline-phase-meta span {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.6875rem;
+  color: var(--text-dim);
+}
+
+.pricing-timeline-card-header-right {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-shrink: 0;
+}
+
+.pricing-timeline-price-badge {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--accent-gold);
+  background: rgba(245, 158, 11, 0.08);
+  padding: 0.25rem 0.625rem;
+  border-radius: 0.375rem;
+}
+
+/* Expanded Body */
+.pricing-timeline-card-body {
+  padding: 0 1.25rem 1.25rem;
+  border-top: 1px solid rgba(148, 163, 184, 0.06);
+  padding-top: 1rem;
+}
+
+.pricing-timeline-card-desc {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin: 0 0 1rem;
+}
+
+/* Outcomes Grid */
+.pricing-timeline-outcomes {
+  margin-bottom: 1rem;
+}
+
+.pricing-timeline-outcomes-label {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.6875rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--phase-accent, #f59e0b);
+  margin-bottom: 0.5rem;
+}
+
+.pricing-timeline-outcomes-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.pricing-timeline-outcome-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(148, 163, 184, 0.08);
+  padding: 0.375rem 0.625rem;
+  border-radius: 0.375rem;
+}
+
+.pricing-timeline-outcome-chip svg {
+  color: var(--phase-accent, #f59e0b);
+  flex-shrink: 0;
+}
+
+/* Locked Message */
+.pricing-timeline-locked-msg {
+  font-size: 0.75rem;
+  color: #fbbf24;
+  background: rgba(251, 191, 36, 0.06);
+  border: 1px solid rgba(251, 191, 36, 0.12);
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+/* Add to Cart Button */
+.pricing-timeline-cart-btn {
+  width: 100%;
+  padding: 0.625rem 1rem;
+  border-radius: 0.5rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: 1px solid transparent;
+}
+
+.pricing-timeline-cart-btn.add {
+  background: rgba(245, 158, 11, 0.1);
+  border-color: rgba(245, 158, 11, 0.25);
+  color: var(--accent-gold);
+}
+
+.pricing-timeline-cart-btn.add:hover {
+  background: rgba(245, 158, 11, 0.18);
+  border-color: var(--accent-gold);
+}
+
+.pricing-timeline-cart-btn.remove {
+  background: rgba(16, 185, 129, 0.1);
+  border-color: rgba(16, 185, 129, 0.25);
+  color: #10b981;
+}
+
+.pricing-timeline-cart-btn.remove:hover {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.25);
+  color: #ef4444;
+}
+
+.pricing-timeline-cart-btn.disabled {
+  background: rgba(148, 163, 184, 0.04);
+  border-color: rgba(148, 163, 184, 0.08);
+  color: var(--text-dim);
+  cursor: not-allowed;
+}
+
+/* ============================================================
+   STICKY CART BAR
+   ============================================================ */
+
+.pricing-sticky-cart {
+  position: sticky;
+  bottom: 1rem;
+  z-index: 50;
+  margin-top: 2rem;
+}
+
+.pricing-sticky-cart-inner {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: rgba(15, 23, 42, 0.95);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  border-radius: 1rem;
+  padding: 0.875rem 1.25rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+/* Compact Cart */
+.phase-cart-compact {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex: 1;
+}
+
+.phase-cart-compact-info {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  color: var(--text-muted);
+}
+
+.phase-cart-compact-count {
+  font-weight: 700;
+  color: var(--text-main);
+  font-size: 0.875rem;
+}
+
+.phase-cart-compact-discount {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.1);
+  padding: 0.15rem 0.5rem;
+  border-radius: 1rem;
+}
+
+.phase-cart-compact-total {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.phase-cart-compact-label {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+}
+
+.phase-cart-compact-amount {
+  font-size: 1.125rem;
+  font-weight: 800;
+  color: var(--text-main);
+}
+
+.pricing-sticky-cta {
+  flex-shrink: 0;
+  padding: 0.625rem 1.25rem !important;
+  font-size: 0.8125rem !important;
+}
+
+/* ============================================================
+   FULL COURSE CTA WRAPPER
+   ============================================================ */
+
+.pricing-full-cta-wrapper {
+  text-align: center;
+  margin-top: 2rem;
+}
+
+.pricing-full-cta-wrapper .pricing-btn-primary {
+  display: inline-flex;
+}
+
+/* ============================================================
+   BUTTON STYLES
+   ============================================================ */
+
+.pricing-btn-primary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.875rem 2rem;
+  border-radius: 0.75rem;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  border: none;
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: #020617;
+  text-decoration: none;
+}
+
+.pricing-btn-primary:hover {
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  box-shadow: 0 4px 20px rgba(245, 158, 11, 0.3);
+  transform: translateY(-1px);
+}
+
+.pricing-btn-primary.disabled {
+  background: rgba(148, 163, 184, 0.15);
+  color: var(--text-dim);
+  cursor: not-allowed;
+  pointer-events: none;
+  box-shadow: none;
+  transform: none;
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+
+@media (max-width: 768px) {
+  .pricing-modern {
+    padding: 1.5rem 0.75rem 3rem;
+  }
+
+  .pricing-modern-title {
+    font-size: 1.5rem;
+  }
+
+  .pricing-hero-content {
+    flex-direction: column;
+    padding: 1.5rem;
+  }
+
+  .pricing-hero-right {
+    flex-direction: row;
+    justify-content: space-between;
+    min-width: auto;
+  }
+
+  .pricing-hero-price-block {
+    align-items: flex-start;
+  }
+
+  .pricing-hero-amount {
+    font-size: 2rem;
+  }
+
+  .pricing-timeline {
+    padding-left: 2rem;
+  }
+
+  .pricing-timeline-marker {
+    left: -2rem;
+  }
+
+  .pricing-timeline-dot {
+    width: 1.75rem;
+    height: 1.75rem;
+  }
+
+  .pricing-sticky-cart-inner {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .phase-cart-compact {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+}
+
+/* ============================================================
+   COUNTDOWN BANNER — Pricing Page
+   ============================================================ */
+
+.countdown-banner {
+  border-bottom: 2px solid var(--accent-gold);
+  position: sticky;
+  top: 0;
+  z-index: 45;
+}
+
+.countdown-banner-inner {
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 0.625rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  position: relative;
+}
+
+.countdown-banner-icon {
+  flex-shrink: 0;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.countdown-banner-text {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.countdown-banner-progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: rgba(148, 163, 184, 0.1);
+}
+
+.countdown-banner-progress-fill {
+  height: 100%;
+  transition: width 1s linear;
+  border-radius: 0 2px 2px 0;
+}
+
+/* ============================================================
+   CHECKOUT MODAL — Fullscreen Overlay
+   ============================================================ */
+
+.checkout-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(2, 6, 23, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.checkout-modal-container {
+  background: rgba(15, 23, 42, 0.98);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  border-radius: 1.25rem;
+  width: 100%;
+  max-width: 36rem;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.checkout-modal-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 0.5rem;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  z-index: 5;
+}
+
+.checkout-modal-close:hover {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.4);
+}
+
+/* Modal Header */
+.checkout-modal-header {
+  padding: 1.5rem 1.5rem 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.checkout-modal-title {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--text-main);
+  margin: 0;
+}
+
+/* Timer in Modal Header */
+.checkout-modal-timer {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  border: 1.5px solid var(--accent-gold);
+  border-radius: 2rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  position: relative;
+  overflow: hidden;
+}
+
+.checkout-modal-timer-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: rgba(148, 163, 184, 0.1);
+}
+
+.checkout-modal-timer-bar-fill {
+  height: 100%;
+  transition: width 1s linear;
+}
+
+/* Timer Message Banner */
+.checkout-modal-timer-msg {
+  margin: 0.75rem 1.5rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--accent-gold);
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+/* Modal Body */
+.checkout-modal-body {
+  padding: 1.25rem 1.5rem 1.5rem;
+}
+
+/* Purchase Summary in Modal */
+.checkout-modal-summary {
+  background: rgba(245, 158, 11, 0.04);
+  border: 1px solid rgba(245, 158, 11, 0.1);
+  border-radius: 0.75rem;
+  padding: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.checkout-modal-summary-title {
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: var(--accent-gold);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 0 0 0.75rem;
+}
+
+.checkout-modal-summary-item {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.06);
+}
+
+.checkout-modal-summary-item:last-child {
+  border-bottom: none;
+}
+
+.checkout-modal-summary-icon {
+  color: var(--accent-gold);
+  flex-shrink: 0;
+}
+
+.checkout-modal-summary-name {
+  flex: 1;
+  font-size: 0.8125rem;
+  color: var(--text-main);
+  font-weight: 500;
+}
+
+.checkout-modal-summary-price {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--accent-gold);
+  flex-shrink: 0;
+}
+
+.checkout-modal-summary-totals {
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.checkout-modal-summary-totals .phase-cart-summary {
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0;
+}
+
+/* Upgrade Nudge */
+.checkout-modal-upgrade-nudge {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  padding: 0.625rem 0.75rem;
+  background: rgba(16, 185, 129, 0.06);
+  border: 1px solid rgba(16, 185, 129, 0.15);
+  border-radius: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #10b981;
+}
+
+.checkout-modal-upgrade-nudge svg {
+  flex-shrink: 0;
+}
+
+/* Modal Section */
+.checkout-modal-section {
+  margin-bottom: 1.25rem;
+}
+
+.checkout-modal-section-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+}
+
+/* ============================================================
+   MODAL RESPONSIVE
+   ============================================================ */
+
+@media (max-width: 640px) {
+  .checkout-modal-container {
+    max-width: 100%;
+    border-radius: 1rem 1rem 0 0;
+    max-height: 95vh;
+  }
+
+  .checkout-modal-header {
+    padding: 1.25rem 1rem 0;
+  }
+
+  .checkout-modal-body {
+    padding: 1rem;
+  }
+
+  .checkout-modal-close {
+    top: 0.75rem;
+    right: 0.75rem;
+  }
+}
+
+/* ============================================================
+   PROFILE PAGE
+   ============================================================ */
+
+.profile-page {
+  max-width: 64rem;
+  margin: 0 auto;
+  padding: 2rem 1rem 4rem;
+}
+
+/* Profile Header */
+.profile-header {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 2rem;
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  border-radius: 1.25rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.profile-header-avatar-section {
+  flex-shrink: 0;
+}
+
+.profile-header-avatar-img {
+  width: 5rem;
+  height: 5rem;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid var(--accent-gold);
+}
+
+.profile-header-avatar-placeholder {
+  width: 5rem;
+  height: 5rem;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #020617;
+  border: 3px solid var(--accent-gold);
+}
+
+.profile-header-info {
+  flex: 1;
+  min-width: 200px;
+}
+
+.profile-header-name {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--text-main);
+  margin: 0 0 0.5rem;
+}
+
+.profile-header-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.profile-header-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
+
+.profile-header-meta-item svg { color: var(--text-dim); }
+
+.profile-header-badges { display: flex; gap: 0.5rem; }
+
+.profile-header-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 2rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.profile-header-badge.enrolled {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.profile-header-badge.not-enrolled {
+  background: rgba(148, 163, 184, 0.1);
+  color: var(--text-dim);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.profile-header-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.profile-header-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  border-radius: 0.625rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  color: var(--accent-gold);
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+.profile-header-action-btn:hover { background: rgba(245, 158, 11, 0.18); border-color: var(--accent-gold); }
+.profile-header-action-btn.secondary { background: rgba(148, 163, 184, 0.06); border-color: rgba(148, 163, 184, 0.15); color: var(--text-muted); }
+.profile-header-action-btn.secondary:hover { background: rgba(148, 163, 184, 0.12); color: var(--text-main); }
+
+/* Profile Grid */
+.profile-grid { display: grid; grid-template-columns: 1fr 340px; gap: 1.5rem; align-items: start; }
+
+@media (max-width: 900px) {
+  .profile-grid { grid-template-columns: 1fr; }
+}
+
+.profile-grid-main { display: flex; flex-direction: column; gap: 1.5rem; }
+.profile-grid-sidebar { display: flex; flex-direction: column; gap: 1.5rem; position: sticky; top: 6rem; }
+
+/* Profile Card */
+.profile-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(245, 158, 11, 0.15);
+  border-radius: 1rem;
+  padding: 1.25rem;
+}
+
+.profile-card-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--text-main);
+  margin: 0 0 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+}
+.profile-card-title svg { color: var(--accent-gold); }
+
+.profile-card-empty { font-size: 0.8125rem; color: var(--text-dim); text-align: center; padding: 1.5rem 0; }
+.profile-card-link { display: flex; align-items: center; gap: 0.375rem; font-size: 0.8125rem; font-weight: 600; color: var(--accent-gold); text-decoration: none; margin-top: 0.75rem; }
+.profile-card-link:hover { text-decoration: underline; }
+
+/* Enrollment Details */
+.profile-enrollment-empty { text-align: center; padding: 1rem 0; }
+.profile-enrollment-empty p { font-size: 0.8125rem; color: var(--text-dim); margin-bottom: 0.75rem; }
+
+.profile-enrollment-details { display: flex; flex-direction: column; gap: 0.625rem; }
+.profile-enrollment-row { display: flex; justify-content: space-between; align-items: center; }
+.profile-enrollment-label { font-size: 0.75rem; color: var(--text-dim); }
+.profile-enrollment-value { display: flex; align-items: center; gap: 0.375rem; font-size: 0.8125rem; font-weight: 600; color: var(--text-main); }
+.profile-enrollment-value.highlight { color: var(--accent-gold); font-weight: 700; }
+
+/* Progress Visual */
+.profile-progress-visual { display: flex; flex-direction: column; align-items: center; margin-bottom: 1rem; }
+.profile-progress-percent { font-size: 1.5rem; font-weight: 800; color: var(--text-main); margin-top: -3.5rem; }
+
+.profile-progress-stats { display: flex; justify-content: center; gap: 2rem; }
+.profile-progress-stat { text-align: center; }
+.profile-progress-stat-value { display: block; font-size: 1.25rem; font-weight: 700; color: var(--text-main); }
+.profile-progress-stat-label { font-size: 0.625rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; }
+
+/* Phase Progress List */
+.profile-phase-list { display: flex; flex-direction: column; gap: 0.75rem; }
+
+.profile-phase-item { padding: 0.75rem; border-radius: 0.5rem; background: rgba(15, 23, 42, 0.4); border: 1px solid rgba(148, 163, 184, 0.08); }
+.profile-phase-item.status-completed { border-color: rgba(16, 185, 129, 0.2); }
+.profile-phase-item.status-in-progress { border-color: rgba(245, 158, 11, 0.2); }
+
+.profile-phase-item-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem; }
+.profile-phase-item-info { display: flex; align-items: center; gap: 0.5rem; }
+.profile-phase-item-number { font-size: 0.625rem; font-weight: 700; color: var(--accent-gold); text-transform: uppercase; }
+.profile-phase-item-title { font-size: 0.8125rem; font-weight: 600; color: var(--text-main); }
+
+.profile-phase-item-bar { height: 6px; border-radius: 3px; background: rgba(148, 163, 184, 0.1); overflow: hidden; margin-bottom: 0.375rem; }
+.profile-phase-item-bar-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg, #f59e0b, #fbbf24); transition: width 0.5s ease; }
+.profile-phase-item.status-completed .profile-phase-item-bar-fill { background: linear-gradient(90deg, #10b981, #34d399); }
+
+.profile-phase-item-meta { display: flex; justify-content: space-between; font-size: 0.6875rem; color: var(--text-dim); }
+.profile-phase-item-status { font-weight: 600; }
+.profile-phase-item-status.status-completed { color: #10b981; }
+.profile-phase-item-status.status-in-progress { color: #f59e0b; }
+.profile-phase-item-status.status-locked { color: var(--text-dim); }
+
+/* Payment History */
+.profile-payment-list { display: flex; flex-direction: column; gap: 0.5rem; }
+
+.profile-payment-item { display: flex; align-items: center; justify-content: space-between; padding: 0.625rem 0.75rem; border-radius: 0.5rem; background: rgba(15, 23, 42, 0.3); border: 1px solid rgba(148, 163, 184, 0.06); }
+.profile-payment-item-left { display: flex; align-items: center; gap: 0.625rem; }
+.profile-payment-status { font-size: 0.5625rem; font-weight: 700; text-transform: uppercase; padding: 0.15rem 0.5rem; border-radius: 1rem; letter-spacing: 0.05em; }
+.profile-payment-status.status-pending { background: rgba(245,158,11,0.12); color: #f59e0b; }
+.profile-payment-status.status-approved { background: rgba(16,185,129,0.12); color: #10b981; }
+.profile-payment-status.status-rejected { background: rgba(239,68,68,0.12); color: #ef4444; }
+.profile-payment-item-info { display: flex; flex-direction: column; }
+.profile-payment-item-method { font-size: 0.75rem; font-weight: 600; color: var(--text-main); }
+.profile-payment-item-date { font-size: 0.625rem; color: var(--text-dim); }
+.profile-payment-item-amount { font-size: 0.8125rem; font-weight: 700; color: var(--accent-gold); }
+
+/* Full Payment List */
+.profile-payment-full-list { display: flex; flex-direction: column; gap: 0.75rem; }
+.profile-payment-item-full { display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.25rem; border-radius: 0.75rem; background: var(--glass-bg); border: 1px solid rgba(148, 163, 184, 0.08); flex-wrap: wrap; gap: 0.75rem; }
+.profile-payment-item-full-left { display: flex; align-items: center; gap: 0.75rem; }
+.profile-payment-item-full-method { display: block; font-size: 0.875rem; font-weight: 600; color: var(--text-main); }
+.profile-payment-item-full-ref { font-size: 0.6875rem; color: var(--text-dim); font-family: var(--font-mono); }
+.profile-payment-item-full-right { text-align: right; }
+.profile-payment-item-full-amount { display: block; font-size: 1rem; font-weight: 700; color: var(--accent-gold); }
+.profile-payment-item-full-date { font-size: 0.6875rem; color: var(--text-dim); }
+
+/* Quick Actions */
+.profile-quick-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+
+.profile-quick-action-item {
+  display: flex; align-items: center; gap: 0.5rem;
+  padding: 0.625rem 0.75rem; border-radius: 0.5rem;
+  background: rgba(245, 158, 11, 0.04); border: 1px solid rgba(245, 158, 11, 0.1);
+  color: var(--accent-gold); font-size: 0.75rem; font-weight: 600;
+  text-decoration: none; cursor: pointer; transition: all 0.2s;
+}
+.profile-quick-action-item:hover { background: rgba(245, 158, 11, 0.1); border-color: rgba(245, 158, 11, 0.25); }
+.profile-quick-action-icon { flex-shrink: 0; }
+
+/* Account Settings */
+.profile-settings-list { display: flex; flex-direction: column; gap: 0.25rem; }
+
+.profile-setting-item {
+  display: flex; align-items: center; gap: 0.625rem;
+  width: 100%; padding: 0.625rem 0.75rem; border-radius: 0.5rem;
+  background: transparent; border: none;
+  color: var(--text-muted); font-size: 0.8125rem; font-weight: 500;
+  text-decoration: none; cursor: pointer; transition: all 0.15s;
+}
+.profile-setting-item:hover { background: rgba(148, 163, 184, 0.06); color: var(--text-main); }
+.profile-setting-icon { flex-shrink: 0; color: var(--text-dim); }
+.profile-setting-label { flex: 1; text-align: left; }
+.profile-setting-value { font-size: 0.75rem; color: var(--accent-gold); font-weight: 600; }
+
+/* Profile Forms */
+.profile-form-container { max-width: 32rem; margin: 0 auto; }
+.profile-form-title { font-size: 1.25rem; font-weight: 800; color: var(--text-main); margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem; }
+
+.profile-form { display: flex; flex-direction: column; gap: 1rem; }
+.profile-back-link { display: inline-flex; align-items: center; gap: 0.375rem; font-size: 0.8125rem; color: var(--text-muted); text-decoration: none; margin-bottom: 0.5rem; }
+.profile-back-link:hover { color: var(--accent-gold); }
+
+.profile-form-error { padding: 0.625rem 0.875rem; border-radius: 0.5rem; background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2); color: #ef4444; font-size: 0.75rem; font-weight: 600; }
+
+.profile-form-field { display: flex; flex-direction: column; gap: 0.25rem; }
+.profile-form-field label { font-size: 0.75rem; font-weight: 700; color: var(--text-muted); }
+
+.profile-form-input {
+  width: 100%; padding: 0.625rem 0.875rem; border-radius: 0.625rem;
+  background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(148, 163, 184, 0.15);
+  color: var(--text-main); font-size: 0.875rem; outline: none; transition: border-color 0.2s;
+}
+.profile-form-input:focus { border-color: var(--accent-gold); }
+.profile-form-input.error { border-color: #ef4444; }
+
+.profile-form-field-error { font-size: 0.6875rem; color: #ef4444; }
+
+.profile-form-submit {
+  display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+  width: 100%; padding: 0.75rem; border-radius: 0.625rem;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #020617; font-size: 0.875rem; font-weight: 700;
+  border: none; cursor: pointer; transition: all 0.2s; margin-top: 0.5rem;
+}
+.profile-form-submit:hover { background: linear-gradient(135deg, #fbbf24, #f59e0b); }
+.profile-form-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Profile Responsive */
+@media (max-width: 640px) {
+  .profile-header { flex-direction: column; text-align: center; }
+  .profile-header-actions { flex-direction: row; }
+  .profile-header-meta { justify-content: center; }
+  .profile-header-badges { justify-content: center; }
+  .profile-quick-actions { grid-template-columns: 1fr; }
+  .profile-grid-sidebar { position: static; }
+}

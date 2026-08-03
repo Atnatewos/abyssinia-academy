@@ -3,7 +3,6 @@
  * Axios instance for frontend API calls
  * Path: apps/web/lib/api.js
  */
-
 import axios from 'axios';
 import { getItem, removeItem } from './storage';
 

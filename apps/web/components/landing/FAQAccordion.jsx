@@ -1,37 +1,59 @@
 /**
  * @fileoverview FAQ Accordion Component
  * Expandable frequently asked questions with smooth animation
+ * Item count from landing.config.js | All Q&A text from i18n → t.landing.faq.*
  * Path: apps/web/components/landing/FAQAccordion.jsx
  */
 
 import { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
+import { useLanguage } from '../../context/LanguageContext';
+import { getFAQConfig } from '../../lib/config';
 
 const FAQAccordion = () => {
+  const { t } = useLanguage();
   const [openIndex, setOpenIndex] = useState(0);
 
-  const faqItems = [
-    { question: 'Do I need prior programming experience to enroll?', answer: 'No! Phase 1 starts from total scratch—covering web mechanics, HTML5, CSS3 layout architecture, and Git basics step-by-step.' },
-    { question: 'How do unlisted YouTube videos work?', answer: 'Once enrolled, your student account unlocks our private video portal embed links. You can stream high-definition recorded live sessions 24/7 on any desktop or mobile device.' },
-    { question: 'What payment options are accepted in Ethiopia?', answer: 'We support Telebirr, CBE Birr, and bank transfer. Upload your payment screenshot and transaction reference for manual verification.' },
-    { question: 'How long do I have access to the learning portal?', answer: 'You receive lifetime access! You can review past recorded sessions, download code templates, and access future course updates at no extra charge.' },
-  ];
+  /*
+   * Total items from landing config
+   * All question/answer text from i18n translations
+   */
+  const faqConfig = getFAQConfig();
+  const totalItems = faqConfig.totalItems || 4;
+
+  const landingI18n = t.landing?.faq || {};
+  const sectionTag = landingI18n.sectionTag || 'Got Questions?';
+  const heading = landingI18n.heading || 'Frequently Asked Questions';
+  const faqItems = landingI18n.items || [];
+
+  const itemsToRender = faqItems.slice(0, totalItems);
+
+  const handleToggle = (index) => {
+    setOpenIndex(openIndex === index ? -1 : index);
+  };
 
   return (
     <>
       <div className="section-header" style={{ marginBottom: '2rem' }}>
-        <div className="section-tag">Got Questions?</div>
-        <h2 className="section-title">Frequently Asked Questions</h2>
+        <div className="section-tag">{sectionTag}</div>
+        <h2 className="section-title">{heading}</h2>
       </div>
+
       <div className="faq-list">
-        {faqItems.map((faq, index) => {
+        {itemsToRender.map((faq, index) => {
           const isOpen = openIndex === index;
+
           return (
             <div key={index} className="faq-item">
-              <button onClick={() => setOpenIndex(isOpen ? -1 : index)} className="faq-question">
+              <button
+                onClick={() => handleToggle(index)}
+                className="faq-question"
+                aria-expanded={isOpen}
+              >
                 <span>{faq.question}</span>
                 <ChevronDown className={`faq-chevron ${isOpen ? 'open' : ''}`} />
               </button>
+
               <div className={`faq-answer-wrapper ${isOpen ? 'open' : 'closed'}`}>
                 <div className="faq-answer-inner">
                   <p className="faq-answer-text">{faq.answer}</p>

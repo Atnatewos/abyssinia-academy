@@ -1,5 +1,5 @@
 /**
- * @fileoverview Week 2: Modern CSS Layouts, Flexbox & CSS Grid
+ * @fileoverview Week 2: HTML
  * Phase 1 - Foundations of Modern Web Architecture
  * Path: packages/shared/courses/fullstack-web-development/weeks/week-02.js
  */
@@ -9,75 +9,54 @@ const { createLesson, mainVideo, sessionVideo, resource } = require('../shared/h
 const WEEK_02 = {
   number: 2,
   phaseNumber: 1,
-  title: 'Modern CSS Layouts, Flexbox & CSS Grid',
+  title: 'HTML',
 
   lessons: [
 
-    // LESSON 2.1 - FREE PREVIEW
     createLesson({
       id: 'p1-w2-l1',
-      title: 'Mastering CSS Flexbox & Dynamic Alignment',
-      duration: '60 mins',
+      title: 'Basics of HTML - part I',
       isFreePreview: true,
-      notes: 'Flexbox is the foundation of modern CSS layout. This lesson covers flex containers vs flex items, main axis vs cross axis, justify-content, align-items, align-self, flex-grow, flex-shrink, flex-basis, and the order property. You will build a responsive navigation bar from scratch.',
+      notes: 'Introduction to HTML. Learn the building blocks of every website on the internet.',
       mainVideo: mainVideo(
-        'Full Lecture: CSS Flexbox Mastery',
-        'https://www.youtube.com/watch?v=3YW65K639wA'
+        'Basics of HTML - part I',
+        'https://www.youtube.com/watch?v=nZqcWgwucGA'
       ),
       sessionVideos: [
-        sessionVideo(
-          '01. Flex Container vs Flex Items - Understanding the Model',
-          'https://www.youtube.com/watch?v=3YW65K639wA',
-          '00:00'
-        ),
-        sessionVideo(
-          '02. Justify, Align, & Order - The Complete Guide',
-          'https://www.youtube.com/watch?v=3YW65K639wA',
-          '25:00'
-        ),
-        sessionVideo(
-          '03. Building a Responsive Navigation Bar from Scratch',
-          'https://www.youtube.com/watch?v=3YW65K639wA',
-          '45:30'
-        ),
+        sessionVideo('1.1 - Introduction to HTML', 'https://www.youtube.com/watch?v=OicbXZ5tfow', '01:00'),
+        sessionVideo('1.2 - Understanding HTML', 'https://www.youtube.com/watch?v=0eWdKTQE_ok', '13:00'),
+        sessionVideo('1.3 - How to write HTML code in VSC', 'https://www.youtube.com/watch?v=IPpON4L_rLg', '14:00'),
+        sessionVideo('1.4 - Basic rules of HTML tags', 'https://www.youtube.com/watch?v=LiBFQNQ6Fks', '17:00'),
+        sessionVideo('1.5 - Building your first HTML page', 'https://www.youtube.com/watch?v=6KLmXFCFnAw', '17:00'),
+        sessionVideo('1.6 - Most commonly used HTML5 tags', 'https://www.youtube.com/watch?v=LoGakIQaB2A', '05:00'),
+        sessionVideo('1.7 - Building Apple\'s terms and policy page in class', 'https://www.youtube.com/watch?v=JCREpmcB58k', '08:00'),
+        sessionVideo('1.8 - Conclusion', 'https://www.youtube.com/watch?v=MwnZsTbkQXc', '01:00'),
       ],
       resources: [
-        resource('Flexbox_Mastery_Sheet.pdf', 'pdf'),
-        resource('Responsive_Navbar.zip', 'zip'),
+        resource('HTML_Basics_Guide.pdf', 'pdf'),
       ],
     }),
 
-    // LESSON 2.2 - LOCKED
     createLesson({
       id: 'p1-w2-l2',
-      title: 'CSS Grid: Two-Dimensional Layout Mastery',
-      duration: '55 mins',
+      title: 'Basics of HTML - part II',
       isFreePreview: false,
-      notes: 'CSS Grid revolutionizes how we build complex page layouts with minimal markup. Learn grid containers, grid items, grid-template-columns, grid-template-rows, grid-template-areas, the fr unit, grid-gap, and how to build a real-world dashboard layout.',
+      notes: 'Continue mastering HTML with advanced tags and real-world page structure.',
       mainVideo: mainVideo(
-        'Full Lecture: CSS Grid Complete Guide',
-        'https://www.youtube.com/watch?v=9zBsd0EycVg'
+        'Basics of HTML - part II',
+        'https://www.youtube.com/watch?v=eN9zxsuwSqs'
       ),
       sessionVideos: [
-        sessionVideo(
-          '01. Grid Container & Grid Items - Setup & Basics',
-          'https://www.youtube.com/watch?v=9zBsd0EycVg',
-          '00:00'
-        ),
-        sessionVideo(
-          '02. Grid Template Areas & the fr Unit Explained',
-          'https://www.youtube.com/watch?v=9zBsd0EycVg',
-          '20:00'
-        ),
-        sessionVideo(
-          '03. Real-World Dashboard Layout - Hands-On Project',
-          'https://www.youtube.com/watch?v=9zBsd0EycVg',
-          '38:00'
-        ),
+        sessionVideo('2.1 - Introduction', 'https://www.youtube.com/watch?v=zjaYRntdDGE', '13:00'),
+        sessionVideo('2.2 - Steps to create an HTML Page', 'https://www.youtube.com/watch?v=IDibaq1AkaE', '15:00'),
+        sessionVideo('2.3 - Common HTML tags (nav, anchor, list items)', 'https://www.youtube.com/watch?v=ht5vkTm33_w', '15:00'),
+        sessionVideo('2.4 - Common HTML tags (header, section, div, footer)', 'https://www.youtube.com/watch?v=nO3gomTl9Ng', '07:00'),
+        sessionVideo('2.5 - Common HTML tags (h1, h2, h3, h4, h5, h6, hr)', 'https://www.youtube.com/watch?v=LuywXru29nM', '09:00'),
+        sessionVideo('2.6 - Common HTML tags (img)', 'https://www.youtube.com/watch?v=bHGvq11p5zY', '15:00'),
+        sessionVideo('2.7 - Common HTML tags (form, video and iframe)', 'https://www.youtube.com/watch?v=6kgcIsvRD80', '17:00'),
       ],
       resources: [
-        resource('CSS_Grid_CheatSheet.pdf', 'pdf'),
-        resource('Dashboard_Layout_Starter.zip', 'zip'),
+        resource('HTML_Tags_Reference.pdf', 'pdf'),
       ],
     }),
   ],

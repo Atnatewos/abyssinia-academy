@@ -1,5 +1,5 @@
 /**
- * @fileoverview Week 6: Responsive Web Design & CSS Architecture
+ * @fileoverview Week 6: Bootstrap
  * Phase 1 - Foundations of Modern Web Architecture
  * Path: packages/shared/courses/fullstack-web-development/weeks/week-06.js
  */
@@ -9,45 +9,47 @@ const { createLesson, mainVideo, sessionVideo, resource } = require('../shared/h
 const WEEK_06 = {
   number: 6,
   phaseNumber: 1,
-  title: 'Week 6: Responsive Web Design & CSS Architecture',
+  title: 'Bootstrap',
 
   lessons: [
 
     createLesson({
       id: 'p1-w6-l1',
-      title: 'Mobile-First Design & Media Queries',
+      title: 'Responsive website development: Bootstrap',
       isFreePreview: false,
-      notes: 'Build websites that look perfect on every screen size from mobile to desktop.',
+      notes: 'Learn the most popular CSS framework used by millions of developers worldwide.',
       mainVideo: mainVideo(
-        'Responsive Web Design Masterclass',
-        'https://www.youtube.com/watch?v=2KL-z9UZ6gQ'
+        'Responsive website development: Bootstrap',
+        'https://www.youtube.com/watch?v=l3Zd5WvIpg4'
       ),
       sessionVideos: [
-        sessionVideo('1.1 - Understanding Viewport & Breakpoints', 'https://www.youtube.com/watch?v=2KL-z9UZ6gQ', '00:00'),
-        sessionVideo('1.2 - Media Queries Deep Dive', 'https://www.youtube.com/watch?v=2KL-z9UZ6gQ', '16:00'),
-        sessionVideo('1.3 - Fluid Typography & Spacing', 'https://www.youtube.com/watch?v=2KL-z9UZ6gQ', '30:00'),
+        sessionVideo('1.1 - What is Bootstrap?', 'PLACEHOLDER_YOUTUBE_ID', '14:00'),
+        sessionVideo('1.2 - How do we use Bootstrap?', 'PLACEHOLDER_YOUTUBE_ID', '08:00'),
+        sessionVideo('1.3 - Bootstrap containers', 'PLACEHOLDER_YOUTUBE_ID', '10:00'),
+        sessionVideo('1.4 - Bootstrap breakpoints', 'PLACEHOLDER_YOUTUBE_ID', '04:00'),
+        sessionVideo('1.5 - Bootstrap grid system (rows)', 'PLACEHOLDER_YOUTUBE_ID', '16:00'),
+        sessionVideo('1.6 - Bootstrap grid system (columns)', 'PLACEHOLDER_YOUTUBE_ID', '21:00'),
       ],
       resources: [
-        resource('Responsive_Design_Checklist.pdf', 'pdf'),
+        resource('Bootstrap_CheatSheet.pdf', 'pdf'),
       ],
     }),
 
     createLesson({
       id: 'p1-w6-l2',
-      title: 'CSS Architecture & Best Practices',
+      title: 'Bootstrap - Demo',
       isFreePreview: false,
-      notes: 'Learn how to organize CSS at scale using modern methodologies.',
+      notes: 'Hands-on demonstration of building a responsive website with Bootstrap.',
       mainVideo: mainVideo(
-        'CSS Architecture Patterns',
-        'https://www.youtube.com/watch?v=2KL-z9UZ6gQ'
+        'Bootstrap Demo',
+        'https://www.youtube.com/watch?v=CKcyCs8sua8'
       ),
       sessionVideos: [
-        sessionVideo('2.1 - CSS Naming Conventions (BEM)', 'https://www.youtube.com/watch?v=2KL-z9UZ6gQ', '00:00'),
-        sessionVideo('2.2 - CSS Custom Properties & Variables', 'https://www.youtube.com/watch?v=2KL-z9UZ6gQ', '18:00'),
-        sessionVideo('2.3 - Building a Design System', 'https://www.youtube.com/watch?v=2KL-z9UZ6gQ', '35:00'),
+        sessionVideo('2.1 - Bootstrap - Mobile first', 'PLACEHOLDER_YOUTUBE_ID', '27:00'),
+        sessionVideo('2.2 - Bootstrap - Desktop version', 'PLACEHOLDER_YOUTUBE_ID', '14:00'),
       ],
       resources: [
-        resource('CSS_Architecture_Guide.pdf', 'pdf'),
+        resource('Bootstrap_Demo_Starter.zip', 'zip'),
       ],
     }),
   ],

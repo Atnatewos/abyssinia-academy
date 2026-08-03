@@ -1,6 +1,7 @@
 /**
  * @fileoverview Course Detail Page Component
- * Displays a single course with its phase breakdown
+ * Shows course info with PhaseCard components for each phase.
+ * "Open Classroom" on a PhaseCard navigates to /portal?phase=X
  * Path: apps/web/pages/courses/[slug].jsx
  */
 
@@ -22,9 +23,7 @@ const CourseDetailPage = () => {
     return (
       <PageLayout>
         <div className="courses-page">
-          <div className="spinner" style={{ marginTop: '3rem' }}>
-            <div className="spinner-circle" />
-          </div>
+          <div className="spinner" style={{ marginTop: '3rem' }}><div className="spinner-circle" /></div>
         </div>
       </PageLayout>
     );
@@ -36,9 +35,7 @@ const CourseDetailPage = () => {
         <div className="courses-page">
           <div className="empty-state" style={{ marginTop: '3rem' }}>
             <p className="empty-state-desc">{error || 'Course not found.'}</p>
-            <Link href="/courses" className="pricing-btn" style={{ display: 'inline-flex', marginTop: '1rem' }}>
-              Back to Courses
-            </Link>
+            <Link href="/courses" className="pricing-btn" style={{ display: 'inline-flex', marginTop: '1rem' }}>Back to Courses</Link>
           </div>
         </div>
       </PageLayout>
@@ -62,15 +59,9 @@ const CourseDetailPage = () => {
           </div>
 
           <div className="section-header" style={{ marginTop: '2rem', marginBottom: '2rem' }}>
-            <div className="section-tag">
-              {t.courses?.phasesInCourse || 'Course Roadmap & Phases'}
-            </div>
-            <h1 className="section-title">
-              {t.courses?.phasesHeading || '5 Structured Phases to Mastery'}
-            </h1>
-            <p className="section-subtitle">
-              {t.courses?.phasesSubheading || 'Comprehensive phase breakdown.'}
-            </p>
+            <div className="section-tag">{t.courses?.phasesInCourse || 'Course Roadmap & Phases'}</div>
+            <h1 className="section-title">{t.courses?.phasesHeading || '5 Structured Phases to Mastery'}</h1>
+            <p className="section-subtitle">{t.courses?.phasesSubheading || 'Comprehensive phase breakdown.'}</p>
           </div>
 
           {course.phases && course.phases.length > 0 ? (
@@ -80,9 +71,7 @@ const CourseDetailPage = () => {
               ))}
             </div>
           ) : (
-            <div className="empty-state">
-              <p className="empty-state-desc">No phases available for this course yet.</p>
-            </div>
+            <div className="empty-state"><p className="empty-state-desc">No phases available for this course yet.</p></div>
           )}
         </div>
       </PageLayout>
