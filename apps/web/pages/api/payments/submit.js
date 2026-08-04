@@ -286,19 +286,27 @@ export default async function handler(req, res) {
     /*
      * Create the payment record with screenshot URL
      */
+    /*
+     * Create the payment record with screenshot URL
+     * Stores purchase_mode and selected_phases so the admin approval
+     * endpoint knows exactly what the student purchased — no assumptions.
+     */
     const paymentResult = await pool.query(
       `INSERT INTO payments (
          user_id, amount, method, status, reference,
+         purchase_mode, selected_phases,
          referral_discount_amount, discount_code_used, discount_code_amount,
          credit_applied, transaction_id, created_at
        )
-       VALUES ($1, $2, $3, 'pending', $4, $5, $6, $7, $8, $9, CURRENT_TIMESTAMP)
+       VALUES ($1, $2, $3, 'pending', $4, $5, $6, $7, $8, $9, $10, $11, CURRENT_TIMESTAMP)
        RETURNING id`,
       [
         user.id,
         amount,
         paymentMethod,
         transactionRef,
+        purchaseMode,
+        selectedPhases,
         referralDiscountAmount,
         discountCode,
         discountCodeAmount,

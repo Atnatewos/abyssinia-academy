@@ -106,6 +106,8 @@ const paymentsConfig = {
       quickActions: true,
       accountSettings: true,
     },
+
+    
     /*
      * Quick action links — shown as cards on the profile overview
      */

@@ -90,8 +90,8 @@ const en = {
     instructorNotes: 'Instructor Notes',
     download: 'Download Asset',
     classroomCurriculum: 'Classroom Curriculum',
-    lockedTitle: 'This Unlisted Class is Locked',
-    lockedDescription: 'Complete your enrollment to unlock all courses, unlisted YouTube class recordings, source code repositories, and weekly project feedback.',
+    lockedTitle: 'This Class is Locked',
+    lockedDescription: 'Complete your enrollment to unlock all courses, class recordings, source code repositories, and weekly project feedback.',
   },
 
   /*

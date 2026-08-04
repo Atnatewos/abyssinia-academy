@@ -85,7 +85,7 @@ const am = {
     download: 'አውርድ',
     classroomCurriculum: 'የትምህርት ዝርዝር',
     lockedTitle: 'ይህ ክፍል ተቆልፏል',
-    lockedDescription: 'ሁሉንም ኮርሶች፣ የዩቲዩብ ቪዲዮዎችን እና የኮድ ፋይሎችን ለማግኘት ምዝገባዎን ያጠናቅቁ።',
+    lockedDescription: 'ሁሉንም ኮርሶች፣ ቪዲዮዎችን እና የኮድ ፋይሎችን ለማግኘት ምዝገባዎን ያጠናቅቁ።',
   },
 
   /*

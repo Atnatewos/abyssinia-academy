@@ -1,17 +1,23 @@
 /**
  * @fileoverview Admin Approve Payment API
- * Approves a payment and enrolls the student.
+ * Approves a payment and creates the enrollment record using the
+ * purchase_mode and selected_phases stored on the payment itself.
+ * No hardcoded assumptions — reads exactly what the student selected.
+ * 
  * Path: apps/web/pages/api/admin/payments/[id]/approve.js
  */
 
 import { Pool } from 'pg';
 import jwt from 'jsonwebtoken';
 
+const isNeon = process.env.DATABASE_URL && process.env.DATABASE_URL.includes('neon.tech');
+
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: process.env.DATABASE_URL && process.env.DATABASE_URL.includes('neon.tech')
-    ? { rejectUnauthorized: false }
-    : false,
+  ssl: isNeon ? { rejectUnauthorized: false } : false,
+  max: 10,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 10000,
 });
 
 export default async function handler(req, res) {
@@ -20,6 +26,9 @@ export default async function handler(req, res) {
     return res.status(405).json({ success: false, message: 'Method not allowed.' });
   }
 
+  /*
+   * Authenticate admin via JWT
+   */
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -39,10 +48,13 @@ export default async function handler(req, res) {
   try {
 
     /*
-     * Fetch the payment record
+     * Fetch the payment record including purchase metadata
      */
     const paymentResult = await pool.query(
-      'SELECT * FROM payments WHERE id = $1',
+      `SELECT p.*, u.referred_by_code
+       FROM payments p
+       JOIN users u ON u.id = p.user_id
+       WHERE p.id = $1`,
       [id]
     );
 
@@ -57,6 +69,46 @@ export default async function handler(req, res) {
         success: false,
         message: `Payment is already ${payment.status}.`,
       });
+    }
+
+    /*
+     * Determine purchase mode and selected phases from the payment record.
+     * If the payment was submitted before these columns existed (legacy data),
+     * default to full-course to maintain backward compatibility.
+     */
+    const purchaseMode = payment.purchase_mode || 'full-course';
+    const selectedPhases = payment.selected_phases || null;
+
+    /*
+     * Validate purchase mode
+     */
+    if (!['full-course', 'individual-phases'].includes(purchaseMode)) {
+      return res.status(400).json({
+        success: false,
+        message: `Invalid purchase_mode on payment record: ${purchaseMode}.`,
+      });
+    }
+
+    /*
+     * Validate selected phases for individual-phases mode
+     */
+    const validPhaseIds = ['phase-1', 'phase-2', 'phase-3', 'phase-4', 'phase-5'];
+
+    if (purchaseMode === 'individual-phases') {
+      if (!selectedPhases || !Array.isArray(selectedPhases) || selectedPhases.length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'Payment has purchase_mode=individual-phases but no selected_phases.',
+        });
+      }
+
+      const invalidPhases = selectedPhases.filter((p) => !validPhaseIds.includes(p));
+      if (invalidPhases.length > 0) {
+        return res.status(400).json({
+          success: false,
+          message: `Payment has invalid phase IDs: ${invalidPhases.join(', ')}.`,
+        });
+      }
     }
 
     /*
@@ -86,21 +138,26 @@ export default async function handler(req, res) {
     );
 
     /*
-     * Create enrollment record if it doesn't exist
+     * Create enrollment record using the EXACT purchase data from the payment.
+     * Delete any existing enrollment first to ensure a clean state,
+     * then insert the correct purchase_mode and selected_phases.
      */
-    const existingEnrollment = await pool.query(
-      'SELECT id FROM enrollments WHERE user_id = $1',
+    await pool.query(
+      'DELETE FROM enrollments WHERE user_id = $1',
       [payment.user_id]
     );
 
-    if (existingEnrollment.rows.length === 0) {
-      await pool.query(
-        `INSERT INTO enrollments (user_id, course_id, purchase_mode, purchase_amount, payment_id, enrolled_at)
-         VALUES ($1, (SELECT id FROM courses WHERE slug = 'fullstack-web-engineering-masterclass' LIMIT 1),
-                 'full-course', $2, $3, CURRENT_TIMESTAMP)`,
-        [payment.user_id, payment.amount, id]
-      );
-    }
+    await pool.query(
+      `INSERT INTO enrollments (user_id, purchase_mode, selected_phases, purchase_amount, payment_id, enrolled_at)
+       VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP)`,
+      [
+        payment.user_id,
+        purchaseMode,
+        purchaseMode === 'full-course' ? null : selectedPhases,
+        payment.amount,
+        id,
+      ]
+    );
 
     /*
      * Initialize course progress if not exists
@@ -113,7 +170,7 @@ export default async function handler(req, res) {
     );
 
     /*
-     * Log the admin action
+     * Log the admin action with full enrollment details for audit
      */
     await pool.query(
       `INSERT INTO admin_audit_logs (admin_id, action, target_type, target_id, details, ip_address, user_agent)
@@ -121,7 +178,12 @@ export default async function handler(req, res) {
       [
         decoded.adminId,
         id,
-        JSON.stringify({ amount: payment.amount, method: payment.method }),
+        JSON.stringify({
+          amount: payment.amount,
+          method: payment.method,
+          purchaseMode,
+          selectedPhases: purchaseMode === 'full-course' ? 'all' : selectedPhases,
+        }),
         req.headers['x-forwarded-for'] || req.socket.remoteAddress || null,
         req.headers['user-agent'] || null,
       ]
@@ -130,6 +192,10 @@ export default async function handler(req, res) {
     res.status(200).json({
       success: true,
       message: 'Payment approved and student enrolled successfully.',
+      data: {
+        purchaseMode,
+        selectedPhases: purchaseMode === 'full-course' ? null : selectedPhases,
+      },
     });
 
   } catch (error) {

@@ -92,6 +92,19 @@ const defaultsConfig = {
         { id: 'telegram', label: 'Join Telegram Community', labelAm: 'ቴሌግራም ይቀላቀሉ', href: 'https://t.me/AbyssiniaAcademy', icon: 'MessageCircle', external: true },
         { id: 'support', label: 'Contact Support', labelAm: 'ድጋፍ ያግኙ', href: '/support', icon: 'HelpCircle' },
       ],
+      /*
+      * Access Control — Lock Overlay Messages
+      * Shown when a student tries to access locked content
+      * All messages are configurable for i18n extensibility
+      */
+      accessControl: {
+        lockedPhaseTitle: 'Phase {phase} is Locked',
+        lockedPhaseTitleAm: 'ደረጃ {phase} ተቆልፏል',
+        lockedPhaseDescription: 'Purchase Phase {phase}{title} to unlock this content and continue your learning journey.',
+        lockedPhaseDescriptionAm: 'ይህን ይዘት ለመክፈት እና የትምህርት ጉዞዎን ለመቀጠል ደረጃ {phase}{title} ይግዙ።',
+        unlockPhase: 'Unlock Phase {phase}',
+        unlockPhaseAm: 'ደረጃ {phase} ይክፈቱ',
+      },
     },
 
     approval: {

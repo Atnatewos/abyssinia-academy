@@ -43,7 +43,7 @@ const WEEK_01 = {
     createLesson({
       id: 'p1-w1-l2',
       title: 'Basic computer skills - part II',
-      isFreePreview: false,
+      isFreePreview: true,
       notes: 'Master clean user input handling before diving into frontend state frameworks.',
       mainVideo: mainVideo(
         'Basic computer skills - part II',

@@ -13,7 +13,7 @@ const WEEK_08 = {
     createLesson({
       id: 'p2-w8-l1',
       title: 'Introduction to programming basics (Part I)',
-      isFreePreview: true,
+      isFreePreview: false,
       notes: 'Learn the fundamentals of programming and why JavaScript is the language of the web.',
       mainVideo: mainVideo(
         'Introduction to programming basics (Part I)',

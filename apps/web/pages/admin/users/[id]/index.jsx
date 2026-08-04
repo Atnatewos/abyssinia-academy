@@ -1,6 +1,6 @@
 /**
  * @fileoverview Admin User Detail Page
- * Full user profile view with enrollment, payments, progress, and referrals.
+ * Full user profile view with enrollment management, payments, progress, and referrals.
  * Path: apps/web/pages/admin/users/[id]/index.jsx
  */
 
@@ -9,25 +9,25 @@ import { useRouter } from 'next/router';
 import Link from 'next/link';
 import {
   ArrowLeft,
-  User,
   Mail,
   Phone,
   Calendar,
-  Shield,
   Layers,
   CreditCard,
   TrendingUp,
   Share2,
+  UserCog,
 } from 'lucide-react';
 import SEOHead from '../../../../components/shared/SEOHead';
 import AdminLayout from '../../../../components/admin/AdminLayout';
+import EnrollmentManager from '../../../../components/admin/EnrollmentManager';
 import { useLanguage } from '../../../../context/LanguageContext';
 import { useToast } from '../../../../context/ToastContext';
 import apiClient from '../../../../lib/api';
 import { getItem } from '../../../../lib/storage';
 
 /**
- * AdminUserDetailPage — Full user profile for admin review.
+ * AdminUserDetailPage — Full user profile for admin review with enrollment management.
  */
 const AdminUserDetailPage = () => {
   const router = useRouter();
@@ -99,7 +99,6 @@ const AdminUserDetailPage = () => {
   }
 
   const user = userData.user || {};
-  const enrollment = userData.enrollment || null;
   const payments = userData.payments || [];
   const progress = userData.progress || {};
   const referrals = userData.referrals || {};
@@ -143,59 +142,43 @@ const AdminUserDetailPage = () => {
 
         {/* Tabs */}
         <div className="admin-tabs">
-          {['enrollment', 'payments', 'progress', 'referrals'].map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`admin-tab ${activeTab === tab ? 'active' : ''}`}
-            >
-              {tab === 'enrollment' && <><Layers size={14} /> Enrollment</>}
-              {tab === 'payments' && <><CreditCard size={14} /> Payments</>}
-              {tab === 'progress' && <><TrendingUp size={14} /> Progress</>}
-              {tab === 'referrals' && <><Share2 size={14} /> Referrals</>}
-            </button>
-          ))}
+          {[
+            { id: 'enrollment', label: 'Enrollment', icon: UserCog },
+            { id: 'payments', label: 'Payments', icon: CreditCard },
+            { id: 'progress', label: 'Progress', icon: TrendingUp },
+            { id: 'referrals', label: 'Referrals', icon: Share2 },
+          ].map((tab) => {
+            const Icon = tab.icon;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`admin-tab ${activeTab === tab.id ? 'active' : ''}`}
+              >
+                <Icon size={14} />
+                {tab.label}
+              </button>
+            );
+          })}
         </div>
 
         {/* Tab Content */}
         <div className="admin-detail-content">
-          {/* Enrollment Tab */}
+          {/* Enrollment Tab — Uses the new EnrollmentManager component */}
           {activeTab === 'enrollment' && (
-            <div className="admin-detail-section">
-              <h4 className="admin-detail-section-title">Enrollment Details</h4>
-              {enrollment ? (
-                <div className="admin-detail-grid">
-                  <div className="admin-detail-item">
-                    <span className="admin-detail-label">Plan</span>
-                    <span className="admin-detail-value">
-                      {enrollment.purchase_mode === 'full-course'
-                        ? 'Full Course'
-                        : `${enrollment.selected_phases?.length || 0} Phase(s)`}
-                    </span>
-                  </div>
-                  <div className="admin-detail-item">
-                    <span className="admin-detail-label">Enrolled Date</span>
-                    <span className="admin-detail-value">
-                      {new Date(enrollment.enrolled_at).toLocaleDateString()}
-                    </span>
-                  </div>
-                  <div className="admin-detail-item">
-                    <span className="admin-detail-label">Amount Paid</span>
-                    <span className="admin-detail-value highlight">
-                      {enrollment.purchase_amount?.toLocaleString()} ETB
-                    </span>
-                  </div>
-                </div>
-              ) : (
-                <p className="admin-detail-empty">User is not enrolled in any course.</p>
-              )}
-            </div>
+            <EnrollmentManager
+              userId={id}
+              onEnrollmentChanged={fetchUserDetail}
+            />
           )}
 
           {/* Payments Tab */}
           {activeTab === 'payments' && (
             <div className="admin-detail-section">
-              <h4 className="admin-detail-section-title">Payment History</h4>
+              <h4 className="admin-detail-section-title">
+                <CreditCard size={16} />
+                Payment History
+              </h4>
               {payments.length > 0 ? (
                 <div className="admin-table-wrapper">
                   {payments.map((payment) => (
@@ -229,7 +212,10 @@ const AdminUserDetailPage = () => {
           {/* Progress Tab */}
           {activeTab === 'progress' && (
             <div className="admin-detail-section">
-              <h4 className="admin-detail-section-title">Learning Progress</h4>
+              <h4 className="admin-detail-section-title">
+                <TrendingUp size={16} />
+                Learning Progress
+              </h4>
               <div className="admin-detail-grid">
                 <div className="admin-detail-item">
                   <span className="admin-detail-label">Overall Progress</span>
@@ -250,7 +236,10 @@ const AdminUserDetailPage = () => {
           {/* Referrals Tab */}
           {activeTab === 'referrals' && (
             <div className="admin-detail-section">
-              <h4 className="admin-detail-section-title">Referral Information</h4>
+              <h4 className="admin-detail-section-title">
+                <Share2 size={16} />
+                Referral Information
+              </h4>
               <div className="admin-detail-grid">
                 <div className="admin-detail-item">
                   <span className="admin-detail-label">Referral Code</span>
