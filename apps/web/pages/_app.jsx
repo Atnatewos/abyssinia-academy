@@ -9,6 +9,7 @@ import { LanguageProvider } from '../context/LanguageContext';
 import { AuthProvider } from '../context/AuthContext';
 import { ToastProvider } from '../context/ToastContext';
 import '../styles/globals.css';
+import '../styles/admin.css';
 
 /**
  * Root App component - all pages render inside this wrapper

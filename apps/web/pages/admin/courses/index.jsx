@@ -1,88 +1,103 @@
 /**
  * @fileoverview Admin Courses Page
- * Course management placeholder page
+ * Course management interface.
  * Path: apps/web/pages/admin/courses/index.jsx
  */
 
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/router';
-import Link from 'next/link';
-import {
-  LayoutDashboard, CreditCard, Users, BookOpen, Settings, LogOut, Code2,
-} from 'lucide-react';
+import { BookOpen, Edit, Eye, Plus } from 'lucide-react';
 import SEOHead from '../../../components/shared/SEOHead';
+import AdminLayout from '../../../components/admin/AdminLayout';
+import { useLanguage } from '../../../context/LanguageContext';
+import { useToast } from '../../../context/ToastContext';
+import apiClient from '../../../lib/api';
+import { getItem } from '../../../lib/storage';
 
 /**
- * AdminCoursesPage - Placeholder for course management
+ * AdminCoursesPage — Course management overview.
  */
 const AdminCoursesPage = () => {
   const router = useRouter();
+  const { t } = useLanguage();
+  const toast = useToast();
 
-  const handleLogout = () => {
-    localStorage.removeItem('admin_token');
-    localStorage.removeItem('admin_user');
-    router.push('/admin/login');
-  };
+  const [courses, setCourses] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const navItems = [
-    { path: '/admin', label: 'Dashboard', icon: LayoutDashboard, exact: true },
-    { path: '/admin/payments', label: 'Payments', icon: CreditCard },
-    { path: '/admin/students', label: 'Students', icon: Users },
-    { path: '/admin/courses', label: 'Courses', icon: BookOpen },
-  ];
+  const fetchCourses = useCallback(async () => {
+    const token = getItem('admin_token');
+    if (!token) {
+      router.push('/admin/login');
+      return;
+    }
 
-  const isActive = (path, exact) => {
-    if (exact) return router.pathname === path;
-    return router.pathname.startsWith(path);
-  };
+    setLoading(true);
+
+    try {
+      const response = await apiClient.get('/admin/courses');
+      if (response && response.success) {
+        setCourses(response.data || []);
+      }
+    } catch (err) {
+      if (err?.response?.status === 401) {
+        router.push('/admin/login');
+      } else {
+        toast.error('Failed to load courses.');
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [router, toast]);
+
+  useEffect(() => {
+    fetchCourses();
+  }, [fetchCourses]);
 
   return (
     <>
       <SEOHead title="Manage Courses" />
-      <div className="admin-layout">
-        <aside className="admin-sidebar">
-          <Link href="/admin" className="admin-sidebar-brand">
-            <div className="admin-sidebar-logo"><Code2 /></div>
-            <div>
-              <span className="admin-sidebar-name"><span className="text-gradient-gold">ABYSSiNIA</span></span>
-              <span className="admin-sidebar-suffix">Admin Panel</span>
-            </div>
-          </Link>
-          <nav className="admin-nav">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              return (
-                <Link key={item.path} href={item.path} className={`admin-nav-link ${isActive(item.path, item.exact) ? 'active' : ''}`}>
-                  <Icon /><span>{item.label}</span>
-                </Link>
-              );
-            })}
-          </nav>
-          <div className="admin-nav-bottom">
-            <Link href="/admin/settings" className={`admin-nav-link ${isActive('/admin/settings', false) ? 'active' : ''}`}>
-              <Settings /><span>Settings</span>
-            </Link>
-            <button onClick={handleLogout} className="admin-nav-logout">
-              <LogOut /><span>Logout</span>
-            </button>
+      <AdminLayout
+        title={t.admin?.courses || 'Courses'}
+        subtitle="Manage course content and structure"
+      >
+        {loading ? (
+          <div className="spinner" style={{ marginTop: '2rem' }}>
+            <div className="spinner-circle" />
           </div>
-        </aside>
-
-        <div className="admin-main">
-          <header className="admin-header">
-            <div>
-              <h1 className="admin-header-title">Courses</h1>
-              <p className="admin-header-subtitle">Manage course content</p>
-            </div>
-          </header>
-          <main className="admin-content">
-            <div className="empty-state">
-              <BookOpen size={48} style={{ color: 'var(--text-dim)', marginBottom: '1rem' }} />
-              <h3 className="empty-state-title">Course Management</h3>
-              <p className="empty-state-desc">Course management features coming soon.</p>
-            </div>
-          </main>
-        </div>
-      </div>
+        ) : (
+          <div className="admin-courses-grid">
+            {courses.length > 0 ? (
+              courses.map((course) => (
+                <div key={course.id} className="admin-course-card">
+                  <div className="admin-course-card-icon">
+                    <BookOpen size={24} />
+                  </div>
+                  <h3 className="admin-course-card-title">{course.title}</h3>
+                  <p className="admin-course-card-desc">{course.description}</p>
+                  <div className="admin-course-card-meta">
+                    <span>{course.level}</span>
+                    <span>{course.duration}</span>
+                  </div>
+                  <div className="admin-course-card-actions">
+                    <button className="admin-action-btn view">
+                      <Eye size={16} />
+                    </button>
+                    <button className="admin-action-btn view">
+                      <Edit size={16} />
+                    </button>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="empty-state">
+                <BookOpen size={48} style={{ color: 'var(--text-dim)', marginBottom: '1rem' }} />
+                <p className="empty-state-desc">No courses configured yet.</p>
+              </div>
+            )}
+          </div>
+        )}
+      </AdminLayout>
     </>
   );
 };
