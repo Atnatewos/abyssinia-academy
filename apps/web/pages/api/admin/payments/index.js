@@ -1,7 +1,7 @@
 /**
  * @fileoverview Admin Payments List API
  * Returns paginated list of all payments with optional status filter.
- * Supports ?status=pending&limit=10 query parameters.
+ * Now includes transaction_id (screenshot URL) in the response.
  * Path: apps/web/pages/api/admin/payments/index.js
  */
 
@@ -42,7 +42,8 @@ export default async function handler(req, res) {
     const maxLimit = Math.min(parseInt(limit, 10) || 50, 100);
 
     /*
-     * Build the query with optional status filter
+     * Build the query with optional status filter.
+     * transaction_id contains the Cloudinary screenshot URL.
      */
     let query = `
       SELECT

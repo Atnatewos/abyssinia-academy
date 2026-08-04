@@ -1,6 +1,6 @@
 /**
  * @fileoverview Admin Payment Detail API
- * Returns full payment details with user info and discount breakdown.
+ * Returns full payment details with user info, discount breakdown, and screenshot URL.
  * Path: apps/web/pages/api/admin/payments/[id]/index.js
  */
 
@@ -36,9 +36,23 @@ export default async function handler(req, res) {
 
   try {
 
+    /*
+     * Fetch the payment with user info.
+     * transaction_id contains the Cloudinary screenshot URL.
+     */
     const result = await pool.query(
       `SELECT
-         p.*,
+         p.id,
+         p.amount,
+         p.method,
+         p.status,
+         p.reference,
+         p.transaction_id,
+         p.discount_code_used,
+         p.discount_code_amount,
+         p.referral_discount_amount,
+         p.credit_applied,
+         p.created_at,
          u.full_name AS user_name,
          u.phone AS user_phone,
          u.email AS user_email,

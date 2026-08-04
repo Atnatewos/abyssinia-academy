@@ -18,7 +18,7 @@ const weekNumbers = Object.values(allWeeks)
 const PHASE_1 = {
   id: 'phase-1',
   number: 1,
-  title: 'Foundations of Modern Web Architecture',
+  title: 'Building static websites using HTML, CSS & Bootstrap',
   subtitle: 'HTML5, CSS3, Modern UI/UX Layouts & Git Enterprise Workflow',
   description: 'Build an unshakeable foundation in semantic HTML5, fluid layouts, modern Flexbox and Grid, mobile responsiveness, and collaborative Git version control.',
   color: 'from-amber-500 to-yellow-400',

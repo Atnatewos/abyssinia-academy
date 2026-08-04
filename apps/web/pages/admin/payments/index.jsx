@@ -1,6 +1,7 @@
 /**
  * @fileoverview Admin Payments Page
- * Full payment management with search, filter, tabs, approve/reject, and detail modal.
+ * Full payment management with search, filter, tabs, approve/reject, detail modal,
+ * and inline copy buttons for quick data access.
  * Path: apps/web/pages/admin/payments/index.jsx
  */
 
@@ -8,12 +9,12 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import {
   Search,
-  Filter,
   Check,
   X,
   Eye,
   Download,
-  ChevronDown,
+  Copy,
+  Check as CheckIcon,
 } from 'lucide-react';
 import SEOHead from '../../../components/shared/SEOHead';
 import AdminLayout from '../../../components/admin/AdminLayout';
@@ -22,6 +23,54 @@ import { useLanguage } from '../../../context/LanguageContext';
 import { useToast } from '../../../context/ToastContext';
 import apiClient from '../../../lib/api';
 import { getItem } from '../../../lib/storage';
+
+/**
+ * Inline mini copy button for table cells.
+ */
+const MiniCopyButton = ({ text }) => {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = useCallback(async (e) => {
+    e.stopPropagation();
+    if (!text) return;
+
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      const textArea = document.createElement('textarea');
+      textArea.value = text;
+      textArea.style.position = 'fixed';
+      textArea.style.opacity = '0';
+      document.body.appendChild(textArea);
+      textArea.select();
+      try {
+        document.execCommand('copy');
+        setCopied(true);
+        setTimeout(() => setCopied(false), 1500);
+      } catch {
+        /* silent */
+      }
+      document.body.removeChild(textArea);
+    }
+  }, [text]);
+
+  return (
+    <button
+      type="button"
+      onClick={handleCopy}
+      className="admin-table-copy-btn"
+      title="Copy"
+    >
+      {copied ? (
+        <CheckIcon size={11} style={{ color: '#10b981' }} />
+      ) : (
+        <Copy size={11} />
+      )}
+    </button>
+  );
+};
 
 /**
  * AdminPaymentsPage — Complete payment management interface.
@@ -39,9 +88,6 @@ const AdminPaymentsPage = () => {
   const [selectedPayment, setSelectedPayment] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
 
-  /*
-   * Tabs for filtering by status
-   */
   const tabs = [
     { id: 'all', label: 'All Payments' },
     { id: 'pending', label: t.admin?.pending || 'Pending' },
@@ -49,12 +95,8 @@ const AdminPaymentsPage = () => {
     { id: 'rejected', label: t.admin?.rejected || 'Rejected' },
   ];
 
-  /**
-   * Fetch payments from the API
-   */
   const fetchPayments = useCallback(async () => {
     const token = getItem('admin_token');
-
     if (!token) {
       router.push('/admin/login');
       return;
@@ -84,16 +126,10 @@ const AdminPaymentsPage = () => {
     }
   }, [activeTab, router, toast]);
 
-  /*
-   * Fetch on mount and when tab changes
-   */
   useEffect(() => {
     fetchPayments();
   }, [fetchPayments]);
 
-  /**
-   * Handle approve/reject action
-   */
   const handleAction = useCallback(async (paymentId, action) => {
     setActionLoading(paymentId);
 
@@ -119,25 +155,16 @@ const AdminPaymentsPage = () => {
     }
   }, [fetchPayments, toast]);
 
-  /**
-   * Open payment detail modal
-   */
   const handleViewDetail = useCallback((payment) => {
     setSelectedPayment(payment);
     setShowDetailModal(true);
   }, []);
 
-  /**
-   * Close payment detail modal
-   */
   const handleCloseDetail = useCallback(() => {
     setShowDetailModal(false);
     setSelectedPayment(null);
   }, []);
 
-  /**
-   * Filter payments by search term
-   */
   const filteredPayments = payments.filter((payment) => {
     if (!searchTerm) return true;
     const term = searchTerm.toLowerCase();
@@ -149,9 +176,6 @@ const AdminPaymentsPage = () => {
     );
   });
 
-  /**
-   * Get status badge class
-   */
   const getStatusClass = (status) => {
     const classes = {
       pending: 'status-badge pending',
@@ -221,13 +245,17 @@ const AdminPaymentsPage = () => {
                     <span className="admin-table-name">
                       {payment.user_name || payment.full_name || 'Unknown'}
                     </span>
+                    <MiniCopyButton text={payment.user_name || payment.full_name || ''} />
                     <span className={getStatusClass(payment.status)}>
                       {payment.status}
                     </span>
                   </div>
                   <p className="admin-table-meta">
-                    {payment.user_phone || payment.phone || 'N/A'} · Ref:{' '}
+                    {payment.user_phone || payment.phone || 'N/A'}
+                    <MiniCopyButton text={payment.user_phone || payment.phone || ''} />
+                    {' · Ref: '}
                     {payment.reference || 'N/A'}
+                    <MiniCopyButton text={payment.reference || ''} />
                   </p>
                   <p className="admin-table-meta">
                     {payment.method} ·{' '}
@@ -242,7 +270,6 @@ const AdminPaymentsPage = () => {
                   </span>
 
                   <div className="admin-table-action-btns">
-                    {/* View Detail */}
                     <button
                       onClick={() => handleViewDetail(payment)}
                       className="admin-action-btn view"
@@ -251,7 +278,6 @@ const AdminPaymentsPage = () => {
                       <Eye size={16} />
                     </button>
 
-                    {/* Approve / Reject for pending payments */}
                     {payment.status === 'pending' && (
                       <>
                         <button

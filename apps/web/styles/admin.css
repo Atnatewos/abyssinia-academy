@@ -1385,3 +1385,141 @@
 .admin-checkbox-label span {
   font-weight: 500;
 }
+
+/* ============================================================
+   CLOUDINARY SCREENSHOT PREVIEW
+   ============================================================ */
+
+.admin-screenshot-cloudinary {
+  border-radius: 0.75rem;
+  overflow: hidden;
+  border: 1px solid rgba(148, 163, 184, 0.15);
+  background: rgba(15, 23, 42, 0.5);
+}
+
+.admin-screenshot-image {
+  width: 100%;
+  max-height: 400px;
+  object-fit: contain;
+  display: block;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.admin-screenshot-image:hover {
+  opacity: 0.9;
+}
+
+.admin-screenshot-cloudinary .admin-screenshot-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  padding: 0.625rem;
+  background: rgba(245, 158, 11, 0.06);
+  border-top: 1px solid rgba(148, 163, 184, 0.1);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--accent-gold);
+  text-decoration: none;
+  transition: background 0.2s ease;
+}
+
+.admin-screenshot-cloudinary .admin-screenshot-link:hover {
+  background: rgba(245, 158, 11, 0.12);
+}
+
+/* ============================================================
+   SCREENSHOT VIEWER — Professional
+   ============================================================ */
+
+.admin-screenshot-viewer {
+  position: relative;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  border: 1px solid rgba(148, 163, 184, 0.15);
+  background: rgba(2, 6, 23, 0.8);
+}
+
+.admin-screenshot-image {
+  width: 100%;
+  max-height: 400px;
+  object-fit: contain;
+  display: block;
+}
+
+.admin-screenshot-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1rem;
+  background: rgba(15, 23, 42, 0.5);
+}
+
+.admin-screenshot-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  padding: 0.5rem;
+  background: rgba(245, 158, 11, 0.05);
+  border-top: 1px solid rgba(148, 163, 184, 0.08);
+}
+
+.admin-screenshot-footer .admin-screenshot-link {
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+/* ============================================================
+   ADMIN COPY BUTTONS
+   ============================================================ */
+
+.admin-copy-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 0.25rem;
+  background: rgba(148, 163, 184, 0.06);
+  border: 1px solid rgba(148, 163, 184, 0.1);
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.admin-copy-btn:hover {
+  background: rgba(245, 158, 11, 0.1);
+  border-color: rgba(245, 158, 11, 0.25);
+  color: var(--accent-gold);
+}
+
+.admin-copy-btn:active {
+  transform: scale(0.9);
+}
+
+/* Mini copy button in table rows */
+.admin-table-copy-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.125rem;
+  height: 1.125rem;
+  border-radius: 0.1875rem;
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+  padding: 0;
+  vertical-align: middle;
+  margin-left: 0.25rem;
+}
+
+.admin-table-copy-btn:hover {
+  background: rgba(245, 158, 11, 0.1);
+  color: var(--accent-gold);
+}

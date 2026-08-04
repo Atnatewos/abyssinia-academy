@@ -1,16 +1,70 @@
 /**
  * @fileoverview Payment Detail Modal Component
- * Shows full payment information with screenshot preview, discount breakdown,
- * and approve/reject actions.
+ * Professional payment review with Cloudinary screenshot,
+ * copy-to-clipboard buttons, discount breakdown, and approve/reject actions.
  * Path: apps/web/components/admin/payments/PaymentDetailModal.jsx
  */
 
-import React from 'react';
-import { X, Check, Eye, Download } from 'lucide-react';
+import React, { useState, useCallback } from 'react';
+import {
+  X,
+  Check,
+  Eye,
+  ExternalLink,
+  Copy,
+  Check as CheckIcon,
+} from 'lucide-react';
 import { useLanguage } from '../../../context/LanguageContext';
 
 /**
- * PaymentDetailModal — Full-screen overlay showing complete payment details.
+ * Inline CopyButton — Copies text to clipboard with visual feedback.
+ */
+const CopyButton = ({ text, label = 'Copy' }) => {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = useCallback(async () => {
+    if (!text) return;
+
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      const textArea = document.createElement('textarea');
+      textArea.value = text;
+      textArea.style.position = 'fixed';
+      textArea.style.opacity = '0';
+      document.body.appendChild(textArea);
+      textArea.select();
+      try {
+        document.execCommand('copy');
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      } catch {
+        /* silent */
+      }
+      document.body.removeChild(textArea);
+    }
+  }, [text]);
+
+  return (
+    <button
+      type="button"
+      onClick={handleCopy}
+      className="admin-copy-btn"
+      title={copied ? 'Copied!' : label}
+    >
+      {copied ? (
+        <CheckIcon size={12} style={{ color: '#10b981' }} />
+      ) : (
+        <Copy size={12} />
+      )}
+    </button>
+  );
+};
+
+/**
+ * PaymentDetailModal — Professional payment review overlay.
  *
  * @param {object} props
  * @param {boolean} props.isOpen - Whether the modal is visible
@@ -29,6 +83,23 @@ const PaymentDetailModal = ({
   const { t } = useLanguage();
 
   if (!isOpen || !payment) return null;
+
+  /*
+   * The screenshot URL is stored in the transaction_id field
+   * from the Cloudinary upload during payment submission.
+   * This is a Cloudinary secure_url like:
+   * https://res.cloudinary.com/dwu1urppe/image/upload/v1234567890/abyssinia-academy/payments/abc123.jpg
+   */
+  const screenshotUrl = payment.transaction_id || null;
+
+  /*
+   * Check if the URL is a valid image URL (from Cloudinary or any image host)
+   */
+  const isImageUrl = screenshotUrl && (
+    screenshotUrl.includes('cloudinary.com') ||
+    screenshotUrl.includes('res.cloudinary.com') ||
+    screenshotUrl.match(/\.(jpg|jpeg|png|webp|gif)(\?|$)/i)
+  );
 
   return (
     <div
@@ -65,14 +136,16 @@ const PaymentDetailModal = ({
             <div className="admin-detail-grid">
               <div className="admin-detail-item">
                 <span className="admin-detail-label">Name</span>
-                <span className="admin-detail-value">
+                <span className="admin-detail-value" style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
                   {payment.user_name || payment.full_name || 'Unknown'}
+                  <CopyButton text={payment.user_name || payment.full_name || ''} label="Copy Name" />
                 </span>
               </div>
               <div className="admin-detail-item">
                 <span className="admin-detail-label">Phone</span>
-                <span className="admin-detail-value">
+                <span className="admin-detail-value" style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
                   {payment.user_phone || payment.phone || 'N/A'}
+                  <CopyButton text={payment.user_phone || payment.phone || ''} label="Copy Phone" />
                 </span>
               </div>
               <div className="admin-detail-item">
@@ -81,8 +154,9 @@ const PaymentDetailModal = ({
               </div>
               <div className="admin-detail-item">
                 <span className="admin-detail-label">Reference</span>
-                <span className="admin-detail-value" style={{ fontFamily: 'var(--font-mono)' }}>
+                <span className="admin-detail-value" style={{ fontFamily: 'var(--font-mono)', display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
                   {payment.reference || 'N/A'}
+                  <CopyButton text={payment.reference || ''} label="Copy Reference" />
                 </span>
               </div>
             </div>
@@ -143,19 +217,78 @@ const PaymentDetailModal = ({
           </div>
 
           {/* Screenshot Preview */}
-          {payment.transaction_id && (
+          {screenshotUrl && (
+            <div className="admin-detail-section">
+              <h4 className="admin-detail-section-title">Payment Proof</h4>
+
+              {isImageUrl ? (
+                /*
+                 * Cloudinary or image URL — display the image inline
+                 */
+                <div className="admin-screenshot-viewer">
+                  <img
+                    src={screenshotUrl}
+                    alt="Payment screenshot"
+                    className="admin-screenshot-image"
+                    loading="lazy"
+                    onError={(e) => {
+                      /*
+                       * If the image fails to load, show the link instead
+                       */
+                      e.target.style.display = 'none';
+                      e.target.parentElement.querySelector('.admin-screenshot-fallback').style.display = 'flex';
+                    }}
+                  />
+                  <div className="admin-screenshot-fallback" style={{ display: 'none' }}>
+                    <a
+                      href={screenshotUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="admin-screenshot-link"
+                    >
+                      <Eye size={16} />
+                      <span>View Screenshot</span>
+                    </a>
+                  </div>
+                  <div className="admin-screenshot-footer">
+                    <a
+                      href={screenshotUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="admin-screenshot-link"
+                    >
+                      <ExternalLink size={14} />
+                      <span>Open Full Size</span>
+                    </a>
+                  </div>
+                </div>
+              ) : (
+                /*
+                 * Regular URL — show as a link
+                 */
+                <div className="admin-screenshot-preview">
+                  <a
+                    href={screenshotUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="admin-screenshot-link"
+                  >
+                    <Eye size={16} />
+                    <span>View Screenshot</span>
+                  </a>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* No Screenshot Message */}
+          {!screenshotUrl && (
             <div className="admin-detail-section">
               <h4 className="admin-detail-section-title">Payment Proof</h4>
               <div className="admin-screenshot-preview">
-                <a
-                  href={payment.transaction_id}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="admin-screenshot-link"
-                >
-                  <Eye size={16} />
-                  <span>View Screenshot</span>
-                </a>
+                <p style={{ fontSize: '0.75rem', color: 'var(--text-dim)', textAlign: 'center', padding: '1rem' }}>
+                  No screenshot was uploaded with this payment.
+                </p>
               </div>
             </div>
           )}
