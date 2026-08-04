@@ -44,9 +44,9 @@ const HeroVisual = () => {
         {/* macOS-style title bar */}
         <div className="hero-visual-titlebar">
           <div className="hero-visual-dots">
-            <div className="hero-visual-dot red" />
+            {/* <div className="hero-visual-dot red" />
             <div className="hero-visual-dot yellow" />
-            <div className="hero-visual-dot green" />
+            <div className="hero-visual-dot green" /> */}
           </div>
           <span className="hero-visual-filename">{filename}</span>
         </div>

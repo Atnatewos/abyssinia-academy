@@ -62,7 +62,7 @@ const HeroSection = () => {
       {/* Badge — icon from config, text from i18n */}
       <div className="hero-badge">
         <BadgeIcon />
-        <span>{t.hero?.badge || '#1 Unlisted YouTube Masterclass Learning System'}</span>
+        <span>{t.hero?.badge || '#1 Unlisted Masterclass Learning System'}</span>
       </div>
 
       {/* Heading — split across two lines with highlighted brand word */}
