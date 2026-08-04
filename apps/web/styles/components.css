@@ -4454,7 +4454,7 @@
 /* Video Column — stays fixed while accordion scrolls */
 .senior-video-column {
   position: sticky;
-  top: 90px;
+  top: 10px;
   align-self: start;
 }
 
