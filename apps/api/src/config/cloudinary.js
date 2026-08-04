@@ -1,81 +1,60 @@
 /**
  * @fileoverview Cloudinary Configuration
- * Image and file upload service setup
+ * Image and file upload service configuration
+ * All credentials sourced from environment variables — zero hardcoded values.
  * Path: apps/api/src/config/cloudinary.js
  */
 
 const cloudinary = require('cloudinary').v2;
-const { CloudinaryStorage } = require('multer-storage-cloudinary');
-const { platform } = require('../../../../packages/shared/config');
 
+/*
+ * Configure Cloudinary with environment variables
+ * These must be set in the Express server .env file
+ */
 cloudinary.config({
-  cloud_name: platform.cloudinary.cloudName,
-  api_key: platform.cloudinary.apiKey,
-  api_secret: platform.cloudinary.apiSecret,
-});
-
-/**
- * Create multer storage for payment screenshots
- */
-const paymentStorage = new CloudinaryStorage({
-  cloudinary: cloudinary,
-  params: {
-    folder: `${platform.cloudinary.uploadFolder}/payments`,
-    allowed_formats: platform.cloudinary.allowedFormats,
-    transformation: [{ width: 1200, height: 1200, crop: 'limit', quality: 'auto' }],
-  },
-});
-
-/**
- * Create multer storage for course thumbnails
- */
-const thumbnailStorage = new CloudinaryStorage({
-  cloudinary: cloudinary,
-  params: {
-    folder: `${platform.cloudinary.uploadFolder}/thumbnails`,
-    allowed_formats: ['jpg', 'jpeg', 'png', 'webp'],
-    transformation: [{ width: 800, height: 600, crop: 'fill', quality: 'auto' }],
-  },
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+  secure: true,
 });
 
 /**
  * Upload a file to Cloudinary
- * @param {string} filePath - Path to the file
+ * @param {string} filePath - Path to the file on disk
  * @param {object} options - Upload options
- * @returns {object} Upload result
+ * @param {string} [options.folder] - Cloudinary folder path
+ * @returns {Promise<object>} Upload result with secure_url, public_id, etc.
  */
 const uploadFile = async (filePath, options = {}) => {
   try {
     const result = await cloudinary.uploader.upload(filePath, {
-      folder: platform.cloudinary.uploadFolder,
+      folder: options.folder || process.env.CLOUDINARY_UPLOAD_FOLDER || 'abyssinia-academy',
       ...options,
     });
     return result;
   } catch (error) {
-    console.error('❌ Cloudinary upload error:', error.message);
+    console.error('Cloudinary upload error:', error.message);
     throw error;
   }
 };
 
 /**
- * Delete a file from Cloudinary
- * @param {string} publicId - Public ID of the file
- * @returns {object} Deletion result
+ * Delete a file from Cloudinary by its public ID
+ * @param {string} publicId - The Cloudinary public ID to delete
+ * @returns {Promise<object>} Deletion result
  */
 const deleteFile = async (publicId) => {
   try {
     const result = await cloudinary.uploader.destroy(publicId);
     return result;
   } catch (error) {
-    console.error('❌ Cloudinary delete error:', error.message);
+    console.error('Cloudinary delete error:', error.message);
     throw error;
   }
 };
 
 module.exports = {
   cloudinary,
-  paymentStorage,
-  thumbnailStorage,
   uploadFile,
   deleteFile,
 };
