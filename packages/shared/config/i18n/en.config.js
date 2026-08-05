@@ -104,7 +104,7 @@ const en = {
     fullPass: 'Full Academy Access Pass',
     masterclass: 'Full-Stack Software Masterclass',
     instantAccess: 'Instant access to all 5 phases & course modules',
-    hdPlaylists: 'Unlisted HD YouTube pre-recorded video masterclasses',
+    hdPlaylists: ' HD pre-recorded video masterclasses',
     timestampsNotes: 'Timestamped session breakdowns & lecture notes',
     githubAssets: 'GitHub source code repositories & starter kits',
     telegramCommunity: 'Private Telegram developer mentorship community',

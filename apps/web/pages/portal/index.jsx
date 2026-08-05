@@ -13,6 +13,11 @@
  * - Locked phases show dimmed with lock icons, clickable for upsell overlay
  * - Free preview lessons within locked phases remain accessible
  * - Progress tracking blocked server-side for locked lessons
+ * 
+ * MOBILE BEHAVIOR:
+ * - No lesson selected: empty state hidden, weeks fill full width
+ * - Lesson selected: video appears ABOVE weeks, pushes content down
+ * - Weeks scroll normally below the video player
  *
  * Path: apps/web/pages/portal/index.jsx
  */
@@ -83,7 +88,6 @@ const PortalPage = () => {
 
   /*
    * Compute progress only for accessible lessons
-   * Students should only see progress based on content they can actually access
    */
   const allLessonIds = useMemo(() => {
     const ids = [];
@@ -119,20 +123,16 @@ const PortalPage = () => {
   };
 
   const handleSelectLesson = useCallback((lesson) => {
-    const isFreePreview = lesson.isFreePreview === true;
-    const hasAccess = checkLessonAccess(lesson.id, isFreePreview);
-
-    /*
-     * Allow free preview lessons even in locked phases for enrolled students
-     * Locked non-preview lessons will trigger the LockedOverlay
-     */
     setActiveLesson(lesson);
     setActiveVideoId(lesson.mainVideo?.youtubeId || null);
-  }, [checkLessonAccess]);
+  }, []);
 
   const handleSelectSession = useCallback((youtubeId) => setActiveVideoId(youtubeId), []);
 
-  const handleCloseVideo = useCallback(() => { setActiveLesson(null); setActiveVideoId(null); }, []);
+  const handleCloseVideo = useCallback(() => {
+    setActiveLesson(null);
+    setActiveVideoId(null);
+  }, []);
 
   const toggleWeek = useCallback((weekId) => {
     setCollapsedWeeks((prev) => ({ ...prev, [weekId]: !prev[weekId] }));
@@ -204,6 +204,37 @@ const PortalPage = () => {
             <button className="senior-back-btn" onClick={handleBackToPhases}>← All Phases</button>
             <div className="senior-phase-layout">
 
+              {/* ── Video Column — sits above accordion on mobile, beside on desktop ── */}
+              <div className="senior-video-column">
+                {activeLesson ? (
+                  <div className="senior-video-card">
+                    <div className="senior-video-topbar">
+                      <div>
+                        <span className="senior-video-label">NOW PLAYING</span>
+                        <h2 className="senior-video-title">{activeLesson.title}</h2>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <CompleteButton
+                          isCompleted={completedLessons.includes(activeLesson.id)}
+                          onToggle={() => handleToggleComplete(activeLesson.id)}
+                          loading={progressLoading}
+                        />
+                        <button className="senior-video-close" onClick={handleCloseVideo}><X size={16} /></button>
+                      </div>
+                    </div>
+                    <VideoPlayer lesson={activeLesson} activeVideoId={activeVideoId} />
+                  </div>
+                ) : (
+                  <div className="senior-video-empty">
+                    <Video size={48} style={{ color: 'var(--text-dim)', marginBottom: '1rem' }} />
+                    <p style={{ color: 'var(--text-dim)', fontSize: '0.875rem' }}>
+                      Select a class from the left to start watching.
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* ── Accordion Column ── */}
               <div className="senior-accordion-column">
                 <div className="senior-phase-info-card">
                   <div className="senior-phase-info-top">
@@ -226,12 +257,7 @@ const PortalPage = () => {
                     const weekId = week.id || `w-${week.number}`;
                     const wp = getWeekProgress(week);
                     const isCollapsed = collapsedWeeks[weekId] === true;
-
-                    /*
-                     * ACCESS CONTROL: Determine if this week is accessible
-                     */
                     const weekAccessible = isFullCourse || checkWeekAccess(week.number);
-                    const phaseAccessible = isFullCourse || checkPhaseAccess(activePhase.id);
 
                     return (
                       <div key={weekId} className={`senior-week-card ${!weekAccessible ? 'locked-week' : ''}`}>
@@ -341,35 +367,6 @@ const PortalPage = () => {
                     );
                   })}
                 </div>
-              </div>
-
-              <div className="senior-video-column">
-                {activeLesson ? (
-                  <div className="senior-video-card">
-                    <div className="senior-video-topbar">
-                      <div>
-                        <span className="senior-video-label">NOW PLAYING</span>
-                        <h2 className="senior-video-title">{activeLesson.title}</h2>
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <CompleteButton
-                          isCompleted={completedLessons.includes(activeLesson.id)}
-                          onToggle={() => handleToggleComplete(activeLesson.id)}
-                          loading={progressLoading}
-                        />
-                        <button className="senior-video-close" onClick={handleCloseVideo}><X size={16} /></button>
-                      </div>
-                    </div>
-                    <VideoPlayer lesson={activeLesson} activeVideoId={activeVideoId} />
-                  </div>
-                ) : (
-                  <div className="senior-video-empty">
-                    <Video size={48} style={{ color: 'var(--text-dim)', marginBottom: '1rem' }} />
-                    <p style={{ color: 'var(--text-dim)', fontSize: '0.875rem' }}>
-                      Select a class from the left to start watching.
-                    </p>
-                  </div>
-                )}
               </div>
             </div>
           </div>
