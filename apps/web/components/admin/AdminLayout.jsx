@@ -24,6 +24,7 @@ import {
   FileText,
   ChevronDown,
   ChevronRight,
+  Video,
 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { getItem } from '../../lib/storage';
@@ -137,6 +138,11 @@ const AdminLayout = ({ children, title = 'Dashboard', subtitle = '' }) => {
           path: '/admin/referrals',
           label: t.referrals?.dashboardTitle || 'Referrals',
           icon: Share2,
+        },
+        {
+          path: '/admin/discussions',
+          label: 'Discussions',
+          icon: Video,
         },
       ],
     },

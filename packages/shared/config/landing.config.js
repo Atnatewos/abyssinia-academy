@@ -116,6 +116,7 @@ const landingConfig = {
       duration: '02:12:16',
       thumbnail: '',
     },
+
     {
       youtubeId: 'https://www.youtube.com/watch?v=jRU0VJXJdZg',
       title: 'ከየት ልጀምር? 99%ቱ ተመልካች ማለፍ ያቃተው ስቴፕ',

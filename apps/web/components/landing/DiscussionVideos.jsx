@@ -2,16 +2,15 @@
  * @fileoverview Discussion Videos — Equal Card Grid
  * Same card grid layout as pricing cards. Click opens YouTube embed modal
  * or opens in a new tab. Thumbnails auto-generated from YouTube video IDs.
- * All videos from landing.config.js — accepts full URLs or plain IDs.
+ * Fetches videos from /api/discussions/list (database-driven).
  * All videos are PUBLIC (marketing content, no auth required).
  * 
  * Path: apps/web/components/landing/DiscussionVideos.jsx
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Play, X, Clock, ExternalLink } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
-import { getLandingConfig } from '../../lib/config';
 
 /**
  * Extract the YouTube video ID from a full URL or plain ID.
@@ -41,8 +40,7 @@ const extractYouTubeId = (input) => {
 
 /**
  * Get the YouTube thumbnail URL for a video ID.
- * Uses the high-quality default thumbnail (hqdefault.jpg).
- * Falls back through multiple thumbnail sizes.
+ * Uses hqdefault.jpg with mqdefault.jpg fallback.
  * 
  * @param {string} videoId - YouTube video ID
  * @returns {string} Thumbnail URL
@@ -65,26 +63,40 @@ const getYouTubeUrl = (videoId) => {
 
 /**
  * DiscussionVideos — Equal grid of video cards, matching the pricing card layout.
+ * Fetches videos from the database via public API.
  */
 const DiscussionVideos = () => {
   const { t } = useLanguage();
-  const landingConfig = getLandingConfig();
-  const rawVideos = landingConfig.discussionVideos || [];
 
-  /*
-   * Process videos: extract YouTube IDs and generate thumbnails
-   */
-  const videos = rawVideos.map((video) => {
-    const youtubeId = extractYouTubeId(video.youtubeId);
-    return {
-      ...video,
-      youtubeId,
-      thumbnail: video.thumbnail || getThumbnailUrl(youtubeId),
-    };
-  });
-
+  const [videos, setVideos] = useState([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [modalVideoId, setModalVideoId] = useState(null);
+
+  /*
+   * Fetch discussion videos from the public API
+   */
+  useEffect(() => {
+    const fetchVideos = async () => {
+      try {
+        const response = await fetch('/api/discussions/list');
+        const data = await response.json();
+        if (data.success) {
+          const processed = (data.data || []).map((v) => {
+            const youtubeId = extractYouTubeId(v.youtube_id);
+            return {
+              ...v,
+              youtubeId,
+              thumbnail: v.thumbnail || getThumbnailUrl(youtubeId),
+            };
+          });
+          setVideos(processed);
+        }
+      } catch {
+        setVideos([]);
+      }
+    };
+    fetchVideos();
+  }, []);
 
   if (videos.length === 0) return null;
 
@@ -134,7 +146,7 @@ const DiscussionVideos = () => {
         <div className="landing-pricing-equal-grid">
           {videos.map((video, index) => (
             <div
-              key={index}
+              key={video.id || index}
               className="landing-pricing-equal-card"
               style={{
                 '--card-accent-border': 'rgba(239, 68, 68, 0.3)',
@@ -167,7 +179,7 @@ const DiscussionVideos = () => {
                     transition: 'opacity 0.3s ease',
                   }}
                   onError={(e) => {
-                    const vidId = extractYouTubeId(video.youtubeId);
+                    const vidId = extractYouTubeId(video.youtubeId || video.youtube_id);
                     if (vidId && !e.target.src.includes('mqdefault')) {
                       e.target.src = `https://img.youtube.com/vi/${vidId}/mqdefault.jpg`;
                     }
