@@ -63,8 +63,10 @@
    ========================================================================== */
 
 .nav-header {
-  position: sticky;
+  position: fixed;
   top: 0;
+  left: 0;
+  right: 0;
   z-index: 50;
   background: var(--bg-nav);
   backdrop-filter: blur(var(--nav-glass-blur)) saturate(160%);
@@ -74,7 +76,9 @@
   height: var(--nav-height);
   display: flex;
   align-items: center;
-  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: background 0.35s ease,
+              border-color 0.35s ease,
+              box-shadow 0.35s ease;
 }
 
 .nav-header.nav-scrolled {
