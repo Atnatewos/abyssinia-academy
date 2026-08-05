@@ -13,6 +13,7 @@
 @import './design-system.css';
 @import './layout.css';
 @import './components.css';
+@import './responsive.css';
 
 /* ============================================================================
    CSS RESET
@@ -176,14 +177,6 @@ p, h1, h2, h3, h4, h5, h6 {
   gap: 1rem;
 }
 
-@media (min-width: 640px) {
-  .course-detail-header {
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-  }
-}
-
 .course-detail-selected {
   font-size: 0.75rem;
   font-family: var(--font-mono);
@@ -277,18 +270,4 @@ p, h1, h2, h3, h4, h5, h6 {
    ============================================================================ */
 .top-banner-sparkle {
   animation: spin 4s linear infinite;
-}
-
-/* ============================================================================
-   REDUCED MOTION
-   ============================================================================ */
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-  }
 }

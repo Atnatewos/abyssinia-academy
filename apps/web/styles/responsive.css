@@ -1,0 +1,406 @@
+/**
+ * Abyssinia Academy — Responsive Overrides
+ * Single source for all responsive breakpoints.
+ * Loaded LAST so it always overrides base styles.
+ * 
+ * Breakpoints:
+ *   xs: max-width 400px  (tiny phones)
+ *   sm: max-width 640px  (large phones)
+ *   md: max-width 768px  (tablets)
+ *   lg: max-width 1024px (small laptops / landscape tablets)
+ *   xl: max-width 900px  (profile grid breakpoint)
+ * 
+ * Desktop-first: base styles in components.css are desktop.
+ * All max-width overrides live here.
+ * 
+ * Path: apps/web/styles/responsive.css
+ */
+
+/* ============================================================================
+   ≤ 400px — Tiny Phones
+   ============================================================================ */
+@media (max-width: 400px) {
+  .referral-stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .referral-steps-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ============================================================================
+   ≤ 640px — Large Phones
+   ============================================================================ */
+@media (max-width: 640px) {
+  /* Profile */
+  .profile-header {
+    flex-direction: column;
+    text-align: center;
+  }
+  .profile-header-actions {
+    flex-direction: row;
+  }
+  .profile-header-meta {
+    justify-content: center;
+  }
+  .profile-header-badges {
+    justify-content: center;
+  }
+  .profile-quick-actions {
+    grid-template-columns: 1fr;
+  }
+  .profile-grid-sidebar {
+    position: static;
+  }
+
+  /* Checkout Modal */
+  .checkout-modal-container {
+    max-width: 100%;
+    border-radius: 1rem 1rem 0 0;
+    max-height: 95vh;
+  }
+  .checkout-modal-header {
+    padding: 1.25rem 1rem 0;
+  }
+  .checkout-modal-body {
+    padding: 1rem;
+  }
+  .checkout-modal-close {
+    top: 0.75rem;
+    right: 0.75rem;
+  }
+
+  /* Referrals */
+  .referral-stats-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .referral-earnings-grid {
+    grid-template-columns: 1fr;
+  }
+  .referral-steps-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .referral-share-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* ============================================================================
+   ≤ 767px — Profile Dropdown Hidden
+   ============================================================================ */
+@media (max-width: 767px) {
+  .nav-profile-dropdown {
+    display: none;
+  }
+
+  .nav-enrolled-indicator {
+    display: none;
+  }
+}
+
+/* ============================================================================
+   ≤ 768px — Tablets & Large Phones
+   ============================================================================ */
+@media (max-width: 768px) {
+  /* Portal Header */
+  .portal-header-redesigned {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  /* Pricing */
+  .pricing-modern {
+    padding: 1.5rem 0.75rem 3rem;
+  }
+  .pricing-modern-title {
+    font-size: 1.5rem;
+  }
+  .pricing-hero-content {
+    flex-direction: column;
+    padding: 1.5rem;
+  }
+  .pricing-hero-right {
+    flex-direction: row;
+    justify-content: space-between;
+    min-width: auto;
+  }
+  .pricing-hero-price-block {
+    align-items: flex-start;
+  }
+  .pricing-hero-amount {
+    font-size: 2rem;
+  }
+  .pricing-timeline {
+    padding-left: 2rem;
+  }
+  .pricing-timeline-marker {
+    left: -2rem;
+  }
+  .pricing-timeline-dot {
+    width: 1.75rem;
+    height: 1.75rem;
+  }
+  .pricing-sticky-cart-inner {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .phase-cart-compact {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  .phase-detail-grid {
+    grid-template-columns: 1fr;
+  }
+  .pricing-individual-container {
+    max-width: 100%;
+  }
+  .pricing-cart-sidebar {
+    max-width: 100%;
+  }
+  .pricing-full-course-section {
+    max-width: 100%;
+  }
+  .pricing-cart-section {
+    max-width: 100%;
+  }
+}
+
+/* ============================================================================
+   ≤ 900px — Profile Grid
+   ============================================================================ */
+@media (max-width: 900px) {
+  .profile-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ============================================================================
+   ≤ 1024px — Tablets Landscape & Small Laptops
+   ============================================================================ */
+@media (max-width: 1024px) {
+  /* Portal Grids */
+  .portal-grid-redesigned {
+    grid-template-columns: 1fr;
+  }
+  .portal-navigation-sidebar {
+    position: static;
+    max-height: none;
+    margin-bottom: 1.5rem;
+  }
+  .portal-v2-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* Senior Portal Layout */
+  .senior-phase-layout {
+    grid-template-columns: 1fr;
+    overflow: visible;
+    display: flex;
+    flex-direction: column;
+  }
+  .senior-accordion-column {
+    order: 2;
+    max-height: none;
+    overflow-y: visible;
+    width: 100%;
+  }
+  .senior-video-column {
+    order: 1;
+    position: sticky;
+    top: 72px;
+    z-index: 30;
+    width: 100%;
+    margin-bottom: 0;
+    background: var(--bg-main);
+    padding-bottom: 1rem;
+  }
+  .senior-video-empty {
+    display: none;
+  }
+  .senior-video-column:has(.senior-video-empty) {
+    display: none;
+  }
+}
+
+/* ============================================================================
+   ≥ 640px — Progressive Enhancements (min-width)
+   ============================================================================ */
+@media (min-width: 640px) {
+  .top-banner {
+    font-size: 0.875rem;
+  }
+  .nav-controls {
+    gap: 0.5rem;
+  }
+  .nav-enroll-btn {
+    display: block;
+  }
+  .nav-signin-btn {
+    display: flex;
+  }
+  .hero-badge {
+    font-size: 0.875rem;
+  }
+  .hero-title {
+    font-size: 3.75rem;
+  }
+  .hero-subtitle {
+    font-size: 1.25rem;
+  }
+  .hero-actions {
+    flex-direction: row;
+    justify-content: center;
+  }
+  .stats-value {
+    font-size: 1.875rem;
+  }
+  .section-title {
+    font-size: 3rem;
+  }
+  .faq-question {
+    font-size: 1rem;
+  }
+  .faq-answer-text {
+    font-size: 0.875rem;
+  }
+  .cta-banner {
+    padding: 3rem;
+  }
+  .cta-title {
+    font-size: 3rem;
+  }
+  .cta-subtitle {
+    font-size: 1rem;
+  }
+  .portal-header {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .portal-header-title {
+    font-size: 1.125rem;
+  }
+  .lesson-details-title {
+    font-size: 1.5rem;
+  }
+  .admin-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .admin-table-row {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .site-footer-inner {
+    flex-direction: row;
+    justify-content: space-between;
+  }
+}
+
+/* ============================================================================
+   ≥ 768px — Tablet & Up
+   ============================================================================ */
+@media (min-width: 768px) {
+  .nav-pills {
+    display: flex;
+  }
+  .nav-icon-label {
+    display: inline;
+  }
+  .nav-auth-group {
+    display: flex;
+  }
+  .nav-mobile-toggle {
+    display: none;
+  }
+  .nav-mobile-menu {
+    display: none;
+  }
+  .features-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .steps-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .courses-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .phases-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* ============================================================================
+   ≥ 1024px — Desktop
+   ============================================================================ */
+@media (min-width: 1024px) {
+  .nav-header {
+    padding: 0 2.5rem;
+  }
+  .nav-profile-name {
+    display: inline;
+  }
+  .hero-section {
+    padding-top: 4rem;
+  }
+  .hero-grid {
+    grid-template-columns: 7fr 5fr;
+  }
+  .hero-content {
+    text-align: left;
+  }
+  .hero-title {
+    font-size: 4.5rem;
+  }
+  .hero-actions {
+    justify-content: flex-start;
+  }
+  .stats-bar {
+    text-align: left;
+  }
+  .features-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  .steps-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  .phases-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .portal-grid {
+    grid-template-columns: 8fr 4fr;
+  }
+  .admin-stats-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  .pricing-individual-container {
+    flex-direction: row;
+    align-items: flex-start;
+  }
+  .phase-detail-grid {
+    flex: 1;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  }
+  .pricing-cart-sidebar {
+    position: sticky;
+    top: 6rem;
+    width: 300px;
+    flex-shrink: 0;
+  }
+}
+
+/* ============================================================================
+   REDUCED MOTION
+   ============================================================================ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

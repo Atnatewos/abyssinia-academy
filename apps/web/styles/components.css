@@ -45,11 +45,6 @@
   position: relative;
 }
 
-@media (min-width: 640px) {
-  .top-banner {
-    font-size: 0.875rem;
-  }
-}
 
 .top-banner-link {
   text-decoration: underline;
@@ -88,11 +83,6 @@
   box-shadow: var(--shadow-nav);
 }
 
-@media (min-width: 1024px) {
-  .nav-header {
-    padding: 0 2.5rem;
-  }
-}
 
 /* ── Inner Container ── */
 .nav-inner {
@@ -170,11 +160,6 @@
   border: 1px solid var(--border-pill);
 }
 
-@media (min-width: 768px) {
-  .nav-pills {
-    display: flex;
-  }
-}
 
 .nav-pill {
   position: relative;
@@ -228,11 +213,6 @@
   flex-shrink: 0;
 }
 
-@media (min-width: 640px) {
-  .nav-controls {
-    gap: 0.5rem;
-  }
-}
 
 /* ── Icon Button (language, theme, referrals) ── */
 .nav-icon-btn {
@@ -265,11 +245,6 @@
   display: none;
 }
 
-@media (min-width: 768px) {
-  .nav-icon-label {
-    display: inline;
-  }
-}
 
 .nav-theme-btn {
   padding: 0.45rem;
@@ -283,11 +258,6 @@
   gap: 0.35rem;
 }
 
-@media (min-width: 768px) {
-  .nav-auth-group {
-    display: flex;
-  }
-}
 
 /* ── Enrolled Badge ── */
 .nav-enrolled-badge {
@@ -364,11 +334,6 @@
   display: none;
 }
 
-@media (min-width: 1024px) {
-  .nav-profile-name {
-    display: inline;
-  }
-}
 
 /* ── Logout Button ── */
 .nav-logout-btn {
@@ -407,11 +372,6 @@
   text-decoration: none;
 }
 
-@media (min-width: 640px) {
-  .nav-enroll-btn {
-    display: block;
-  }
-}
 
 .nav-enroll-btn-bg {
   position: absolute;
@@ -476,11 +436,6 @@
   color: var(--text-nav-icon-hover);
 }
 
-@media (min-width: 768px) {
-  .nav-mobile-toggle {
-    display: none;
-  }
-}
 
 /* ── Mobile Menu ── */
 .nav-mobile-menu {
@@ -511,11 +466,6 @@
   }
 }
 
-@media (min-width: 768px) {
-  .nav-mobile-menu {
-    display: none;
-  }
-}
 
 .nav-mobile-link {
   display: flex;
@@ -592,15 +542,6 @@
 }
 
 /* Hide profile dropdown on mobile — hamburger menu handles everything */
-@media (max-width: 767px) {
-  .nav-profile-dropdown {
-    display: none;
-  }
-  
-  .nav-enrolled-indicator {
-    display: none;
-  }
-}
 
 .nav-profile-trigger {
   display: flex;
@@ -753,11 +694,6 @@
   color: var(--text-nav-icon-hover);
 }
 
-@media (min-width: 640px) {
-  .nav-signin-btn {
-    display: flex;
-  }
-}
 
 /* ── Enrolled Indicator (green dot only) ── */
 .nav-enrolled-indicator {
@@ -798,11 +734,6 @@
   margin: 0 auto;
 }
 
-@media (min-width: 1024px) {
-  .hero-section {
-    padding-top: 4rem;
-  }
-}
 
 .hero-grid {
   display: grid;
@@ -810,11 +741,6 @@
   align-items: center;
 }
 
-@media (min-width: 1024px) {
-  .hero-grid {
-    grid-template-columns: 7fr 5fr;
-  }
-}
 
 .hero-content {
   display: flex;
@@ -823,11 +749,6 @@
   text-align: center;
 }
 
-@media (min-width: 1024px) {
-  .hero-content {
-    text-align: left;
-  }
-}
 
 .hero-badge {
   display: inline-flex;
@@ -844,11 +765,6 @@
   -webkit-backdrop-filter: blur(16px);
 }
 
-@media (min-width: 640px) {
-  .hero-badge {
-    font-size: 0.875rem;
-  }
-}
 
 .hero-badge svg {
   width: 1rem;
@@ -865,17 +781,7 @@
   letter-spacing: -0.02em;
 }
 
-@media (min-width: 640px) {
-  .hero-title {
-    font-size: 3.75rem;
-  }
-}
 
-@media (min-width: 1024px) {
-  .hero-title {
-    font-size: 4.5rem;
-  }
-}
 
 .hero-subtitle {
   font-size: 1.125rem;
@@ -884,11 +790,6 @@
   line-height: 1.6;
 }
 
-@media (min-width: 640px) {
-  .hero-subtitle {
-    font-size: 1.25rem;
-  }
-}
 
 .hero-actions {
   display: flex;
@@ -898,18 +799,7 @@
   padding-top: 0.5rem;
 }
 
-@media (min-width: 640px) {
-  .hero-actions {
-    flex-direction: row;
-    justify-content: center;
-  }
-}
 
-@media (min-width: 1024px) {
-  .hero-actions {
-    justify-content: flex-start;
-  }
-}
 
 /* ============================================================================
    HERO VISUAL CARD
@@ -1086,11 +976,6 @@
   text-align: center;
 }
 
-@media (min-width: 1024px) {
-  .stats-bar {
-    text-align: left;
-  }
-}
 
 .stats-value {
   font-size: 1.5rem;
@@ -1098,11 +983,6 @@
   color: var(--accent-gold);
 }
 
-@media (min-width: 640px) {
-  .stats-value {
-    font-size: 1.875rem;
-  }
-}
 
 .stats-label {
   font-size: 0.75rem;
@@ -1137,11 +1017,6 @@
   margin-bottom: 0.75rem;
 }
 
-@media (min-width: 640px) {
-  .section-title {
-    font-size: 3rem;
-  }
-}
 
 .section-subtitle {
   font-size: 1rem;
@@ -1157,17 +1032,7 @@
   gap: 1.5rem;
 }
 
-@media (min-width: 768px) {
-  .features-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
 
-@media (min-width: 1024px) {
-  .features-grid {
-    grid-template-columns: repeat(4, 1fr);
-  }
-}
 
 .feature-card {
   background: var(--glass-bg);
@@ -1227,17 +1092,7 @@
   gap: 1.5rem;
 }
 
-@media (min-width: 768px) {
-  .steps-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
 
-@media (min-width: 1024px) {
-  .steps-grid {
-    grid-template-columns: repeat(4, 1fr);
-  }
-}
 
 .step-card {
   background: var(--glass-bg);
@@ -1307,11 +1162,6 @@
   cursor: pointer;
 }
 
-@media (min-width: 640px) {
-  .faq-question {
-    font-size: 1rem;
-  }
-}
 
 .faq-chevron {
   width: 1.25rem;
@@ -1354,11 +1204,6 @@
   margin: 0 1.25rem;
 }
 
-@media (min-width: 640px) {
-  .faq-answer-text {
-    font-size: 0.875rem;
-  }
-}
 
 /* ============================================================================
    CTA BANNER
@@ -1376,11 +1221,6 @@
   overflow: hidden;
 }
 
-@media (min-width: 640px) {
-  .cta-banner {
-    padding: 3rem;
-  }
-}
 
 .cta-glow {
   position: absolute;
@@ -1399,11 +1239,6 @@
   margin-bottom: 1rem;
 }
 
-@media (min-width: 640px) {
-  .cta-title {
-    font-size: 3rem;
-  }
-}
 
 .cta-subtitle {
   font-size: 0.875rem;
@@ -1412,11 +1247,6 @@
   margin: 0 auto 1.5rem;
 }
 
-@media (min-width: 640px) {
-  .cta-subtitle {
-    font-size: 1rem;
-  }
-}
 
 /* ============================================================================
    COURSE CARD
@@ -1427,11 +1257,6 @@
   gap: 2rem;
 }
 
-@media (min-width: 768px) {
-  .courses-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
 
 .course-card {
   background: var(--glass-bg);
@@ -1572,17 +1397,7 @@
   gap: 2rem;
 }
 
-@media (min-width: 768px) {
-  .phases-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
 
-@media (min-width: 1024px) {
-  .phases-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
 
 .phase-card {
   background: var(--glass-bg);
@@ -1811,13 +1626,6 @@
   padding: 1rem;
 }
 
-@media (min-width: 640px) {
-  .portal-header {
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-  }
-}
 
 .portal-header-info {
   display: flex;
@@ -1848,11 +1656,6 @@
   color: var(--text-main);
 }
 
-@media (min-width: 640px) {
-  .portal-header-title {
-    font-size: 1.125rem;
-  }
-}
 
 .portal-header-subtitle {
   font-size: 0.75rem;
@@ -1864,11 +1667,6 @@
   gap: 1.5rem;
 }
 
-@media (min-width: 1024px) {
-  .portal-grid {
-    grid-template-columns: 8fr 4fr;
-  }
-}
 
 /* ============================================================================
    VIDEO PLAYER
@@ -1993,11 +1791,6 @@
   color: var(--text-main);
 }
 
-@media (min-width: 640px) {
-  .lesson-details-title {
-    font-size: 1.5rem;
-  }
-}
 
 /* ============================================================================
    COMPLETE BUTTON
@@ -3088,17 +2881,7 @@
   gap: 1.5rem;
 }
 
-@media (min-width: 640px) {
-  .admin-stats-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
 
-@media (min-width: 1024px) {
-  .admin-stats-grid {
-    grid-template-columns: repeat(4, 1fr);
-  }
-}
 
 .admin-stat-card {
   background: var(--glass-bg);
@@ -3155,13 +2938,6 @@
   margin-bottom: 0.75rem;
 }
 
-@media (min-width: 640px) {
-  .admin-table-row {
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-  }
-}
 
 .admin-table-info {
   flex: 1;
@@ -3379,12 +3155,6 @@
   gap: 1rem;
 }
 
-@media (min-width: 640px) {
-  .site-footer-inner {
-    flex-direction: row;
-    justify-content: space-between;
-  }
-}
 
 .site-footer-info {
   display: flex;
@@ -3418,11 +3188,6 @@
   gap: 2rem;
 }
 
-@media (max-width: 1024px) {
-  .portal-grid-redesigned {
-    grid-template-columns: 1fr;
-  }
-}
 
 /* ============================================================================
    PORTAL NAVIGATION SIDEBAR
@@ -3886,20 +3651,7 @@
    RESPONSIVE
    ============================================================================ */
 
-@media (max-width: 1024px) {
-  .portal-navigation-sidebar {
-    position: static;
-    max-height: none;
-    margin-bottom: 1.5rem;
-  }
-}
 
-@media (max-width: 768px) {
-  .portal-header-redesigned {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-}
 
 /* ============================================================================
    VIDEO PLAYER OVERLAY
@@ -4184,11 +3936,6 @@
   align-items: start;
 }
 
-@media (max-width: 1024px) {
-  .portal-v2-grid {
-    grid-template-columns: 1fr;
-  }
-}
 
 /* ============================================================================
    VIDEO OVERLAY V2
@@ -4772,14 +4519,6 @@
   overflow: hidden;
 }
 
-@media (max-width: 1024px) {
-  .senior-phase-layout {
-    grid-template-columns: 1fr;
-    overflow: visible;
-    display: flex;
-    flex-direction: column;
-  }
-}
 
 /* ── Accordion Column — LEFT side on desktop ── */
 .senior-accordion-column {
@@ -4804,14 +4543,6 @@
   border-radius: 10px;
 }
 
-@media (max-width: 1024px) {
-  .senior-accordion-column {
-    order: 2;
-    max-height: none;
-    overflow-y: visible;
-    width: 100%;
-  }
-}
 
 /* ── Video Column — RIGHT side on desktop, sticky top on mobile ── */
 .senior-video-column {
@@ -4884,33 +4615,6 @@
 }
 
 /* ── Mobile: video sticky at top, weeks scroll below independently ── */
-@media (max-width: 1024px) {
-  .senior-video-column {
-    order: 1;
-    position: sticky;
-    top: 72px;
-    z-index: 30;
-    width: 100%;
-    margin-bottom: 0;
-    background: var(--bg-main);
-    padding-bottom: 1rem;
-  }
-
-  .senior-video-empty {
-    display: none;
-  }
-
-  .senior-video-column:has(.senior-video-empty) {
-    display: none;
-  }
-
-  .senior-accordion-column {
-    order: 2;
-    max-height: none;
-    overflow-y: visible;
-    width: 100%;
-  }
-}
 
 .senior-video-card {
   background: var(--glass-bg);
@@ -6306,38 +6010,7 @@
    PRICING PAGE — RESPONSIVE
    ============================================================ */
 
-@media (max-width: 768px) {
-  .phase-detail-grid {
-    grid-template-columns: 1fr;
-  }
 
-  .pricing-individual-container {
-    max-width: 100%;
-  }
-
-  .pricing-cart-sidebar {
-    max-width: 100%;
-  }
-}
-
-@media (min-width: 1024px) {
-  .pricing-individual-container {
-    flex-direction: row;
-    align-items: flex-start;
-  }
-
-  .phase-detail-grid {
-    flex: 1;
-    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-  }
-
-  .pricing-cart-sidebar {
-    position: sticky;
-    top: 6rem;
-    width: 300px;
-    flex-shrink: 0;
-  }
-}
 
 /* ============================================================
    PRICING PAGE — FULL COURSE SECTION
@@ -6460,19 +6133,6 @@
    PRICING PAGE — RESPONSIVE
    ============================================================ */
 
-@media (max-width: 768px) {
-  .phase-detail-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .pricing-full-course-section {
-    max-width: 100%;
-  }
-
-  .pricing-cart-section {
-    max-width: 100%;
-  }
-}
 
 /* ============================================================
    PRICING MODERN — FULL REDESIGN
@@ -7170,58 +6830,6 @@
    RESPONSIVE
    ============================================================ */
 
-@media (max-width: 768px) {
-  .pricing-modern {
-    padding: 1.5rem 0.75rem 3rem;
-  }
-
-  .pricing-modern-title {
-    font-size: 1.5rem;
-  }
-
-  .pricing-hero-content {
-    flex-direction: column;
-    padding: 1.5rem;
-  }
-
-  .pricing-hero-right {
-    flex-direction: row;
-    justify-content: space-between;
-    min-width: auto;
-  }
-
-  .pricing-hero-price-block {
-    align-items: flex-start;
-  }
-
-  .pricing-hero-amount {
-    font-size: 2rem;
-  }
-
-  .pricing-timeline {
-    padding-left: 2rem;
-  }
-
-  .pricing-timeline-marker {
-    left: -2rem;
-  }
-
-  .pricing-timeline-dot {
-    width: 1.75rem;
-    height: 1.75rem;
-  }
-
-  .pricing-sticky-cart-inner {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .phase-cart-compact {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.5rem;
-  }
-}
 
 /* ============================================================
    COUNTDOWN BANNER — Pricing Page
@@ -7496,26 +7104,6 @@
    MODAL RESPONSIVE
    ============================================================ */
 
-@media (max-width: 640px) {
-  .checkout-modal-container {
-    max-width: 100%;
-    border-radius: 1rem 1rem 0 0;
-    max-height: 95vh;
-  }
-
-  .checkout-modal-header {
-    padding: 1.25rem 1rem 0;
-  }
-
-  .checkout-modal-body {
-    padding: 1rem;
-  }
-
-  .checkout-modal-close {
-    top: 0.75rem;
-    right: 0.75rem;
-  }
-}
 
 /* ============================================================
    PROFILE PAGE
@@ -7650,9 +7238,6 @@
 /* Profile Grid */
 .profile-grid { display: grid; grid-template-columns: 1fr 340px; gap: 1.5rem; align-items: start; }
 
-@media (max-width: 900px) {
-  .profile-grid { grid-template-columns: 1fr; }
-}
 
 .profile-grid-main { display: flex; flex-direction: column; gap: 1.5rem; }
 .profile-grid-sidebar { display: flex; flex-direction: column; gap: 1.5rem; position: sticky; top: 6rem; }
@@ -7811,14 +7396,6 @@
 .profile-form-submit:disabled { opacity: 0.5; cursor: not-allowed; }
 
 /* Profile Responsive */
-@media (max-width: 640px) {
-  .profile-header { flex-direction: column; text-align: center; }
-  .profile-header-actions { flex-direction: row; }
-  .profile-header-meta { justify-content: center; }
-  .profile-header-badges { justify-content: center; }
-  .profile-quick-actions { grid-template-columns: 1fr; }
-  .profile-grid-sidebar { position: static; }
-}
 
 /* ============================================================
    REFERRAL SYSTEM STYLES
@@ -8549,33 +8126,7 @@
    RESPONSIVE — Referral & Discount
    ============================================================ */
 
-@media (max-width: 640px) {
-  .referral-stats-grid {
-    grid-template-columns: 1fr 1fr;
-  }
 
-  .referral-earnings-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .referral-steps-grid {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  .referral-share-grid {
-    grid-template-columns: 1fr 1fr;
-  }
-}
-
-@media (max-width: 400px) {
-  .referral-stats-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .referral-steps-grid {
-    grid-template-columns: 1fr;
-  }
-}
 
 /* Referral Link Row with Copy Button */
 .referral-link-row {
