@@ -8,6 +8,7 @@
 import { Pool } from 'pg';
 import jwt from 'jsonwebtoken';
 import { getReferralCodeGenConfig } from '../../../lib/config';
+import { buildReferralUrl } from '../../../lib/url';
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -166,8 +167,7 @@ export default async function handler(req, res) {
       /*
        * Build the referral link using the frontend URL from environment
        */
-      const baseUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-      const referralLink = `${baseUrl}/register?ref=${row.code}`;
+      const referralLink = buildReferralUrl(row.code, req);
 
       res.status(200).json({
         success: true,

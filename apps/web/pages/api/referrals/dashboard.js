@@ -7,6 +7,7 @@
 import { Pool } from 'pg';
 import jwt from 'jsonwebtoken';
 import { getReferralTierByCount, getReferralTiers, getReferralDashboardConfig } from '../../../lib/config';
+import { buildReferralUrl } from '../../../lib/url';
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -119,8 +120,7 @@ export default async function handler(req, res) {
     /*
      * Build the referral link
      */
-    const baseUrl = process.env.FRONTEND_URL || 'https://abyssinia.academy';
-    const referralLink = `${baseUrl}/register?ref=${codeData.code}`;
+    const referralLink = buildReferralUrl(codeData.code, req);
 
     res.status(200).json({
       success: true,
