@@ -23,42 +23,6 @@ const landingConfig = {
         href: '/pricing',
         icon: 'Zap',
       },
-        /*
-      * Discussion Videos — Live Q&A recordings for the landing page
-      * All videos are public (marketing content)
-      */
-  /*
-   * Discussion Videos — Live Q&A recordings for the landing page
-   * All videos are PUBLIC (marketing content).
-   * youtubeId: the YouTube video ID (the part after ?v= in the URL)
-   * thumbnail: optional custom thumbnail URL (leave empty to use YouTube default)
-   */
-      discussionVideos: [
-        {
-          youtubeId: 's6kPODxyRfg',
-          title: 'Phase 1 — Basic Computer Skills & Web Mechanics Discussion',
-          duration: '45:20',
-          thumbnail: '',
-        },
-        {
-          youtubeId: 'nZqcWgwucGA',
-          title: 'Phase 1 — HTML Basics Live Q&A Session',
-          duration: '32:15',
-          thumbnail: '',
-        },
-        {
-          youtubeId: '99ujQ2Hvnew',
-          title: 'Phase 1 — CSS Styling & Layout Discussion',
-          duration: '58:40',
-          thumbnail: '',
-        },
-        {
-          youtubeId: 'ED7w3dmtV6E',
-          title: 'Phase 1 — Apple.com Rebuild Project Review',
-          duration: '42:10',
-          thumbnail: '',
-        },
-      ],
     },
   },
 
@@ -130,6 +94,41 @@ const landingConfig = {
       href: '/pricing',
     },
   },
+
+  /*
+   * Discussion Videos — Live Q&A recordings for the landing page
+   * All videos are PUBLIC (marketing content).
+   * youtubeId: accepts both full URL and plain ID — auto-extracted
+   *   ✅ 'https://www.youtube.com/watch?v=vx4tXeIBTNY'
+   *   ✅ 'https://youtu.be/vx4tXeIBTNY'
+   *   ✅ 'vx4tXeIBTNY'
+   */
+  discussionVideos: [
+    {
+      youtubeId: 'https://www.youtube.com/watch?v=vx4tXeIBTNY',
+      title: 'ለ2030 እንዴት እንዘጋጅ? - EPS I',
+      duration: '02:42:00',
+      thumbnail: '',
+    },
+    {
+      youtubeId: 'https://www.youtube.com/watch?v=baLf033SUkg',
+      title: '2030 በAI ላለመተካት እንዴት እንዘጋጅ? - EPS II',
+      duration: '02:12:16',
+      thumbnail: '',
+    },
+    {
+      youtubeId: 'https://www.youtube.com/watch?v=jRU0VJXJdZg',
+      title: 'ከየት ልጀምር? 99%ቱ ተመልካች ማለፍ ያቃተው ስቴፕ',
+      duration: '13:28',
+      thumbnail: '',
+    },
+    {
+      youtubeId: 'https://www.youtube.com/watch?v=atnhAVi3cOc',
+      title: 'Coding ግን ለኔ አይከብደኝም?',
+      duration: '11:48',
+      thumbnail: '',
+    },
+  ],
 };
 
 module.exports = landingConfig;

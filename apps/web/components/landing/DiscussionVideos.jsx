@@ -1,7 +1,7 @@
 /**
  * @fileoverview Discussion Videos — 3D Cinema Wall
  * Curved carousel of teacher-student discussion recordings.
- * Video URLs from landing.config.js — zero hardcoded values.
+ * Video URLs from landing.config.js — accepts full URLs or plain IDs.
  * All videos are PUBLIC (marketing content, no auth required).
  * 
  * Path: apps/web/components/landing/DiscussionVideos.jsx
@@ -13,12 +13,56 @@ import { useLanguage } from '../../context/LanguageContext';
 import { getLandingConfig } from '../../lib/config';
 
 /**
+ * Extract the YouTube video ID from a full URL or plain ID.
+ * Supports all YouTube URL formats.
+ * 
+ * @param {string} input - Full YouTube URL or plain video ID
+ * @returns {string} YouTube video ID
+ */
+const extractYouTubeId = (input) => {
+  if (!input) return '';
+
+  /*
+   * If it's already a plain 11-character ID, return as-is
+   */
+  if (/^[a-zA-Z0-9_-]{11}$/.test(input)) return input;
+
+  /*
+   * Try to extract from various YouTube URL formats
+   */
+  const patterns = [
+    /(?:youtube\.com\/watch\?v=)([a-zA-Z0-9_-]{11})/,
+    /(?:youtu\.be\/)([a-zA-Z0-9_-]{11})/,
+    /(?:youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/,
+    /(?:youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/,
+  ];
+
+  for (const pattern of patterns) {
+    const match = input.match(pattern);
+    if (match) return match[1];
+  }
+
+  /*
+   * Fallback: return the input as-is (best effort)
+   */
+  return input;
+};
+
+/**
  * DiscussionVideos — 3D curved video carousel with YouTube embed modal.
  */
 const DiscussionVideos = () => {
   const { t } = useLanguage();
   const landingConfig = getLandingConfig();
-  const videos = landingConfig.discussionVideos || [];
+  const rawVideos = landingConfig.discussionVideos || [];
+
+  /*
+   * Process videos: extract YouTube IDs from whatever format was provided
+   */
+  const videos = rawVideos.map((video) => ({
+    ...video,
+    youtubeId: extractYouTubeId(video.youtubeId),
+  }));
 
   const [activeIndex, setActiveIndex] = useState(0);
   const [modalOpen, setModalOpen] = useState(false);
