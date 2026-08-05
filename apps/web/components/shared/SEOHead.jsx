@@ -3,12 +3,8 @@
  * Dynamic meta tags for social sharing previews, search engines, and messaging apps.
  * Auto-detects the current domain — zero hardcoded URLs.
  * 
- * Features:
- * - Open Graph tags (Facebook, LinkedIn, Discord, WhatsApp, Telegram, iMessage)
- * - Twitter Card tags (X/Twitter)
- * - Auto-detected canonical URLs from the browser/request
- * - Absolute image URLs for external previews
- * - Config-driven brand identity from platform.config.js
+ * When no image is provided, social platforms will scrape the page's visible
+ * hero content (headings, descriptions, logos) and generate a preview automatically.
  * 
  * Path: apps/web/components/shared/SEOHead.jsx
  */
@@ -19,24 +15,24 @@ import { getBaseUrl } from '../../lib/url';
 
 /**
  * SEOHead — Renders dynamic <head> meta tags for rich link previews.
- * Every URL is absolute (auto-detected domain) so previews work on any platform.
+ * 
+ * Preview priority:
+ * 1. If `image` prop is provided → uses that image
+ * 2. If no image → Facebook/Twitter/Discord will scrape the page's hero section
+ *    and generate a preview from the visible content (title, logo, heading)
  *
  * @param {object} props
- * @param {string} [props.title] - Page-specific title (appended to site name)
+ * @param {string} [props.title] - Page-specific title
  * @param {string} [props.description] - Page-specific meta description
- * @param {string} [props.image] - Open Graph image path (e.g., '/images/og-default.jpg')
- * @param {string} [props.url] - Canonical URL path (e.g., '/courses/fullstack')
+ * @param {string} [props.image] - Optional custom OG image path
+ * @param {string} [props.url] - Canonical URL path
  */
 const SEOHead = ({
   title = '',
   description = '',
-  image = '/images/og-default.png',
+  image = '',
   url = '',
 }) => {
-  /*
-   * Load brand identity from platform config
-   * All values sourced from packages/shared/config/platform.config.js
-   */
   const platformConfig = getPlatform();
   const brand = platformConfig.brand || {};
 
@@ -45,19 +41,9 @@ const SEOHead = ({
   const pageTitle = title ? `${title} | ${siteName}` : `${siteName} — ${tagline}`;
   const pageDescription = description || tagline;
 
-  /*
-   * Auto-detect the base URL — works on localhost, Vercel preview, and production.
-   * No .env or config changes needed when switching domains.
-   */
   const baseUrl = getBaseUrl();
-
-  /*
-   * Build absolute URLs for canonical and image.
-   * External platforms (Facebook, Twitter, Telegram, etc.) require absolute URLs
-   * to fetch the preview image. Relative paths will NOT work.
-   */
   const canonicalUrl = url ? `${baseUrl}${url}` : baseUrl;
-  const imageUrl = image.startsWith('http') ? image : `${baseUrl}${image}`;
+  const imageUrl = image ? (image.startsWith('http') ? image : `${baseUrl}${image}`) : '';
 
   return (
     <Head>
@@ -70,25 +56,39 @@ const SEOHead = ({
       <meta name="application-name" content={siteName} />
       <link rel="canonical" href={canonicalUrl} />
 
-      {/* ── Open Graph (Facebook, LinkedIn, Discord, WhatsApp, Telegram, iMessage, Slack) ── */}
+      {/* ── Open Graph (Facebook, LinkedIn, Discord, WhatsApp, Telegram, Slack) ── */}
       <meta property="og:type" content="website" />
       <meta property="og:url" content={canonicalUrl} />
       <meta property="og:title" content={pageTitle} />
       <meta property="og:description" content={pageDescription} />
-      <meta property="og:image" content={imageUrl} />
-      <meta property="og:image:width" content="1200" />
-      <meta property="og:image:height" content="630" />
-      <meta property="og:image:alt" content={pageTitle} />
       <meta property="og:site_name" content={siteName} />
       <meta property="og:locale" content="en_US" />
 
+      {/* 
+       * If an image is provided, use it with dimensions.
+       * If no image, the platform scrapers will auto-generate a preview
+       * from the page's hero section (logo, heading, description).
+       */}
+      {imageUrl && (
+        <>
+          <meta property="og:image" content={imageUrl} />
+          <meta property="og:image:width" content="1200" />
+          <meta property="og:image:height" content="630" />
+          <meta property="og:image:alt" content={pageTitle} />
+        </>
+      )}
+
       {/* ── Twitter / X Card ── */}
-      <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:card" content={imageUrl ? 'summary_large_image' : 'summary'} />
       <meta name="twitter:url" content={canonicalUrl} />
       <meta name="twitter:title" content={pageTitle} />
       <meta name="twitter:description" content={pageDescription} />
-      <meta name="twitter:image" content={imageUrl} />
-      <meta name="twitter:image:alt" content={pageTitle} />
+      {imageUrl && (
+        <>
+          <meta name="twitter:image" content={imageUrl} />
+          <meta name="twitter:image:alt" content={pageTitle} />
+        </>
+      )}
 
       {/* ── Icons ── */}
       <link rel="icon" type="image/svg+xml" href="/images/logo.svg" />
