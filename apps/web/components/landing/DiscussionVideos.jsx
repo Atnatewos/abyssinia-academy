@@ -1,7 +1,7 @@
 /**
  * @fileoverview Discussion Videos — Equal Card Grid
- * Same card grid layout as pricing cards. Click opens YouTube embed modal.
- * Thumbnails auto-generated from YouTube video IDs.
+ * Same card grid layout as pricing cards. Click opens YouTube embed modal
+ * or opens in a new tab. Thumbnails auto-generated from YouTube video IDs.
  * All videos from landing.config.js — accepts full URLs or plain IDs.
  * All videos are PUBLIC (marketing content, no auth required).
  * 
@@ -9,7 +9,7 @@
  */
 
 import { useState, useCallback } from 'react';
-import { Play, X, Clock } from 'lucide-react';
+import { Play, X, Clock, ExternalLink } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { getLandingConfig } from '../../lib/config';
 
@@ -49,16 +49,18 @@ const extractYouTubeId = (input) => {
  */
 const getThumbnailUrl = (videoId) => {
   if (!videoId) return '';
-  /*
-   * YouTube thumbnail sizes:
-   * - default.jpg (120x90)
-   * - mqdefault.jpg (320x180)  
-   * - hqdefault.jpg (480x360)
-   * - sddefault.jpg (640x480)
-   * - maxresdefault.jpg (1280x720)
-   * hqdefault is most reliable — always available
-   */
   return `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+};
+
+/**
+ * Build a full YouTube watch URL from a video ID.
+ * 
+ * @param {string} videoId - YouTube video ID
+ * @returns {string} Full YouTube watch URL
+ */
+const getYouTubeUrl = (videoId) => {
+  if (!videoId) return '#';
+  return `https://www.youtube.com/watch?v=${videoId}`;
 };
 
 /**
@@ -87,12 +89,21 @@ const DiscussionVideos = () => {
   if (videos.length === 0) return null;
 
   /**
-   * Open the video modal
+   * Open the video modal (plays embedded on site)
    */
-  const handleOpenModal = (youtubeId) => {
+  const handleOpenModal = (youtubeId, e) => {
+    e.stopPropagation();
     setModalVideoId(youtubeId);
     setModalOpen(true);
     document.body.style.overflow = 'hidden';
+  };
+
+  /**
+   * Open the video in a new YouTube tab
+   */
+  const handleOpenNewTab = (youtubeId, e) => {
+    e.stopPropagation();
+    window.open(getYouTubeUrl(youtubeId), '_blank', 'noopener,noreferrer');
   };
 
   /**
@@ -131,10 +142,10 @@ const DiscussionVideos = () => {
                 '--card-accent-bg': 'rgba(239, 68, 68, 0.06)',
                 cursor: 'pointer',
               }}
-              onClick={() => handleOpenModal(video.youtubeId)}
             >
-              {/* ── Thumbnail ── */}
+              {/* ── Thumbnail — click opens modal ── */}
               <div
+                onClick={(e) => handleOpenModal(video.youtubeId, e)}
                 style={{
                   position: 'relative',
                   aspectRatio: '16 / 9',
@@ -156,12 +167,9 @@ const DiscussionVideos = () => {
                     transition: 'opacity 0.3s ease',
                   }}
                   onError={(e) => {
-                    /*
-                     * Fallback: if hqdefault fails, try mqdefault
-                     */
-                    const videoId = extractYouTubeId(video.youtubeId);
-                    if (videoId && !e.target.src.includes('mqdefault')) {
-                      e.target.src = `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
+                    const vidId = extractYouTubeId(video.youtubeId);
+                    if (vidId && !e.target.src.includes('mqdefault')) {
+                      e.target.src = `https://img.youtube.com/vi/${vidId}/mqdefault.jpg`;
                     }
                   }}
                 />
@@ -174,7 +182,9 @@ const DiscussionVideos = () => {
                     alignItems: 'center',
                     justifyContent: 'center',
                     background: 'rgba(0, 0, 0, 0.2)',
+                    transition: 'background 0.3s ease',
                   }}
+                  className="video-thumb-overlay"
                 >
                   <div className="landing-discussion-play">
                     <Play size={20} fill="#0f172a" />
@@ -206,19 +216,38 @@ const DiscussionVideos = () => {
                 </p>
               )}
 
-              {/* Spacer to push CTA to bottom */}
+              {/* Spacer to push buttons to bottom */}
               <div style={{ flex: 1 }} />
 
-              {/* ── CTA ── */}
-              <div
-                className="landing-pricing-equal-cta"
-                style={{
-                  borderColor: 'rgba(239, 68, 68, 0.25)',
-                  color: '#ef4444',
-                }}
-              >
-                <Play size={14} />
-                <span>{t.landing?.discussions?.watchNow || 'Watch Now'}</span>
+              {/* ── Action Buttons ── */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                {/* Watch Now — opens modal */}
+                <button
+                  className="landing-pricing-equal-cta"
+                  style={{
+                    borderColor: 'rgba(239, 68, 68, 0.25)',
+                    color: '#ef4444',
+                  }}
+                  onClick={(e) => handleOpenModal(video.youtubeId, e)}
+                >
+                  <Play size={14} />
+                  <span>{t.landing?.discussions?.watchNow || 'Watch Now'}</span>
+                </button>
+
+                {/* Open in YouTube — new tab */}
+                <button
+                  className="landing-pricing-equal-cta"
+                  style={{
+                    borderColor: 'rgba(148, 163, 184, 0.2)',
+                    color: 'var(--text-muted)',
+                    fontSize: '0.75rem',
+                    padding: '0.5rem 1rem',
+                  }}
+                  onClick={(e) => handleOpenNewTab(video.youtubeId, e)}
+                >
+                  <ExternalLink size={13} />
+                  <span>{t.landing?.discussions?.openInYouTube || 'Open in YouTube'}</span>
+                </button>
               </div>
             </div>
           ))}
