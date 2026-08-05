@@ -739,6 +739,33 @@ const am = {
     valueTooHighFixed: 'ከፍተኛው ቋሚ ቅናሽ {max} ETB ነው።',
   },
 
+    /*
+   * Contact Page
+   */
+  contact: {
+    title: 'ያግኙን',
+    subtitle: 'እኛ ለመርዳት እዚህ ነን። እኛን ለማግኘት የተሻለውን መንገድ ይምረጡ።',
+    telegramTitle: 'የቴሌግራም ማህበረሰብ',
+    telegramDesc: 'ለቀጥታ ማንቶርሺፕ እና የእኩዮች ድጋፍ የግል የቴሌግራም ቡድናችንን ይቀላቀሉ።',
+    faqTitle: 'ተደጋጋሚ ጥያቄዎች',
+    faqDesc: 'ስለ ምዝገባ፣ ክፍያዎች እና የኮርስ መዳረሻ ለተለመዱ ጥያቄዎች ፈጣን መልስ ያግኙ።',
+    coursesTitle: 'የኮርስ መረጃ',
+    coursesDesc: 'ሙሉውን የኮርስ ካታሎጋችንን ያስሱ እና ባለ 5-ምዕራፍ ሥርዓተ ትምህርት ይመልከቱ።',
+    directTitle: 'ቀጥተኛ ግንኙነት ይመርጣሉ?',
+    directDesc: 'በማንኛውም ጊዜ ቡድናችንን ያግኙ። በተለምዶ በጥቂት ሰዓታት ውስጥ ምላሽ እንሰጣለን።',
+    telegramSupport: 'የቴሌግራም ድጋፍ',
+  },
+
+  /*
+   * Referral Code Input (Register Page)
+   */
+  referrals: {
+    // ... existing keys ...
+    haveReferralCode: 'የማጣቀሻ ኮድ አለዎት?',
+    enterReferralCode: 'የማጣቀሻ ኮድ ያስገቡ',
+    // ... rest remains ...
+  },
+
 };
 
 module.exports = am;

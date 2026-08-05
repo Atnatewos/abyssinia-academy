@@ -1,14 +1,14 @@
 /**
  * @fileoverview Registration Page
  * New student account creation form with referral code support.
- * Accepts ?ref= parameter from referral links.
+ * Accepts ?ref= parameter from referral links OR manual referral code input.
  * Path: apps/web/pages/auth/register.jsx
  */
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
-import { Eye, EyeOff, UserPlus, ArrowLeft, Gift } from 'lucide-react';
+import { Eye, EyeOff, UserPlus, ArrowLeft, Gift, Tag, Check, Loader } from 'lucide-react';
 import SEOHead from '../../components/shared/SEOHead';
 import PageLayout from '../../components/shared/PageLayout';
 import { useLanguage } from '../../context/LanguageContext';
@@ -19,8 +19,7 @@ import { getReferralConfig } from '../../lib/config';
 
 /**
  * RegisterPage — Student registration with optional referral code.
- * If a ?ref= parameter is present in the URL, the referral code is
- * automatically applied and validated.
+ * Referral code can come from ?ref= URL parameter OR manual input.
  */
 const RegisterPage = () => {
   const router = useRouter();
@@ -42,12 +41,15 @@ const RegisterPage = () => {
   const [errors, setErrors] = useState({});
 
   /*
-   * Referral state
+   * Referral state — supports both URL param AND manual input
    */
   const [referralCode, setReferralCode] = useState('');
+  const [referralInputValue, setReferralInputValue] = useState('');
   const [referralData, setReferralData] = useState(null);
   const [referralValidating, setReferralValidating] = useState(false);
   const [referralError, setReferralError] = useState(null);
+  const [referralApplied, setReferralApplied] = useState(false);
+  const [showReferralInput, setShowReferralInput] = useState(false);
 
   /*
    * Extract referral code from URL query parameter on mount
@@ -58,35 +60,61 @@ const RegisterPage = () => {
     if (refCode && typeof refCode === 'string' && refCode.trim()) {
       const cleanCode = refCode.trim().toUpperCase();
       setReferralCode(cleanCode);
-
-      /*
-       * Validate the referral code against the API
-       */
-      const validateReferralCode = async () => {
-        setReferralValidating(true);
-        setReferralError(null);
-
-        try {
-          const response = await apiClient.get(`/referrals/validate/${cleanCode}`);
-
-          if (response && response.success) {
-            setReferralData(response.data);
-          } else {
-            setReferralError(t.referrals?.invalidCode || 'Invalid referral code.');
-          }
-        } catch (err) {
-          const message = err?.response?.data?.message
-            || t.referrals?.invalidCode
-            || 'Invalid referral code.';
-          setReferralError(message);
-        } finally {
-          setReferralValidating(false);
-        }
-      };
-
-      validateReferralCode();
+      setReferralInputValue(cleanCode);
+      validateAndApplyReferral(cleanCode);
     }
-  }, [router.query.ref, t]);
+  }, [router.query.ref]);
+
+  /**
+   * Validate a referral code against the API and apply if valid
+   */
+  const validateAndApplyReferral = async (code) => {
+    setReferralValidating(true);
+    setReferralError(null);
+
+    try {
+      const response = await apiClient.get(`/referrals/validate/${code}`);
+
+      if (response && response.success) {
+        setReferralData(response.data);
+        setReferralCode(code);
+        setReferralApplied(true);
+      } else {
+        setReferralError(t.referrals?.invalidCode || 'Invalid referral code.');
+        setReferralApplied(false);
+      }
+    } catch (err) {
+      const message = err?.response?.data?.message
+        || t.referrals?.invalidCode
+        || 'Invalid referral code.';
+      setReferralError(message);
+      setReferralApplied(false);
+    } finally {
+      setReferralValidating(false);
+    }
+  };
+
+  /**
+   * Handle manual referral code apply button
+   */
+  const handleApplyReferral = () => {
+    if (!referralInputValue.trim()) return;
+
+    const cleanCode = referralInputValue.trim().toUpperCase();
+    setReferralCode(cleanCode);
+    validateAndApplyReferral(cleanCode);
+  };
+
+  /**
+   * Remove the applied referral code
+   */
+  const handleRemoveReferral = () => {
+    setReferralCode('');
+    setReferralInputValue('');
+    setReferralData(null);
+    setReferralError(null);
+    setReferralApplied(false);
+  };
 
   /**
    * Handle form field changes
@@ -146,7 +174,7 @@ const RegisterPage = () => {
       /*
        * Attach referral code if present and valid
        */
-      if (referralCode && referralData) {
+      if (referralApplied && referralCode && referralData) {
         payload.referralCode = referralCode;
       }
 
@@ -188,14 +216,14 @@ const RegisterPage = () => {
               <h1 className="auth-title">{t.auth?.register || 'Create Account'}</h1>
               <p className="auth-subtitle">Join Abyssinia Academy and start learning</p>
 
-              {/* Referral Banner */}
-              {referralValidating && (
+              {/* ── Referral Banner (from URL param — auto-applied) ── */}
+              {referralValidating && !referralInputValue && (
                 <div className="referral-register-banner loading">
                   <span>Validating referral code...</span>
                 </div>
               )}
 
-              {referralData && !referralError && (
+              {referralData && referralApplied && !referralError && (
                 <div className="referral-register-banner success">
                   <Gift size={18} />
                   <div>
@@ -211,7 +239,7 @@ const RegisterPage = () => {
                 </div>
               )}
 
-              {referralError && (
+              {referralError && !referralApplied && (
                 <div className="referral-register-banner error">
                   <span>{referralError}</span>
                 </div>
@@ -310,21 +338,128 @@ const RegisterPage = () => {
                   {errors.confirmPassword && <p className="auth-error">{errors.confirmPassword}</p>}
                 </div>
 
-                {/* Referral Code Display (read-only if from URL) */}
-                {referralCode && (
+                {/* ── Manual Referral Code Input ── */}
+                {!referralApplied && (
                   <div className="auth-field">
-                    <label>{t.referrals?.yourCode || 'Referral Code'}</label>
-                    <input
-                      type="text"
-                      value={referralCode}
-                      readOnly={referralConfig.registration?.allowCodeChange === false}
-                      className="auth-input"
-                      style={{ fontFamily: 'var(--font-mono)', letterSpacing: '0.05em' }}
-                    />
+                    {!showReferralInput ? (
+                      <button
+                        type="button"
+                        onClick={() => setShowReferralInput(true)}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.5rem',
+                          fontSize: '0.8125rem',
+                          color: 'var(--accent-gold)',
+                          fontWeight: 600,
+                          background: 'none',
+                          border: 'none',
+                          cursor: 'pointer',
+                          padding: 0,
+                        }}
+                      >
+                        <Tag size={14} />
+                        {t.referrals?.haveReferralCode || 'Have a referral code?'}
+                      </button>
+                    ) : (
+                      <div>
+                        <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '0.375rem', display: 'block' }}>
+                          {t.referrals?.enterReferralCode || 'Enter Referral Code'}
+                        </label>
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                          <input
+                            type="text"
+                            value={referralInputValue}
+                            onChange={(e) => setReferralInputValue(e.target.value.toUpperCase())}
+                            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleApplyReferral(); } }}
+                            placeholder="ABY123XYZ"
+                            className="auth-input"
+                            style={{ fontFamily: 'var(--font-mono)', letterSpacing: '0.05em', flex: 1 }}
+                            maxLength={20}
+                            disabled={referralValidating}
+                          />
+                          <button
+                            type="button"
+                            onClick={handleApplyReferral}
+                            disabled={referralValidating || !referralInputValue.trim()}
+                            style={{
+                              padding: '0.5rem 1rem',
+                              borderRadius: '0.5rem',
+                              background: 'var(--accent-gold)',
+                              color: '#0f172a',
+                              fontWeight: 700,
+                              fontSize: '0.75rem',
+                              border: 'none',
+                              cursor: 'pointer',
+                              whiteSpace: 'nowrap',
+                              opacity: referralValidating || !referralInputValue.trim() ? 0.5 : 1,
+                            }}
+                          >
+                            {referralValidating ? (
+                              <Loader size={14} style={{ animation: 'spin 1s linear infinite' }} />
+                            ) : (
+                              t.discounts?.applyCode || 'Apply'
+                            )}
+                          </button>
+                        </div>
+                        {referralError && (
+                          <p style={{ fontSize: '0.6875rem', color: '#ef4444', marginTop: '0.25rem' }}>{referralError}</p>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => { setShowReferralInput(false); setReferralError(null); setReferralInputValue(''); }}
+                          style={{
+                            fontSize: '0.6875rem',
+                            color: 'var(--text-dim)',
+                            background: 'none',
+                            border: 'none',
+                            cursor: 'pointer',
+                            marginTop: '0.25rem',
+                            padding: 0,
+                          }}
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Applied Referral Code Display */}
+                {referralApplied && referralCode && (
+                  <div className="auth-field">
+                    <label>{t.referrals?.referralCodeApplied || 'Referral Code Applied'}</label>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <input
+                        type="text"
+                        value={referralCode}
+                        readOnly
+                        className="auth-input"
+                        style={{ fontFamily: 'var(--font-mono)', letterSpacing: '0.05em', background: 'rgba(16,185,129,0.06)', borderColor: 'rgba(16,185,129,0.3)', flex: 1 }}
+                      />
+                      <Check size={16} style={{ color: '#10b981', flexShrink: 0 }} />
+                      {referralConfig.registration?.allowCodeChange !== false && (
+                        <button
+                          type="button"
+                          onClick={handleRemoveReferral}
+                          style={{
+                            fontSize: '0.6875rem',
+                            color: '#ef4444',
+                            background: 'none',
+                            border: 'none',
+                            cursor: 'pointer',
+                            whiteSpace: 'nowrap',
+                            padding: '0.25rem 0.5rem',
+                          }}
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
                     {referralData && (
                       <p style={{ fontSize: '0.6875rem', color: '#10b981', marginTop: '0.25rem' }}>
-                        {(t.referrals?.referralCodeApplied || 'Referral code applied: {code}')
-                          .replace('{code}', referralCode)}
+                        {(t.referrals?.discountApplied || 'You\'ll receive {percent}% off your enrollment.')
+                          .replace('{percent}', referralData.discountPercent)}
                       </p>
                     )}
                   </div>

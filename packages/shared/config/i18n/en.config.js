@@ -756,6 +756,33 @@ const en = {
     valueTooHighFixed: 'Maximum fixed discount is {max} ETB.',
   },
 
+    /*
+   * Contact Page
+   */
+  contact: {
+    title: 'Contact Us',
+    subtitle: 'We are here to help. Choose the best way to reach us.',
+    telegramTitle: 'Telegram Community',
+    telegramDesc: 'Join our private Telegram group for direct mentorship and peer support.',
+    faqTitle: 'Frequently Asked Questions',
+    faqDesc: 'Find instant answers to common questions about enrollment and courses.',
+    coursesTitle: 'Course Information',
+    coursesDesc: 'Browse our full course catalog and 5-phase curriculum.',
+    directTitle: 'Prefer Direct Contact?',
+    directDesc: 'Reach out to our team anytime. We typically respond within a few hours.',
+    telegramSupport: 'Telegram Support',
+  },
+
+  /*
+   * Referral Code Input (Register Page)
+   */
+  referrals: {
+    // ... existing keys ...
+    haveReferralCode: 'Have a referral code?',
+    enterReferralCode: 'Enter Referral Code',
+    // ... rest remains ...
+  },
+
 };
 
 module.exports = en;

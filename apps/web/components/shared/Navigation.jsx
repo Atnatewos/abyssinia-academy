@@ -35,6 +35,7 @@ import {
   BookOpen,
   ChevronDown,
   LogIn,
+  UserPlus,
 } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 import { useLanguage } from '../../context/LanguageContext';
@@ -261,10 +262,16 @@ const Navigation = () => {
             </>
           ) : (
             /* ── Unauthenticated: Sign In + Enroll ── */
+            /* ── Unauthenticated: Sign In + Register + Enroll ── */
             <div className="nav-unauth-group">
               <Link href="/auth/login" className="nav-signin-btn">
                 <LogIn size={14} />
                 <span>{t.auth?.signIn || 'Sign In'}</span>
+              </Link>
+
+              <Link href="/auth/register" className="nav-signin-btn">
+                <UserPlus size={14} />
+                <span>{t.auth?.register || 'Register'}</span>
               </Link>
 
               <Link href="/checkout" className="nav-enroll-btn">
