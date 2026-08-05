@@ -144,6 +144,11 @@ const AdminLayout = ({ children, title = 'Dashboard', subtitle = '' }) => {
           label: 'Discussions',
           icon: Video,
         },
+        {
+          path: '/admin/course-videos',
+          label: 'Course Videos',
+          icon: Video,
+        },
       ],
     },
     {
@@ -202,9 +207,6 @@ const AdminLayout = ({ children, title = 'Dashboard', subtitle = '' }) => {
         <nav className="admin-nav">
           {navSections.map((section) => {
             const isExpanded = expandedSections[section.id] !== false;
-            const hasActiveChild = section.items.some((item) =>
-              isActive(item.path, item.exact)
-            );
 
             return (
               <div key={section.id} className="admin-nav-section">

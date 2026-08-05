@@ -1,7 +1,7 @@
 /**
  * @fileoverview Admin Discussion Videos Page
  * Manage landing page Q&A/discussion recordings.
- * Full CRUD with reorder (up/down), add, edit, delete.
+ * Full CRUD with drag-and-drop reorder, add, edit, delete.
  * Auto-fetches YouTube video title when URL is pasted.
  * Live preview of how the card will look on the landing page.
  * New videos automatically appear at the top.
@@ -9,9 +9,9 @@
  * Path: apps/web/pages/admin/discussions/index.jsx
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/router';
-import { Video, Plus, Edit, Trash2, Search, ChevronUp, ChevronDown, X, Save, Eye, Loader, Play, Clock, ExternalLink } from 'lucide-react';
+import { Video, Plus, Edit, Trash2, Search, X, Save, Eye, Loader, Play, Clock, ExternalLink, GripVertical } from 'lucide-react';
 import SEOHead from '../../../components/shared/SEOHead';
 import AdminLayout from '../../../components/admin/AdminLayout';
 import { useLanguage } from '../../../context/LanguageContext';
@@ -47,7 +47,7 @@ const getThumbnailUrl = (videoId) => {
 };
 
 /**
- * AdminDiscussionsPage — Discussion video management with auto-fetch and preview.
+ * AdminDiscussionsPage — Discussion video management with drag-and-drop reorder.
  */
 const AdminDiscussionsPage = () => {
   const router = useRouter();
@@ -61,6 +61,7 @@ const AdminDiscussionsPage = () => {
   const [editingVideo, setEditingVideo] = useState(null);
   const [saving, setSaving] = useState(false);
   const [fetchingTitle, setFetchingTitle] = useState(false);
+  const [reordering, setReordering] = useState(false);
 
   const [formData, setFormData] = useState({
     youtubeId: '',
@@ -68,6 +69,12 @@ const AdminDiscussionsPage = () => {
     duration: '',
     thumbnail: '',
   });
+
+  /*
+   * Drag-and-drop state
+   */
+  const dragItem = useRef(null);
+  const dragOverItem = useRef(null);
 
   /*
    * Computed preview values from the form input
@@ -101,18 +108,12 @@ const AdminDiscussionsPage = () => {
 
   /**
    * Auto-fetch YouTube video title when a URL is pasted.
-   * Uses YouTube's oEmbed API — no API key required.
    */
   const handleYoutubeIdChange = async (value) => {
     setFormData((prev) => ({ ...prev, youtubeId: value }));
 
     const videoId = extractYouTubeId(value);
 
-    /*
-     * Only auto-fetch if:
-     * 1. We got a valid 11-character ID
-     * 2. The title field is currently empty (don't overwrite manual edits)
-     */
     if (videoId && videoId.length === 11 && !formData.title) {
       setFetchingTitle(true);
       try {
@@ -130,10 +131,7 @@ const AdminDiscussionsPage = () => {
           }
         }
       } catch {
-        /*
-         * Silent fail — YouTube oEmbed may be blocked in some regions.
-         * User can still type the title manually.
-         */
+        /* Silent fail */
       } finally {
         setFetchingTitle(false);
       }
@@ -200,6 +198,8 @@ const AdminDiscussionsPage = () => {
           toast.success('Video updated.');
           fetchVideos();
           handleCloseModal();
+        } else {
+          toast.error(response?.message || 'Failed to update video.');
         }
       } else {
         const response = await apiClient.post('/admin/discussions', formData);
@@ -207,6 +207,8 @@ const AdminDiscussionsPage = () => {
           toast.success('Video created. It appears at the top.');
           fetchVideos();
           handleCloseModal();
+        } else {
+          toast.error(response?.message || 'Failed to create video.');
         }
       }
     } catch (err) {
@@ -226,24 +228,108 @@ const AdminDiscussionsPage = () => {
       if (response && response.success) {
         toast.success('Video deleted.');
         fetchVideos();
+      } else {
+        toast.error(response?.message || 'Failed to delete video.');
       }
     } catch (err) {
       toast.error('Failed to delete video.');
     }
   };
 
-  /**
-   * Move a video up or down
+  /*
+   * ── Drag and Drop Handlers ──
    */
-  const handleReorder = async (videoId, direction) => {
+
+  /**
+   * Drag starts — store the index of the item being dragged
+   */
+  const handleDragStart = (e, index) => {
+    dragItem.current = index;
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/html', e.target.innerHTML);
+    /*
+     * Add a slight opacity to the dragged item
+     */
+    setTimeout(() => {
+      e.target.style.opacity = '0.4';
+    }, 0);
+  };
+
+  /**
+   * Drag enters a valid drop target
+   */
+  const handleDragEnter = (e, index) => {
+    e.preventDefault();
+    dragOverItem.current = index;
+  };
+
+  /**
+   * Drag leaves
+   */
+  const handleDragLeave = (e) => {
+    e.target.style.borderTop = '';
+  };
+
+  /**
+   * Drag over — must prevent default to allow drop
+   */
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  /**
+   * Drop — reorder the list and persist to server
+   */
+  const handleDrop = async (e, index) => {
+    e.preventDefault();
+    e.target.style.borderTop = '';
+
+    const draggedIndex = dragItem.current;
+    const droppedIndex = index;
+
+    if (draggedIndex === droppedIndex || draggedIndex === null) return;
+
+    /*
+     * Optimistically update the UI immediately
+     */
+    const updatedVideos = [...videos];
+    const [removed] = updatedVideos.splice(draggedIndex, 1);
+    updatedVideos.splice(droppedIndex, 0, removed);
+    setVideos(updatedVideos);
+
+    dragItem.current = null;
+    dragOverItem.current = null;
+
+    /*
+     * Persist the new order to the server
+     */
+    setReordering(true);
     try {
-      const response = await apiClient.post('/admin/discussions/reorder', { videoId, direction });
-      if (response && response.success) {
-        fetchVideos();
-      }
+      /*
+       * Update all sort_order values based on the new array positions
+       */
+      const reorderPayload = updatedVideos.map((video, i) => ({
+        id: video.id,
+        sortOrder: i,
+      }));
+
+      await apiClient.post('/admin/discussions/reorder-bulk', { videos: reorderPayload });
     } catch (err) {
-      toast.error('Failed to reorder.');
+      toast.error('Failed to save new order. Refreshing...');
+      fetchVideos();
+    } finally {
+      setReordering(false);
     }
+  };
+
+  /**
+   * Drag ends — clean up
+   */
+  const handleDragEnd = (e) => {
+    e.target.style.opacity = '1';
+    dragItem.current = null;
+    dragOverItem.current = null;
   };
 
   /**
@@ -264,7 +350,7 @@ const AdminDiscussionsPage = () => {
   return (
     <>
       <SEOHead title="Discussion Videos" />
-      <AdminLayout title="Discussion Videos" subtitle="Manage landing page Q&A recordings">
+      <AdminLayout title="Discussion Videos" subtitle="Manage landing page Q&A recordings — drag to reorder">
         {/* Toolbar */}
         <div className="admin-toolbar">
           <div className="admin-search">
@@ -282,18 +368,39 @@ const AdminDiscussionsPage = () => {
           <div className="spinner" style={{ marginTop: '2rem' }}><div className="spinner-circle" /></div>
         ) : filteredVideos.length > 0 ? (
           <div className="admin-table-wrapper">
+            {reordering && (
+              <div style={{ padding: '0.5rem 1rem', fontSize: '0.75rem', color: 'var(--accent-gold)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <Loader size={14} style={{ animation: 'spin 1s linear infinite' }} />
+                Saving new order...
+              </div>
+            )}
             {filteredVideos.map((video, index) => (
-              <div key={video.id} className="admin-table-row">
+              <div
+                key={video.id}
+                className="admin-table-row"
+                draggable
+                onDragStart={(e) => handleDragStart(e, index)}
+                onDragEnter={(e) => handleDragEnter(e, index)}
+                onDragLeave={handleDragLeave}
+                onDragOver={handleDragOver}
+                onDrop={(e) => handleDrop(e, index)}
+                onDragEnd={handleDragEnd}
+                style={{
+                  cursor: 'grab',
+                  transition: 'opacity 0.2s ease, border-color 0.2s ease',
+                  userSelect: 'none',
+                }}
+              >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flex: 1 }}>
-                  {/* Reorder Buttons */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.125rem' }}>
-                    <button className="admin-action-btn view" onClick={() => handleReorder(video.id, 'up')} disabled={index === 0} style={{ opacity: index === 0 ? 0.3 : 1 }}>
-                      <ChevronUp size={14} />
-                    </button>
-                    <button className="admin-action-btn view" onClick={() => handleReorder(video.id, 'down')} disabled={index === filteredVideos.length - 1} style={{ opacity: index === filteredVideos.length - 1 ? 0.3 : 1 }}>
-                      <ChevronDown size={14} />
-                    </button>
+                  {/* Drag Handle */}
+                  <div style={{ color: 'var(--text-dim)', cursor: 'grab', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
+                    <GripVertical size={18} />
                   </div>
+
+                  {/* Position Number */}
+                  <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-dim)', minWidth: '20px', textAlign: 'center', flexShrink: 0 }}>
+                    {index + 1}
+                  </span>
 
                   {/* Thumbnail */}
                   <div style={{ width: '80px', height: '45px', borderRadius: '0.375rem', overflow: 'hidden', background: '#000', flexShrink: 0 }}>

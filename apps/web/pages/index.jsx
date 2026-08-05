@@ -1,6 +1,7 @@
 /**
  * @fileoverview Landing Page — Immersive 3D Experience
- * Full landing page with hero, stats, pricing, phases, discussions, rewards, features, how it works, FAQ, and CTA
+ * Full landing page with hero, stats, pricing, phases, course videos,
+ * discussions, rewards, features, how it works, FAQ, and CTA
  * Path: apps/web/pages/index.jsx
  */
 
@@ -11,6 +12,7 @@ import HeroVisual from '../components/landing/HeroVisual';
 import StatsCounter from '../components/landing/StatsCounter';
 import PricingShowcase from '../components/landing/PricingShowcase';
 import PhaseTimeline3D from '../components/landing/PhaseTimeline3D';
+import CourseVideos from '../components/landing/CourseVideos';
 import DiscussionVideos from '../components/landing/DiscussionVideos';
 import RewardsShowcase from '../components/landing/RewardsShowcase';
 import FeaturesGrid from '../components/landing/FeaturesGrid';
@@ -38,13 +40,16 @@ const HomePage = () => {
             </div>
           </section>
 
-          {/* Pricing Showcase — 3D Cards */}
+          {/* Pricing Showcase — 3D Equal Card Grid */}
           <PricingShowcase />
 
           {/* Phase Timeline — 3D Roadmap */}
           <PhaseTimeline3D />
 
-          {/* Discussion Videos — 3D Cinema Wall */}
+          {/* Course Videos — About the Course (Blue Accent) */}
+          <CourseVideos />
+
+          {/* Discussion Videos — Live Q&A (Red Accent) */}
           <DiscussionVideos />
 
           {/* Rewards — 3D Floating Badges */}
