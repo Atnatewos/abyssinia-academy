@@ -46,7 +46,7 @@ const HeroSection = () => {
   /*
    * Highlighted brand word — same across all languages
    */
-  const highlightedWord = heroConfig.highlightedWord || 'ABYSSiNIA';
+  const highlightedWord = heroConfig.highlightedWord || 'ABYSSiNiA';
 
   /*
    * CTA button configuration — links and icon names

@@ -34,7 +34,7 @@ const en = {
    * Main headline, badge, subtitle, and call-to-action buttons
    */
   hero: {
-    badge: '#1 Unlisted videos Masterclass Learning System',
+    badge: '#1 Pre Recorded videos Masterclass Learning System',
     title: 'Master Professional Software Engineering at',
     subtitle: 'A step-by-step 5-phase engineering curriculum. Access high-definition pre-recorded live masterclasses, session breakdowns, raw coding exercises, and production project repositories.',
     exploreCourses: 'Explore Courses',
