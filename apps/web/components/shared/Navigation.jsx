@@ -1,23 +1,24 @@
 /**
  * @fileoverview Main Navigation Component
- * Premium sticky header — original feature set, refined design.
+ * Clean, organized header with profile dropdown menu.
  * 
- * Features preserved:
- * - Logo with gold gradient mark
- * - Desktop pill navigation with active state
- * - Language toggle (EN/አማ)
- * - Theme toggle (light/dark)
- * - Auth: enrolled badge, referrals, profile avatar, logout
- * - Unauthenticated: Enroll Now CTA with gradient animation
- * - Mobile: slide-down menu with full feature parity
+ * Desktop layout (left to right):
+ * [Logo] [Pills: Overview, Courses, Classroom, Pricing] [spacer] [EN] [☀] [👤▼] [Enroll]
  * 
- * Design: clean glass morphism, sticky, scroll-aware shadow,
- * subtle micro-animations on hover and state changes.
+ * Profile dropdown (authenticated):
+ *   ├─ My Profile
+ *   ├─ My Courses  
+ *   ├─ Referrals
+ *   ├─ ─────────
+ *   └─ Sign Out
+ * 
+ * Unauthenticated:
+ *   [Sign In] [Enroll Now]
  * 
  * Path: apps/web/components/shared/Navigation.jsx
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import {
@@ -31,6 +32,9 @@ import {
   User,
   Share2,
   LogOut,
+  BookOpen,
+  ChevronDown,
+  LogIn,
 } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 import { useLanguage } from '../../context/LanguageContext';
@@ -38,7 +42,9 @@ import { useAuth } from '../../context/AuthContext';
 
 const Navigation = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const dropdownRef = useRef(null);
   const router = useRouter();
   const { theme, toggleTheme } = useTheme();
   const { language, t, toggleLanguage } = useLanguage();
@@ -56,20 +62,34 @@ const Navigation = () => {
   }, []);
 
   /*
-   * Close mobile menu on route change
+   * Close mobile menu and dropdown on route change
    */
   useEffect(() => {
     setMobileMenuOpen(false);
+    setProfileDropdownOpen(false);
   }, [router.pathname]);
 
   /*
-   * Main navigation items — same as original
+   * Close dropdown when clicking outside
+   */
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setProfileDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  /*
+   * Main navigation items
    */
   const navItems = [
     { path: '/', label: t.nav?.overview || 'Overview' },
     { path: '/courses', label: t.nav?.courses || 'Courses' },
-    { path: '/portal', label: t.nav?.portal || 'Classroom Portal', requiresEnrollment: true },
-    { path: '/pricing', label: t.nav?.tuition || 'Tuition' },
+    { path: '/portal', label: t.nav?.portal || 'Classroom', requiresEnrollment: true },
+    { path: '/pricing', label: t.nav?.tuition || 'Pricing' },
   ];
 
   /**
@@ -81,10 +101,11 @@ const Navigation = () => {
   };
 
   /**
-   * Logout with mobile menu cleanup
+   * Logout with cleanup
    */
   const handleLogout = () => {
     setMobileMenuOpen(false);
+    setProfileDropdownOpen(false);
     logout();
   };
 
@@ -109,9 +130,7 @@ const Navigation = () => {
         <nav className="nav-pills">
           {navItems.map((item) => {
             if (item.requiresEnrollment && !isEnrolled) return null;
-
             const active = isActive(item.path);
-
             return (
               <Link
                 key={item.path}
@@ -126,6 +145,9 @@ const Navigation = () => {
             );
           })}
         </nav>
+
+        {/* ── Spacer ── */}
+        <div style={{ flex: 1 }} />
 
         {/* ── Right Side Controls ── */}
         <div className="nav-controls">
@@ -151,60 +173,108 @@ const Navigation = () => {
             {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
           </button>
 
-          {/* ── Authenticated Actions ── */}
+          {/* ── Authenticated: Profile Dropdown + Enrolled Badge ── */}
           {isAuthenticated ? (
-            <div className="nav-auth-group">
-
-              {/* Enrolled Badge */}
+            <>
+              {/* Enrolled Indicator — subtle, outside dropdown */}
               {isEnrolled && (
-                <div className="nav-enrolled-badge">
-                  <div className="nav-enrolled-dot" />
-                  <span className="nav-enrolled-label">Enrolled</span>
-                </div>
+                <span className="nav-enrolled-indicator" title="Enrolled">
+                  <span className="nav-enrolled-indicator-dot" />
+                </span>
               )}
 
-              {/* Referrals Link */}
-              <Link
-                href="/profile/referrals"
-                className="nav-icon-btn"
-                title={t.referrals?.dashboardTitle || 'Referral Dashboard'}
-              >
-                <Share2 size={16} />
-                <span className="nav-icon-label">{t.referrals?.shortTitle || 'Referrals'}</span>
-              </Link>
+              {/* Profile Dropdown */}
+              <div className="nav-profile-dropdown" ref={dropdownRef}>
+                <button
+                  onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
+                  className="nav-profile-trigger"
+                  aria-expanded={profileDropdownOpen}
+                  aria-haspopup="true"
+                >
+                  <span className="nav-profile-avatar">
+                    {(user?.full_name || 'U').charAt(0).toUpperCase()}
+                  </span>
+                  <ChevronDown
+                    size={14}
+                    className={`nav-profile-chevron ${profileDropdownOpen ? 'open' : ''}`}
+                  />
+                </button>
 
-              {/* Profile Link */}
-              <Link
-                href="/profile"
-                className="nav-profile-btn"
-                title={t.profile?.title || 'My Profile'}
-              >
-                <span className="nav-profile-avatar">
-                  {(user?.full_name || 'U').charAt(0).toUpperCase()}
-                </span>
-                <span className="nav-profile-name">
-                  {user?.full_name?.split(' ')[0] || 'Profile'}
-                </span>
-              </Link>
+                {/* Dropdown Menu */}
+                {profileDropdownOpen && (
+                  <div className="nav-dropdown-menu">
+                    {/* User info header */}
+                    <div className="nav-dropdown-header">
+                      <span className="nav-dropdown-user-name">
+                        {user?.full_name || 'Student'}
+                      </span>
+                      <span className="nav-dropdown-user-email">
+                        {user?.phone || user?.email || ''}
+                      </span>
+                    </div>
 
-              {/* Logout Button */}
-              <button
-                onClick={handleLogout}
-                className="nav-logout-btn"
-                title={t.auth?.logout || 'Logout'}
-              >
-                <LogOut size={16} />
-              </button>
-            </div>
+                    <div className="nav-dropdown-divider" />
+
+                    {/* Menu items */}
+                    <Link
+                      href="/profile"
+                      className="nav-dropdown-item"
+                      onClick={() => setProfileDropdownOpen(false)}
+                    >
+                      <User size={16} />
+                      <span>{t.profile?.title || 'My Profile'}</span>
+                    </Link>
+
+                    {isEnrolled && (
+                      <Link
+                        href="/portal"
+                        className="nav-dropdown-item"
+                        onClick={() => setProfileDropdownOpen(false)}
+                      >
+                        <BookOpen size={16} />
+                        <span>{t.nav?.portal || 'My Courses'}</span>
+                      </Link>
+                    )}
+
+                    <Link
+                      href="/profile/referrals"
+                      className="nav-dropdown-item"
+                      onClick={() => setProfileDropdownOpen(false)}
+                    >
+                      <Share2 size={16} />
+                      <span>{t.referrals?.dashboardTitle || 'Referrals'}</span>
+                    </Link>
+
+                    <div className="nav-dropdown-divider" />
+
+                    {/* Logout */}
+                    <button
+                      onClick={handleLogout}
+                      className="nav-dropdown-item nav-dropdown-logout"
+                    >
+                      <LogOut size={16} />
+                      <span>{t.auth?.logout || 'Sign Out'}</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+            </>
           ) : (
-            /* ── Unauthenticated — Enroll Now CTA ── */
-            <Link href="/checkout" className="nav-enroll-btn">
-              <span className="nav-enroll-btn-bg" />
-              <span className="nav-enroll-btn-text">
-                <Zap size={14} />
-                <span>{t.nav?.enrollNow || 'Enroll Now'}</span>
-              </span>
-            </Link>
+            /* ── Unauthenticated: Sign In + Enroll ── */
+            <div className="nav-unauth-group">
+              <Link href="/auth/login" className="nav-signin-btn">
+                <LogIn size={14} />
+                <span>{t.auth?.signIn || 'Sign In'}</span>
+              </Link>
+
+              <Link href="/checkout" className="nav-enroll-btn">
+                <span className="nav-enroll-btn-bg" />
+                <span className="nav-enroll-btn-text">
+                  <Zap size={14} />
+                  <span>{t.nav?.enrollNow || 'Enroll Now'}</span>
+                </span>
+              </Link>
+            </div>
           )}
 
           {/* ── Mobile Menu Toggle ── */}
@@ -224,7 +294,6 @@ const Navigation = () => {
         <nav className="nav-mobile-menu">
           {navItems.map((item) => {
             if (item.requiresEnrollment && !isEnrolled) return null;
-
             return (
               <Link
                 key={item.path}
@@ -237,45 +306,54 @@ const Navigation = () => {
             );
           })}
 
-          {isAuthenticated && (
+          <div className="nav-mobile-divider" />
+
+          {isAuthenticated ? (
             <>
-              <div className="nav-mobile-divider" />
-              <Link
-                href="/profile/referrals"
-                onClick={() => setMobileMenuOpen(false)}
-                className="nav-mobile-link"
-              >
-                <Share2 size={16} />
-                {' '}
-                {t.referrals?.dashboardTitle || 'Referral Dashboard'}
-              </Link>
               <Link
                 href="/profile"
                 onClick={() => setMobileMenuOpen(false)}
                 className="nav-mobile-link"
               >
-                <User size={16} />
-                {' '}
-                {t.profile?.title || 'My Profile'}
+                <User size={16} /> {t.profile?.title || 'My Profile'}
+              </Link>
+              {isEnrolled && (
+                <Link
+                  href="/portal"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="nav-mobile-link"
+                >
+                  <BookOpen size={16} /> {t.nav?.portal || 'My Courses'}
+                </Link>
+              )}
+              <Link
+                href="/profile/referrals"
+                onClick={() => setMobileMenuOpen(false)}
+                className="nav-mobile-link"
+              >
+                <Share2 size={16} /> {t.referrals?.dashboardTitle || 'Referral Dashboard'}
               </Link>
               <button onClick={handleLogout} className="nav-mobile-logout">
-                <LogOut size={16} />
-                {' '}
-                {t.auth?.logout || 'Logout'}
+                <LogOut size={16} /> {t.auth?.logout || 'Sign Out'}
               </button>
             </>
-          )}
-
-          {!isAuthenticated && (
-            <Link
-              href="/checkout"
-              onClick={() => setMobileMenuOpen(false)}
-              className="nav-mobile-cta"
-            >
-              <Zap size={16} />
-              {' '}
-              {t.nav?.enrollNow || 'Enroll Now'}
-            </Link>
+          ) : (
+            <>
+              <Link
+                href="/auth/login"
+                onClick={() => setMobileMenuOpen(false)}
+                className="nav-mobile-link"
+              >
+                <LogIn size={16} /> {t.auth?.signIn || 'Sign In'}
+              </Link>
+              <Link
+                href="/checkout"
+                onClick={() => setMobileMenuOpen(false)}
+                className="nav-mobile-cta"
+              >
+                <Zap size={16} /> {t.nav?.enrollNow || 'Enroll Now'}
+              </Link>
+            </>
           )}
         </nav>
       )}
