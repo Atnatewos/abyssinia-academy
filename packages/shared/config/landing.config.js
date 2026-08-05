@@ -23,6 +23,42 @@ const landingConfig = {
         href: '/pricing',
         icon: 'Zap',
       },
+        /*
+      * Discussion Videos — Live Q&A recordings for the landing page
+      * All videos are public (marketing content)
+      */
+  /*
+   * Discussion Videos — Live Q&A recordings for the landing page
+   * All videos are PUBLIC (marketing content).
+   * youtubeId: the YouTube video ID (the part after ?v= in the URL)
+   * thumbnail: optional custom thumbnail URL (leave empty to use YouTube default)
+   */
+      discussionVideos: [
+        {
+          youtubeId: 's6kPODxyRfg',
+          title: 'Phase 1 — Basic Computer Skills & Web Mechanics Discussion',
+          duration: '45:20',
+          thumbnail: '',
+        },
+        {
+          youtubeId: 'nZqcWgwucGA',
+          title: 'Phase 1 — HTML Basics Live Q&A Session',
+          duration: '32:15',
+          thumbnail: '',
+        },
+        {
+          youtubeId: '99ujQ2Hvnew',
+          title: 'Phase 1 — CSS Styling & Layout Discussion',
+          duration: '58:40',
+          thumbnail: '',
+        },
+        {
+          youtubeId: 'ED7w3dmtV6E',
+          title: 'Phase 1 — Apple.com Rebuild Project Review',
+          duration: '42:10',
+          thumbnail: '',
+        },
+      ],
     },
   },
 

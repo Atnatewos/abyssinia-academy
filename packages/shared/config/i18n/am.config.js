@@ -355,6 +355,69 @@ const am = {
     },
   },
 
+      /*
+     * Pricing Overview — የዋጋ አጠቃላይ እይታ
+     */
+    pricingOverview: {
+      eyebrow: 'ክፍያ',
+      title: 'ቀላል፣ ግልጽ ዋጋ',
+      subtitle: 'አንድ ዋጋ። የእድሜ ልክ መዳረሻ። ምንም የተደበቀ ክፍያ የለም።',
+      bestValue: 'ምርጥ ዋጋ',
+      fullCourseTitle: 'ሙሉ የአካዳሚ ፓስ',
+      perPhaseTitle: 'የራስዎን መንገድ ይገንቡ',
+      perPhase: 'ምዕራፍ',
+      savePercent: '{percent}% ይቆጥቡ',
+      featureAllPhases: 'ሁሉም 5ቱ የተዋቀሩ ምዕራፎች',
+      featureLifetime: 'የእድሜ ልክ መዳረሻ',
+      featureCertificate: 'የማጠናቀቂያ ሰርተፍኬት',
+      featureCommunity: 'የግል ቴሌግራም ማህበረሰብ',
+      enrollCta: 'አሁኑኑ ይመዝገቡ',
+      browsePhases: 'ምዕራፎችን ይመልከቱ',
+      bulkDiscounts: 'የብዙ ቅናሽ',
+      phases: 'ምዕራፎች',
+      off: 'ቅናሽ',
+    },
+
+    /*
+     * Phase Timeline — የስርዓተ ትምህርት መንገድ
+     */
+    phaseTimeline: {
+      eyebrow: 'ሥርዓተ ትምህርት',
+      title: 'የኢንጂነሪንግ ጉዞዎ',
+      subtitle: '5 ምዕራፎች። ከዜሮ እስከ ሙሉ ፉል-ስታክ ኢንጂነር።',
+      classes: 'ክፍሎች',
+      viewDetails: 'ዝርዝሮችን ይመልከቱ',
+      enrollCta: 'በሙሉ ኮርስ ይመዝገቡ',
+    },
+
+    /*
+     * Discussion Videos — የጥያቄ እና መልስ ቅጂዎች
+     */
+    discussions: {
+      eyebrow: 'በክፍል ውስጥ',
+      title: 'የቀጥታ ውይይቶች እና ጥያቄና መልስ',
+      subtitle: 'እውነተኛ ውይይቶች። እውነተኛ ማንቶርሺፕ። እውነተኛ ማህበረሰብ።',
+    },
+
+    /*
+     * Rewards — ቅናሾች እና ማጣቀሻዎች
+     */
+    rewards: {
+      eyebrow: 'ያግኙ እና ያትርፉ',
+      title: 'የበለጠ ይቆጥቡ፣ የበለጠ ያትርፉ',
+      subtitle: 'ክፍያዎን ለመቀነስ እና ሽልማት ለማግኘት ብዙ መንገዶች።',
+      discountTitle: 'የቅናሽ ኮዶች',
+      discountDesc: 'በክፍያ ጊዜ የማስተዋወቂያ ኮዶችን ይተግብሩ እና ፈጣን ቅናሽ ያግኙ።',
+      discountCta: 'የበለጠ ይወቁ',
+      referralTitle: 'የማጣቀሻ ሽልማቶች',
+      referralDesc: 'ሊንክዎን ያጋሩ፣ ጓደኞችዎ {percent}% ቅናሽ ያግኙ፣ እርስዎ ክሬዲት ያግኙ።',
+      referralCta: 'ማጣቀሻ ይጀምሩ',
+      commissionTitle: 'የጥሬ ገንዘብ ኮሚሽን',
+      commissionDesc: 'ማጣቀሻዎችዎ ከኮርስ ዋጋዎ ሲበልጡ እውነተኛ ጥሬ ገንዘብ ያግኙ።',
+      commissionCta: 'ደረጃዎችን ይመልከቱ',
+    },
+
+
   /*
    * Phase Purchase Flow — የምዕራፍ ግዢ ሂደት
    */

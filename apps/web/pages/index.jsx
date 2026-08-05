@@ -1,6 +1,6 @@
 /**
- * @fileoverview Landing Page
- * Full landing page with hero, features, how it works, FAQ, and CTA
+ * @fileoverview Landing Page — Immersive 3D Experience
+ * Full landing page with hero, stats, pricing, phases, discussions, rewards, features, how it works, FAQ, and CTA
  * Path: apps/web/pages/index.jsx
  */
 
@@ -9,13 +9,17 @@ import PageLayout from '../components/shared/PageLayout';
 import HeroSection from '../components/landing/HeroSection';
 import HeroVisual from '../components/landing/HeroVisual';
 import StatsCounter from '../components/landing/StatsCounter';
+import PricingShowcase from '../components/landing/PricingShowcase';
+import PhaseTimeline3D from '../components/landing/PhaseTimeline3D';
+import DiscussionVideos from '../components/landing/DiscussionVideos';
+import RewardsShowcase from '../components/landing/RewardsShowcase';
 import FeaturesGrid from '../components/landing/FeaturesGrid';
 import HowItWorks from '../components/landing/HowItWorks';
 import FAQAccordion from '../components/landing/FAQAccordion';
 import CTABanner from '../components/landing/CTABanner';
 
 /**
- * HomePage - Complete landing page matching the Gemini foundation
+ * HomePage — Complete landing page with immersive 3D sections.
  */
 const HomePage = () => {
   return (
@@ -33,6 +37,18 @@ const HomePage = () => {
               </div>
             </div>
           </section>
+
+          {/* Pricing Showcase — 3D Cards */}
+          <PricingShowcase />
+
+          {/* Phase Timeline — 3D Roadmap */}
+          <PhaseTimeline3D />
+
+          {/* Discussion Videos — 3D Cinema Wall */}
+          <DiscussionVideos />
+
+          {/* Rewards — 3D Floating Badges */}
+          <RewardsShowcase />
 
           {/* Features */}
           <section className="landing-section">

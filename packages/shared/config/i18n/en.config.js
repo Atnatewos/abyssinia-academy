@@ -295,6 +295,7 @@ const en = {
           title: 'Verified Skill Certification',
           description: 'Earn an official Abyssinia Academy Engineering Certificate upon successful completion and review of your 5-phase capstone project.',
         },
+        
       ],
     },
 
@@ -368,6 +369,67 @@ const en = {
       buttonText: 'Enroll Today & Start Learning',
     },
   },
+      /*
+     * Pricing Overview — Landing page pricing section
+     */
+    pricingOverview: {
+      eyebrow: 'Tuition',
+      title: 'Simple, Transparent Pricing',
+      subtitle: 'One price. Lifetime access. No hidden fees.',
+      bestValue: 'BEST VALUE',
+      fullCourseTitle: 'Full Academy Pass',
+      perPhaseTitle: 'Build Your Own Path',
+      perPhase: 'phase',
+      savePercent: 'Save {percent}%',
+      featureAllPhases: 'All 5 structured phases',
+      featureLifetime: 'Lifetime access',
+      featureCertificate: 'Completion certificate',
+      featureCommunity: 'Private Telegram community',
+      enrollCta: 'Enroll Now',
+      browsePhases: 'Browse Phases',
+      bulkDiscounts: 'Bulk Discounts',
+      phases: 'phases',
+      off: 'off',
+    },
+
+    /*
+     * Phase Timeline — Curriculum roadmap
+     */
+    phaseTimeline: {
+      eyebrow: 'Curriculum',
+      title: 'Your Engineering Journey',
+      subtitle: '5 phases. Zero to deployed full-stack engineer.',
+      classes: 'classes',
+      viewDetails: 'View Phase Details',
+      enrollCta: 'Enroll in Full Course',
+    },
+
+    /*
+     * Discussion Videos — Q&A recordings
+     */
+    discussions: {
+      eyebrow: 'Inside the Classroom',
+      title: 'Live Discussions & Q&A',
+      subtitle: 'Real discussions. Real mentorship. Real community.',
+    },
+
+    /*
+     * Rewards — Discounts & Referrals
+     */
+    rewards: {
+      eyebrow: 'Save & Earn',
+      title: 'Save More, Earn More',
+      subtitle: 'Multiple ways to reduce your tuition and earn rewards.',
+      discountTitle: 'Discount Codes',
+      discountDesc: 'Apply promo codes at checkout for instant savings on your enrollment.',
+      discountCta: 'Learn More',
+      referralTitle: 'Referral Rewards',
+      referralDesc: 'Share your link, friends get {percent}% off, you earn credit toward your courses.',
+      referralCta: 'Start Referring',
+      commissionTitle: 'Cash Commission',
+      commissionDesc: 'Earn real cash when your referrals exceed your course price.',
+      commissionCta: 'View Tiers',
+    },
 
   /*
    * Phase Purchase Flow
