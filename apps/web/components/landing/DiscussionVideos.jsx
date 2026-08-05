@@ -1,14 +1,15 @@
 /**
- * @fileoverview Discussion Videos — 3D Cinema Wall
- * Curved carousel of teacher-student discussion recordings.
- * Video URLs from landing.config.js — accepts full URLs or plain IDs.
+ * @fileoverview Discussion Videos — Equal Card Grid
+ * Same card grid layout as pricing cards. Click opens YouTube embed modal.
+ * Thumbnails auto-generated from YouTube video IDs.
+ * All videos from landing.config.js — accepts full URLs or plain IDs.
  * All videos are PUBLIC (marketing content, no auth required).
  * 
  * Path: apps/web/components/landing/DiscussionVideos.jsx
  */
 
 import { useState, useCallback } from 'react';
-import { Play, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Play, X, Clock } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { getLandingConfig } from '../../lib/config';
 
@@ -21,15 +22,8 @@ import { getLandingConfig } from '../../lib/config';
  */
 const extractYouTubeId = (input) => {
   if (!input) return '';
-
-  /*
-   * If it's already a plain 11-character ID, return as-is
-   */
   if (/^[a-zA-Z0-9_-]{11}$/.test(input)) return input;
 
-  /*
-   * Try to extract from various YouTube URL formats
-   */
   const patterns = [
     /(?:youtube\.com\/watch\?v=)([a-zA-Z0-9_-]{11})/,
     /(?:youtu\.be\/)([a-zA-Z0-9_-]{11})/,
@@ -42,14 +36,33 @@ const extractYouTubeId = (input) => {
     if (match) return match[1];
   }
 
-  /*
-   * Fallback: return the input as-is (best effort)
-   */
   return input;
 };
 
 /**
- * DiscussionVideos — 3D curved video carousel with YouTube embed modal.
+ * Get the YouTube thumbnail URL for a video ID.
+ * Uses the high-quality default thumbnail (hqdefault.jpg).
+ * Falls back through multiple thumbnail sizes.
+ * 
+ * @param {string} videoId - YouTube video ID
+ * @returns {string} Thumbnail URL
+ */
+const getThumbnailUrl = (videoId) => {
+  if (!videoId) return '';
+  /*
+   * YouTube thumbnail sizes:
+   * - default.jpg (120x90)
+   * - mqdefault.jpg (320x180)  
+   * - hqdefault.jpg (480x360)
+   * - sddefault.jpg (640x480)
+   * - maxresdefault.jpg (1280x720)
+   * hqdefault is most reliable — always available
+   */
+  return `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+};
+
+/**
+ * DiscussionVideos — Equal grid of video cards, matching the pricing card layout.
  */
 const DiscussionVideos = () => {
   const { t } = useLanguage();
@@ -57,34 +70,21 @@ const DiscussionVideos = () => {
   const rawVideos = landingConfig.discussionVideos || [];
 
   /*
-   * Process videos: extract YouTube IDs from whatever format was provided
+   * Process videos: extract YouTube IDs and generate thumbnails
    */
-  const videos = rawVideos.map((video) => ({
-    ...video,
-    youtubeId: extractYouTubeId(video.youtubeId),
-  }));
+  const videos = rawVideos.map((video) => {
+    const youtubeId = extractYouTubeId(video.youtubeId);
+    return {
+      ...video,
+      youtubeId,
+      thumbnail: video.thumbnail || getThumbnailUrl(youtubeId),
+    };
+  });
 
-  const [activeIndex, setActiveIndex] = useState(0);
   const [modalOpen, setModalOpen] = useState(false);
   const [modalVideoId, setModalVideoId] = useState(null);
 
   if (videos.length === 0) return null;
-
-  const totalVideos = videos.length;
-
-  /**
-   * Navigate to previous video in carousel
-   */
-  const handlePrev = useCallback(() => {
-    setActiveIndex((prev) => (prev - 1 + totalVideos) % totalVideos);
-  }, [totalVideos]);
-
-  /**
-   * Navigate to next video in carousel
-   */
-  const handleNext = useCallback(() => {
-    setActiveIndex((prev) => (prev + 1) % totalVideos);
-  }, [totalVideos]);
 
   /**
    * Open the video modal
@@ -104,94 +104,128 @@ const DiscussionVideos = () => {
     document.body.style.overflow = '';
   };
 
-  /**
-   * Get the visual position for a card relative to the active index
-   */
-  const getCardPosition = (index) => {
-    if (index === activeIndex) return 'center';
-    const prev = (activeIndex - 1 + totalVideos) % totalVideos;
-    const next = (activeIndex + 1) % totalVideos;
-    if (index === prev || index === next) return 'side';
-    return 'hidden';
-  };
-
   return (
     <>
-      <section className="landing-discussions-3d">
-        <div className="landing-discussions-header">
+      <section className="landing-pricing-3d">
+        <div className="landing-pricing-header">
           <span className="landing-pricing-eyebrow">
             {t.landing?.discussions?.eyebrow || 'Inside the Classroom'}
           </span>
-          <h2 className="landing-discussions-title">
+          <h2 className="landing-pricing-title">
             {t.landing?.discussions?.title || 'Live Discussions & Q&A'}
           </h2>
-          <p className="landing-discussions-subtitle">
+          <p className="landing-pricing-subtitle">
             {t.landing?.discussions?.subtitle || 'Real discussions. Real mentorship. Real community.'}
           </p>
         </div>
 
-        <div className="landing-discussions-wall">
-          {videos.map((video, index) => {
-            const position = getCardPosition(index);
-            if (position === 'hidden') return null;
-
-            return (
+        {/* ── Equal Card Grid — same layout as pricing cards ── */}
+        <div className="landing-pricing-equal-grid">
+          {videos.map((video, index) => (
+            <div
+              key={index}
+              className="landing-pricing-equal-card"
+              style={{
+                '--card-accent-border': 'rgba(239, 68, 68, 0.3)',
+                '--card-accent-color': '#ef4444',
+                '--card-accent-bg': 'rgba(239, 68, 68, 0.06)',
+                cursor: 'pointer',
+              }}
+              onClick={() => handleOpenModal(video.youtubeId)}
+            >
+              {/* ── Thumbnail ── */}
               <div
-                key={index}
-                className={`landing-discussion-card-3d ${position}`}
-                onClick={() => handleOpenModal(video.youtubeId)}
+                style={{
+                  position: 'relative',
+                  aspectRatio: '16 / 9',
+                  borderRadius: '0.75rem',
+                  overflow: 'hidden',
+                  marginBottom: '1rem',
+                  background: '#000',
+                }}
               >
-                <div className="landing-discussion-thumb">
-                  {video.thumbnail ? (
-                    <img src={video.thumbnail} alt={video.title} loading="lazy" />
-                  ) : (
-                    <div style={{ width: '100%', height: '100%', background: 'var(--bg-card-solid)' }} />
-                  )}
+                <img
+                  src={video.thumbnail}
+                  alt={video.title}
+                  loading="lazy"
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                    opacity: 0.7,
+                    transition: 'opacity 0.3s ease',
+                  }}
+                  onError={(e) => {
+                    /*
+                     * Fallback: if hqdefault fails, try mqdefault
+                     */
+                    const videoId = extractYouTubeId(video.youtubeId);
+                    if (videoId && !e.target.src.includes('mqdefault')) {
+                      e.target.src = `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
+                    }
+                  }}
+                />
+                {/* Play Button Overlay */}
+                <div
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    background: 'rgba(0, 0, 0, 0.2)',
+                  }}
+                >
                   <div className="landing-discussion-play">
                     <Play size={20} fill="#0f172a" />
                   </div>
                 </div>
-                <div className="landing-discussion-info">
-                  <h4 className="landing-discussion-name">{video.title}</h4>
-                  <span className="landing-discussion-duration">{video.duration}</span>
-                </div>
               </div>
-            );
-          })}
-        </div>
 
-        {/* Carousel Navigation */}
-        {totalVideos > 1 && (
-          <div className="landing-discussions-nav">
-            <button
-              className="landing-discussions-arrow"
-              onClick={handlePrev}
-              aria-label="Previous video"
-            >
-              <ChevronLeft size={18} />
-            </button>
-            <div className="landing-discussions-dots">
-              {videos.map((_, index) => (
-                <button
-                  key={index}
-                  className={`landing-discussions-dot ${index === activeIndex ? 'active' : ''}`}
-                  onClick={() => setActiveIndex(index)}
-                  aria-label={`Video ${index + 1}`}
-                />
-              ))}
+              {/* ── Title ── */}
+              <h3
+                className="landing-pricing-equal-title"
+                style={{
+                  display: '-webkit-box',
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: 'vertical',
+                  overflow: 'hidden',
+                }}
+              >
+                {video.title}
+              </h3>
+
+              {/* ── Duration ── */}
+              {video.duration && (
+                <p
+                  className="landing-pricing-equal-subtitle"
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}
+                >
+                  <Clock size={12} />
+                  {video.duration}
+                </p>
+              )}
+
+              {/* Spacer to push CTA to bottom */}
+              <div style={{ flex: 1 }} />
+
+              {/* ── CTA ── */}
+              <div
+                className="landing-pricing-equal-cta"
+                style={{
+                  borderColor: 'rgba(239, 68, 68, 0.25)',
+                  color: '#ef4444',
+                }}
+              >
+                <Play size={14} />
+                <span>{t.landing?.discussions?.watchNow || 'Watch Now'}</span>
+              </div>
             </div>
-            <button
-              className="landing-discussions-arrow"
-              onClick={handleNext}
-              aria-label="Next video"
-            >
-              <ChevronRight size={18} />
-            </button>
-          </div>
-        )}
+          ))}
+        </div>
       </section>
 
-      {/* Video Modal */}
+      {/* ── Video Modal ── */}
       {modalOpen && modalVideoId && (
         <div className="discussion-modal-overlay" onClick={handleCloseModal}>
           <div className="discussion-modal-content" onClick={(e) => e.stopPropagation()}>
