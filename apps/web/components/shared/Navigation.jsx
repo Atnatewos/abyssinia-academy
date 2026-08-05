@@ -91,6 +91,7 @@ const Navigation = () => {
     { path: '/courses', label: t.nav?.courses || 'Courses' },
     { path: '/portal', label: t.nav?.portal || 'Classroom', requiresEnrollment: true },
     { path: '/pricing', label: t.nav?.tuition || 'Pricing' },
+    { path: '/contact', label: 'Contact' },
   ];
 
   /**
