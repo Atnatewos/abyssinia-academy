@@ -17,7 +17,7 @@ const WEEK_11 = {
       notes: 'Practice writing algorithms to solve complex problems like finding hidden words and nested arrays.',
       mainVideo: mainVideo(
         'Algorithm writing (solving algorithmic problems) - Part I',
-        'PLACEHOLDER_YOUTUBE_ID'
+        'https://www.youtube.com/watch?v=FPtkQOONB8o'
       ),
       sessionVideos: [
         sessionVideo('1.1 - Algorithm writing with example (the hidden word in a crowd function)', 'PLACEHOLDER_YOUTUBE_ID', '00:00'),
@@ -34,7 +34,7 @@ const WEEK_11 = {
       notes: 'Continue mastering algorithmic problem solving with magic arrays and sorting functions.',
       mainVideo: mainVideo(
         'Algorithm writing (solving algorithmic problems) - Part II',
-        'PLACEHOLDER_YOUTUBE_ID'
+        'https://www.youtube.com/watch?v=HCaXSFOg2fs'
       ),
       sessionVideos: [
         sessionVideo('2.1 - Algorithm writing with example (the magic array function)', 'PLACEHOLDER_YOUTUBE_ID', '00:00'),

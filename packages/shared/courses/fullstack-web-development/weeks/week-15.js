@@ -17,7 +17,7 @@ const WEEK_15 = {
       notes: 'Learn about back-end development, modular structure, avoiding namespace collision, and managing Node modules using NPM.',
       mainVideo: mainVideo(
         'Introduction to Node modules',
-        'PLACEHOLDER_YOUTUBE_ID'
+        'https://www.youtube.com/watch?v=0p7KcNID6-s'
       ),
       sessionVideos: [
         sessionVideo('1.1 - Getting started with Node.js (installing and running our script on Node)', 'PLACEHOLDER_YOUTUBE_ID', '00:00'),
@@ -39,7 +39,7 @@ const WEEK_15 = {
       notes: 'Build HTTP web servers using core Node modules and the Express framework to serve static files and websites.',
       mainVideo: mainVideo(
         'Building web server - http & Express',
-        'PLACEHOLDER_YOUTUBE_ID'
+        'https://www.youtube.com/watch?v=g88uTz1sAfA'
       ),
       sessionVideos: [
         sessionVideo('2.1 - Introduction: core node modules', 'PLACEHOLDER_YOUTUBE_ID', '00:00'),

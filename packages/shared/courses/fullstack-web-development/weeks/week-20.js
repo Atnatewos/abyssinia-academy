@@ -17,7 +17,7 @@ const WEEK_20 = {
       notes: 'Learn what APIs are, how JSON works, and how to fetch and display data from external APIs like YouTube in your React components.',
       mainVideo: mainVideo(
         'API integration',
-        'PLACEHOLDER_YOUTUBE_ID'
+        'https://www.youtube.com/watch?v=X5PBXDIn_AA'
       ),
       sessionVideos: [
         sessionVideo('1.1 - Introduction to API: what do we mean by API?', 'PLACEHOLDER_YOUTUBE_ID', '00:00'),
@@ -37,7 +37,7 @@ const WEEK_20 = {
       notes: 'Master React Router v6 to handle navigation, nested routes, and single-page application routing in your React projects.',
       mainVideo: mainVideo(
         'React Routing',
-        'PLACEHOLDER_YOUTUBE_ID'
+        'https://www.youtube.com/watch?v=amFwiTOGgo4'
       ),
       sessionVideos: [
         sessionVideo('2.1 - Limitations of React without React Router', 'PLACEHOLDER_YOUTUBE_ID', '00:00'),

@@ -17,7 +17,7 @@ const WEEK_16 = {
       notes: 'Understand relational vs non-relational databases, HTTP verbs, and how to connect Node.js to a MySQL database using SQL queries.',
       mainVideo: mainVideo(
         'Working with databases - MySql part I',
-        'PLACEHOLDER_YOUTUBE_ID'
+        'https://www.youtube.com/watch?v=zZMQlaGka6A'
       ),
       sessionVideos: [
         sessionVideo('1.1 - Introduction: database and database management system (DBMS)', 'PLACEHOLDER_YOUTUBE_ID', '00:00'),
@@ -38,7 +38,7 @@ const WEEK_16 = {
       notes: 'Master the most commonly used SQL queries: INSERT, SELECT, UPDATE, and DELETE using Node.js and MySQL.',
       mainVideo: mainVideo(
         'Working with databases - MySQL part II',
-        'PLACEHOLDER_YOUTUBE_ID'
+        'https://www.youtube.com/watch?v=wg0ga_p3jtk'
       ),
       sessionVideos: [
         sessionVideo('2.1 - Working with databases using NodeJS: most commonly used SQL queries (insert)', 'PLACEHOLDER_YOUTUBE_ID', '00:00'),

@@ -17,7 +17,7 @@ const WEEK_08 = {
       notes: 'Learn the fundamentals of programming and why JavaScript is the language of the web.',
       mainVideo: mainVideo(
         'Introduction to programming basics (Part I)',
-        'PLACEHOLDER_YOUTUBE_ID'
+        'https://www.youtube.com/watch?v=KG7GZ98zQiA'
       ),
       sessionVideos: [
         sessionVideo('1.1 - Introduction to phase 2', 'PLACEHOLDER_YOUTUBE_ID', '00:00'),
@@ -41,7 +41,7 @@ const WEEK_08 = {
       notes: 'Understand data structures, operators, and arrays in JavaScript.',
       mainVideo: mainVideo(
         'Introduction to programming basics (part II)',
-        'PLACEHOLDER_YOUTUBE_ID'
+        'https://www.youtube.com/watch?v=Qz8sXIPn1I8'
       ),
       sessionVideos: [
         sessionVideo('2.1 - What is data structure and why do we need to structure data?', 'PLACEHOLDER_YOUTUBE_ID', '00:00'),

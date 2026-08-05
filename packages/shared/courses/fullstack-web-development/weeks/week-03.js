@@ -23,8 +23,8 @@ const WEEK_03 = {
         'https://www.youtube.com/watch?v=99ujQ2Hvnew'
       ),
       sessionVideos: [
-        sessionVideo('1.1 - Introduction', 'PLACEHOLDER_YOUTUBE_ID', '01:00'),
-        sessionVideo('1.2 - Understanding CSS (CSS versions and sending styling instructions to the browser)', 'PLACEHOLDER_YOUTUBE_ID', '12:00'),
+        sessionVideo('1.1 - Introduction', 'https://www.youtube.com/watch?v=SzgchikrLr4', '01:15'),
+        sessionVideo('1.2 - Understanding CSS (CSS versions and sending styling instructions to the browser)', 'https://www.youtube.com/watch?v=vIyL4BfwSos', '12:00'),
         sessionVideo('1.3 - Adding CSS instructions to HTML documents', 'PLACEHOLDER_YOUTUBE_ID', '14:00'),
         sessionVideo('1.4 - CSS units', 'PLACEHOLDER_YOUTUBE_ID', '11:00'),
         sessionVideo('1.5 - Thinking in terms of containers', 'PLACEHOLDER_YOUTUBE_ID', '14:00'),

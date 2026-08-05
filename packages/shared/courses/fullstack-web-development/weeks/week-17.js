@@ -17,7 +17,7 @@ const WEEK_17 = {
       notes: 'Learn why ReactJS is popular, how it works under the hood, and how to set up a React development environment using create-react-app.',
       mainVideo: mainVideo(
         'Introduction to React',
-        'PLACEHOLDER_YOUTUBE_ID'
+        'https://www.youtube.com/watch?v=65VeYzd54Ec'
       ),
       sessionVideos: [
         sessionVideo('1.1 - Introduction: why are we learning ReactJS?', 'PLACEHOLDER_YOUTUBE_ID', '00:00'),
@@ -39,7 +39,7 @@ const WEEK_17 = {
       notes: 'Understand React components, the difference between functional and class components, and build an Apple website clone using functional components.',
       mainVideo: mainVideo(
         'React components - functional components',
-        'PLACEHOLDER_YOUTUBE_ID'
+        'https://www.youtube.com/watch?v=f354MvMZfJM'
       ),
       sessionVideos: [
         sessionVideo('2.1 - Introduction to react components: why do we build Apple website using react components?', 'PLACEHOLDER_YOUTUBE_ID', '00:00'),

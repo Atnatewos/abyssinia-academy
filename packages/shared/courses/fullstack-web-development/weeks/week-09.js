@@ -17,7 +17,7 @@ const WEEK_09 = {
       notes: 'Master functions, arguments, return values, scoping, and conditional statements.',
       mainVideo: mainVideo(
         'Functions and conditional statements',
-        'PLACEHOLDER_YOUTUBE_ID'
+        'https://www.youtube.com/watch?v=qGYw3r9vfr8'
       ),
       sessionVideos: [
         sessionVideo('1.1 - What are functions? Why do we need them?', 'PLACEHOLDER_YOUTUBE_ID', '00:00'),
@@ -42,7 +42,7 @@ const WEEK_09 = {
       notes: 'Learn how to think algorithmically by solving real-world problems with functions.',
       mainVideo: mainVideo(
         'Algorithmic thinking (Part I)',
-        'PLACEHOLDER_YOUTUBE_ID'
+        'https://www.youtube.com/watch?v=BlAknpjEbWs'
       ),
       sessionVideos: [
         sessionVideo('2.1 - Algorithm explained with example (addition function)', 'PLACEHOLDER_YOUTUBE_ID', '00:00'),

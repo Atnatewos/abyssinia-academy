@@ -17,7 +17,7 @@ const WEEK_10 = {
       notes: 'Control the flow of your programs with for loops, while loops, and practical examples.',
       mainVideo: mainVideo(
         'Decision loops',
-        'PLACEHOLDER_YOUTUBE_ID'
+        'https://www.youtube.com/watch?v=P00sozVnYbY'
       ),
       sessionVideos: [
         sessionVideo('1.1 - Decisions & loops (for loop)', 'PLACEHOLDER_YOUTUBE_ID', '00:00'),
@@ -35,7 +35,7 @@ const WEEK_10 = {
       notes: 'Understand the object-oriented data model and built-in JavaScript objects.',
       mainVideo: mainVideo(
         'Introduction to object-oriented programming',
-        'PLACEHOLDER_YOUTUBE_ID'
+        'https://www.youtube.com/watch?v=bFbp3aszv-8'
       ),
       sessionVideos: [
         sessionVideo('2.1 - The object-oriented data model', 'PLACEHOLDER_YOUTUBE_ID', '00:00'),

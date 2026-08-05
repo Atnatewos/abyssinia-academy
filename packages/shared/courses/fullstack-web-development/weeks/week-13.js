@@ -17,7 +17,7 @@ const WEEK_13 = {
       notes: 'Learn jQuery to simplify DOM manipulation, event handling, and animations.',
       mainVideo: mainVideo(
         'jQuery',
-        'PLACEHOLDER_YOUTUBE_ID'
+        'https://www.youtube.com/watch?v=yQCOkc5eJ9o'
       ),
       sessionVideos: [
         sessionVideo('1.1 - What is jQuery? Why do we need it and what can we do with it?', 'PLACEHOLDER_YOUTUBE_ID', '00:00'),
@@ -40,7 +40,7 @@ const WEEK_13 = {
       notes: 'Understand synchronous vs asynchronous programming, callbacks, promises, and async/await.',
       mainVideo: mainVideo(
         'Asynchronous JavaScript - Callbacks, Promise and Async-Await (jQuery Based)',
-        'PLACEHOLDER_YOUTUBE_ID'
+        'https://www.youtube.com/watch?v=LZkp2ByN-is'
       ),
       sessionVideos: [
         sessionVideo('2.1 - Synchronous Programming', 'PLACEHOLDER_YOUTUBE_ID', '00:00'),

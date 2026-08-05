@@ -17,7 +17,7 @@ const WEEK_12 = {
       notes: 'Learn how JavaScript interacts with HTML through the Document Object Model (DOM).',
       mainVideo: mainVideo(
         'JavaScript DOM manipulation',
-        'PLACEHOLDER_YOUTUBE_ID'
+        'https://www.youtube.com/watch?v=47WKc3QGW_k'
       ),
       sessionVideos: [
         sessionVideo('1.1 - Relationship between JavaScript and HTML: why do we need JS?', 'PLACEHOLDER_YOUTUBE_ID', '00:00'),
@@ -44,7 +44,7 @@ const WEEK_12 = {
       notes: 'Make your web pages interactive by handling user events like clicks, inputs, and form submissions.',
       mainVideo: mainVideo(
         'JavaScript events',
-        'PLACEHOLDER_YOUTUBE_ID'
+        'https://www.youtube.com/watch?v=QnObxDVjKYU'
       ),
       sessionVideos: [
         sessionVideo('2.1 - Introduction', 'PLACEHOLDER_YOUTUBE_ID', '00:00'),

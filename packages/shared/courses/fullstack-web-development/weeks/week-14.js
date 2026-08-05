@@ -13,11 +13,11 @@ const WEEK_14 = {
     createLesson({
       id: 'p3-w14-l1',
       title: 'Introduction to terminal, Bash Script and Git',
-      isFreePreview: true,
+      isFreePreview: false,
       notes: 'Master the command line, essential Bash commands, and the fundamentals of version control with Git and GitHub.',
       mainVideo: mainVideo(
         'Introduction to terminal, Bash Script and Git',
-        'PLACEHOLDER_YOUTUBE_ID'
+        'https://www.youtube.com/watch?v=KrJ7kiNB2Ys'
       ),
       sessionVideos: [
         sessionVideo('1.1 - Introduction to phase 3', 'PLACEHOLDER_YOUTUBE_ID', '00:00'),
@@ -40,7 +40,7 @@ const WEEK_14 = {
       notes: 'Understand how web servers work, the difference between static and dynamic pages, and the inception of Node.js non-blocking architecture.',
       mainVideo: mainVideo(
         'Introduction to Node.js',
-        'PLACEHOLDER_YOUTUBE_ID'
+        'https://www.youtube.com/watch?v=QpV5tAkPUUQ'
       ),
       sessionVideos: [
         sessionVideo('2.1 - How does a local static web page work?', 'PLACEHOLDER_YOUTUBE_ID', '00:00'),

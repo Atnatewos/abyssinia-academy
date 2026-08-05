@@ -17,7 +17,7 @@ const WEEK_19 = {
       notes: 'Understand the difference between state and props, how to add and update states in class components, and component lifecycle methods.',
       mainVideo: mainVideo(
         'React States',
-        'PLACEHOLDER_YOUTUBE_ID'
+        'https://www.youtube.com/watch?v=C4T3jn-Q-T4'
       ),
       sessionVideos: [
         sessionVideo('1.1 - Definition of state: what is the difference between state and props?', 'PLACEHOLDER_YOUTUBE_ID', '00:00'),
@@ -37,7 +37,7 @@ const WEEK_19 = {
       notes: 'Learn modern React Hooks including useState, useEffect, and useContext to manage state and side effects in functional components.',
       mainVideo: mainVideo(
         'React Hooks',
-        'PLACEHOLDER_YOUTUBE_ID'
+        'https://www.youtube.com/watch?v=NJidUGVO_Fo'
       ),
       sessionVideos: [
         sessionVideo('2.1 - What are React hooks, why do we use them and what rules should we follow when using them?', 'PLACEHOLDER_YOUTUBE_ID', '00:00'),

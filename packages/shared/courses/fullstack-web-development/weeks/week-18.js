@@ -17,7 +17,7 @@ const WEEK_18 = {
       notes: 'Master ES6 classes, inheritance, destructuring, and learn how to convert functional components to class components and use React props.',
       mainVideo: mainVideo(
         'React components (class based components) and props',
-        'PLACEHOLDER_YOUTUBE_ID'
+        'https://www.youtube.com/watch?v=Yp27DqdOlTI'
       ),
       sessionVideos: [
         sessionVideo('1.1 - Creating objects in JS using constructor function', 'PLACEHOLDER_YOUTUBE_ID', '00:00'),
@@ -39,10 +39,10 @@ const WEEK_18 = {
       notes: 'Hands-on demonstration of using React props in a real-world application.',
       mainVideo: mainVideo(
         'Props Demo Class',
-        'PLACEHOLDER_YOUTUBE_ID'
+        'https://www.youtube.com/watch?v=9eeRBqoXb_c'
       ),
       sessionVideos: [
-        sessionVideo('2.1 - Full video - Props demo class (Previous batch)', 'PLACEHOLDER_YOUTUBE_ID', '00:00'),
+        sessionVideo('2.1 - Full video - Props demo class (Previous batch)', 'https://www.youtube.com/watch?v=EZxsCrOBqvQ', '01:07:07'),
       ],
       resources: [
         resource('Props_Demo_Starter.zip', 'zip'),
