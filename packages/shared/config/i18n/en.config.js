@@ -35,7 +35,7 @@ const en = {
    */
   hero: {
     badge: '#1 Pre Recorded videos Masterclass Learning System',
-    title: 'Master Professional Software Engineering at',
+    title: 'Master Full Stack Web Application Development at',
     subtitle: 'A step-by-step 5-phase engineering curriculum. Access high-definition pre-recorded live masterclasses, session breakdowns, raw coding exercises, and production project repositories.',
     exploreCourses: 'Explore Courses',
     unlockAccess: 'Unlock Full Pass',
