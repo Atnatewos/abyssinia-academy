@@ -20,9 +20,9 @@ const WEEK_10 = {
         'https://www.youtube.com/watch?v=P00sozVnYbY'
       ),
       sessionVideos: [
-        sessionVideo('1.1 - Decisions & loops (for loop)', 'PLACEHOLDER_YOUTUBE_ID', '00:00'),
-        sessionVideo('1.2 - Decisions & loops (while Loop)', 'PLACEHOLDER_YOUTUBE_ID', '25:00'),
-        sessionVideo('1.3 - Example - Add up until a number', 'PLACEHOLDER_YOUTUBE_ID', '31:00'),
+        sessionVideo('1.1 - Decisions & loops (for loop)', 'https://www.youtube.com/watch?v=pamOW4yxh98', '00:00'),
+        sessionVideo('1.2 - Decisions & loops (while Loop)', 'https://www.youtube.com/watch?v=9AqmcsKITZo', '25:00'),
+        sessionVideo('1.3 - Example - Add up until a number', 'https://www.youtube.com/watch?v=oZ6NM_2YbdQ', '31:00'),
       ],
       resources: [
         resource('JS_Loops_Guide.pdf', 'pdf'),
@@ -38,12 +38,12 @@ const WEEK_10 = {
         'https://www.youtube.com/watch?v=bFbp3aszv-8'
       ),
       sessionVideos: [
-        sessionVideo('2.1 - The object-oriented data model', 'PLACEHOLDER_YOUTUBE_ID', '00:00'),
-        sessionVideo('2.2 - Object oriented programming in JavaScript', 'PLACEHOLDER_YOUTUBE_ID', '13:00'),
-        sessionVideo('2.3 - JavaScript object constructors', 'PLACEHOLDER_YOUTUBE_ID', '27:00'),
-        sessionVideo('2.4 - Mostly used built-in JavaScript object (string object)', 'PLACEHOLDER_YOUTUBE_ID', '40:00'),
-        sessionVideo('2.5 - Mostly used built-in JavaScript object (array object)', 'PLACEHOLDER_YOUTUBE_ID', '54:00'),
-        sessionVideo('2.6 - Mostly used built-in JavaScript object (math object)', 'PLACEHOLDER_YOUTUBE_ID', '01:01:00'),
+        sessionVideo('2.1 - The object-oriented data model', 'https://www.youtube.com/watch?v=KbowHGX_hK0', '00:00'),
+        sessionVideo('2.2 - Object oriented programming in JavaScript', 'https://www.youtube.com/watch?v=nQC8oM04jdc', '13:00'),
+        sessionVideo('2.3 - JavaScript object constructors', 'https://www.youtube.com/watch?v=jgtm6AVeclw', '27:00'),
+        sessionVideo('2.4 - Mostly used built-in JavaScript object (string object)', 'https://www.youtube.com/watch?v=uVWEukJhvYI', '40:00'),
+        sessionVideo('2.5 - Mostly used built-in JavaScript object (array object)', 'https://www.youtube.com/watch?v=1iCkAUje4Ro', '54:00'),
+        sessionVideo('2.6 - Mostly used built-in JavaScript object (math object)', 'https://www.youtube.com/watch?v=qBk7wILnsmc', '01:01:00'),
       ],
       resources: [
         resource('JS_OOP_Guide.pdf', 'pdf'),

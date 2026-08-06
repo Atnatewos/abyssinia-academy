@@ -23,11 +23,11 @@ const WEEK_05 = {
         'https://www.youtube.com/watch?v=iHYbAiR7-KI'
       ),
       sessionVideos: [
-        sessionVideo('1.1 - Responsive website and what is media query', 'PLACEHOLDER_YOUTUBE_ID', '16:00'),
-        sessionVideo('1.2 - Break points', 'PLACEHOLDER_YOUTUBE_ID', '08:00'),
-        sessionVideo('1.3 - Defining breakpoints for screen sizes', 'PLACEHOLDER_YOUTUBE_ID', '08:00'),
-        sessionVideo('1.4 - The mobile first development approach', 'PLACEHOLDER_YOUTUBE_ID', '16:00'),
-        sessionVideo('1.5 - Building the Puppy Lovers Page using media query', 'PLACEHOLDER_YOUTUBE_ID', '29:00'),
+        sessionVideo('1.1 - Responsive website and what is media query', 'https://www.youtube.com/watch?v=0h4iFDW_7EY', '16:00'),
+        sessionVideo('1.2 - Break points', 'https://www.youtube.com/watch?v=OLK8thkZVHs', '08:00'),
+        sessionVideo('1.3 - Defining breakpoints for screen sizes', 'https://www.youtube.com/watch?v=CoSIHn03KOY', '08:00'),
+        sessionVideo('1.4 - The mobile first development approach', 'https://www.youtube.com/watch?v=z9HxQcszHyo', '16:00'),
+        sessionVideo('1.5 - Building the Puppy Lovers Page using media query', 'https://www.youtube.com/watch?v=5e0Z6rbejac', '29:00'),
       ],
       resources: [
         resource('Media_Queries_Guide.pdf', 'pdf'),

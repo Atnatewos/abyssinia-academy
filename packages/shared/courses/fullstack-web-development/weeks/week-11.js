@@ -20,8 +20,8 @@ const WEEK_11 = {
         'https://www.youtube.com/watch?v=FPtkQOONB8o'
       ),
       sessionVideos: [
-        sessionVideo('1.1 - Algorithm writing with example (the hidden word in a crowd function)', 'PLACEHOLDER_YOUTUBE_ID', '00:00'),
-        sessionVideo('1.2 - Algorithm writing with example (the nested array function)', 'PLACEHOLDER_YOUTUBE_ID', '46:00'),
+        sessionVideo('1.1 - Algorithm writing with example (the hidden word in a crowd function)', 'https://www.youtube.com/watch?v=wH2ORM6x7ZU', '00:00'),
+        sessionVideo('1.2 - Algorithm writing with example (the nested array function)', 'https://www.youtube.com/watch?v=GGEQlsNCNqY', '46:00'),
       ],
       resources: [
         resource('Algorithm_Writing_Part1.pdf', 'pdf'),
@@ -37,8 +37,8 @@ const WEEK_11 = {
         'https://www.youtube.com/watch?v=HCaXSFOg2fs'
       ),
       sessionVideos: [
-        sessionVideo('2.1 - Algorithm writing with example (the magic array function)', 'PLACEHOLDER_YOUTUBE_ID', '00:00'),
-        sessionVideo('2.2 - Algorithm writing with example (the sort function)', 'PLACEHOLDER_YOUTUBE_ID', '33:00'),
+        sessionVideo('2.1 - Algorithm writing with example (the magic array function)', 'https://www.youtube.com/watch?v=i1HhsOUIWgU', '33:00'),
+        sessionVideo('2.2 - Algorithm writing with example (the sort function)', 'https://www.youtube.com/watch?v=yvIbRhEY6UI', '38:00'),
       ],
       resources: [
         resource('Algorithm_Writing_Part2.pdf', 'pdf'),

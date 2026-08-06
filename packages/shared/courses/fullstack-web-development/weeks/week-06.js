@@ -23,12 +23,12 @@ const WEEK_06 = {
         'https://www.youtube.com/watch?v=l3Zd5WvIpg4'
       ),
       sessionVideos: [
-        sessionVideo('1.1 - What is Bootstrap?', 'PLACEHOLDER_YOUTUBE_ID', '14:00'),
-        sessionVideo('1.2 - How do we use Bootstrap?', 'PLACEHOLDER_YOUTUBE_ID', '08:00'),
-        sessionVideo('1.3 - Bootstrap containers', 'PLACEHOLDER_YOUTUBE_ID', '10:00'),
-        sessionVideo('1.4 - Bootstrap breakpoints', 'PLACEHOLDER_YOUTUBE_ID', '04:00'),
-        sessionVideo('1.5 - Bootstrap grid system (rows)', 'PLACEHOLDER_YOUTUBE_ID', '16:00'),
-        sessionVideo('1.6 - Bootstrap grid system (columns)', 'PLACEHOLDER_YOUTUBE_ID', '21:00'),
+        sessionVideo('1.1 - What is Bootstrap?', 'https://www.youtube.com/watch?v=5kd1lSSjEU8', '14:00'),
+        sessionVideo('1.2 - How do we use Bootstrap?', 'https://www.youtube.com/watch?v=sCnXDO3lOZU', '08:00'),
+        sessionVideo('1.3 - Bootstrap containers', 'https://www.youtube.com/watch?v=mXsmXcq7c6A', '10:00'),
+        sessionVideo('1.4 - Bootstrap breakpoints', 'https://www.youtube.com/watch?v=TBl3v5HZo90', '04:00'),
+        sessionVideo('1.5 - Bootstrap grid system (rows)', 'https://www.youtube.com/watch?v=ouD44sWtqqU', '16:00'),
+        sessionVideo('1.6 - Bootstrap grid system (columns)', 'https://www.youtube.com/watch?v=ykMiGvNF4bU', '21:00'),
       ],
       resources: [
         resource('Bootstrap_CheatSheet.pdf', 'pdf'),
@@ -45,8 +45,8 @@ const WEEK_06 = {
         'https://www.youtube.com/watch?v=CKcyCs8sua8'
       ),
       sessionVideos: [
-        sessionVideo('2.1 - Bootstrap - Mobile first', 'PLACEHOLDER_YOUTUBE_ID', '27:00'),
-        sessionVideo('2.2 - Bootstrap - Desktop version', 'PLACEHOLDER_YOUTUBE_ID', '14:00'),
+        sessionVideo('2.1 - Bootstrap - Mobile first', 'https://www.youtube.com/watch?v=Nl-OP4NoJQI', '27:00'),
+        sessionVideo('2.2 - Bootstrap - Desktop version', 'https://www.youtube.com/watch?v=AaeClQmrH3I', '14:00'),
       ],
       resources: [
         resource('Bootstrap_Demo_Starter.zip', 'zip'),

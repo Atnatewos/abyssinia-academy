@@ -20,16 +20,16 @@ const WEEK_09 = {
         'https://www.youtube.com/watch?v=qGYw3r9vfr8'
       ),
       sessionVideos: [
-        sessionVideo('1.1 - What are functions? Why do we need them?', 'PLACEHOLDER_YOUTUBE_ID', '00:00'),
-        sessionVideo('1.2 - How do we declare/define a function in JS?', 'PLACEHOLDER_YOUTUBE_ID', '05:00'),
-        sessionVideo('1.3 - Functions with arguments', 'PLACEHOLDER_YOUTUBE_ID', '14:00'),
-        sessionVideo('1.4 - Functions that return a value', 'PLACEHOLDER_YOUTUBE_ID', '19:00'),
-        sessionVideo('1.5 - Variable scoping', 'PLACEHOLDER_YOUTUBE_ID', '25:00'),
-        sessionVideo('1.6 - Arrow functions', 'PLACEHOLDER_YOUTUBE_ID', '37:00'),
-        sessionVideo('1.7 - Understanding statements: conditional statements', 'PLACEHOLDER_YOUTUBE_ID', '45:00'),
-        sessionVideo('1.8 - If statements', 'PLACEHOLDER_YOUTUBE_ID', '56:00'),
-        sessionVideo('1.9 - If ... else Statements', 'PLACEHOLDER_YOUTUBE_ID', '01:09:00'),
-        sessionVideo('1.10 - Switch statements', 'PLACEHOLDER_YOUTUBE_ID', '01:19:00'),
+        sessionVideo('1.1 - What are functions? Why do we need them?', 'https://www.youtube.com/watch?v=svvZC8qHB6c', '00:00'),
+        sessionVideo('1.2 - How do we declare/define a function in JS?', 'https://www.youtube.com/watch?v=Al7mb6bchF8', '05:00'),
+        sessionVideo('1.3 - Functions with arguments', 'https://www.youtube.com/watch?v=LAan1V-Vhr8', '14:00'),
+        sessionVideo('1.4 - Functions that return a value', 'https://www.youtube.com/watch?v=ApyCpoy5Q7c', '19:00'),
+        sessionVideo('1.5 - Variable scoping', 'https://www.youtube.com/watch?v=ssm-uUrzgH8', '25:00'),
+        sessionVideo('1.6 - Arrow functions', 'https://www.youtube.com/watch?v=CwlFBgQKBL4', '37:00'),
+        sessionVideo('1.7 - Understanding statements: conditional statements', 'https://www.youtube.com/watch?v=dUlYcZeQ1Iw', '45:00'),
+        sessionVideo('1.8 - If statements', 'https://www.youtube.com/watch?v=3V_A9le0KMA', '56:00'),
+        sessionVideo('1.9 - If ... else Statements', 'https://www.youtube.com/watch?v=ldz58iS5t64', '01:09:00'),
+        sessionVideo('1.10 - Switch statements', 'https://www.youtube.com/watch?v=orhTuICEJhc', '01:19:00'),
       ],
       resources: [
         resource('JS_Functions_Guide.pdf', 'pdf'),
@@ -45,10 +45,10 @@ const WEEK_09 = {
         'https://www.youtube.com/watch?v=BlAknpjEbWs'
       ),
       sessionVideos: [
-        sessionVideo('2.1 - Algorithm explained with example (addition function)', 'PLACEHOLDER_YOUTUBE_ID', '00:00'),
-        sessionVideo('2.2 - Algorithm explained with example (the soccer points function)', 'PLACEHOLDER_YOUTUBE_ID', '41:00'),
-        sessionVideo('2.3 - Algorithm explained with example (the area of a triangle function)', 'PLACEHOLDER_YOUTUBE_ID', '01:00:00'),
-        sessionVideo('2.4 - Algorithm explained with example (the minute to second converter function)', 'PLACEHOLDER_YOUTUBE_ID', '01:05:00'),
+        sessionVideo('2.1 - Algorithm explained with example (addition function)', 'https://www.youtube.com/watch?v=bBnBKkPy8x8', '00:00'),
+        sessionVideo('2.2 - Algorithm explained with example (the soccer points function)', 'https://www.youtube.com/watch?v=cJ74f9TZjqw', '41:00'),
+        sessionVideo('2.3 - Algorithm explained with example (the area of a triangle function)', 'https://www.youtube.com/watch?v=ItgMco7e54Y', '01:00:00'),
+        sessionVideo('2.4 - Algorithm explained with example (the minute to second converter function)', 'https://www.youtube.com/watch?v=hyGPkOtcpB8', '01:05:00'),
       ],
       resources: [
         resource('Algorithmic_Thinking.pdf', 'pdf'),

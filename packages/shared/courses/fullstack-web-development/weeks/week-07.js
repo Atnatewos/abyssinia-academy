@@ -23,10 +23,10 @@ const WEEK_07 = {
         'https://www.youtube.com/watch?v=6-fRyyI4E7k'
       ),
       sessionVideos: [
-        sessionVideo('1.1 - Why do we need to build a portfolio website?', 'PLACEHOLDER_YOUTUBE_ID', '06:00'),
-        sessionVideo('1.2 - How do we make our website impressive?', 'PLACEHOLDER_YOUTUBE_ID', '17:00'),
-        sessionVideo('1.3 - Steps to follow to buy a template website and to build our website (part I)', 'PLACEHOLDER_YOUTUBE_ID', '18:00'),
-        sessionVideo('1.4 - Steps to follow to buy a template website and to build our website (part II)', 'PLACEHOLDER_YOUTUBE_ID', '26:00'),
+        sessionVideo('1.1 - Why do we need to build a portfolio website?', 'https://www.youtube.com/watch?v=TzuHAC7Y3Z4', '06:00'),
+        sessionVideo('1.2 - How do we make our website impressive?', 'https://www.youtube.com/watch?v=ZBNRCu6Lz1g', '17:00'),
+        sessionVideo('1.3 - Steps to follow to buy a template website and to build our website (part I)', 'https://www.youtube.com/watch?v=yHF7XK0h52A', '18:00'),
+        sessionVideo('1.4 - Steps to follow to buy a template website and to build our website (part II)', 'https://www.youtube.com/watch?v=xHqr8Vr5vKU', '26:00'),
       ],
       resources: [
         resource('Portfolio_Checklist.pdf', 'pdf'),
@@ -43,12 +43,12 @@ const WEEK_07 = {
         'https://www.youtube.com/watch?v=zEb7fXZd_zA'
       ),
       sessionVideos: [
-        sessionVideo('2.1 - The three main components needed for a website to go live', 'PLACEHOLDER_YOUTUBE_ID', '04:00'),
-        sessionVideo('2.2 - How do we set up a hosting server?', 'PLACEHOLDER_YOUTUBE_ID', '10:00'),
-        sessionVideo('2.3 - Why is it not recommended to host your own website?', 'PLACEHOLDER_YOUTUBE_ID', '06:00'),
-        sessionVideo('2.4 - How to choose the best web hosting plan according to your needs', 'PLACEHOLDER_YOUTUBE_ID', '17:00'),
-        sessionVideo('2.5 - Accessing and exchanging website files with your hosting server', 'PLACEHOLDER_YOUTUBE_ID', '15:00'),
-        sessionVideo('2.6 - Launching your website', 'PLACEHOLDER_YOUTUBE_ID', '12:00'),
+        sessionVideo('2.1 - The three main components needed for a website to go live', 'https://www.youtube.com/watch?v=ZiWcqB3BheU', '04:00'),
+        sessionVideo('2.2 - How do we set up a hosting server?', 'https://www.youtube.com/watch?v=ZBNRCu6Lz1g', '10:00'),
+        sessionVideo('2.3 - Why is it not recommended to host your own website?', 'https://www.youtube.com/watch?v=UEzNQJEH-7c', '06:00'),
+        sessionVideo('2.4 - How to choose the best web hosting plan according to your needs', 'https://www.youtube.com/watch?v=XoVeIqVBwQg', '17:00'),
+        sessionVideo('2.5 - Accessing and exchanging website files with your hosting server', 'https://www.youtube.com/watch?v=ZxIHrXF_0dw', '15:00'),
+        sessionVideo('2.6 - Launching your website', 'https://www.youtube.com/watch?v=1FFPtFthmTQ', '12:00'),
       ],
       resources: [
         resource('Deployment_Guide.pdf', 'pdf'),
@@ -62,7 +62,7 @@ const WEEK_07 = {
       notes: 'Live demonstration of deploying a real website using popular hosting platforms.',
       mainVideo: mainVideo(
         'Deployment Demo: Deploying Website Using Square Space & Hostinger',
-        'https://youtu.be/-qAs4XyFDl8?si=KGNO8zdiYtAkJSn9'
+        'https://youtu.be/-qAs4XyFDl8?si=GdLNK6yHq__pY2pb'
       ),
       sessionVideos: [],
       resources: [
