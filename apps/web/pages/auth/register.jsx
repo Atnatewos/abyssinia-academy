@@ -1,7 +1,10 @@
 /**
  * @fileoverview Registration Page
- * New student account creation form with referral code support.
+ * New student account creation form with persistent referral code support.
+ * Referral code persists across refreshes and navigation via localStorage.
+ * Auto-expires after 7 days (configurable in referrals.config.js).
  * Accepts ?ref= parameter from referral links OR manual referral code input.
+ * 
  * Path: apps/web/pages/auth/register.jsx
  */
 
@@ -16,10 +19,14 @@ import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import apiClient from '../../lib/api';
 import { getReferralConfig } from '../../lib/config';
+import { getItem, setItem, removeItem } from '../../lib/storage';
+
+const REFERRAL_STORAGE_KEY = 'abyssinia_referral_code';
+const REFERRAL_EXPIRY_KEY = 'abyssinia_referral_expiry';
 
 /**
- * RegisterPage — Student registration with optional referral code.
- * Referral code can come from ?ref= URL parameter OR manual input.
+ * RegisterPage — Student registration with persistent referral code.
+ * Referral code survives browser refreshes, navigation, and closing/reopening.
  */
 const RegisterPage = () => {
   const router = useRouter();
@@ -41,7 +48,7 @@ const RegisterPage = () => {
   const [errors, setErrors] = useState({});
 
   /*
-   * Referral state — supports both URL param AND manual input
+   * Referral state — persists via localStorage
    */
   const [referralCode, setReferralCode] = useState('');
   const [referralInputValue, setReferralInputValue] = useState('');
@@ -52,21 +59,62 @@ const RegisterPage = () => {
   const [showReferralInput, setShowReferralInput] = useState(false);
 
   /*
-   * Extract referral code from URL query parameter on mount
+   * On mount: check URL param first, then localStorage fallback
+   * Priority: URL ?ref= > localStorage (if not expired) > nothing
    */
   useEffect(() => {
     const refCode = router.query.ref;
 
     if (refCode && typeof refCode === 'string' && refCode.trim()) {
+      /*
+       * URL has a referral code — use it and save to localStorage
+       */
       const cleanCode = refCode.trim().toUpperCase();
       setReferralCode(cleanCode);
       setReferralInputValue(cleanCode);
+
+      /*
+       * Save to localStorage with 7-day expiry
+       */
+      const cookieDurationDays = referralConfig.registration?.cookieDurationDays || 7;
+      const expiry = Date.now() + cookieDurationDays * 24 * 60 * 60 * 1000;
+      setItem(REFERRAL_STORAGE_KEY, cleanCode);
+      setItem(REFERRAL_EXPIRY_KEY, expiry);
+
       validateAndApplyReferral(cleanCode);
+    } else {
+      /*
+       * No URL param — check localStorage for a saved referral code
+       */
+      const savedCode = getItem(REFERRAL_STORAGE_KEY);
+      const savedExpiry = getItem(REFERRAL_EXPIRY_KEY);
+
+      if (savedCode && savedExpiry) {
+        /*
+         * Check if the saved code has expired
+         */
+        if (Date.now() < savedExpiry) {
+          /*
+           * Code is still valid — auto-apply it
+           */
+          const cleanCode = savedCode.toUpperCase();
+          setReferralCode(cleanCode);
+          setReferralInputValue(cleanCode);
+          validateAndApplyReferral(cleanCode);
+        } else {
+          /*
+           * Code has expired — clean up localStorage
+           */
+          removeItem(REFERRAL_STORAGE_KEY);
+          removeItem(REFERRAL_EXPIRY_KEY);
+        }
+      }
     }
   }, [router.query.ref]);
 
   /**
-   * Validate a referral code against the API and apply if valid
+   * Validate a referral code against the API and apply if valid.
+   * On success, saves to localStorage for persistence.
    */
   const validateAndApplyReferral = async (code) => {
     setReferralValidating(true);
@@ -79,9 +127,23 @@ const RegisterPage = () => {
         setReferralData(response.data);
         setReferralCode(code);
         setReferralApplied(true);
+
+        /*
+         * Save to localStorage so it survives refreshes
+         */
+        const cookieDurationDays = referralConfig.registration?.cookieDurationDays || 7;
+        const expiry = Date.now() + cookieDurationDays * 24 * 60 * 60 * 1000;
+        setItem(REFERRAL_STORAGE_KEY, code);
+        setItem(REFERRAL_EXPIRY_KEY, expiry);
       } else {
         setReferralError(t.referrals?.invalidCode || 'Invalid referral code.');
         setReferralApplied(false);
+
+        /*
+         * Invalid code — clear from localStorage
+         */
+        removeItem(REFERRAL_STORAGE_KEY);
+        removeItem(REFERRAL_EXPIRY_KEY);
       }
     } catch (err) {
       const message = err?.response?.data?.message
@@ -95,7 +157,8 @@ const RegisterPage = () => {
   };
 
   /**
-   * Handle manual referral code apply button
+   * Handle manual referral code apply button.
+   * Saves to localStorage on success.
    */
   const handleApplyReferral = () => {
     if (!referralInputValue.trim()) return;
@@ -106,7 +169,8 @@ const RegisterPage = () => {
   };
 
   /**
-   * Remove the applied referral code
+   * Remove the applied referral code.
+   * Clears from state AND localStorage.
    */
   const handleRemoveReferral = () => {
     setReferralCode('');
@@ -114,6 +178,8 @@ const RegisterPage = () => {
     setReferralData(null);
     setReferralError(null);
     setReferralApplied(false);
+    removeItem(REFERRAL_STORAGE_KEY);
+    removeItem(REFERRAL_EXPIRY_KEY);
   };
 
   /**
@@ -151,7 +217,8 @@ const RegisterPage = () => {
   };
 
   /**
-   * Handle form submission
+   * Handle form submission.
+   * Clears saved referral code from localStorage on successful registration.
    */
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -181,6 +248,13 @@ const RegisterPage = () => {
       const response = await register(payload);
 
       if (response && response.success) {
+        /*
+         * Registration successful — clear saved referral code
+         * since it's been used
+         */
+        removeItem(REFERRAL_STORAGE_KEY);
+        removeItem(REFERRAL_EXPIRY_KEY);
+
         toast.success('Registration successful! Welcome to Abyssinia Academy.');
         router.push(router.query.redirect || '/pricing');
       } else {
@@ -216,7 +290,7 @@ const RegisterPage = () => {
               <h1 className="auth-title">{t.auth?.register || 'Create Account'}</h1>
               <p className="auth-subtitle">Join Abyssinia Academy and start learning</p>
 
-              {/* ── Referral Banner (from URL param — auto-applied) ── */}
+              {/* ── Referral Banner (auto-applied from URL or localStorage) ── */}
               {referralValidating && !referralInputValue && (
                 <div className="referral-register-banner loading">
                   <span>Validating referral code...</span>

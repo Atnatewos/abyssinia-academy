@@ -1,9 +1,10 @@
 /**
  * @fileoverview Pricing Page — Fully Config-Driven with Referral & Discount Support
  * Modern timeline-based phase selection with sticky cart sidebar.
+ * Fetches referral discount from /auth/me on every page load
+ * so the discount persists even if the user registered days/weeks ago.
  * ALL display text from i18n → t.pricing.* and t.phasePurchase.*
  * ALL data from payments.config.js + course config.
- * Supports referral discount display and discount code badge.
  * Path: apps/web/pages/pricing/index.jsx
  */
 
@@ -11,19 +12,8 @@ import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import {
-  Check,
-  ArrowRight,
-  Sparkles,
-  Clock,
-  BookOpen,
-  Code,
-  Layers,
-  ChevronDown,
-  ChevronUp,
-  ShoppingCart,
-  Shield,
-  Zap,
-  Gift,
+  Check, ArrowRight, Sparkles, Clock, BookOpen, Code,
+  Layers, ChevronDown, ChevronUp, ShoppingCart, Shield, Zap, Gift,
 } from 'lucide-react';
 import SEOHead from '../../components/shared/SEOHead';
 import PageLayout from '../../components/shared/PageLayout';
@@ -33,13 +23,11 @@ import CheckoutModal from '../../components/payment/CheckoutModal';
 import DiscountCodeBadge from '../../components/discount/DiscountCodeBadge';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
-import { getPricing, getCountdownTimerConfig, calculateReferredDiscount } from '../../lib/config';
+import { getPricing, getCountdownTimerConfig } from '../../lib/config';
+import apiClient from '../../lib/api';
 import useCart from '../../hooks/useCart';
 import usePortalCourse from '../../hooks/usePortalCourse';
 
-/*
- * Phase color palette
- */
 const PHASE_COLORS = [
   { accent: '#f59e0b', bg: 'rgba(245,158,11,0.06)', border: 'rgba(245,158,11,0.2)' },
   { accent: '#3b82f6', bg: 'rgba(59,130,246,0.06)', border: 'rgba(59,130,246,0.2)' },
@@ -48,15 +36,11 @@ const PHASE_COLORS = [
   { accent: '#ec4899', bg: 'rgba(236,72,153,0.06)', border: 'rgba(236,72,153,0.2)' },
 ];
 
-/**
- * PricingPage — Professional pricing experience with referral discount support.
- */
 const PricingPage = () => {
   const router = useRouter();
   const { t, language } = useLanguage();
   const { isAuthenticated, isEnrolled, user } = useAuth();
   const cart = useCart();
-
   const { phases: coursePhases } = usePortalCourse('fullstack-web-engineering-masterclass');
 
   const pricing = getPricing();
@@ -69,19 +53,48 @@ const PricingPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   /*
-   * Referral discount state
+   * Referral discount state — fetched fresh from API every time
    */
   const [referralDiscountPercent, setReferralDiscountPercent] = useState(0);
   const [referralCode, setReferralCode] = useState('');
 
   /*
-   * Check if user has a referral discount from their own registration
+   * Fetch the user's referral discount from the server on every page load.
+   * This ensures the discount is ALWAYS visible even if the user registered
+   * days/weeks ago and the AuthContext cache doesn't have the latest data.
+   * 
+   * Also catches the case where the user was referred but the AuthContext
+   * hasn't refreshed since registration.
    */
   useEffect(() => {
-    if (user?.referral_discount_percent && user.referral_discount_percent > 0) {
-      setReferralDiscountPercent(user.referral_discount_percent);
-    }
-  }, [user]);
+    if (!isAuthenticated) return;
+
+    const fetchReferralDiscount = async () => {
+      try {
+        const response = await apiClient.get('/auth/me');
+
+        if (response && response.success && response.data?.user) {
+          const userData = response.data.user;
+
+          if (userData.referred_by_code) {
+            setReferralCode(userData.referred_by_code);
+          }
+
+          const discount = parseFloat(userData.referral_discount_percent || 0);
+          if (discount > 0) {
+            setReferralDiscountPercent(discount);
+          }
+        }
+      } catch {
+        /*
+         * Silent — referral discount is optional.
+         * If the API fails, the user just doesn't see a discount badge.
+         */
+      }
+    };
+
+    fetchReferralDiscount();
+  }, [isAuthenticated]);
 
   /*
    * Merge course phase data with purchase prerequisites
@@ -98,9 +111,6 @@ const PricingPage = () => {
     });
   }, [coursePhases, cart.allPhases]);
 
-  /*
-   * Full course features
-   */
   const fullCourseFeatures = [
     { icon: Layers, text: t.pricing?.instantAccess || 'Instant access to all 5 phases & course modules' },
     { icon: Zap, text: t.pricing?.hdPlaylists || 'Unlisted HD YouTube pre-recorded video masterclasses' },
@@ -109,9 +119,6 @@ const PricingPage = () => {
     { icon: Shield, text: t.pricing?.telegramCommunity || 'Private Telegram developer mentorship community' },
   ];
 
-  /*
-   * Open the checkout modal
-   */
   const handleOpenCheckout = (mode = 'full-course') => {
     if (!isAuthenticated) {
       const params = mode === 'individual-phases' && cart.selectedPhases.length > 0
@@ -145,15 +152,13 @@ const PricingPage = () => {
       <SEOHead title={t.pricing?.heading || 'Tuition'} />
       <PageLayout>
 
-        {/* Countdown Banner */}
         {timerConfig.enabled !== false && <CountdownBanner />}
 
         <div className="pricing-modern">
 
-          {/* Header */}
           <header className="pricing-modern-header">
 
-            {/* Referral Discount Badge */}
+            {/* Referral Discount Badge — always visible if user has one */}
             {referralDiscountPercent > 0 && (
               <div style={{ marginBottom: '1rem' }}>
                 <DiscountCodeBadge
@@ -200,10 +205,7 @@ const PricingPage = () => {
                   </p>
                   <ul className="pricing-hero-features">
                     {fullCourseFeatures.map((feature, index) => (
-                      <li key={index}>
-                        <feature.icon size={16} />
-                        <span>{feature.text}</span>
-                      </li>
+                      <li key={index}><feature.icon size={16} /><span>{feature.text}</span></li>
                     ))}
                   </ul>
                 </div>
@@ -215,44 +217,24 @@ const PricingPage = () => {
                       </span>
                     )}
                     <div className="pricing-hero-price">
-                      <span className="pricing-hero-amount">
-                        {fullCourse.amountETB?.toLocaleString() || '2,499'}
-                      </span>
-                      <span className="pricing-hero-currency">
-                        {fullCourse.currency || 'ETB'}
-                      </span>
+                      <span className="pricing-hero-amount">{fullCourse.amountETB?.toLocaleString() || '2,499'}</span>
+                      <span className="pricing-hero-currency">{fullCourse.currency || 'ETB'}</span>
                     </div>
                     {fullCourse.discountPercentage > 0 && (
-                      <span className="pricing-hero-original">
-                        {fullCourse.originalAmountETB?.toLocaleString()} {fullCourse.currency || 'ETB'}
-                      </span>
+                      <span className="pricing-hero-original">{fullCourse.originalAmountETB?.toLocaleString()} {fullCourse.currency || 'ETB'}</span>
                     )}
                   </div>
-                  <button
-                    className={`pricing-hero-select-btn ${purchaseMode === 'full-course' ? 'selected' : ''}`}
-                    onClick={() => setPurchaseMode('full-course')}
-                  >
-                    {purchaseMode === 'full-course' ? (
-                      <><Check size={18} />{t.pricing?.selected || 'Selected'}</>
-                    ) : (
-                      t.pricing?.selectFullCourse || 'Select Full Course'
-                    )}
+                  <button className={`pricing-hero-select-btn ${purchaseMode === 'full-course' ? 'selected' : ''}`} onClick={() => setPurchaseMode('full-course')}>
+                    {purchaseMode === 'full-course' ? <><Check size={18} />{t.pricing?.selected || 'Selected'}</> : t.pricing?.selectFullCourse || 'Select Full Course'}
                   </button>
                   {purchaseMode === 'full-course' && !isEnrolled && (
-                    <button
-                      className="pricing-btn-primary"
-                      style={{ width: '100%', marginTop: '0.75rem' }}
-                      onClick={() => handleOpenCheckout('full-course')}
-                    >
-                      <Sparkles size={18} />
-                      {t.pricing?.enrollToday || 'Enroll Today'}
-                      <ArrowRight size={18} />
+                    <button className="pricing-btn-primary" style={{ width: '100%', marginTop: '0.75rem' }} onClick={() => handleOpenCheckout('full-course')}>
+                      <Sparkles size={18} />{t.pricing?.enrollToday || 'Enroll Today'}<ArrowRight size={18} />
                     </button>
                   )}
                   {isEnrolled && (
                     <Link href="/portal" className="pricing-btn-primary" style={{ width: '100%', marginTop: '0.75rem' }}>
-                      <BookOpen size={18} />
-                      {t.pricing?.goToPortal || 'Go to Classroom Portal'}
+                      <BookOpen size={18} />{t.pricing?.goToPortal || 'Go to Classroom Portal'}
                     </Link>
                   )}
                 </div>
@@ -264,31 +246,21 @@ const PricingPage = () => {
           <div className="pricing-roadmap-section">
             <div className="pricing-roadmap-header">
               <div>
-                <h2 className="pricing-roadmap-title">
-                  {t.pricing?.orBuildYourOwn || 'Or Build Your Own Path'}
-                </h2>
+                <h2 className="pricing-roadmap-title">{t.pricing?.orBuildYourOwn || 'Or Build Your Own Path'}</h2>
                 <p className="pricing-roadmap-subtitle">
                   {(t.pricing?.selectIndividualPhases || 'Select individual phases at {price} {currency} each.')
                     .replace('{price}', (perPhase.amountETB || 750).toLocaleString())
                     .replace('{currency}', perPhase.currency || 'ETB')}
                 </p>
               </div>
-              <button
-                className={`pricing-roadmap-mode-btn ${purchaseMode === 'individual-phases' ? 'active' : ''}`}
-                onClick={() => setPurchaseMode('individual-phases')}
-              >
-                {purchaseMode === 'individual-phases' ? (
-                  <><Check size={16} />{t.pricing?.customModeActive || 'Custom Mode Active'}</>
-                ) : (
-                  <><Layers size={16} />{t.pricing?.switchToCustom || 'Switch to Custom'}</>
-                )}
+              <button className={`pricing-roadmap-mode-btn ${purchaseMode === 'individual-phases' ? 'active' : ''}`} onClick={() => setPurchaseMode('individual-phases')}>
+                {purchaseMode === 'individual-phases' ? <><Check size={16} />{t.pricing?.customModeActive || 'Custom Mode Active'}</> : <><Layers size={16} />{t.pricing?.switchToCustom || 'Switch to Custom'}</>}
               </button>
             </div>
 
-            {/* Timeline */}
             <div className="pricing-timeline">
               <div className="pricing-timeline-line" />
-              {phasesWithMeta.map((phase, index) => {
+              {phasesWithMeta.map((phase) => {
                 const phaseId = phase.id || `phase-${phase.number}`;
                 const isSelected = cart.isPhaseSelected(phaseId);
                 const selectability = cart.canSelectPhase(phaseId);
@@ -298,21 +270,12 @@ const PricingPage = () => {
                 const outcomes = phase.outcomes || [];
 
                 return (
-                  <div
-                    key={phaseId}
-                    className={`pricing-timeline-item ${isExpanded ? 'expanded' : ''} ${isSelected ? 'selected' : ''} ${isLocked ? 'locked' : ''}`}
-                    style={{
-                      '--phase-accent': phase.colors.accent,
-                      '--phase-bg': phase.colors.bg,
-                      '--phase-border': phase.colors.border,
-                    }}
-                  >
+                  <div key={phaseId} className={`pricing-timeline-item ${isExpanded ? 'expanded' : ''} ${isSelected ? 'selected' : ''} ${isLocked ? 'locked' : ''}`} style={{ '--phase-accent': phase.colors.accent, '--phase-bg': phase.colors.bg, '--phase-border': phase.colors.border }}>
                     <div className="pricing-timeline-marker">
                       <div className="pricing-timeline-dot">
-                        {isSelected ? <Check size={14} /> : isLocked ? <span className="pricing-timeline-dot-locked">!</span> : <span className="pricing-timeline-dot-num">{phase.number}</span>}
+                        {isSelected ? <Check size={14} /> : isLocked ? <span className="pricing-timeline-dot-locked">!</span> : <span>{phase.number}</span>}
                       </div>
                     </div>
-
                     <div className="pricing-timeline-card">
                       <button className="pricing-timeline-card-header" onClick={() => handleToggleExpand(phaseId)}>
                         <div className="pricing-timeline-card-header-left">
@@ -325,15 +288,10 @@ const PricingPage = () => {
                           </div>
                         </div>
                         <div className="pricing-timeline-card-header-right">
-                          {isCustomMode && (
-                            <span className="pricing-timeline-price-badge">
-                              {(perPhase.amountETB || 750).toLocaleString()} {perPhase.currency || 'ETB'}
-                            </span>
-                          )}
+                          {isCustomMode && <span className="pricing-timeline-price-badge">{(perPhase.amountETB || 750).toLocaleString()} {perPhase.currency || 'ETB'}</span>}
                           {isExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
                         </div>
                       </button>
-
                       {isExpanded && (
                         <div className="pricing-timeline-card-body">
                           <p className="pricing-timeline-card-desc">{language === 'am' ? (phase.description_am || phase.description) : phase.description}</p>
@@ -350,7 +308,7 @@ const PricingPage = () => {
                           )}
                           {isCustomMode && (
                             <button onClick={() => handleToggleCart(phaseId)} disabled={isLocked} className={`pricing-timeline-cart-btn ${isSelected ? 'remove' : 'add'} ${isLocked ? 'disabled' : ''}`}>
-                              {isSelected ? (<><Check size={15} />{t.pricing?.removeFromCart || 'Remove from Cart'}</>) : isLocked ? (<><span>🔒</span>{t.pricing?.prerequisitesRequired || 'Prerequisites Required'}</>) : (<><ShoppingCart size={15} />{(t.pricing?.addToCart || 'Add to Cart — {price} {currency}').replace('{price}', (perPhase.amountETB || 750).toLocaleString()).replace('{currency}', perPhase.currency || 'ETB')}</>)}
+                              {isSelected ? <><Check size={15} />{t.pricing?.removeFromCart || 'Remove from Cart'}</> : isLocked ? <><span>🔒</span>{t.pricing?.prerequisitesRequired || 'Prerequisites Required'}</> : <><ShoppingCart size={15} />{(t.pricing?.addToCart || 'Add to Cart — {price} {currency}').replace('{price}', (perPhase.amountETB || 750).toLocaleString()).replace('{currency}', perPhase.currency || 'ETB')}</>}
                             </button>
                           )}
                         </div>
@@ -362,22 +320,18 @@ const PricingPage = () => {
             </div>
           </div>
 
-          {/* Sticky Cart */}
           {purchaseMode === 'individual-phases' && cart.selectedPhases.length > 0 && (
             <div className="pricing-sticky-cart">
               <div className="pricing-sticky-cart-inner">
                 <PhaseCartSummary selectedPhases={cart.selectedPhases} compact />
                 <button className="pricing-btn-primary pricing-sticky-cta" onClick={() => handleOpenCheckout('individual-phases')}>
-                  <Sparkles size={18} />
-                  {t.pricing?.enrollToday || 'Enroll Today'}
-                  <ArrowRight size={18} />
+                  <Sparkles size={18} />{t.pricing?.enrollToday || 'Enroll Today'}<ArrowRight size={18} />
                 </button>
               </div>
             </div>
           )}
         </div>
 
-        {/* Checkout Modal */}
         <CheckoutModal
           isOpen={isModalOpen}
           onClose={handleCloseModal}
@@ -385,7 +339,7 @@ const PricingPage = () => {
           selectedPhases={purchaseMode === 'individual-phases' ? cart.selectedPhases : []}
           coursePhases={coursePhases || []}
           referralDiscountPercent={referralDiscountPercent}
-          referralCode={user?.referred_by_code || ''}
+          referralCode={referralCode}
         />
       </PageLayout>
     </>

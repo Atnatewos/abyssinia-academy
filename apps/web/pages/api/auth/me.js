@@ -1,5 +1,8 @@
 /**
  * @fileoverview Get Current User API Route
+ * Returns full user profile including referral discount info.
+ * The pricing page uses this to show referral discounts even
+ * if the user registered days/weeks ago.
  * Path: apps/web/pages/api/auth/me.js
  */
 
@@ -11,6 +14,9 @@ const isNeon = process.env.DATABASE_URL && process.env.DATABASE_URL.includes('ne
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: isNeon ? { rejectUnauthorized: false } : false,
+  max: 10,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 10000,
 });
 
 export default async function handler(req, res) {
@@ -27,8 +33,15 @@ export default async function handler(req, res) {
     const token = authHeader.split(' ')[1];
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
+    /*
+     * Fetch user with referral discount fields
+     * These are critical for showing persistent referral discounts
+     * on the pricing page and checkout flow.
+     */
     const result = await pool.query(
-      'SELECT id, full_name, phone, email, is_enrolled, payment_status FROM users WHERE id = $1',
+      `SELECT id, full_name, phone, email, is_enrolled, payment_status,
+              referred_by_code, referral_discount_percent
+       FROM users WHERE id = $1`,
       [decoded.userId]
     );
 
@@ -36,8 +49,25 @@ export default async function handler(req, res) {
       return res.status(401).json({ success: false, message: 'User not found.' });
     }
 
-    res.json({ success: true, data: { user: result.rows[0] } });
+    const user = result.rows[0];
+
+    res.json({
+      success: true,
+      data: {
+        user: {
+          id: user.id,
+          full_name: user.full_name,
+          phone: user.phone,
+          email: user.email,
+          is_enrolled: user.is_enrolled,
+          payment_status: user.payment_status,
+          referred_by_code: user.referred_by_code || null,
+          referral_discount_percent: parseFloat(user.referral_discount_percent || 0),
+        },
+      },
+    });
   } catch (error) {
+    console.error('Auth me error:', error.message);
     res.status(401).json({ success: false, message: 'Invalid token.' });
   }
 }
