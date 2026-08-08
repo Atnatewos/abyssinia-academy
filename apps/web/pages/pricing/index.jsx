@@ -3,6 +3,7 @@
  * Modern timeline-based phase selection with sticky cart sidebar.
  * Fetches referral discount from /auth/me on every page load
  * so the discount persists even if the user registered days/weeks ago.
+ * Shows applied discount code badge alongside referral badge.
  * ALL display text from i18n → t.pricing.* and t.phasePurchase.*
  * ALL data from payments.config.js + course config.
  * Path: apps/web/pages/pricing/index.jsx
@@ -13,7 +14,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import {
   Check, ArrowRight, Sparkles, Clock, BookOpen, Code,
-  Layers, ChevronDown, ChevronUp, ShoppingCart, Shield, Zap, Gift,
+  Layers, ChevronDown, ChevronUp, ShoppingCart, Shield, Zap,
 } from 'lucide-react';
 import SEOHead from '../../components/shared/SEOHead';
 import PageLayout from '../../components/shared/PageLayout';
@@ -39,7 +40,7 @@ const PHASE_COLORS = [
 const PricingPage = () => {
   const router = useRouter();
   const { t, language } = useLanguage();
-  const { isAuthenticated, isEnrolled, user } = useAuth();
+  const { isAuthenticated, isEnrolled } = useAuth();
   const cart = useCart();
   const { phases: coursePhases } = usePortalCourse('fullstack-web-engineering-masterclass');
 
@@ -59,12 +60,32 @@ const PricingPage = () => {
   const [referralCode, setReferralCode] = useState('');
 
   /*
+   * Discount code state — persisted from the checkout modal
+   * so the badge remains visible on the pricing page after applying a code.
+   * When the modal closes and reopens, the discount code hook resets,
+   * but these state variables keep the badge visible.
+   */
+  const [appliedDiscountCode, setAppliedDiscountCode] = useState('');
+  const [appliedDiscountPercent, setAppliedDiscountPercent] = useState(0);
+
+  /*
+   * Determine which discount badge type to show.
+   * Priority: both > referral > discount > none
+   */
+  const discountBadgeType = useMemo(() => {
+    const hasReferral = referralDiscountPercent > 0;
+    const hasDiscountCode = appliedDiscountPercent > 0 && appliedDiscountCode;
+
+    if (hasReferral && hasDiscountCode) return 'both';
+    if (hasReferral) return 'referral';
+    if (hasDiscountCode) return 'discount';
+    return null;
+  }, [referralDiscountPercent, appliedDiscountPercent, appliedDiscountCode]);
+
+  /*
    * Fetch the user's referral discount from the server on every page load.
    * This ensures the discount is ALWAYS visible even if the user registered
    * days/weeks ago and the AuthContext cache doesn't have the latest data.
-   * 
-   * Also catches the case where the user was referred but the AuthContext
-   * hasn't refreshed since registration.
    */
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -86,10 +107,7 @@ const PricingPage = () => {
           }
         }
       } catch {
-        /*
-         * Silent — referral discount is optional.
-         * If the API fails, the user just doesn't see a discount badge.
-         */
+        /* Silent — referral discount is optional */
       }
     };
 
@@ -158,12 +176,14 @@ const PricingPage = () => {
 
           <header className="pricing-modern-header">
 
-            {/* Referral Discount Badge — always visible if user has one */}
-            {referralDiscountPercent > 0 && (
+            {/* ── Discount Badges Row ── */}
+            {discountBadgeType && (
               <div style={{ marginBottom: '1rem' }}>
                 <DiscountCodeBadge
-                  type="referral"
+                  type={discountBadgeType}
                   referralPercent={referralDiscountPercent}
+                  discountPercent={appliedDiscountPercent}
+                  discountCode={appliedDiscountCode}
                 />
               </div>
             )}
@@ -340,6 +360,16 @@ const PricingPage = () => {
           coursePhases={coursePhases || []}
           referralDiscountPercent={referralDiscountPercent}
           referralCode={referralCode}
+          onDiscountApplied={(data) => {
+            if (data) {
+              setAppliedDiscountCode(data.code || '');
+              setAppliedDiscountPercent(data.value || 0);
+            }
+          }}
+          onDiscountRemoved={() => {
+            setAppliedDiscountCode('');
+            setAppliedDiscountPercent(0);
+          }}
         />
       </PageLayout>
     </>
