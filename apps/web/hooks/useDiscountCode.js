@@ -1,15 +1,21 @@
 /**
  * @fileoverview Discount Code Hook
  * Manages discount code validation, application, and removal.
+ * Enforces one-time use per checkout session.
+ * Auto-resets on unmount to prevent carry-over between modal opens.
+ * 
  * Path: apps/web/hooks/useDiscountCode.js
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import apiClient from '../lib/api';
 
 /**
  * Custom hook for managing discount code state.
  * Handles validate → apply → remove flow.
+ * Only ONE code can be applied at a time.
+ * Resets completely on unmount.
+ * 
  * @returns {object} Discount code state and actions
  */
 const useDiscountCode = () => {
@@ -18,15 +24,39 @@ const useDiscountCode = () => {
   const [isValidating, setIsValidating] = useState(false);
   const [validationError, setValidationError] = useState(null);
   const [isApplied, setIsApplied] = useState(false);
+  const [hasBeenApplied, setHasBeenApplied] = useState(false);
+
+  /*
+   * Auto-reset on unmount — prevents discount code
+   * from persisting when modal closes and reopens.
+   */
+  useEffect(() => {
+    return () => {
+      setCode('');
+      setDiscountData(null);
+      setIsApplied(false);
+      setValidationError(null);
+      setHasBeenApplied(false);
+    };
+  }, []);
 
   /**
    * Validate a discount code against the server.
-   * Does NOT apply it — just checks if it's valid.
+   * Blocks validation if a code has already been applied in this session.
+   * 
    * @param {string} codeToValidate - The discount code to check
    * @param {object} purchaseInfo - { amount, courseType, selectedPhases }
    * @returns {object} { success, data, message }
    */
   const validateCode = useCallback(async (codeToValidate, purchaseInfo = {}) => {
+    /*
+     * Block: code already applied in this session
+     */
+    if (hasBeenApplied) {
+      setValidationError('A discount code has already been applied to this order.');
+      return { success: false, message: 'A discount code has already been applied to this order.' };
+    }
+
     setIsValidating(true);
     setValidationError(null);
 
@@ -52,35 +82,43 @@ const useDiscountCode = () => {
     } finally {
       setIsValidating(false);
     }
-  }, []);
+  }, [hasBeenApplied]);
 
   /**
    * Apply the validated discount code.
-   * This confirms the code will be used for the purchase.
+   * Marks the session as having applied a code — blocks further applications.
    */
   const applyCode = useCallback((codeToApply) => {
     setCode(codeToApply);
     setIsApplied(true);
+    setHasBeenApplied(true);
+    setValidationError(null);
   }, []);
 
   /**
    * Remove the currently applied discount code.
+   * Allows applying a different code after removal.
    */
   const removeCode = useCallback(() => {
     setCode('');
     setDiscountData(null);
     setIsApplied(false);
     setValidationError(null);
+    /*
+     * Allow re-application after removal — but only ONE active at a time
+     */
+    setHasBeenApplied(false);
   }, []);
 
   /**
-   * Reset all state (useful when checkout modal closes)
+   * Reset all state — called externally when checkout flow completes or cancels
    */
   const reset = useCallback(() => {
     setCode('');
     setDiscountData(null);
     setIsApplied(false);
     setValidationError(null);
+    setHasBeenApplied(false);
   }, []);
 
   return {
@@ -89,6 +127,7 @@ const useDiscountCode = () => {
     isApplied,
     isValidating,
     validationError,
+    hasBeenApplied,
     validateCode,
     applyCode,
     removeCode,
