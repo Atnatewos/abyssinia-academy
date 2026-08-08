@@ -1,7 +1,8 @@
 /**
  * @fileoverview Checkout Form Component
  * Payment submission form with transaction reference, screenshot upload,
- * discount code input, and discount breakdown display with percentages.
+ * and discount breakdown display with percentages.
+ * Discount code input is handled by the parent (CheckoutModal) — not duplicated here.
  * ALL display text from i18n → t.checkout.* — zero hardcoded strings.
  * Path: apps/web/components/payment/CheckoutForm.jsx
  */
@@ -11,7 +12,6 @@ import { ShieldCheck, RefreshCw, Upload, X, Copy, Check } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useToast } from '../../context/ToastContext';
 import { getScreenshotUploadConfig } from '../../lib/config';
-import DiscountCodeInput from '../discount/DiscountCodeInput';
 import DiscountBreakdown from '../discount/DiscountBreakdown';
 
 /**
@@ -52,24 +52,20 @@ const CopyButton = ({ text, label = 'Copy to clipboard' }) => {
 };
 
 /**
- * CheckoutForm — Payment submission form with discount code support.
- * Shows discount code percentage alongside code name in breakdown.
+ * CheckoutForm — Payment submission form.
+ * The discount code input is rendered by the parent (CheckoutModal).
+ * This form only displays the discount breakdown and total.
  * 
  * @param {object} props
  * @param {string} props.selectedMethod - Selected payment method ID
  * @param {object} props.selectedMethodData - Full payment method config object
- * @param {number} props.amount - Tuition amount before discounts
+ * @param {number} props.amount - Final amount after all discounts
  * @param {string} props.currency - Currency code (e.g., 'ETB')
  * @param {function} props.onSubmit - Callback(paymentData) on form submit
  * @param {boolean} props.loading - Whether the form is submitting
  * @param {string} props.discountCode - Currently applied discount code
  * @param {number} props.discountCodePercent - Discount code percentage value
- * @param {number} props.discountCodeFixed - Discount code fixed amount
  * @param {object} props.discountBreakdown - Combined discount breakdown object
- * @param {function} props.onDiscountApplied - Callback when discount is applied
- * @param {function} props.onDiscountRemoved - Callback when discount is removed
- * @param {string} props.purchaseMode - 'full-course' or 'individual-phases'
- * @param {Array} props.selectedPhases - Array of selected phase IDs
  */
 const CheckoutForm = ({
   selectedMethod = '',
@@ -80,12 +76,7 @@ const CheckoutForm = ({
   loading = false,
   discountCode = '',
   discountCodePercent = 0,
-  discountCodeFixed = 0,
   discountBreakdown = null,
-  onDiscountApplied = null,
-  onDiscountRemoved = null,
-  purchaseMode = 'full-course',
-  selectedPhases = [],
 }) => {
   const { t, language } = useLanguage();
   const toast = useToast();
@@ -325,19 +316,6 @@ const CheckoutForm = ({
             />
           </label>
         )}
-      </div>
-
-      {/* ── Discount Code Input ── */}
-      <div style={{ marginBottom: '1rem' }}>
-        <DiscountCodeInput
-          purchaseInfo={{
-            amount,
-            courseType: purchaseMode,
-            selectedPhases,
-          }}
-          onDiscountApplied={onDiscountApplied}
-          onDiscountRemoved={onDiscountRemoved}
-        />
       </div>
 
       {/* ── Discount Breakdown with Percentages ── */}
