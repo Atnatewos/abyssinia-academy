@@ -2,7 +2,7 @@
  * @fileoverview Checkout Modal Component
  * Full checkout experience in a modal popup with purchase summary,
  * payment form, countdown timer, referral discount, discount code input,
- * credit application, and combined discount breakdown.
+ * credit application, and combined discount breakdown with percentages.
  * ALL content from i18n + config — zero hardcoded strings.
  * Path: apps/web/components/payment/CheckoutModal.jsx
  */
@@ -34,6 +34,7 @@ import {
 /**
  * CheckoutModal — Overlay modal for completing enrollment.
  * Handles referral discounts, discount codes, and credit application.
+ * Shows discount code percentage alongside code name in breakdown.
  *
  * @param {object} props
  * @param {boolean} props.isOpen - Whether the modal is visible
@@ -44,6 +45,8 @@ import {
  * @param {number} props.referralDiscountPercent - Discount from referral (0-100)
  * @param {string} props.referralCode - The referral code used (if any)
  * @param {number} props.availableCredit - Available referral credit balance
+ * @param {function} props.onDiscountApplied - Callback when discount is applied
+ * @param {function} props.onDiscountRemoved - Callback when discount is removed
  */
 const CheckoutModal = ({
   isOpen = false,
@@ -54,6 +57,8 @@ const CheckoutModal = ({
   referralDiscountPercent = 0,
   referralCode = '',
   availableCredit = 0,
+  onDiscountApplied,
+  onDiscountRemoved,
 }) => {
   const { t, language } = useLanguage();
   const { isAuthenticated } = useAuth();
@@ -187,7 +192,9 @@ const CheckoutModal = ({
   }, [isOpen, onClose]);
 
   /**
-   * Handle discount code applied callback
+   * Handle discount code applied callback.
+   * Passes the discount data up to the parent (pricing page)
+   * so the badge remains visible after modal close.
    */
   const handleDiscountApplied = useCallback((data) => {
     setDiscountCode(data.code);
@@ -198,16 +205,28 @@ const CheckoutModal = ({
       setDiscountCodePercent(0);
       setDiscountCodeFixed(data.discountAmount);
     }
-  }, []);
+
+    /*
+     * Notify parent so the badge persists on the pricing page
+     */
+    if (onDiscountApplied) {
+      onDiscountApplied(data);
+    }
+  }, [onDiscountApplied]);
 
   /**
-   * Handle discount code removed callback
+   * Handle discount code removed callback.
+   * Clears local state and notifies parent.
    */
   const handleDiscountRemoved = useCallback(() => {
     setDiscountCode('');
     setDiscountCodePercent(0);
     setDiscountCodeFixed(0);
-  }, []);
+
+    if (onDiscountRemoved) {
+      onDiscountRemoved();
+    }
+  }, [onDiscountRemoved]);
 
   /**
    * Handle payment form submission
@@ -412,13 +431,14 @@ const CheckoutModal = ({
                   </>
                 )}
 
-                {/* Discount Breakdown */}
+                {/* Discount Breakdown — shows discount code percentage alongside code name */}
                 {(referralDiscountPercent > 0 || discountCodePercent > 0 || creditApplied > 0) && (
                   <div className="checkout-modal-summary-totals">
                     <DiscountBreakdown
                       basePrice={baseAmount}
                       breakdown={discountBreakdown}
                       discountCode={discountCode}
+                      discountCodePercent={discountCodePercent}
                       referralPercent={referralDiscountPercent}
                       currency={currency}
                     />
@@ -468,6 +488,14 @@ const CheckoutModal = ({
               currency={currency}
               onSubmit={handleSubmit}
               loading={submitting}
+              discountCode={discountCode}
+              discountCodePercent={discountCodePercent}
+              discountCodeFixed={discountCodeFixed}
+              discountBreakdown={discountBreakdown}
+              onDiscountApplied={handleDiscountApplied}
+              onDiscountRemoved={handleDiscountRemoved}
+              purchaseMode={purchaseMode}
+              selectedPhases={selectedPhases}
             />
           </div>
         )}

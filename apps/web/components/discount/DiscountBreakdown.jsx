@@ -1,6 +1,7 @@
 /**
  * @fileoverview Discount Breakdown Component
  * Shows line-by-line breakdown of all applied discounts in checkout.
+ * Displays discount code percentage alongside the code name.
  * ALL display text from i18n → t.discounts.*, t.referrals.*, t.checkout.*
  * Path: apps/web/components/discount/DiscountBreakdown.jsx
  */
@@ -9,13 +10,14 @@ import React from 'react';
 import { useLanguage } from '../../context/LanguageContext';
 
 /**
- * DiscountBreakdown — Shows original price, referral discount, discount code,
- * credit applied, and final price with savings.
+ * DiscountBreakdown — Shows original price, referral discount, discount code
+ * (with percentage), credit applied, and final price with savings.
  *
  * @param {object} props
  * @param {number} props.basePrice - Original price before discounts
  * @param {object} props.breakdown - From calculateCombinedDiscount()
  * @param {string} props.discountCode - The applied discount code (if any)
+ * @param {number} props.discountCodePercent - The discount code percentage value
  * @param {number} props.referralPercent - Referral discount percentage
  * @param {string} props.currency - Currency code
  */
@@ -23,6 +25,7 @@ const DiscountBreakdown = ({
   basePrice = 0,
   breakdown = {},
   discountCode = '',
+  discountCodePercent = 0,
   referralPercent = 0,
   currency = 'ETB',
 }) => {
@@ -52,12 +55,13 @@ const DiscountBreakdown = ({
         </div>
       )}
 
-      {/* Discount Code */}
+      {/* Discount Code — shows both code name AND percentage */}
       {breakdown.discountCodeDiscount > 0 && discountCode && (
         <div className="discount-breakdown-row discount">
           <span>
-            {(t.discounts?.discountCodeLineItem || 'Discount Code ({code})')
-              .replace('{code}', discountCode)}
+            {(t.discounts?.discountCodeLineItemWithPercent || 'Discount Code ({code}) ({percent}%)')
+              .replace('{code}', discountCode)
+              .replace('{percent}', discountCodePercent)}
           </span>
           <span>-{breakdown.discountCodeDiscount.toLocaleString()} {currency}</span>
         </div>

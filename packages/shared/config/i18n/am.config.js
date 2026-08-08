@@ -706,6 +706,7 @@ const am = {
     removeCode: 'ያስወግዱ',
     codeApplied: 'ኮድ ተተግብሯል!',
     codeRemoved: 'ኮድ ተወግዷል።',
+    discountCodeLineItemWithPercent: 'የቅናሽ ኮድ ({code}) ({percent}%)',
 
     /*
      * Validation Messages — የማረጋገጫ መልዕክቶች

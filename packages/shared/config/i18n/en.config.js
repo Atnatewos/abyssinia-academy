@@ -723,6 +723,7 @@ const en = {
     removeCode: 'Remove',
     codeApplied: 'Code applied!',
     codeRemoved: 'Code removed.',
+    discountCodeLineItemWithPercent: 'Discount Code ({code}) ({percent}%)',
 
     /*
      * Validation Messages
