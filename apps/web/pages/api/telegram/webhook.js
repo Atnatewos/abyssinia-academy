@@ -1,6 +1,8 @@
 /**
  * @fileoverview Telegram Bot Webhook Handler
  * Receives messages from Telegram, verifies admin, routes commands.
+ * Every response includes inline keyboard buttons for navigation.
+ * Persistent reply keyboard below text input for quick access.
  * Shows full payment details: transaction reference, purchase type,
  * date/time, and screenshot link with clickable button.
  * 
@@ -11,6 +13,7 @@ import { Pool } from 'pg';
 import {
   sendMessage,
   sendMessageWithKeyboard,
+  sendMessageWithReplyKeyboard,
   answerCallback,
   formatCurrency,
   escapeHtml,
@@ -33,42 +36,47 @@ const pool = new Pool({
 const ADMIN_TELEGRAM_ID = process.env.TELEGRAM_ADMIN_ID;
 
 /*
+ * ── MAIN NAVIGATION BUTTONS ──
+ */
+
+const MAIN_INLINE_BUTTONS = [
+  [
+    { text: '📊 Dashboard', callback_data: 'cmd_dashboard' },
+    { text: '⏳ Pending', callback_data: 'cmd_pending' },
+  ],
+  [
+    { text: '🆕 Recent Users', callback_data: 'cmd_recent' },
+    { text: '❓ Help', callback_data: 'cmd_help' },
+  ],
+];
+
+const REPLY_KEYBOARD = [
+  ['📊 Dashboard', '⏳ Pending'],
+  ['🆕 Recent Users', '❓ Help'],
+];
+
+/*
  * ── COMMAND HANDLERS ──
  */
 
 /**
- * /start — Welcome message with inline quick-action buttons
+ * /start — Welcome message with inline buttons and persistent reply keyboard
  */
 const handleStart = async (chatId) => {
   const message = [
     '🤖 <b>Abyssinia Admin Bot</b>',
     '',
-    'Welcome! Quick commands:',
+    'Welcome! What would you like to do?',
     '',
-    '/dashboard — Quick stats overview',
-    '/pending — Pending payments list',
-    '/recent — Last 5 registered users',
-    '/help — All commands',
-    '',
-    'Use inline buttons below each payment to approve or reject.',
+    'Use the buttons below the text input for quick navigation.',
   ].join('\n');
 
-  const buttons = [
-    [
-      { text: '📊 Dashboard', callback_data: 'cmd_dashboard' },
-      { text: '⏳ Pending', callback_data: 'cmd_pending' },
-    ],
-    [
-      { text: '🆕 Recent Users', callback_data: 'cmd_recent' },
-      { text: '❓ Help', callback_data: 'cmd_help' },
-    ],
-  ];
-
-  await sendMessageWithKeyboard(chatId, message, buttons);
+  await sendMessageWithKeyboard(chatId, message, MAIN_INLINE_BUTTONS);
+  await sendMessageWithReplyKeyboard(chatId, 'Quick access:', REPLY_KEYBOARD);
 };
 
 /**
- * /dashboard — Quick stats overview
+ * /dashboard — Quick stats overview with navigation buttons
  */
 const handleDashboard = async (chatId) => {
   const totalUsers = await pool.query('SELECT COUNT(*) FROM users');
@@ -89,13 +97,23 @@ const handleDashboard = async (chatId) => {
     `👁️ Today\'s Visitors: <b>${todayVisitors.rows[0].count}</b>`,
   ].join('\n');
 
-  await sendMessage(chatId, message);
+  const buttons = [
+    [
+      { text: '⏳ View Pending', callback_data: 'cmd_pending' },
+    ],
+    [
+      { text: '🔄 Refresh Stats', callback_data: 'cmd_dashboard' },
+    ],
+    [
+      { text: '🏠 Main Menu', callback_data: 'cmd_start' },
+    ],
+  ];
+
+  await sendMessageWithKeyboard(chatId, message, buttons);
 };
 
 /**
- * /pending — List pending payments with full details and approve/reject buttons.
- * Shows: name, phone, amount, method, purchase type, date/time,
- * transaction reference, and screenshot link.
+ * /pending — List pending payments with full details and approve/reject buttons
  */
 const handlePending = async (chatId) => {
   const result = await pool.query(
@@ -110,7 +128,16 @@ const handlePending = async (chatId) => {
   );
 
   if (result.rows.length === 0) {
-    await sendMessage(chatId, '✅ No pending payments.');
+    const buttons = [
+      [
+        { text: '📊 Dashboard', callback_data: 'cmd_dashboard' },
+        { text: '🔄 Refresh', callback_data: 'cmd_pending' },
+      ],
+      [
+        { text: '🏠 Main Menu', callback_data: 'cmd_start' },
+      ],
+    ];
+    await sendMessageWithKeyboard(chatId, '✅ No pending payments.', buttons);
     return;
   }
 
@@ -156,16 +183,13 @@ const handlePending = async (chatId) => {
     const fullMessage = message.join('\n');
 
     /*
-     * Build inline buttons
+     * Build inline buttons: Approve/Reject + optional Screenshot button
      */
     const buttons = [[
       { text: '✅ Approve', callback_data: `approve_${payment.id}` },
       { text: '❌ Reject', callback_data: `reject_${payment.id}` },
     ]];
 
-    /*
-     * Add screenshot button if available
-     */
     if (payment.transaction_id) {
       buttons.push([
         { text: '📸 View Screenshot', url: payment.transaction_id },
@@ -174,10 +198,24 @@ const handlePending = async (chatId) => {
 
     await sendMessageWithKeyboard(chatId, fullMessage, buttons);
   }
+
+  /*
+   * After listing all payments, send a navigation footer
+   */
+  const footerButtons = [
+    [
+      { text: '📊 Dashboard', callback_data: 'cmd_dashboard' },
+      { text: '🔄 Refresh', callback_data: 'cmd_pending' },
+    ],
+    [
+      { text: '🏠 Main Menu', callback_data: 'cmd_start' },
+    ],
+  ];
+  await sendMessageWithKeyboard(chatId, '⬆️ End of pending list. What\'s next?', footerButtons);
 };
 
 /**
- * /recent — Last 5 registered users
+ * /recent — Last 5 registered users with navigation buttons
  */
 const handleRecent = async (chatId) => {
   const result = await pool.query(
@@ -188,7 +226,11 @@ const handleRecent = async (chatId) => {
   );
 
   if (result.rows.length === 0) {
-    await sendMessage(chatId, 'No users registered yet.');
+    const buttons = [
+      [{ text: '📊 Dashboard', callback_data: 'cmd_dashboard' }],
+      [{ text: '🏠 Main Menu', callback_data: 'cmd_start' }],
+    ];
+    await sendMessageWithKeyboard(chatId, 'No users registered yet.', buttons);
     return;
   }
 
@@ -198,11 +240,26 @@ const handleRecent = async (chatId) => {
     return `${status} ${escapeHtml(user.full_name)} · ${escapeHtml(user.phone)} · ${date}`;
   });
 
-  await sendMessage(chatId, ['🆕 <b>Recent Users</b>', '', ...lines].join('\n'));
+  const message = ['🆕 <b>Recent Users</b>', '', ...lines].join('\n');
+
+  const buttons = [
+    [
+      { text: '📊 Dashboard', callback_data: 'cmd_dashboard' },
+      { text: '⏳ Pending', callback_data: 'cmd_pending' },
+    ],
+    [
+      { text: '🔄 Refresh', callback_data: 'cmd_recent' },
+    ],
+    [
+      { text: '🏠 Main Menu', callback_data: 'cmd_start' },
+    ],
+  ];
+
+  await sendMessageWithKeyboard(chatId, message, buttons);
 };
 
 /**
- * /help — Show all available commands
+ * /help — Show all available commands with navigation buttons
  */
 const handleHelp = async (chatId) => {
   const message = [
@@ -215,9 +272,24 @@ const handleHelp = async (chatId) => {
     '/recent — Last 5 registered users',
     '/stats — Same as dashboard',
     '/help — This message',
+    '',
+    'You can also use the buttons below the text input.',
   ].join('\n');
 
-  await sendMessage(chatId, message);
+  await sendMessageWithKeyboard(chatId, message, MAIN_INLINE_BUTTONS);
+};
+
+/**
+ * Handle unknown commands — show help with buttons
+ */
+const handleUnknown = async (chatId) => {
+  const message = [
+    '❓ Unknown command.',
+    '',
+    'Use the buttons below or type /help.',
+  ].join('\n');
+
+  await sendMessageWithKeyboard(chatId, message, MAIN_INLINE_BUTTONS);
 };
 
 /**
@@ -253,10 +325,7 @@ const handleApprove = async (chatId, paymentId) => {
     /*
      * Create enrollment record with correct purchase mode and phases
      */
-    const paymentData = await pool.query(
-      'SELECT * FROM payments WHERE id = $1',
-      [paymentId]
-    );
+    const paymentData = await pool.query('SELECT * FROM payments WHERE id = $1', [paymentId]);
 
     if (paymentData.rows.length > 0) {
       const p = paymentData.rows[0];
@@ -274,9 +343,20 @@ const handleApprove = async (chatId, paymentId) => {
       );
     }
 
-    await sendMessage(
+    const confirmButtons = [
+      [
+        { text: '📊 Dashboard', callback_data: 'cmd_dashboard' },
+        { text: '⏳ More Pending', callback_data: 'cmd_pending' },
+      ],
+      [
+        { text: '🏠 Main Menu', callback_data: 'cmd_start' },
+      ],
+    ];
+
+    await sendMessageWithKeyboard(
       chatId,
-      `✅ Payment <code>${paymentId.substring(0, 8)}</code> approved! (${formatCurrency(payment.amount)})`
+      `✅ Payment <code>${paymentId.substring(0, 8)}</code> approved! (${formatCurrency(payment.amount)})`,
+      confirmButtons
     );
   } catch (error) {
     console.error('Approve error:', error.message);
@@ -308,9 +388,20 @@ const handleReject = async (chatId, paymentId) => {
       [paymentId]
     );
 
-    await sendMessage(
+    const confirmButtons = [
+      [
+        { text: '📊 Dashboard', callback_data: 'cmd_dashboard' },
+        { text: '⏳ More Pending', callback_data: 'cmd_pending' },
+      ],
+      [
+        { text: '🏠 Main Menu', callback_data: 'cmd_start' },
+      ],
+    ];
+
+    await sendMessageWithKeyboard(
       chatId,
-      `❌ Payment <code>${paymentId.substring(0, 8)}</code> rejected.`
+      `❌ Payment <code>${paymentId.substring(0, 8)}</code> rejected.`,
+      confirmButtons
     );
   } catch (error) {
     console.error('Reject error:', error.message);
@@ -340,15 +431,14 @@ export default async function handler(req, res) {
       const senderId = String(callback.from.id);
       const data = callback.data;
 
-      /*
-       * Verify sender is the authorized admin
-       */
       if (ADMIN_TELEGRAM_ID && senderId !== ADMIN_TELEGRAM_ID) {
         await answerCallback(callback.id, 'Unauthorized');
         return res.status(200).json({ ok: true });
       }
 
-      if (data === 'cmd_dashboard') {
+      if (data === 'cmd_start') {
+        await handleStart(chatId);
+      } else if (data === 'cmd_dashboard') {
         await handleDashboard(chatId);
       } else if (data === 'cmd_pending') {
         await handlePending(chatId);
@@ -370,23 +460,40 @@ export default async function handler(req, res) {
     }
 
     /*
-     * Handle text message commands
+     * Handle text messages (commands and reply keyboard buttons)
      */
     if (body.message && body.message.text) {
       const chatId = body.message.chat.id;
       const senderId = String(body.message.from.id);
       const text = body.message.text.trim();
 
-      /*
-       * Verify sender is the authorized admin
-       */
       if (ADMIN_TELEGRAM_ID && senderId !== ADMIN_TELEGRAM_ID) {
         await sendMessage(chatId, '⛔ Unauthorized. This bot is private.');
         return res.status(200).json({ ok: true });
       }
 
       /*
-       * Route commands
+       * Handle reply keyboard button presses
+       */
+      if (text === '📊 Dashboard') {
+        await handleDashboard(chatId);
+        return res.status(200).json({ ok: true });
+      }
+      if (text === '⏳ Pending') {
+        await handlePending(chatId);
+        return res.status(200).json({ ok: true });
+      }
+      if (text === '🆕 Recent Users') {
+        await handleRecent(chatId);
+        return res.status(200).json({ ok: true });
+      }
+      if (text === '❓ Help') {
+        await handleHelp(chatId);
+        return res.status(200).json({ ok: true });
+      }
+
+      /*
+       * Handle slash commands
        */
       if (text === '/start') {
         await handleStart(chatId);
@@ -406,7 +513,7 @@ export default async function handler(req, res) {
           await sendMessage(chatId, 'Usage: /approve <payment_id>');
         }
       } else {
-        await sendMessage(chatId, 'Unknown command. Type /help for available commands.');
+        await handleUnknown(chatId);
       }
     }
 
