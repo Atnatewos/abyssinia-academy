@@ -1,6 +1,9 @@
 /**
  * @fileoverview Telegram Bot Webhook Handler
  * Receives messages from Telegram, verifies admin, routes commands.
+ * Shows full payment details: transaction reference, purchase type,
+ * date/time, and screenshot link with clickable button.
+ * 
  * Path: apps/web/pages/api/telegram/webhook.js
  */
 
@@ -25,7 +28,7 @@ const pool = new Pool({
 
 /*
  * Only this Telegram user ID can use the bot
- * Get your ID from @userinfobot on Telegram
+ * Set via TELEGRAM_ADMIN_ID in environment variables
  */
 const ADMIN_TELEGRAM_ID = process.env.TELEGRAM_ADMIN_ID;
 
@@ -34,7 +37,7 @@ const ADMIN_TELEGRAM_ID = process.env.TELEGRAM_ADMIN_ID;
  */
 
 /**
- * /start — Welcome message
+ * /start — Welcome message with inline quick-action buttons
  */
 const handleStart = async (chatId) => {
   const message = [
@@ -65,7 +68,7 @@ const handleStart = async (chatId) => {
 };
 
 /**
- * /dashboard — Quick stats
+ * /dashboard — Quick stats overview
  */
 const handleDashboard = async (chatId) => {
   const totalUsers = await pool.query('SELECT COUNT(*) FROM users');
@@ -90,11 +93,14 @@ const handleDashboard = async (chatId) => {
 };
 
 /**
- * /pending — List pending payments with approve/reject buttons
+ * /pending — List pending payments with full details and approve/reject buttons.
+ * Shows: name, phone, amount, method, purchase type, date/time,
+ * transaction reference, and screenshot link.
  */
 const handlePending = async (chatId) => {
   const result = await pool.query(
-    `SELECT p.id, p.amount, p.method, p.reference, p.created_at,
+    `SELECT p.id, p.amount, p.method, p.reference, p.transaction_id, p.created_at,
+            p.purchase_mode, p.selected_phases,
             u.full_name, u.phone
      FROM payments p
      JOIN users u ON u.id = p.user_id
@@ -113,22 +119,60 @@ const handlePending = async (chatId) => {
   for (const payment of result.rows) {
     const shortId = payment.id.substring(0, 8);
     const date = new Date(payment.created_at).toLocaleDateString();
+    const time = new Date(payment.created_at).toLocaleTimeString();
 
+    /*
+     * Build purchase type description
+     */
+    let purchaseType = 'Full Course';
+    if (payment.purchase_mode === 'individual-phases' && payment.selected_phases) {
+      const phases = payment.selected_phases
+        .map((p) => p.replace('phase-', 'P'))
+        .join(', ');
+      purchaseType = `Phases: ${phases}`;
+    }
+
+    /*
+     * Build the message with all payment details
+     */
     const message = [
       `🆔 <code>${shortId}</code>`,
-      `👤 ${escapeHtml(payment.full_name)}`,
+      `👤 <b>${escapeHtml(payment.full_name)}</b>`,
       `📱 ${escapeHtml(payment.phone)}`,
-      `💳 ${payment.method} · ${formatCurrency(payment.amount)}`,
-      `📅 ${date}`,
-      `🔖 Ref: ${escapeHtml(payment.reference || 'N/A')}`,
-    ].join('\n');
+      `💳 ${payment.method} · <b>${formatCurrency(payment.amount)}</b>`,
+      `📦 ${purchaseType}`,
+      `📅 ${date} at ${time}`,
+      `🔖 <b>Transaction Ref:</b> ${escapeHtml(payment.reference || 'N/A')}`,
+    ];
 
+    /*
+     * Add screenshot link if available
+     */
+    if (payment.transaction_id) {
+      message.push('');
+      message.push(`📸 <a href="${escapeHtml(payment.transaction_id)}">View Payment Screenshot</a>`);
+    }
+
+    const fullMessage = message.join('\n');
+
+    /*
+     * Build inline buttons
+     */
     const buttons = [[
       { text: '✅ Approve', callback_data: `approve_${payment.id}` },
       { text: '❌ Reject', callback_data: `reject_${payment.id}` },
     ]];
 
-    await sendMessageWithKeyboard(chatId, message, buttons);
+    /*
+     * Add screenshot button if available
+     */
+    if (payment.transaction_id) {
+      buttons.push([
+        { text: '📸 View Screenshot', url: payment.transaction_id },
+      ]);
+    }
+
+    await sendMessageWithKeyboard(chatId, fullMessage, buttons);
   }
 };
 
@@ -148,7 +192,7 @@ const handleRecent = async (chatId) => {
     return;
   }
 
-  const lines = result.rows.map((user, i) => {
+  const lines = result.rows.map((user) => {
     const status = user.is_enrolled ? '✅' : '🆕';
     const date = new Date(user.created_at).toLocaleDateString();
     return `${status} ${escapeHtml(user.full_name)} · ${escapeHtml(user.phone)} · ${date}`;
@@ -158,7 +202,7 @@ const handleRecent = async (chatId) => {
 };
 
 /**
- * /help — Show all commands
+ * /help — Show all available commands
  */
 const handleHelp = async (chatId) => {
   const message = [
@@ -177,7 +221,8 @@ const handleHelp = async (chatId) => {
 };
 
 /**
- * Approve a payment by ID
+ * Approve a payment by ID.
+ * Creates enrollment record and marks user as enrolled.
  */
 const handleApprove = async (chatId, paymentId) => {
   try {
@@ -206,14 +251,19 @@ const handleApprove = async (chatId, paymentId) => {
     );
 
     /*
-     * Create enrollment record
+     * Create enrollment record with correct purchase mode and phases
      */
-    const paymentData = await pool.query('SELECT * FROM payments WHERE id = $1', [paymentId]);
+    const paymentData = await pool.query(
+      'SELECT * FROM payments WHERE id = $1',
+      [paymentId]
+    );
 
     if (paymentData.rows.length > 0) {
       const p = paymentData.rows[0];
       const purchaseMode = p.purchase_mode || 'full-course';
-      const selectedPhases = purchaseMode === 'full-course' ? null : (p.selected_phases || null);
+      const selectedPhases = purchaseMode === 'full-course'
+        ? null
+        : (p.selected_phases || null);
 
       await pool.query('DELETE FROM enrollments WHERE user_id = $1', [p.user_id]);
 
@@ -224,7 +274,10 @@ const handleApprove = async (chatId, paymentId) => {
       );
     }
 
-    await sendMessage(chatId, `✅ Payment <code>${paymentId.substring(0, 8)}</code> approved! (${formatCurrency(payment.amount)})`);
+    await sendMessage(
+      chatId,
+      `✅ Payment <code>${paymentId.substring(0, 8)}</code> approved! (${formatCurrency(payment.amount)})`
+    );
   } catch (error) {
     console.error('Approve error:', error.message);
     await sendMessage(chatId, '❌ Failed to approve payment.');
@@ -232,7 +285,8 @@ const handleApprove = async (chatId, paymentId) => {
 };
 
 /**
- * Reject a payment by ID
+ * Reject a payment by ID.
+ * Marks payment and user as rejected.
  */
 const handleReject = async (chatId, paymentId) => {
   try {
@@ -254,7 +308,10 @@ const handleReject = async (chatId, paymentId) => {
       [paymentId]
     );
 
-    await sendMessage(chatId, `❌ Payment <code>${paymentId.substring(0, 8)}</code> rejected.`);
+    await sendMessage(
+      chatId,
+      `❌ Payment <code>${paymentId.substring(0, 8)}</code> rejected.`
+    );
   } catch (error) {
     console.error('Reject error:', error.message);
     await sendMessage(chatId, '❌ Failed to reject payment.');
@@ -275,7 +332,7 @@ export default async function handler(req, res) {
     console.log('📩 Telegram webhook:', JSON.stringify(body).substring(0, 500));
 
     /*
-     * Handle inline button callbacks
+     * Handle inline button callbacks (approve, reject, dashboard, etc.)
      */
     if (body.callback_query) {
       const callback = body.callback_query;
@@ -283,6 +340,9 @@ export default async function handler(req, res) {
       const senderId = String(callback.from.id);
       const data = callback.data;
 
+      /*
+       * Verify sender is the authorized admin
+       */
       if (ADMIN_TELEGRAM_ID && senderId !== ADMIN_TELEGRAM_ID) {
         await answerCallback(callback.id, 'Unauthorized');
         return res.status(200).json({ ok: true });
@@ -310,7 +370,7 @@ export default async function handler(req, res) {
     }
 
     /*
-     * Handle text messages
+     * Handle text message commands
      */
     if (body.message && body.message.text) {
       const chatId = body.message.chat.id;
@@ -318,7 +378,7 @@ export default async function handler(req, res) {
       const text = body.message.text.trim();
 
       /*
-       * Verify sender is the admin
+       * Verify sender is the authorized admin
        */
       if (ADMIN_TELEGRAM_ID && senderId !== ADMIN_TELEGRAM_ID) {
         await sendMessage(chatId, '⛔ Unauthorized. This bot is private.');
