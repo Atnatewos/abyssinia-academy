@@ -1,32 +1,33 @@
 /**
  * @fileoverview Phase Timeline 3D — Immersive Curriculum Roadmap
+ * Database-driven per-phase pricing via usePaymentConfig hook.
  * Vertical timeline with 3D depth-on-scroll effect.
- * All phase data from course config + payments config — zero hardcoded values.
  * 
  * Path: apps/web/components/landing/PhaseTimeline3D.jsx
  */
 
-import { useMemo, useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { Check, Clock, BookOpen, Play, ArrowRight } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
-import { getPricing } from '../../lib/config';
 import usePortalCourse from '../../hooks/usePortalCourse';
+import usePaymentConfig from '../../hooks/usePaymentConfig';
 
 /**
- * PhaseTimeline3D — Vertical 3D timeline of all 5 phases.
+ * PhaseTimeline3D — Vertical 3D timeline of all phases.
+ * Uses DB-first per-phase pricing.
  */
 const PhaseTimeline3D = () => {
   const { t, language } = useLanguage();
   const { phases: coursePhases } = usePortalCourse('fullstack-web-engineering-masterclass');
-  const pricing = useMemo(() => getPricing(), []);
-  const perPhasePrice = pricing.perPhase?.amountETB || 750;
-  const currency = pricing.perPhase?.currency || 'ETB';
+  const { pricing, loading: pricingLoading } = usePaymentConfig();
+
+  const perPhasePrice = pricing?.perPhase?.amountETB || 0;
+  const currency = pricing?.perPhase?.currency || 'ETB';
   const cardRefs = useRef([]);
 
   /*
-   * Intersection Observer — adds .in-view class when cards enter viewport
-   * for the 3D depth animation
+   * Intersection Observer for 3D depth animation
    */
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -51,6 +52,16 @@ const PhaseTimeline3D = () => {
       });
     };
   }, [coursePhases]);
+
+  if (pricingLoading || !pricing) {
+    return (
+      <section className="landing-phases-3d">
+        <div className="spinner" style={{ padding: '2rem 0' }}>
+          <div className="spinner-circle" />
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section id="landing-phases" className="landing-phases-3d">
@@ -115,7 +126,7 @@ const PhaseTimeline3D = () => {
               )}
 
               <Link
-                href={`/courses/fullstack-web-engineering-masterclass`}
+                href="/courses/fullstack-web-engineering-masterclass"
                 className="landing-phase-preview-link"
               >
                 <Play size={14} />

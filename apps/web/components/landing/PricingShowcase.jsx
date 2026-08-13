@@ -1,38 +1,38 @@
 /**
  * @fileoverview Pricing Showcase — Equal Card Grid
- * All cards same size, same weight. Full course card + auto-generated phase cards.
+ * Database-driven pricing via usePaymentConfig hook.
+ * No price flicker — shows skeleton while loading.
+ * Full course card + auto-generated phase cards.
  * Remove a phase from phases/index.js → card disappears. Add → card appears.
- * Full course card has premium gold glow and "Best Value" badge.
- * All pricing auto-calculated from payments.config.js — zero hardcoded values.
  * 
  * Path: apps/web/components/landing/PricingShowcase.jsx
  */
 
 import { useMemo } from 'react';
 import Link from 'next/link';
-import { Sparkles, Check, Zap, Clock, BookOpen, ArrowRight, Crown } from 'lucide-react';
+import { Sparkles, Check, Zap, ArrowRight, Crown } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
-import { getPricing } from '../../lib/config';
 import usePortalCourse from '../../hooks/usePortalCourse';
+import usePaymentConfig from '../../hooks/usePaymentConfig';
 
 /**
  * PricingShowcase — Equal grid of pricing cards.
- * Full course card + one card per phase from the course config.
+ * Uses DB-first pricing so admin changes show immediately.
  */
 const PricingShowcase = () => {
   const { t, language } = useLanguage();
   const { isAuthenticated } = useAuth();
   const { phases: coursePhases } = usePortalCourse('fullstack-web-engineering-masterclass');
+  const { pricing, loading: pricingLoading } = usePaymentConfig();
 
-  const pricing = useMemo(() => getPricing(), []);
-  const fullCourse = pricing.fullCourse || {};
-  const perPhase = pricing.perPhase || {};
-  const perPhasePrice = perPhase.amountETB || 750;
+  const fullCourse = pricing?.fullCourse || {};
+  const perPhase = pricing?.perPhase || {};
+  const perPhasePrice = perPhase.amountETB || 0;
   const currency = perPhase.currency || 'ETB';
 
   /*
-   * Auto-calculate discount percentage from config — never hardcoded
+   * Auto-calculate discount percentage — never hardcoded
    */
   const discountPercent = useMemo(() => {
     const original = fullCourse.originalAmountETB || 0;
@@ -46,7 +46,7 @@ const PricingShowcase = () => {
     : '/auth/login?redirect=/checkout?mode=full-course';
 
   /*
-   * Build the complete card array: Full Course + all phases from config
+   * Build the complete card array
    */
   const allCards = useMemo(() => {
     const cards = [];
@@ -60,7 +60,7 @@ const PricingShowcase = () => {
       number: null,
       title: fullCourse.description || 'Full Academy Pass — All Phases',
       subtitle: t.landing?.pricingOverview?.fullCourseSubtitle || 'Complete curriculum, best value',
-      price: fullCourse.amountETB || 2499,
+      price: fullCourse.amountETB || 0,
       originalPrice: fullCourse.originalAmountETB || null,
       discountPercent,
       currency,
@@ -78,13 +78,10 @@ const PricingShowcase = () => {
     });
 
     /*
-     * Cards 1-5: Individual Phases (auto-generated from course config)
-     * If a phase is removed from phases/index.js, it disappears here automatically
+     * Cards 1-5: Individual Phases (auto-generated)
      */
     (coursePhases || []).forEach((phase, index) => {
-      const weekCount = phase.weeks
-        ? phase.weeks.length
-        : (phase.weekNumbers ? phase.weekNumbers.length : 0);
+      const weekCount = phase.weeks ? phase.weeks.length : 0;
 
       cards.push({
         id: phase.id || `phase-${index + 1}`,
@@ -102,7 +99,7 @@ const PricingShowcase = () => {
         features: (phase.outcomes || []).slice(0, 3),
         badge: null,
         badgeIcon: null,
-        href: `/courses/fullstack-web-engineering-masterclass`,
+        href: '/courses/fullstack-web-engineering-masterclass',
         ctaText: t.landing?.pricingOverview?.viewPhase || 'View Phase',
         isPremium: false,
         colorIndex: index,
@@ -113,14 +110,14 @@ const PricingShowcase = () => {
   }, [coursePhases, fullCourse, perPhasePrice, currency, discountPercent, enrollHref, t, language]);
 
   /*
-   * Phase accent colors for variety
+   * Phase accent colors
    */
   const phaseAccentColors = [
-    'rgba(245,158,11,0.08)',   // Gold
-    'rgba(59,130,246,0.08)',   // Blue
-    'rgba(16,185,129,0.08)',   // Green
-    'rgba(139,92,246,0.08)',   // Purple
-    'rgba(236,72,153,0.08)',   // Pink
+    'rgba(245,158,11,0.08)',
+    'rgba(59,130,246,0.08)',
+    'rgba(16,185,129,0.08)',
+    'rgba(139,92,246,0.08)',
+    'rgba(236,72,153,0.08)',
   ];
 
   const phaseBorderColors = [
@@ -131,13 +128,20 @@ const PricingShowcase = () => {
     'rgba(236,72,153,0.25)',
   ];
 
-  const phaseNumberColors = [
-    '#f59e0b',
-    '#3b82f6',
-    '#10b981',
-    '#8b5cf6',
-    '#ec4899',
-  ];
+  const phaseNumberColors = ['#f59e0b', '#3b82f6', '#10b981', '#8b5cf6', '#ec4899'];
+
+  /*
+   * Loading skeleton — no price flicker
+   */
+  if (pricingLoading || !pricing) {
+    return (
+      <section className="landing-pricing-3d">
+        <div className="spinner" style={{ padding: '3rem 0' }}>
+          <div className="spinner-circle" />
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="landing-pricing-3d">
@@ -149,11 +153,10 @@ const PricingShowcase = () => {
           {t.landing?.pricingOverview?.title || 'Simple, Transparent Pricing'}
         </h2>
         <p className="landing-pricing-subtitle">
-          {t.landing?.pricingOverview?.subtitle || 'Choose the path that fits your goals. All prices in Ethiopian Birr.'}
+          {t.landing?.pricingOverview?.subtitle || 'Choose the path that fits your goals.'}
         </p>
       </div>
 
-      {/* ── Equal Card Grid ── */}
       <div className="landing-pricing-equal-grid">
         {allCards.map((card) => {
           const isFullCourse = card.type === 'full-course';
@@ -177,7 +180,6 @@ const PricingShowcase = () => {
                 '--card-accent-color': accentColor,
               }}
             >
-              {/* Badge */}
               {card.badge && (
                 <span className="landing-pricing-equal-badge">
                   <card.badgeIcon size={12} />
@@ -185,17 +187,12 @@ const PricingShowcase = () => {
                 </span>
               )}
 
-              {/* Phase Number (for phase cards) */}
               {card.number && (
-                <div
-                  className="landing-pricing-equal-number"
-                  style={{ background: accentColor }}
-                >
+                <div className="landing-pricing-equal-number" style={{ background: accentColor }}>
                   {card.number}
                 </div>
               )}
 
-              {/* Title */}
               <h3 className="landing-pricing-equal-title">
                 {isFullCourse ? (
                   <>
@@ -208,7 +205,6 @@ const PricingShowcase = () => {
               </h3>
               <p className="landing-pricing-equal-subtitle">{card.subtitle}</p>
 
-              {/* Price */}
               <div className="landing-pricing-equal-price-row">
                 <span className="landing-pricing-equal-price">
                   {card.price.toLocaleString()} {card.currency}
@@ -220,7 +216,6 @@ const PricingShowcase = () => {
                 )}
               </div>
 
-              {/* Original Price + Save Badge */}
               {card.originalPrice && card.discountPercent > 0 && (
                 <div className="landing-pricing-equal-save-row">
                   <span className="landing-pricing-equal-original">
@@ -233,7 +228,6 @@ const PricingShowcase = () => {
                 </div>
               )}
 
-              {/* Features */}
               <ul className="landing-pricing-equal-features">
                 {card.features.map((feature, fi) => (
                   <li key={fi}>
@@ -243,7 +237,6 @@ const PricingShowcase = () => {
                 ))}
               </ul>
 
-              {/* CTA Button */}
               <Link
                 href={card.href}
                 className={`landing-pricing-equal-cta ${isFullCourse ? 'primary' : ''}`}
