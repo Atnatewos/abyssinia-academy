@@ -1,7 +1,8 @@
 /**
  * @fileoverview Admin Layout Component
- * Consistent wrapper for all admin pages with sidebar and header.
- * Extracts shared sidebar/header logic so individual pages don't repeat it.
+ * Consistent wrapper for all admin pages with responsive sidebar and header.
+ * Mobile: slide-in sidebar with overlay + hamburger toggle.
+ * Desktop: fixed sidebar with expandable sections.
  * Path: apps/web/components/admin/AdminLayout.jsx
  */
 
@@ -25,13 +26,19 @@ import {
   ChevronDown,
   ChevronRight,
   Video,
+  Menu,
+  X,
 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { getItem } from '../../lib/storage';
 
 /**
  * AdminLayout — Provides the sidebar + header shell for all admin pages.
- * Each page renders its content as children inside this layout.
+ * 
+ * Mobile behavior:
+ * - Sidebar hidden by default, slides in from left with hamburger toggle
+ * - Dark overlay behind sidebar, tap to close
+ * - Auto-closes on route change
  *
  * @param {object} props
  * @param {React.ReactNode} props.children - Page content to render
@@ -43,6 +50,7 @@ const AdminLayout = ({ children, title = 'Dashboard', subtitle = '' }) => {
   const { t, language, toggleLanguage } = useLanguage();
   const [adminUser, setAdminUser] = useState(null);
   const [expandedSections, setExpandedSections] = useState({});
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   /*
    * Check authentication on mount
@@ -61,12 +69,20 @@ const AdminLayout = ({ children, title = 'Dashboard', subtitle = '' }) => {
     }
   }, [router]);
 
+  /*
+   * Close mobile sidebar on route change
+   */
+  useEffect(() => {
+    setMobileSidebarOpen(false);
+  }, [router.pathname]);
+
   /**
    * Handle admin logout
    */
   const handleLogout = () => {
     localStorage.removeItem('admin_token');
     localStorage.removeItem('admin_user');
+    setMobileSidebarOpen(false);
     router.push('/admin/login');
   };
 
@@ -188,10 +204,19 @@ const AdminLayout = ({ children, title = 'Dashboard', subtitle = '' }) => {
 
   return (
     <div className="admin-layout">
+
+      {/* ── Mobile Sidebar Overlay ── */}
+      <div
+        className={`admin-sidebar-overlay ${mobileSidebarOpen ? 'active' : ''}`}
+        onClick={() => setMobileSidebarOpen(false)}
+        aria-hidden="true"
+      />
+
       {/* ── Sidebar ── */}
-      <aside className="admin-sidebar">
+      <aside className={`admin-sidebar ${mobileSidebarOpen ? 'mobile-open' : ''}`}>
+
         {/* Brand */}
-        <Link href="/admin" className="admin-sidebar-brand">
+        <Link href="/admin" className="admin-sidebar-brand" onClick={() => setMobileSidebarOpen(false)}>
           <div className="admin-sidebar-logo">
             <Code2 />
           </div>
@@ -231,6 +256,7 @@ const AdminLayout = ({ children, title = 'Dashboard', subtitle = '' }) => {
                           key={item.path}
                           href={item.path}
                           className={`admin-nav-link ${active ? 'active' : ''}`}
+                          onClick={() => setMobileSidebarOpen(false)}
                         >
                           <IconComponent size={18} />
                           <span>{item.label}</span>
@@ -246,7 +272,13 @@ const AdminLayout = ({ children, title = 'Dashboard', subtitle = '' }) => {
 
         {/* Bottom Actions */}
         <div className="admin-nav-bottom">
-          <Link href="/" className="admin-nav-link" target="_blank" rel="noopener noreferrer">
+          <Link
+            href="/"
+            className="admin-nav-link"
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => setMobileSidebarOpen(false)}
+          >
             <LayoutDashboard size={18} />
             <span>View Site</span>
           </Link>
@@ -261,9 +293,21 @@ const AdminLayout = ({ children, title = 'Dashboard', subtitle = '' }) => {
       <div className="admin-main">
         {/* Header */}
         <header className="admin-header">
-          <div>
-            <h1 className="admin-header-title">{title}</h1>
-            {subtitle && <p className="admin-header-subtitle">{subtitle}</p>}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            {/* Mobile Sidebar Toggle */}
+            <button
+              className="admin-mobile-toggle"
+              onClick={() => setMobileSidebarOpen(!mobileSidebarOpen)}
+              aria-label={mobileSidebarOpen ? 'Close sidebar' : 'Open sidebar'}
+              aria-expanded={mobileSidebarOpen}
+            >
+              {mobileSidebarOpen ? <X size={18} /> : <Menu size={18} />}
+            </button>
+
+            <div>
+              <h1 className="admin-header-title">{title}</h1>
+              {subtitle && <p className="admin-header-subtitle">{subtitle}</p>}
+            </div>
           </div>
 
           <div className="admin-header-actions">
