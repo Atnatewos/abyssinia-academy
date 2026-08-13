@@ -1,6 +1,6 @@
 /**
  * @fileoverview Shared Database Connection Pool
- * Single pool instance for all API routes — prevents connection exhaustion.
+ * Single pool instance for all API routes.
  * Path: apps/web/lib/db.js
  */
 

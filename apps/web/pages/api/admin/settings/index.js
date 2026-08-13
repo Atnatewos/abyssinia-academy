@@ -1,9 +1,8 @@
 /**
  * @fileoverview Admin Settings API
- * GET: returns all settings (DB values merged with config defaults)
- * PUT: saves settings for a specific section
- * POST: resets a section to config defaults
- * 
+ * GET: returns all settings from DB
+ * PUT: saves a setting section
+ * POST: resets a section to defaults
  * Path: apps/web/pages/api/admin/settings/index.js
  */
 
@@ -11,9 +10,6 @@ import jwt from 'jsonwebtoken';
 import { query } from '../../../../lib/db';
 
 export default async function handler(req, res) {
-  /*
-   * Authenticate admin
-   */
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return res.status(401).json({ success: false, message: 'Admin authentication required.' });
@@ -50,13 +46,8 @@ export default async function handler(req, res) {
     try {
       const { key, value } = req.body;
 
-      if (!key) {
-        return res.status(400).json({ success: false, message: 'Setting key is required.' });
-      }
-
-      if (!value) {
-        return res.status(400).json({ success: false, message: 'Setting value is required.' });
-      }
+      if (!key) return res.status(400).json({ success: false, message: 'Setting key is required.' });
+      if (!value) return res.status(400).json({ success: false, message: 'Setting value is required.' });
 
       await query(
         `INSERT INTO admin_settings (setting_key, setting_value, updated_by)
@@ -66,10 +57,7 @@ export default async function handler(req, res) {
         [key, JSON.stringify(value), decoded.adminId]
       );
 
-      return res.status(200).json({
-        success: true,
-        message: 'Settings saved successfully.',
-      });
+      return res.status(200).json({ success: true, message: 'Settings saved.' });
     } catch (error) {
       console.error('Settings save error:', error.message);
       return res.status(500).json({ success: false, message: 'Failed to save settings.' });
@@ -77,25 +65,18 @@ export default async function handler(req, res) {
   }
 
   /*
-   * POST — Reset a setting to defaults
+   * POST — Reset a setting
    */
   if (req.method === 'POST') {
     try {
       const { key } = req.body;
-
-      if (!key) {
-        return res.status(400).json({ success: false, message: 'Setting key is required.' });
-      }
+      if (!key) return res.status(400).json({ success: false, message: 'Setting key is required.' });
 
       await query('DELETE FROM admin_settings WHERE setting_key = $1', [key]);
-
-      return res.status(200).json({
-        success: true,
-        message: 'Settings reset to defaults.',
-      });
+      return res.status(200).json({ success: true, message: 'Settings reset.' });
     } catch (error) {
       console.error('Settings reset error:', error.message);
-      return res.status(500).json({ success: false, message: 'Failed to reset settings.' });
+      return res.status(500).json({ success: false, message: 'Failed to reset.' });
     }
   }
 

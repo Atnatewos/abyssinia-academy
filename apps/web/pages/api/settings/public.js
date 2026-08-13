@@ -1,6 +1,7 @@
 /**
- * @fileoverview Public Settings API
- * Returns pricing and payment methods from DB (with config fallback).
+ * @fileoverview Public Settings API — Single Source of Truth
+ * Returns pricing + payment methods from DB (with config fallback).
+ * Used by pricing page, checkout modal, and payment submission.
  * No auth required — public data only.
  * Path: apps/web/pages/api/settings/public.js
  */
@@ -15,11 +16,12 @@ export default async function handler(req, res) {
 
   try {
     /*
-     * Fetch settings from database
+     * Fetch both pricing and payment_methods from database
      */
     const result = await query(
-      'SELECT setting_key, setting_value FROM admin_settings WHERE setting_key IN ($1, $2)',
-      ['pricing', 'payment_methods']
+      `SELECT setting_key, setting_value
+       FROM admin_settings
+       WHERE setting_key IN ('pricing', 'payment_methods')`
     );
 
     const dbSettings = {};
@@ -44,7 +46,7 @@ export default async function handler(req, res) {
     console.error('Public settings error:', error.message);
 
     /*
-     * Fallback to static config if DB is unreachable
+     * Fallback to static config if DB unreachable
      */
     return res.status(200).json({
       success: true,
