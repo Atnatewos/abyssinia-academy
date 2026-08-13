@@ -19,7 +19,10 @@
 @media (max-width: 1024px) {
 
   /* ── Sidebar becomes a slide-in drawer ── */
+  /* MUST override the display: none from admin.css */
   .admin-sidebar {
+    display: flex !important;
+    flex-direction: column;
     position: fixed;
     left: 0;
     top: 0;
@@ -27,15 +30,16 @@
     transform: translateX(-100%);
     transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     z-index: 70;
-    width: 260px;
+    width: 280px;
+    max-width: 85vw;
+    height: 100vh;
     min-height: 100vh;
+    overflow-y: auto;
     box-shadow: 0 0 40px rgba(0, 0, 0, 0.3);
-    visibility: hidden;
   }
 
   .admin-sidebar.mobile-open {
     transform: translateX(0);
-    visibility: visible;
   }
 
   /* ── Mobile overlay behind sidebar ── */
@@ -46,14 +50,11 @@
     backdrop-filter: blur(4px);
     -webkit-backdrop-filter: blur(4px);
     z-index: 60;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.3s ease;
+    display: none;
   }
 
   .admin-sidebar-overlay.active {
-    opacity: 1;
-    pointer-events: auto;
+    display: block;
   }
 
   /* ── Main content takes full width ── */
@@ -111,7 +112,6 @@
 
 @media (max-width: 768px) {
 
-  /* ── Header shrinks ── */
   .admin-header {
     padding: 0.75rem 1rem;
     flex-wrap: wrap;
@@ -135,12 +135,10 @@
     display: none;
   }
 
-  /* ── Content padding reduces ── */
   .admin-content {
     padding: 1rem;
   }
 
-  /* ── Stats grid becomes 2 columns ── */
   .admin-stats-grid-6,
   .admin-stats-grid {
     grid-template-columns: repeat(2, 1fr);
@@ -155,7 +153,6 @@
     font-size: 1.25rem;
   }
 
-  /* ── Toolbar stacks ── */
   .admin-toolbar {
     flex-direction: column;
     align-items: stretch;
@@ -181,7 +178,6 @@
     width: 100%;
   }
 
-  /* ── Tabs become scrollable horizontal ── */
   .admin-tabs {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
@@ -196,7 +192,6 @@
     font-size: 0.75rem;
   }
 
-  /* ── Detail grids stack ── */
   .admin-detail-grid {
     grid-template-columns: 1fr;
   }
@@ -205,7 +200,6 @@
     padding: 1rem;
   }
 
-  /* ── User profile header stacks ── */
   .admin-user-profile-header {
     flex-direction: column;
     text-align: center;
@@ -220,18 +214,15 @@
     justify-content: center;
   }
 
-  /* ── Form rows stack ── */
   .admin-form-row {
     grid-template-columns: 1fr;
     gap: 0.75rem;
   }
 
-  /* ── Bulk actions wrap ── */
   .admin-bulk-actions {
     flex-wrap: wrap;
   }
 
-  /* ── Confirm dialog full width ── */
   .admin-confirm-dialog {
     width: 95%;
     padding: 1.5rem;
@@ -253,7 +244,6 @@
 
 @media (max-width: 480px) {
 
-  /* ── Stats become 1 column ── */
   .admin-stats-grid-6,
   .admin-stats-grid {
     grid-template-columns: 1fr;
@@ -284,7 +274,6 @@
     font-size: 1.125rem;
   }
 
-  /* ── Table rows tighten ── */
   .admin-table-row {
     padding: 0.75rem;
     gap: 0.5rem;
@@ -307,30 +296,25 @@
     height: 32px;
   }
 
-  /* ── Header username fully hidden ── */
   .admin-header-avatar {
     width: 1.75rem;
     height: 1.75rem;
     font-size: 0.625rem;
   }
 
-  /* ── Filter group stacks ── */
   .admin-filter-group {
     flex-direction: column;
   }
 
-  /* ── Phase checkbox title shortens ── */
   .admin-phase-checkbox-title {
     max-width: 180px;
     font-size: 0.6875rem;
   }
 
-  /* ── Radio group stacks ── */
   .admin-radio-group {
     grid-template-columns: 1fr;
   }
 
-  /* ── Buttons full width ── */
   .admin-enrollment-actions {
     flex-direction: column;
   }
@@ -340,7 +324,6 @@
     justify-content: center;
   }
 
-  /* ── Detail buttons stack ── */
   .admin-detail-actions {
     flex-direction: column;
   }
@@ -349,7 +332,6 @@
     width: 100%;
   }
 
-  /* ── Modal close button smaller ── */
   .checkout-modal-container {
     max-height: 85vh;
     border-radius: 0.875rem;
