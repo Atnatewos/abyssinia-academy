@@ -1,11 +1,11 @@
 /**
  * @fileoverview Pricing Page — Fully Config-Driven with Referral & Discount Support
  * Modern timeline-based phase selection with sticky cart sidebar.
- * Fetches referral discount from /auth/me on every page load
- * so the discount persists even if the user registered days/weeks ago.
+ * Fetches pricing from admin settings database on every page load.
+ * Fetches referral discount from /auth/me on every page load.
  * Shows applied discount code badge alongside referral badge.
  * ALL display text from i18n → t.pricing.* and t.phasePurchase.*
- * ALL data from payments.config.js + course config.
+ * ALL data from admin_settings DB → payments.config.js fallback.
  * Path: apps/web/pages/pricing/index.jsx
  */
 
@@ -44,10 +44,39 @@ const PricingPage = () => {
   const cart = useCart();
   const { phases: coursePhases } = usePortalCourse('fullstack-web-engineering-masterclass');
 
-  const pricing = getPricing();
+  /*
+   * Pricing state — starts with static config, then updates from DB.
+   * Admin changes appear immediately after page load.
+   */
+  const [pricing, setPricing] = useState(() => getPricing());
   const fullCourse = pricing.fullCourse || {};
   const perPhase = pricing.perPhase || {};
   const timerConfig = getCountdownTimerConfig();
+
+  /*
+   * Fetch pricing from the admin settings database on every page load.
+   * This connects the admin settings page to the public pricing page.
+   * If the database is unreachable, the static config values remain.
+   */
+  useEffect(() => {
+    const fetchPricingFromDB = async () => {
+      try {
+        const response = await fetch('/api/settings/public');
+        const data = await response.json();
+
+        if (data && data.success && data.data && data.data.pricing) {
+          setPricing(data.data.pricing);
+        }
+      } catch {
+        /*
+         * Silent — keep using static config values.
+         * Database is optional; config files are the fallback.
+         */
+      }
+    };
+
+    fetchPricingFromDB();
+  }, []);
 
   const [purchaseMode, setPurchaseMode] = useState('full-course');
   const [expandedPhase, setExpandedPhase] = useState(null);
@@ -62,8 +91,6 @@ const PricingPage = () => {
   /*
    * Discount code state — persisted from the checkout modal
    * so the badge remains visible on the pricing page after applying a code.
-   * When the modal closes and reopens, the discount code hook resets,
-   * but these state variables keep the badge visible.
    */
   const [appliedDiscountCode, setAppliedDiscountCode] = useState('');
   const [appliedDiscountPercent, setAppliedDiscountPercent] = useState(0);

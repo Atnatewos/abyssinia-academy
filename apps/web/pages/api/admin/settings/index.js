@@ -7,19 +7,8 @@
  * Path: apps/web/pages/api/admin/settings/index.js
  */
 
-import { Pool } from 'pg';
 import jwt from 'jsonwebtoken';
-import { saveSetting, deleteSetting, fetchAllSettingsFromDB } from '../../../../lib/settings';
-
-const isNeon = process.env.DATABASE_URL && process.env.DATABASE_URL.includes('neon.tech');
-
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: isNeon ? { rejectUnauthorized: false } : false,
-  max: 5,
-  idleTimeoutMillis: 10000,
-  connectionTimeoutMillis: 5000,
-});
+import { query } from '../../../../lib/db';
 
 export default async function handler(req, res) {
   /*
@@ -38,11 +27,15 @@ export default async function handler(req, res) {
   }
 
   /*
-   * GET — Return all settings from DB
+   * GET — Return all settings
    */
   if (req.method === 'GET') {
     try {
-      const settings = await fetchAllSettingsFromDB();
+      const result = await query('SELECT setting_key, setting_value FROM admin_settings');
+      const settings = {};
+      for (const row of result.rows) {
+        settings[row.setting_key] = row.setting_value;
+      }
       return res.status(200).json({ success: true, data: settings });
     } catch (error) {
       console.error('Settings fetch error:', error.message);
@@ -51,8 +44,7 @@ export default async function handler(req, res) {
   }
 
   /*
-   * PUT — Save a setting section
-   * Body: { key: 'pricing', value: { ... } }
+   * PUT — Save a setting
    */
   if (req.method === 'PUT') {
     try {
@@ -62,34 +54,21 @@ export default async function handler(req, res) {
         return res.status(400).json({ success: false, message: 'Setting key is required.' });
       }
 
-      if (!value || typeof value !== 'object') {
-        return res.status(400).json({ success: false, message: 'Setting value must be an object.' });
+      if (!value) {
+        return res.status(400).json({ success: false, message: 'Setting value is required.' });
       }
 
-      /*
-       * Validate specific keys
-       */
-      if (key === 'pricing') {
-        if (value.fullCourse?.amountETB && Number(value.fullCourse.amountETB) <= 0) {
-          return res.status(400).json({ success: false, message: 'Full course price must be greater than 0.' });
-        }
-        if (value.perPhase?.amountETB && Number(value.perPhase.amountETB) <= 0) {
-          return res.status(400).json({ success: false, message: 'Per-phase price must be greater than 0.' });
-        }
-      }
-
-      if (key === 'payment_methods') {
-        if (!Array.isArray(value)) {
-          return res.status(400).json({ success: false, message: 'Payment methods must be an array.' });
-        }
-      }
-
-      const saved = await saveSetting(key, value, decoded.adminId);
+      await query(
+        `INSERT INTO admin_settings (setting_key, setting_value, updated_by)
+         VALUES ($1, $2, $3)
+         ON CONFLICT (setting_key)
+         DO UPDATE SET setting_value = $2, updated_by = $3, updated_at = CURRENT_TIMESTAMP`,
+        [key, JSON.stringify(value), decoded.adminId]
+      );
 
       return res.status(200).json({
         success: true,
         message: 'Settings saved successfully.',
-        data: saved,
       });
     } catch (error) {
       console.error('Settings save error:', error.message);
@@ -98,8 +77,7 @@ export default async function handler(req, res) {
   }
 
   /*
-   * POST — Reset a setting section to config defaults
-   * Body: { key: 'pricing' }
+   * POST — Reset a setting to defaults
    */
   if (req.method === 'POST') {
     try {
@@ -109,7 +87,7 @@ export default async function handler(req, res) {
         return res.status(400).json({ success: false, message: 'Setting key is required.' });
       }
 
-      await deleteSetting(key);
+      await query('DELETE FROM admin_settings WHERE setting_key = $1', [key]);
 
       return res.status(200).json({
         success: true,
