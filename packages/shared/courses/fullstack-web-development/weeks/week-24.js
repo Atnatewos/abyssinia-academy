@@ -58,25 +58,25 @@ const WEEK_24 = {
         resource('Evangadi_Frontend_Starter.zip', 'zip'),
       ],
     }),
-    createLesson({
-      id: 'p4-w24-l3',
-      title: 'Deployment',
-      isFreePreview: false,
-      notes: 'Deploy the full-stack application. Setup remote database, deploy Node backend, and deploy React frontend.',
-    //   mainVideo: mainVideo(
-    //     'Full Project Build: Evangadi Forum Deployment',
-    //     'PLACEHOLDER_YOUTUBE_ID'
-    //   ),
-      sessionVideos: [
-        sessionVideo('3.1 - Introduction to deployment', 'PLACEHOLDER_YOUTUBE_ID', '00:00'),
-        sessionVideo('3.2 - How to setup remote database', 'PLACEHOLDER_YOUTUBE_ID', '04:00'),
-        sessionVideo('3.3 - How to setup and deploy node application (Back-end)', 'PLACEHOLDER_YOUTUBE_ID', '16:00'),
-        sessionVideo('3.4 - How to setup and deploy React application (Front-end)', 'PLACEHOLDER_YOUTUBE_ID', '27:00'),
-      ],
-      resources: [
-        resource('Deployment_Checklist.pdf', 'pdf'),
-      ],
-    }),
+    // createLesson({
+    //   id: 'p4-w24-l3',
+    //   title: 'Deployment',
+    //   isFreePreview: false,
+    //   notes: 'Deploy the full-stack application. Setup remote database, deploy Node backend, and deploy React frontend.',
+    // //   mainVideo: mainVideo(
+    // //     'Full Project Build: Evangadi Forum Deployment',
+    // //     'PLACEHOLDER_YOUTUBE_ID'
+    // //   ),
+    //   sessionVideos: [
+    //     sessionVideo('3.1 - Introduction to deployment', 'PLACEHOLDER_YOUTUBE_ID', '00:00'),
+    //     sessionVideo('3.2 - How to setup remote database', 'PLACEHOLDER_YOUTUBE_ID', '04:00'),
+    //     sessionVideo('3.3 - How to setup and deploy node application (Back-end)', 'PLACEHOLDER_YOUTUBE_ID', '16:00'),
+    //     sessionVideo('3.4 - How to setup and deploy React application (Front-end)', 'PLACEHOLDER_YOUTUBE_ID', '27:00'),
+    //   ],
+    //   resources: [
+    //     resource('Deployment_Checklist.pdf', 'pdf'),
+    //   ],
+    // }),
   ],
 };
 
