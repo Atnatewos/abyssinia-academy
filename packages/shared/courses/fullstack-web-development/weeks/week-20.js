@@ -20,11 +20,11 @@ const WEEK_20 = {
         'https://www.youtube.com/watch?v=X5PBXDIn_AA'
       ),
       sessionVideos: [
-        sessionVideo('1.1 - Introduction to API: what do we mean by API?', 'PLACEHOLDER_YOUTUBE_ID', '00:00'),
-        sessionVideo('1.2 - What is JSON? Why is JSON format preferred to transmit data in web applications?', 'PLACEHOLDER_YOUTUBE_ID', '20:00'),
-        sessionVideo('1.3 - API key: definition and steps to creating a YouTube API key', 'PLACEHOLDER_YOUTUBE_ID', '34:00'),
-        sessionVideo('1.4 - How do we call/request a JSON data from YouTube?', 'PLACEHOLDER_YOUTUBE_ID', '48:00'),
-        sessionVideo('1.5 - Demo on how to use the JSON data we obtained from YouTube API in our react component', 'PLACEHOLDER_YOUTUBE_ID', '01:01:00'),
+        sessionVideo('1.1 - Introduction to API: what do we mean by API?', 'https://www.youtube.com/watch?v=QWikQCXvIzw', '20:00'),
+        sessionVideo('1.2 - What is JSON? Why is JSON format preferred to transmit data in web applications?', 'https://www.youtube.com/watch?v=8Blj_MZsjZM', '14:00'),
+        sessionVideo('1.3 - API key: definition and steps to creating a YouTube API key', 'https://www.youtube.com/watch?v=DYzRTcJKgZ0', '14:00'),
+        sessionVideo('1.4 - How do we call/request a JSON data from YouTube?', 'https://www.youtube.com/watch?v=EPVtEgOG9d8', '13:00'),
+        sessionVideo('1.5 - Demo on how to use the JSON data we obtained from YouTube API in our react component', 'https://www.youtube.com/watch?v=RL_dIA8HoOg', '29:00'),
       ],
       resources: [
         resource('API_Integration_Guide.pdf', 'pdf'),
@@ -40,12 +40,12 @@ const WEEK_20 = {
         'https://www.youtube.com/watch?v=amFwiTOGgo4'
       ),
       sessionVideos: [
-        sessionVideo('2.1 - Limitations of React without React Router', 'PLACEHOLDER_YOUTUBE_ID', '00:00'),
-        sessionVideo('2.2 - Main parts of React Router', 'PLACEHOLDER_YOUTUBE_ID', '10:00'),
-        sessionVideo('2.3 - Non existing routes and Nested routes', 'PLACEHOLDER_YOUTUBE_ID', '25:00'),
-        sessionVideo('2.4 - iPhone Page - Products', 'PLACEHOLDER_YOUTUBE_ID', '37:00'),
-        sessionVideo('2.5 - Single Product', 'PLACEHOLDER_YOUTUBE_ID', '01:04:00'),
-        sessionVideo('2.6 - Additional Tips - fetching data from JSON file, React Bootstrap, Deployment', 'PLACEHOLDER_YOUTUBE_ID', '01:17:00'),
+        sessionVideo('2.1 - Limitations of React without React Router', 'https://www.youtube.com/watch?v=JZ_vuJC7ytM', '10:00'),
+        sessionVideo('2.2 - Main parts of React Router', 'https://www.youtube.com/watch?v=NQqTm5YyzC4', '15:00'),
+        sessionVideo('2.3 - Non existing routes and Nested routes', 'https://www.youtube.com/watch?v=dvCpdmCQveE', '12:00'),
+        sessionVideo('2.4 - iPhone Page - Products', 'https://www.youtube.com/watch?v=cz5f5XS9JJ4', '27:00'),
+        sessionVideo('2.5 - Single Product', 'https://www.youtube.com/watch?v=7CHQbiQcxrA', '13:00'),
+        sessionVideo('2.6 - Additional Tips - fetching data from JSON file, React Bootstrap, Deployment', 'https://www.youtube.com/watch?v=gSAXa9hfCho', '14:00'),
       ],
       resources: [
         resource('React_Router_Guide.pdf', 'pdf'),

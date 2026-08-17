@@ -20,11 +20,11 @@ const WEEK_19 = {
         'https://www.youtube.com/watch?v=C4T3jn-Q-T4'
       ),
       sessionVideos: [
-        sessionVideo('1.1 - Definition of state: what is the difference between state and props?', 'PLACEHOLDER_YOUTUBE_ID', '00:00'),
-        sessionVideo('1.2 - Steps to add and use states in your class based component', 'PLACEHOLDER_YOUTUBE_ID', '07:00'),
-        sessionVideo('1.3 - Updating state values in your class based component: handling events in react', 'PLACEHOLDER_YOUTUBE_ID', '24:00'),
-        sessionVideo('1.4 - Updating state values in your class based component: setState() method', 'PLACEHOLDER_YOUTUBE_ID', '33:00'),
-        sessionVideo('1.5 - React component\'s lifecycle methods (class based)', 'PLACEHOLDER_YOUTUBE_ID', '54:00'),
+        sessionVideo('1.1 - Definition of state: what is the difference between state and props?', 'https://www.youtube.com/watch?v=n9ke5_Q5Q1E', '07:00'),
+        sessionVideo('1.2 - Steps to add and use states in your class based component', 'https://www.youtube.com/watch?v=9M_5ERSTS80', '17:00'),
+        sessionVideo('1.3 - Updating state values in your class based component: handling events in react', 'https://www.youtube.com/watch?v=eAp4udCTf9g', '09:00'),
+        sessionVideo('1.4 - Updating state values in your class based component: setState() method', 'https://www.youtube.com/watch?v=Ci7N5ubT5o0', '21:00'),
+        sessionVideo('1.5 - React component\'s lifecycle methods (class based)', 'https://www.youtube.com/watch?v=gJoxF9qq9dk', '24:00'),
       ],
       resources: [
         resource('React_States_Guide.pdf', 'pdf'),
@@ -40,11 +40,11 @@ const WEEK_19 = {
         'https://www.youtube.com/watch?v=NJidUGVO_Fo'
       ),
       sessionVideos: [
-        sessionVideo('2.1 - What are React hooks, why do we use them and what rules should we follow when using them?', 'PLACEHOLDER_YOUTUBE_ID', '00:00'),
-        sessionVideo('2.2 - Basic React hooks: steps to implement useState() hook', 'PLACEHOLDER_YOUTUBE_ID', '12:00'),
-        sessionVideo('2.3 - Basic React hooks: using useState() to change a state\'s value based on previous state value', 'PLACEHOLDER_YOUTUBE_ID', '35:00'),
-        sessionVideo('2.4 - Basic React hooks: steps to implement useEffect() hook', 'PLACEHOLDER_YOUTUBE_ID', '41:00'),
-        sessionVideo('2.5 - Basic React hooks: steps to implement context API and useContext() hook', 'PLACEHOLDER_YOUTUBE_ID', '54:00'),
+        sessionVideo('2.1 - What are React hooks, why do we use them and what rules should we follow when using them?', 'https://www.youtube.com/watch?v=IiUjlso5WHY', '12:00'),
+        sessionVideo('2.2 - Basic React hooks: steps to implement useState() hook', 'https://www.youtube.com/watch?v=L9S7RvfZV2E', '23:00'),
+        sessionVideo('2.3 - Basic React hooks: using useState() to change a state\'s value based on previous state value', 'https://www.youtube.com/watch?v=gE3UQABppa8', '06:00'),
+        sessionVideo('2.4 - Basic React hooks: steps to implement useEffect() hook', 'https://www.youtube.com/watch?v=fSRhK0nZmHw', '13:00'),
+        sessionVideo('2.5 - Basic React hooks: steps to implement context API and useContext() hook', 'https://www.youtube.com/watch?v=hsLOpbLQyk8', '16:00'),
       ],
       resources: [
         resource('React_Hooks_CheatSheet.pdf', 'pdf'),

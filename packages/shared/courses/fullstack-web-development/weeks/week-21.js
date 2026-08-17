@@ -20,12 +20,12 @@ const WEEK_21 = {
     //     'PLACEHOLDER_YOUTUBE_ID'
     //   ),
       sessionVideos: [
-        sessionVideo('1.1 - Create react-app and Setting up the Environment', 'PLACEHOLDER_YOUTUBE_ID', '00:00'),
-        sessionVideo('1.2 - Building Netflix Header and Footer', 'PLACEHOLDER_YOUTUBE_ID', '14:00'),
-        sessionVideo('1.3 - Get API key and Movies endpoint from TMDB', 'PLACEHOLDER_YOUTUBE_ID', '38:00'),
-        sessionVideo('1.4 - Building Netflix Banner', 'PLACEHOLDER_YOUTUBE_ID', '58:00'),
-        sessionVideo('1.5 - Building Netflix rows', 'PLACEHOLDER_YOUTUBE_ID', '01:19:00'),
-        sessionVideo('1.6 - Netflix Project Deployment', 'PLACEHOLDER_YOUTUBE_ID', '02:02:00'),
+        sessionVideo('1.1 - Create react-app and Setting up the Environment', 'https://www.youtube.com/watch?v=lfoPHdisTR8', '14:00'),
+        sessionVideo('1.2 - Building Netflix Header and Footer', 'https://www.youtube.com/watch?v=ENcwAfnuOMc', '29:00'),
+        sessionVideo('1.3 - Get API key and Movies endpoint from TMDB', 'https://www.youtube.com/watch?v=PyV5-pJToEs', '20:00'),
+        sessionVideo('1.4 - Building Netflix Banner', 'https://www.youtube.com/watch?v=hxIzn4XqVHg', '21:00'),
+        sessionVideo('1.5 - Building Netflix rows', 'https://www.youtube.com/watch?v=dLz9KMQiyR8', '43:00'),
+        sessionVideo('1.6 - Netflix Project Deployment', 'https://www.youtube.com/watch?v=U253V65NJsg', '10:58'),
       ],
       resources: [
         resource('Netflix_Clone_Starter.zip', 'zip'),

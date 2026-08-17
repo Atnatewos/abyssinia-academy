@@ -20,12 +20,12 @@ const WEEK_16 = {
         'https://www.youtube.com/watch?v=zZMQlaGka6A'
       ),
       sessionVideos: [
-        sessionVideo('1.1 - Introduction: database and database management system (DBMS)', 'PLACEHOLDER_YOUTUBE_ID', '00:00'),
-        sessionVideo('1.2 - Main categories of database: relational and non-relational database', 'PLACEHOLDER_YOUTUBE_ID', '12:00'),
-        sessionVideo('1.3 - Working with databases using NodeJS: http verb', 'PLACEHOLDER_YOUTUBE_ID', '38:00'),
-        sessionVideo('1.4 - Working with databases using NodeJS: SQL query and MySQL database', 'PLACEHOLDER_YOUTUBE_ID', '45:00'),
-        sessionVideo('1.5 - Working with databases using NodeJS: MySQL driver and connecting with MySQL database using Node', 'PLACEHOLDER_YOUTUBE_ID', '58:00'),
-        sessionVideo('1.6 - Working with databases using NodeJS: most commonly used SQL queries (create)', 'PLACEHOLDER_YOUTUBE_ID', '01:19:00'),
+        sessionVideo('1.1 - Introduction: database and database management system (DBMS)', 'https://www.youtube.com/watch?v=cVm3ZoM9_g8', '12:00'),
+        sessionVideo('1.2 - Main categories of database: relational and non-relational database', 'https://www.youtube.com/watch?v=og6rx6oElCE', '26:00'),
+        sessionVideo('1.3 - Working with databases using NodeJS: http verb', 'https://www.youtube.com/watch?v=FVO6Wtrcoxw', '07:00'),
+        sessionVideo('1.4 - Working with databases using NodeJS: SQL query and MySQL database', 'https://www.youtube.com/watch?v=_oYe5e6c2Gg', '13:00'),
+        sessionVideo('1.5 - Working with databases using NodeJS: MySQL driver and connecting with MySQL database using Node', 'https://www.youtube.com/watch?v=SxI18sioNsg', '21:00'),
+        sessionVideo('1.6 - Working with databases using NodeJS: most commonly used SQL queries (create)', 'https://www.youtube.com/watch?v=UPlPpfeHQzE', '24:00'),
       ],
       resources: [
         resource('MySQL_Basics_Guide.pdf', 'pdf'),
@@ -41,9 +41,9 @@ const WEEK_16 = {
         'https://www.youtube.com/watch?v=wg0ga_p3jtk'
       ),
       sessionVideos: [
-        sessionVideo('2.1 - Working with databases using NodeJS: most commonly used SQL queries (insert)', 'PLACEHOLDER_YOUTUBE_ID', '00:00'),
-        sessionVideo('2.2 - Working with databases using NodeJS: most commonly used SQL queries (select)', 'PLACEHOLDER_YOUTUBE_ID', '37:00'),
-        sessionVideo('2.3 - Working with databases using NodeJS: most commonly used SQL queries (update and delete)', 'PLACEHOLDER_YOUTUBE_ID', '01:05:00'),
+        sessionVideo('2.1 - Working with databases using NodeJS: most commonly used SQL queries (insert)', 'https://www.youtube.com/watch?v=irZgpPN5ruI', '37:00'),
+        sessionVideo('2.2 - Working with databases using NodeJS: most commonly used SQL queries (select)', 'https://www.youtube.com/watch?v=Y6MFpDNPmo4', '28:00'),
+        sessionVideo('2.3 - Working with databases using NodeJS: most commonly used SQL queries (update and delete)', 'https://www.youtube.com/watch?v=FWuAyvCIYsE', '04:00'),
       ],
       resources: [
         resource('SQL_Queries_CheatSheet.pdf', 'pdf'),

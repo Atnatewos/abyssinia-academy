@@ -20,13 +20,13 @@ const WEEK_18 = {
         'https://www.youtube.com/watch?v=Yp27DqdOlTI'
       ),
       sessionVideos: [
-        sessionVideo('1.1 - Creating objects in JS using constructor function', 'PLACEHOLDER_YOUTUBE_ID', '00:00'),
-        sessionVideo('1.2 - Traditional way of property inheritance in JS (using prototype object)', 'PLACEHOLDER_YOUTUBE_ID', '10:00'),
-        sessionVideo('1.3 - ES6 way of property inheritance in JS (concept of class)', 'PLACEHOLDER_YOUTUBE_ID', '21:00'),
-        sessionVideo('1.4 - ES6 way of property inheritance in JS (concept of class inheritance)', 'PLACEHOLDER_YOUTUBE_ID', '31:00'),
-        sessionVideo('1.5 - Array and object destructuring', 'PLACEHOLDER_YOUTUBE_ID', '44:00'),
-        sessionVideo('1.6 - Class based components: converting functional components into class components', 'PLACEHOLDER_YOUTUBE_ID', '49:00'),
-        sessionVideo('1.7 - React prop', 'PLACEHOLDER_YOUTUBE_ID', '01:06:00'),
+        sessionVideo('1.1 - Creating objects in JS using constructor function', 'https://www.youtube.com/watch?v=wmggHZFPKHE', '10:00'),
+        sessionVideo('1.2 - Traditional way of property inheritance in JS (using prototype object)', 'https://www.youtube.com/watch?v=RBv_mMfkfik', '11:00'),
+        sessionVideo('1.3 - ES6 way of property inheritance in JS (concept of class)', 'https://www.youtube.com/watch?v=jtri-T6B8zk', '10:00'),
+        sessionVideo('1.4 - ES6 way of property inheritance in JS (concept of class inheritance)', 'https://www.youtube.com/watch?v=JeE0ZW7b7p8', '13:00'),
+        sessionVideo('1.5 - Array and object destructuring', 'https://www.youtube.com/watch?v=-JRi_zhixYY', '05:00'),
+        sessionVideo('1.6 - Class based components: converting functional components into class components', 'https://www.youtube.com/watch?v=-x0YDJITVGM', '17:00'),
+        sessionVideo('1.7 - React prop', 'https://www.youtube.com/watch?v=icjlfKOPwDM', '22:00'),
       ],
       resources: [
         resource('React_Class_Components.pdf', 'pdf'),
