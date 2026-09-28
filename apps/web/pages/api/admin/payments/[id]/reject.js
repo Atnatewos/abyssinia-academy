@@ -1,46 +1,65 @@
 /**
- * @fileoverview Admin Reject Payment API
- * Rejects a payment without enrolling the student.
+ * @fileoverview Admin Payment Rejection API (Money Model v2)
+ *
+ * POST /api/admin/payments/[id]/reject
+ *
+ * Rejects a pending payment (returns funds to buyer).
+ * If the payment was already approved and commissions distributed,
+ * this triggers the orchestrated reversal flow (commissions + bonuses
+ * + paying counters reversed).
+ *
  * Path: apps/web/pages/api/admin/payments/[id]/reject.js
  */
 
-import { Pool } from 'pg';
+import { query } from '../../../../../lib/db';
 import jwt from 'jsonwebtoken';
+import { getReferralConfig } from '../../../../../lib/config';
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.DATABASE_URL && process.env.DATABASE_URL.includes('neon.tech')
-    ? { rejectUnauthorized: false }
-    : false,
-});
+const mlm = require('../../../../../packages/shared/mlm');
 
 export default async function handler(req, res) {
-
-  if (req.method !== 'PATCH') {
+  if (req.method !== 'POST') {
     return res.status(405).json({ success: false, message: 'Method not allowed.' });
   }
 
+  /* Admin auth check */
   const authHeader = req.headers.authorization;
-
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return res.status(401).json({ success: false, message: 'No token provided.' });
   }
 
   let decoded;
-
   try {
-    decoded = jwt.verify(authHeader.split(' ')[1], process.env.JWT_ADMIN_SECRET);
+    decoded = jwt.verify(authHeader.split(' ')[1], process.env.JWT_SECRET);
   } catch {
-    return res.status(401).json({ success: false, message: 'Invalid admin token.' });
+    return res.status(401).json({ success: false, message: 'Invalid token.' });
   }
 
-  const { id } = req.query;
+  /* Verify admin role */
+  const adminCheck = await query(
+    'SELECT role FROM admins WHERE user_id = $1',
+    [decoded.userId]
+  );
+
+  if (adminCheck.rows.length === 0) {
+    return res.status(403).json({ success: false, message: 'Admin access required.' });
+  }
+
+  const paymentId = req.query.id;
+  const { reason } = req.body;
+
+  if (!reason) {
+    return res.status(400).json({
+      success: false,
+      message: 'Rejection reason is required',
+    });
+  }
 
   try {
-
-    const paymentResult = await pool.query(
-      'SELECT * FROM payments WHERE id = $1',
-      [id]
+    /* Fetch payment details */
+    const paymentResult = await query(
+      `SELECT id, user_id, amount, status FROM payments WHERE id = $1`,
+      [paymentId]
     );
 
     if (paymentResult.rows.length === 0) {
@@ -48,59 +67,67 @@ export default async function handler(req, res) {
     }
 
     const payment = paymentResult.rows[0];
+    const wasApproved = payment.status === 'approved';
 
-    if (payment.status !== 'pending') {
-      return res.status(400).json({
-        success: false,
-        message: `Payment is already ${payment.status}.`,
-      });
+    /* Update payment status to rejected */
+    await query(
+      `UPDATE payments
+       SET status = 'rejected',
+           admin_note = $2,
+           rejected_at = NOW(),
+           rejected_by_admin_id = $3,
+           updated_at = NOW()
+       WHERE id = $1`,
+      [paymentId, reason, decoded.userId]
+    );
+
+    /*
+     * Money Model v2: if the payment was already approved and commissions
+     * were distributed, trigger the orchestrated reversal flow.
+     *
+     * This reverses:
+     *   - All locked commissions tied to this payment
+     *   - All locked bonuses tied to this payment
+     *   - Paying counters for ancestors (if this was the buyer's only payment)
+     */
+    let reversalResult = null;
+
+    if (wasApproved) {
+      const config = getReferralConfig();
+      const db = {
+        query: (text, params) => query(text, params),
+        getClient: () => query.pool.connect(),
+      };
+
+      reversalResult = await mlm.reverseAllForPayment(
+        db,
+        config,
+        paymentId,
+        `Payment rejected by admin: ${reason}`
+      );
     }
 
-    /*
-     * Update payment status to rejected
-     */
-    await pool.query(
-      `UPDATE payments
-       SET status = 'rejected'
-       WHERE id = $1`,
-      [id]
-    );
-
-    /*
-     * Update user payment status
-     */
-    await pool.query(
-      `UPDATE users
-       SET payment_status = 'rejected', updated_at = CURRENT_TIMESTAMP
-       WHERE id = $1`,
-      [payment.user_id]
-    );
-
-    /*
-     * Log the admin action
-     */
-    await pool.query(
-      `INSERT INTO admin_audit_logs (admin_id, action, target_type, target_id, details, ip_address, user_agent)
-       VALUES ($1, 'payment.reject', 'payment', $2, $3, $4, $5)`,
-      [
-        decoded.adminId,
-        id,
-        JSON.stringify({ amount: payment.amount, method: payment.method }),
-        req.headers['x-forwarded-for'] || req.socket.remoteAddress || null,
-        req.headers['user-agent'] || null,
-      ]
-    );
+    /* Remove enrollment if this was a course purchase */
+    if (wasApproved) {
+      await query(
+        `DELETE FROM enrollments WHERE user_id = $1`,
+        [payment.user_id]
+      );
+    }
 
     res.status(200).json({
       success: true,
-      message: 'Payment rejected successfully.',
+      message: wasApproved
+        ? 'Payment rejected and commissions reversed'
+        : 'Payment rejected',
+      data: {
+        paymentId,
+        wasApproved,
+        reversal: reversalResult,
+      },
     });
-
   } catch (error) {
     console.error('Payment rejection error:', error.message);
-    return res.status(500).json({
-      success: false,
-      message: 'Failed to reject payment.',
-    });
+    return res.status(500).json({ success: false, message: 'Failed to reject payment.' });
   }
 }

@@ -1,34 +1,38 @@
 /**
  * @fileoverview Default Configuration Values
+ *
  * Single source of truth for ALL fallback values used across the platform.
  * When shared config fails to load, these defaults keep the app functional.
+ *
+ * Every section mirrors the shape of its corresponding live config file
+ * (payments.config.js, referrals.config.js, etc.) so the config bridge
+ * never sees a missing key.
+ *
  * Path: packages/shared/config/defaults.config.js
  */
 
 const defaultsConfig = {
 
   /*
-   * Payment defaults — used when payments.config.js is unavailable
+   * Payment defaults — mirrors packages/shared/config/payments.config.js
    */
   payments: {
 
     pricing: {
-
       fullCourse: {
-        amountETB: 2499,
-        originalAmountETB: 9500,
+        amountETB: 1000,
+        originalAmountETB: 1000,
+        referredAmountETB: 900,
+        referredDiscountPercent: 10,
         currency: 'ETB',
-        discountPercentage: 47,
       },
-
       perPhase: {
-        amountETB: 750,
-        originalAmountETB: 2500,
+        amountETB: 500,
+        originalAmountETB: 500,
         currency: 'ETB',
         minPhases: 1,
         maxPhases: 5,
       },
-
       bulkDiscounts: [
         { phases: 2, discountPercent: 0 },
         { phases: 3, discountPercent: 0 },
@@ -92,11 +96,6 @@ const defaultsConfig = {
         { id: 'telegram', label: 'Join Telegram Community', labelAm: 'ቴሌግራም ይቀላቀሉ', href: 'https://t.me/AbyssiniaAcademy', icon: 'MessageCircle', external: true },
         { id: 'support', label: 'Contact Support', labelAm: 'ድጋፍ ያግኙ', href: '/support', icon: 'HelpCircle' },
       ],
-      /*
-      * Access Control — Lock Overlay Messages
-      * Shown when a student tries to access locked content
-      * All messages are configurable for i18n extensibility
-      */
       accessControl: {
         lockedPhaseTitle: 'Phase {phase} is Locked',
         lockedPhaseTitleAm: 'ደረጃ {phase} ተቆልፏል',
@@ -174,23 +173,111 @@ const defaultsConfig = {
     defaultLanguage: 'en',
   },
 
-    /*
-   * Referral system defaults
+  /*
+   * Referral system defaults — mirrors packages/shared/config/referrals.config.js
+   * 4-level MLM with fixed commission amounts, flat 10% referred discount,
+   * 5 independent bonus categories, and per-user + platform monthly caps.
    */
   referrals: {
     enabled: true,
-    codeGeneration: { length: 8, prefix: 'ABY', charset: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', excludeSimilar: true },
-    referrerTiers: [
-      { name: 'Bronze', nameAm: 'ብሮንዝ', minReferrals: 1, maxReferrals: 2, creditPercent: 10, color: '#cd7f32', icon: 'Medal' },
-      { name: 'Silver', nameAm: 'ብር', minReferrals: 3, maxReferrals: 5, creditPercent: 15, color: '#c0c0c0', icon: 'Medal' },
-      { name: 'Gold', nameAm: 'ወርቅ', minReferrals: 6, maxReferrals: 10, creditPercent: 20, color: '#ffd700', icon: 'Trophy' },
-    ],
-    creditCap: { maxPercent: 100, behavior: 'commission' },
-    commission: { enabled: true, percentOfPayment: 20, minimumPayout: 500, payoutMethods: ['telebirr', 'cbe-birr', 'bank-transfer'] },
-    referredDiscount: { mode: 'match_referrer', matchPercent: 100, fixedPercent: 10, minimumDiscount: 5, maximumDiscount: 40 },
-    registration: { showReferralBanner: true, autoApplyCode: true, allowCodeChange: false, cookieDurationDays: 30 },
-    sharing: { platforms: [], shareMessage: '', shareMessageAm: '' },
-    dashboard: { showTierProgress: true, showEarningsBreakdown: true, showReferralHistory: true, showHowItWorks: true, historyPerPage: 10 },
+
+    codeGeneration: {
+      length: 8,
+      prefix: 'ABY',
+      charset: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
+      excludeSimilar: true,
+    },
+
+    commissionStructure: {
+      maxLevels: 4,
+      levelAmounts: [200, 150, 100, 50],
+      totalPerSale: 500,
+      currency: 'ETB',
+      unlockDelayDays: 7,
+    },
+
+    referredDiscount: {
+      percent: 10,
+    },
+
+    bonuses: {
+      directReferral: {
+        category: 'direct_referral',
+        tiers: [
+          { requirement: 5, amountETB: 1000, name: 'Direct Referral — 5' },
+          { requirement: 10, amountETB: 2500, name: 'Direct Referral — 10' },
+          { requirement: 20, amountETB: 5000, name: 'Direct Referral — 20' },
+        ],
+      },
+      milestone: {
+        category: 'milestone',
+        tiers: [
+          { requirement: 50, amountETB: 10000, name: 'Milestone — 50 Team' },
+          { requirement: 100, amountETB: 20000, name: 'Milestone — 100 Team' },
+          { requirement: 200, amountETB: 40000, name: 'Milestone — 200 Team' },
+        ],
+      },
+      rank: {
+        category: 'rank',
+        tiers: [
+          { requirement: 50, amountETB: 5000, name: 'Silver' },
+          { requirement: 200, amountETB: 15000, name: 'Gold' },
+          { requirement: 500, amountETB: 50000, name: 'Platinum' },
+        ],
+      },
+      teamBonus: {
+        category: 'team_bonus',
+        tiers: [
+          { requirement: 50, amountETB: 2500, name: 'Team Growth — 50' },
+          { requirement: 100, amountETB: 5000, name: 'Team Growth — 100' },
+          { requirement: 200, amountETB: 10000, name: 'Team Growth — 200' },
+        ],
+      },
+      speedBonus: {
+        category: 'speed_bonus',
+        period: 'monthly',
+        tiers: [
+          { requirement: 10, amountETB: 1500, name: 'Speed Bonus — 10/Month' },
+        ],
+      },
+    },
+
+    caps: {
+      maxTotalPerSaleETB: 500,
+      maxBonusPerUserPerMonthETB: 10000,
+      maxTotalPayoutPerUserPerMonthETB: 25000,
+      maxTotalPayoutPlatformPerMonthETB: 500000,
+    },
+
+    withdrawal: {
+      minimumAmountETB: 500,
+      maximumAmountETB: 100000,
+      methods: ['telebirr', 'cbe-birr', 'bank-transfer'],
+      requiresAdminApproval: true,
+      maxPendingRequests: 1,
+      processingTimeHours: 48,
+    },
+
+    registration: {
+      showReferralBanner: true,
+      autoApplyCode: true,
+      allowCodeChange: false,
+      cookieDurationDays: 30,
+    },
+
+    sharing: {
+      platforms: [],
+      shareMessage: '',
+      shareMessageAm: '',
+    },
+
+    dashboard: {
+      showTierProgress: true,
+      showEarningsBreakdown: true,
+      showReferralHistory: true,
+      showHowItWorks: true,
+      historyPerPage: 10,
+    },
   },
 
   /*
@@ -198,23 +285,60 @@ const defaultsConfig = {
    */
   discounts: {
     enabled: true,
-    combinedDiscounts: { maxCombinedPercent: 60, applicationOrder: ['referral', 'discount_code', 'credit'], capBehavior: 'proportional' },
+    combinedDiscounts: {
+      maxCombinedPercent: 60,
+      applicationOrder: ['referral', 'discount_code', 'credit'],
+      capBehavior: 'proportional',
+    },
     codes: {
-      codeValidation: { minLength: 4, maxLength: 20, allowedChars: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', autoUppercase: true, trimWhitespace: true },
-      defaults: { maxTotalUses: 100, maxUsesPerUser: 1, minPurchaseAmount: 0 },
-      adminLimits: { maxDiscountPercent: 100, maxDiscountFixed: 10000, maxTotalUses: 10000 },
+      codeValidation: {
+        minLength: 4,
+        maxLength: 20,
+        allowedChars: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
+        autoUppercase: true,
+        trimWhitespace: true,
+      },
+      defaults: {
+        maxTotalUses: 100,
+        maxUsesPerUser: 1,
+        minPurchaseAmount: 0,
+      },
+      adminLimits: {
+        maxDiscountPercent: 100,
+        maxDiscountFixed: 10000,
+        maxTotalUses: 10000,
+      },
     },
     rateLimiting: {
-      perIP: { validatePerMinute: 10, applyPerMinute: 3, totalPerDay: 20 },
-      perUser: { validatePerMinute: 5, applyPerMinute: 3 },
+      perIP: {
+        validatePerMinute: 10,
+        applyPerMinute: 3,
+        totalPerDay: 20,
+      },
+      perUser: {
+        validatePerMinute: 5,
+        applyPerMinute: 3,
+      },
     },
     antiAbuse: {
       enabled: true,
-      riskThresholds: { normal: 20, suspicious: 50, high: 75, critical: 100 },
-      actions: { suspicious: 'log', high: 'flag_for_review', critical: 'block_and_notify' },
+      riskThresholds: {
+        normal: 20,
+        suspicious: 50,
+        high: 75,
+        critical: 100,
+      },
+      actions: {
+        suspicious: 'log',
+        high: 'flag_for_review',
+        critical: 'block_and_notify',
+      },
       autoDisableThreshold: 5,
     },
-    publicListing: { enabled: false, showOnPricingPage: true },
+    publicListing: {
+      enabled: false,
+      showOnPricingPage: true,
+    },
   },
 };
 

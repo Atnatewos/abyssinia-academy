@@ -1,27 +1,39 @@
 /**
  * @fileoverview Payment Configuration
- * Controls payment methods, pricing, bulk discounts, approval flow, countdown timer, checkout modal, and profile
+ *
+ * Single source of truth for tuition pricing, payment methods, checkout
+ * modal behavior, countdown timer, and profile display preferences.
+ *
+ * Pricing is admin-overridable via the admin_settings table (DB-first).
+ * The values here are the fallback defaults.
+ *
  * Path: packages/shared/config/payments.config.js
  */
 
 const paymentsConfig = {
+
   /*
-   * Pricing Structure
+   * Pricing structure.
+   *
+   * fullCourse:           1000 ETB standard price
+   * fullCourse.referred:   900 ETB after 10% referral discount
+   * perPhase:              500 ETB per individual phase
    */
   pricing: {
     fullCourse: {
-      amountETB: 2499,
-      originalAmountETB: 9500,
-      discountPercentage: 73,
+      amountETB: 1000,
+      originalAmountETB: 1000,
+      referredAmountETB: 900,
+      referredDiscountPercent: 10,
       currency: 'ETB',
       description: 'Full Academy Access Pass — All 5 Phases',
       descriptionAm: 'ሙሉ የአካዳሚ መዳረሻ — ሁሉም 5ቱ ደረጃዎች',
-      savingsLabel: 'Save 47% vs buying phases separately',
-      savingsLabelAm: 'ጅምላ 47% ይቆጥቡ',
+      savingsLabel: 'Complete curriculum, lifetime access',
+      savingsLabelAm: 'ሙሉ ሥርዓተ ትምህርት፣ የዕድሜ ልክ መዳረሻ',
     },
     perPhase: {
-      amountETB: 750,
-      originalAmountETB: 2500,
+      amountETB: 500,
+      originalAmountETB: 500,
       currency: 'ETB',
       description: 'Single Phase Access Pass',
       descriptionAm: 'የአንድ ደረጃ መዳረሻ ፓስ',
@@ -37,23 +49,33 @@ const paymentsConfig = {
   },
 
   /*
-   * Purchase modes
+   * Purchase modes — full course vs individual phases.
    */
   purchaseModes: {
     fullCourse: {
-      enabled: true, id: 'full-course', label: 'Full Course', labelAm: 'ሙሉ ኮርስ',
-      description: 'All 5 phases — best value', descriptionAm: 'ሁሉም 5ቱ ደረጃዎች — ምርጥ ዋጋ',
-      icon: 'BookOpen', badge: 'Best Value', badgeAm: 'ምርጥ ዋጋ',
+      enabled: true,
+      id: 'full-course',
+      label: 'Full Course',
+      labelAm: 'ሙሉ ኮርስ',
+      description: 'All 5 phases — best value',
+      descriptionAm: 'ሁሉም 5ቱ ደረጃዎች — ምርጥ ዋጋ',
+      icon: 'BookOpen',
+      badge: 'Best Value',
+      badgeAm: 'ምርጥ ዋጋ',
     },
     individualPhases: {
-      enabled: true, id: 'individual-phases', label: 'Individual Phases', labelAm: 'የተለያዩ ደረጃዎች',
-      description: 'Pick specific phases you need', descriptionAm: 'የሚፈልጉትን ደረጃ ብቻ ይምረጡ',
+      enabled: true,
+      id: 'individual-phases',
+      label: 'Individual Phases',
+      labelAm: 'የተለያዩ ደረጃዎች',
+      description: 'Pick specific phases you need',
+      descriptionAm: 'የሚፈልጉትን ደረጃ ብቻ ይምረጡ',
       icon: 'Layers',
     },
   },
 
   /*
-   * Countdown Timer
+   * Countdown timer — urgency banner on the pricing page.
    */
   countdownTimer: {
     enabled: true,
@@ -66,13 +88,18 @@ const paymentsConfig = {
       expiredText: 'Offer expired',
       expiredTextAm: 'ቅናሹ አልቋል',
     },
-    colors: { normal: '#f59e0b', warning: '#fbbf24', danger: '#ef4444', expired: '#6b7280' },
+    colors: {
+      normal: '#f59e0b',
+      warning: '#fbbf24',
+      danger: '#ef4444',
+      expired: '#6b7280',
+    },
     warningThresholdPercent: 30,
     dangerThresholdPercent: 10,
   },
 
   /*
-   * Checkout Modal
+   * Checkout modal — display options.
    */
   checkoutModal: {
     title: 'Complete Your Enrollment',
@@ -83,21 +110,15 @@ const paymentsConfig = {
   },
 
   /*
-   * Profile Configuration
+   * Profile page configuration.
    */
   profile: {
-    /*
-     * Avatar upload limits
-     */
     avatar: {
       maxSize: 2 * 1024 * 1024,
       allowedTypes: ['image/jpeg', 'image/png', 'image/webp'],
       maxWidth: 512,
       maxHeight: 512,
     },
-    /*
-     * Which sections to show on the profile page
-     */
     sections: {
       enrollmentCard: true,
       overallProgress: true,
@@ -106,11 +127,6 @@ const paymentsConfig = {
       quickActions: true,
       accountSettings: true,
     },
-
-    
-    /*
-     * Quick action links — shown as cards on the profile overview
-     */
     quickActions: [
       { id: 'portal', label: 'Go to Classroom Portal', labelAm: 'ወደ መማሪያ ክፍል ይሂዱ', href: '/portal', icon: 'BookOpen' },
       { id: 'courses', label: 'Browse Courses', labelAm: 'ኮርሶችን ይመልከቱ', href: '/courses', icon: 'Grid' },
@@ -120,26 +136,39 @@ const paymentsConfig = {
   },
 
   /*
-   * Payment Methods
+   * Payment methods — manual Ethiopian payment rails.
+   * Account details are admin-overridable via the DB.
    */
   methods: [
     {
-      id: 'telebirr', name: 'Telebirr', nameAm: 'ቴሌብር', icon: '📱',
-      accountNumber: '0920944941', accountName: 'ATNATEWOS GETASEW SAHILU',
+      id: 'telebirr',
+      name: 'Telebirr',
+      nameAm: 'ቴሌብር',
+      icon: '📱',
+      accountNumber: '0920944941',
+      accountName: 'ATNATEWOS GETASEW SAHILU',
       instructions: 'Send payment to the Telebirr number above and submit the transaction ID',
       instructionsAm: 'ከላይ በተጠቀሰው የቴሌብር ቁጥር ገንዘብ ይላኩ እና የተላከለትን ቁጥር ያስገቡ',
       isActive: true,
     },
     {
-      id: 'cbe-birr', name: 'CBE Birr', nameAm: 'ሲቢኢ ብር', icon: '🏦',
-      accountNumber: '0920944941', accountName: 'ATNATEWOS GETASEW SAHILU',
+      id: 'cbe-birr',
+      name: 'CBE Birr',
+      nameAm: 'ሲቢኢ ብር',
+      icon: '🏦',
+      accountNumber: '0920944941',
+      accountName: 'ATNATEWOS GETASEW SAHILU',
       instructions: 'Transfer to the CBE Birr account and submit the reference number',
       instructionsAm: 'በሲቢኢ ብር አካውንት ገንዘብ ያስተላልፉ እና የተላከለትን ቁጥር ያስገቡ',
       isActive: true,
     },
     {
-      id: 'bank-transfer', name: 'Bank Transfer', nameAm: 'የባንክ ትራንስፈር', icon: '🏛️',
-      accountNumber: '1000428407567', accountName: 'ATNATEWOS GETASEW SAHILU',
+      id: 'bank-transfer',
+      name: 'Bank Transfer',
+      nameAm: 'የባንክ ትራንስፈር',
+      icon: '🏛️',
+      accountNumber: '1000428407567',
+      accountName: 'ATNATEWOS GETASEW SAHILU',
       bankName: 'Commercial Bank of Ethiopia - (CBE)',
       instructions: 'Transfer to the bank account and upload the receipt screenshot',
       instructionsAm: 'በባንክ አካውንት ገንዘብ ያስተላልፉ እና የተከፈለበትን ማስረጃ ፎቶ ያስገቡ',
@@ -147,18 +176,51 @@ const paymentsConfig = {
     },
   ],
 
+  /*
+   * Approval flow — manual review by admin.
+   */
   approval: {
-    isManual: true, adminReviewRequired: true, autoApproveAfterHours: null,
+    isManual: true,
+    adminReviewRequired: true,
+    autoApproveAfterHours: null,
     pendingMessage: 'Your payment is being verified. You will get access within 24 hours after confirmation.',
-    pendingMessageAm: 'ክፍያዎ እየተረጋገጠ ነው። ከተረጋገጠ በ24 ሰዓት ውስጥ መዳረሻ ያገኛሉ።',
+    pendingMessageAm: 'ክፍያዎ እየተረጋገጠ ነው። ከተረጋገጠ በ24 ሰዓት ውስጥ መዳሻ ያገኛሉ።',
     approvedMessage: 'Payment approved! Welcome to Abyssinia Academy!',
     approvedMessageAm: 'ክፍያዎ ተቀባይነት አግኝቷል! እንኳን ወደ አቢሲኒያ አካዳሚ በደህና መጡ!',
     rejectedMessage: 'Payment could not be verified. Please contact support.',
     rejectedMessageAm: 'ክፍያዎን ማረጋገጥ አልተቻለም። እባክዎ የደንበኛ ድጋፍ ያግኙ።',
   },
-  statuses: { NONE: 'none', PENDING: 'pending', APPROVED: 'approved', REJECTED: 'rejected' },
-  requiredFields: { fullName: true, phone: true, paymentMethod: true, transactionRef: true, screenshot: false },
-  screenshotUpload: { maxSize: 5 * 1024 * 1024, allowedTypes: ['image/jpeg', 'image/png', 'image/webp'], maxWidth: 1920, maxHeight: 1920 },
+
+  /*
+   * Payment status enum — used by client + server.
+   */
+  statuses: {
+    NONE: 'none',
+    PENDING: 'pending',
+    APPROVED: 'approved',
+    REJECTED: 'rejected',
+  },
+
+  /*
+   * Required fields for payment submission.
+   */
+  requiredFields: {
+    fullName: true,
+    phone: true,
+    paymentMethod: true,
+    transactionRef: true,
+    screenshot: false,
+  },
+
+  /*
+   * Screenshot upload limits.
+   */
+  screenshotUpload: {
+    maxSize: 5 * 1024 * 1024,
+    allowedTypes: ['image/jpeg', 'image/png', 'image/webp'],
+    maxWidth: 1920,
+    maxHeight: 1920,
+  },
 };
 
 module.exports = paymentsConfig;

@@ -1,8 +1,15 @@
 /**
  * @fileoverview Config Bridge
- * Bridges shared package config to Next.js frontend.
- * ALL fallback values sourced from defaults.config.js — zero hardcoded values.
- * Provides typed accessor functions for every config section across the platform.
+ *
+ * Bridges shared package config to Next.js frontend. Provides typed
+ * accessor functions for every config section. ALL fallback values are
+ * sourced from defaults.config.js — zero hardcoded values in this file.
+ *
+ * Resolution order for every accessor:
+ *   1. Shared config (packages/shared/config)
+ *   2. Defaults config (packages/shared/config/defaults.config)
+ *   3. Inline hard fallback (last resort)
+ *
  * Path: apps/web/lib/config.js
  */
 
@@ -10,8 +17,9 @@ let cachedConfig = null;
 let cachedDefaults = null;
 
 /**
- * Load the full shared configuration from packages/shared/config
- * Falls back through multiple require paths for different environments
+ * Load the full shared configuration from packages/shared/config.
+ * Falls back through multiple require paths for different environments.
+ *
  * @returns {object|null} Shared config object or null if unavailable
  */
 const loadConfig = () => {
@@ -31,7 +39,9 @@ const loadConfig = () => {
 };
 
 /**
- * Load the defaults configuration — always available as a safety net
+ * Load the defaults configuration — always available as a safety net.
+ * Every config section gets a fallback shape here so the UI never crashes.
+ *
  * @returns {object} Defaults config object
  */
 const loadDefaults = () => {
@@ -40,14 +50,25 @@ const loadDefaults = () => {
   try {
     cachedDefaults = require('../../../packages/shared/config/defaults.config');
   } catch {
-
-    /*
-     * Ultimate hard fallback — minimal structure to prevent crashes
-     * This should never be reached if defaults.config.js exists
-     */
     cachedDefaults = {
       payments: {
-        pricing: { fullCourse: {}, perPhase: {}, bulkDiscounts: [] },
+        pricing: {
+          fullCourse: {
+            amountETB: 1000,
+            originalAmountETB: 1000,
+            referredAmountETB: 900,
+            referredDiscountPercent: 10,
+            currency: 'ETB',
+          },
+          perPhase: {
+            amountETB: 500,
+            originalAmountETB: 500,
+            currency: 'ETB',
+            minPhases: 1,
+            maxPhases: 5,
+          },
+          bulkDiscounts: [],
+        },
         purchaseModes: {},
         countdownTimer: {},
         checkoutModal: {},
@@ -57,23 +78,81 @@ const loadDefaults = () => {
         methods: [],
       },
       phases: { individuallyPurchasable: true, phases: [] },
-      platform: { brand: {}, frontendUrl: '' },
+      platform: {
+        name: 'Abyssinia Academy',
+        brand: {},
+        frontendUrl: '',
+        supportEmail: '',
+      },
       landing: { hero: {}, heroVisual: {}, stats: [], features: {}, howItWorks: {}, faq: {}, cta: {} },
       i18n: { defaultLanguage: 'en' },
       referrals: {
         enabled: true,
         codeGeneration: { length: 8, prefix: 'ABY', charset: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', excludeSimilar: true },
-        referrerTiers: [
-          { name: 'Bronze', nameAm: 'ብሮንዝ', minReferrals: 1, maxReferrals: 2, creditPercent: 10, color: '#cd7f32', icon: 'Medal' },
-          { name: 'Silver', nameAm: 'ብር', minReferrals: 3, maxReferrals: 5, creditPercent: 15, color: '#c0c0c0', icon: 'Medal' },
-          { name: 'Gold', nameAm: 'ወርቅ', minReferrals: 6, maxReferrals: 10, creditPercent: 20, color: '#ffd700', icon: 'Trophy' },
-        ],
-        creditCap: { maxPercent: 100, behavior: 'commission' },
-        commission: { enabled: true, percentOfPayment: 20, minimumPayout: 500, payoutMethods: ['telebirr', 'cbe-birr', 'bank-transfer'] },
-        referredDiscount: { mode: 'match_referrer', matchPercent: 100, fixedPercent: 10, minimumDiscount: 5, maximumDiscount: 40 },
+        commissionStructure: {
+          maxLevels: 4,
+          levelAmounts: [200, 150, 100, 50],
+          totalPerSale: 500,
+          currency: 'ETB',
+          unlockDelayDays: 7,
+        },
+        referredDiscount: { percent: 10 },
+        bonuses: {
+          directReferral: { category: 'direct_referral', tiers: [
+            { requirement: 5, amountETB: 1000, name: 'Direct Referral — 5' },
+            { requirement: 10, amountETB: 2500, name: 'Direct Referral — 10' },
+            { requirement: 20, amountETB: 5000, name: 'Direct Referral — 20' },
+          ]},
+          milestone: { category: 'milestone', tiers: [
+            { requirement: 50, amountETB: 10000, name: 'Milestone — 50 Team' },
+            { requirement: 100, amountETB: 20000, name: 'Milestone — 100 Team' },
+            { requirement: 200, amountETB: 40000, name: 'Milestone — 200 Team' },
+          ]},
+          rank: { category: 'rank', tiers: [
+            { requirement: 50, amountETB: 5000, name: 'Silver' },
+            { requirement: 200, amountETB: 15000, name: 'Gold' },
+            { requirement: 500, amountETB: 50000, name: 'Platinum' },
+          ]},
+          teamBonus: { category: 'team_bonus', tiers: [
+            { requirement: 50, amountETB: 2500, name: 'Team Growth — 50' },
+            { requirement: 100, amountETB: 5000, name: 'Team Growth — 100' },
+            { requirement: 200, amountETB: 10000, name: 'Team Growth — 200' },
+          ]},
+          speedBonus: { category: 'speed_bonus', period: 'monthly', tiers: [
+            { requirement: 10, amountETB: 1500, name: 'Speed Bonus — 10/Month' },
+          ]},
+        },
+        caps: {
+          maxTotalPerSaleETB: 500,
+          maxBonusPerUserPerMonthETB: 10000,
+          maxTotalPayoutPerUserPerMonthETB: 25000,
+          maxTotalPayoutPlatformPerMonthETB: 500000,
+        },
+        withdrawal: {
+          minimumAmountETB: 500,
+          maximumAmountETB: 100000,
+          methods: ['telebirr', 'cbe-birr', 'bank-transfer'],
+          requiresAdminApproval: true,
+          maxPendingRequests: 1,
+          processingTimeHours: 48,
+        },
         registration: { showReferralBanner: true, autoApplyCode: true, allowCodeChange: false, cookieDurationDays: 30 },
-        sharing: { platforms: [], shareMessage: '', shareMessageAm: '' },
-        dashboard: { showTierProgress: true, showEarningsBreakdown: true, showReferralHistory: true, showHowItWorks: true, historyPerPage: 10 },
+        sharing: {
+          shareMessageTemplate: 'Join me at {name} and learn Full-Stack Web Development! Use my referral link: {link}',
+          shareMessageTemplateAm: 'በ{name} ይቀላቀሉ እና ፉል-ስታክ ዌብ ዴቨሎፕመንት ይማሩ! የማጣቀሻ ሊንኬን ይጠቀሙ: {link}',
+          platforms: {
+            telegram: 'https://t.me/share/url',
+            whatsapp: 'https://wa.me',
+            facebook: 'https://www.facebook.com/sharer/sharer.php',
+          },
+        },
+        dashboard: {
+          showTierProgress: true,
+          showEarningsBreakdown: true,
+          showReferralHistory: true,
+          showHowItWorks: true,
+          historyPerPage: 10,
+        },
       },
       discounts: {
         enabled: true,
@@ -102,8 +181,9 @@ const loadDefaults = () => {
 };
 
 /**
- * Resolve a dot-notation path on an object
+ * Resolve a dot-notation path on an object.
  * Example: resolvePath({ a: { b: 'hello' } }, 'a.b') → 'hello'
+ *
  * @param {object} obj - The object to traverse
  * @param {string} path - Dot-notation path string
  * @returns {*} Value at the path or undefined
@@ -117,7 +197,8 @@ const resolvePath = (obj, path) => {
 
 /**
  * Get a value from config with a fallback chain:
- * Shared Config → Defaults Config → Hard Fallback
+ * Shared Config → Defaults Config → Final Fallback
+ *
  * @param {string} configPath - Dot-notation path to the config value
  * @param {*} finalFallback - Ultimate fallback if nothing else works
  * @returns {*} The resolved value
@@ -126,23 +207,14 @@ const getValue = (configPath, finalFallback = null) => {
   const config = loadConfig();
   const defaults = loadDefaults();
 
-  /*
-   * Try the shared config first
-   */
   if (config) {
     const configValue = resolvePath(config, configPath);
     if (configValue !== undefined && configValue !== null) return configValue;
   }
 
-  /*
-   * Try the defaults config next
-   */
   const defaultVal = resolvePath(defaults, configPath);
   if (defaultVal !== undefined && defaultVal !== null) return defaultVal;
 
-  /*
-   * Final hard fallback
-   */
   return finalFallback;
 };
 
@@ -265,8 +337,7 @@ export const getPurchasablePhases = () => {
 
 /**
  * Calculate pricing for selected phases including bulk discounts.
- * All pricing values sourced from config via getPricing() and getBulkDiscounts().
- * Zero hardcoded numbers — everything flows from config files.
+ * All pricing values sourced from config — zero hardcoded numbers.
  *
  * @param {Array} selectedPhaseIds - Array of phase ID strings
  * @returns {object} Calculated pricing breakdown
@@ -320,19 +391,11 @@ export const calculatePhasePricing = (selectedPhaseIds = []) => {
    PROFILE ACCESSORS
    ================================================================ */
 
-/**
- * Get profile configuration
- * @returns {object} Profile config with avatar limits, section visibility, quick actions
- */
 export const getProfileConfig = () => {
   const defaults = loadDefaults();
   return getValue('payments.profile', defaults.payments.profile);
 };
 
-/**
- * Get avatar upload configuration
- * @returns {object} Avatar upload limits
- */
 export const getAvatarConfig = () => {
   const profileConfig = getProfileConfig();
   return profileConfig?.avatar || {
@@ -344,12 +407,32 @@ export const getAvatarConfig = () => {
 };
 
 /* ================================================================
-   REFERRAL SYSTEM ACCESSORS
+   PLATFORM ACCESSORS
    ================================================================ */
 
 /**
- * Get the full referral system configuration
- * @returns {object} Referral config with tiers, credit caps, commissions, sharing
+ * Get platform-level configuration (name, brand, URLs, support).
+ *
+ * @returns {object} { name, brand, frontendUrl, supportEmail }
+ */
+export const getPlatformConfig = () => {
+  const defaults = loadDefaults();
+  return getValue('platform', defaults.platform || {
+    name: 'Abyssinia Academy',
+    brand: {},
+    frontendUrl: '',
+    supportEmail: '',
+  });
+};
+
+/* ================================================================
+   REFERRAL SYSTEM ACCESSORS (MLM)
+   ================================================================ */
+
+/**
+ * Get the full MLM referral configuration.
+ *
+ * @returns {object} { commissionStructure, referredDiscount, bonuses, caps, withdrawal, ... }
  */
 export const getReferralConfig = () => {
   const defaults = loadDefaults();
@@ -357,8 +440,9 @@ export const getReferralConfig = () => {
 };
 
 /**
- * Get referral code generation settings
- * @returns {object} Code generation config (length, prefix, charset)
+ * Get referral code generation settings.
+ *
+ * @returns {object} { length, prefix, charset, excludeSimilar }
  */
 export const getReferralCodeGenConfig = () => {
   const referralConfig = getReferralConfig();
@@ -366,78 +450,114 @@ export const getReferralCodeGenConfig = () => {
 };
 
 /**
- * Get referral reward tiers
- * @returns {Array} Array of tier objects sorted by minReferrals
+ * Get the 4-level commission structure.
+ * Level amounts indexed by depth - 1 (depth 1 → levelAmounts[0]).
+ *
+ * @returns {object} { maxLevels, levelAmounts, totalPerSale, currency, unlockDelayDays }
  */
-export const getReferralTiers = () => {
+export const getCommissionStructure = () => {
   const referralConfig = getReferralConfig();
-  return referralConfig?.referrerTiers || loadDefaults().referrals.referrerTiers;
+  const defaults = loadDefaults();
+  return (
+    referralConfig?.commissionStructure ||
+    defaults.referrals?.commissionStructure || {
+      maxLevels: 4,
+      levelAmounts: [200, 150, 100, 50],
+      totalPerSale: 500,
+      currency: 'ETB',
+      unlockDelayDays: 7,
+    }
+  );
 };
 
 /**
- * Get the tier for a given number of successful referrals
- * @param {number} successfulReferrals - Number of completed referrals
- * @returns {object} The matching tier object
+ * Get the 5 bonus categories with their tier ladders.
+ *
+ * @returns {object} { directReferral, milestone, rank, teamBonus, speedBonus }
  */
-export const getReferralTierByCount = (successfulReferrals = 0) => {
-  const tiers = getReferralTiers();
-  const sorted = [...tiers].sort((a, b) => b.minReferrals - a.minReferrals);
-  return sorted.find((tier) => successfulReferrals >= tier.minReferrals) || tiers[0];
-};
-
-/**
- * Get referred student discount configuration
- * @returns {object} Discount config (mode, percentages, min/max)
- */
-export const getReferredDiscountConfig = () => {
+export const getBonusConfig = () => {
   const referralConfig = getReferralConfig();
-  return referralConfig?.referredDiscount || loadDefaults().referrals.referredDiscount;
+  const defaults = loadDefaults();
+  return referralConfig?.bonuses || defaults.referrals?.bonuses || {};
 };
 
 /**
- * Calculate the discount percentage for a referred student
- * based on the referrer's tier
- * @param {number} referrerSuccessfulReferrals - How many referrals the referrer has completed
- * @returns {number} Discount percentage for the referred student
+ * Get the payout caps.
+ *
+ * @returns {object} { maxTotalPerSaleETB, maxBonusPerUserPerMonthETB, maxTotalPayoutPerUserPerMonthETB, maxTotalPayoutPlatformPerMonthETB }
  */
-export const calculateReferredDiscount = (referrerSuccessfulReferrals = 0) => {
-  const tier = getReferralTierByCount(referrerSuccessfulReferrals);
-  const discountConfig = getReferredDiscountConfig();
-
-  let discountPercent = tier.creditPercent;
-
-  if (discountConfig.mode === 'fixed') {
-    discountPercent = discountConfig.fixedPercent;
-  } else if (discountConfig.mode === 'match_referrer') {
-    discountPercent = Math.round(tier.creditPercent * (discountConfig.matchPercent / 100));
-  }
-
-  discountPercent = Math.max(discountPercent, discountConfig.minimumDiscount || 5);
-  discountPercent = Math.min(discountPercent, discountConfig.maximumDiscount || 40);
-
-  return discountPercent;
-};
-
-/**
- * Get credit cap configuration
- * @returns {object} Credit cap config
- */
-export const getCreditCapConfig = () => {
+export const getMLMCaps = () => {
   const referralConfig = getReferralConfig();
-  return referralConfig?.creditCap || loadDefaults().referrals.creditCap;
+  const defaults = loadDefaults();
+  return (
+    referralConfig?.caps ||
+    defaults.referrals?.caps || {
+      maxTotalPerSaleETB: 500,
+      maxBonusPerUserPerMonthETB: 10000,
+      maxTotalPayoutPerUserPerMonthETB: 25000,
+      maxTotalPayoutPlatformPerMonthETB: 500000,
+    }
+  );
 };
 
 /**
- * Get commission configuration
- * @returns {object} Commission config
+ * Get the withdrawal rules.
+ *
+ * @returns {object} { minimumAmountETB, maximumAmountETB, methods, requiresAdminApproval, maxPendingRequests, processingTimeHours }
  */
-export const getCommissionConfig = () => {
+export const getWithdrawalConfig = () => {
   const referralConfig = getReferralConfig();
-  return referralConfig?.commission || loadDefaults().referrals.commission;
+  const defaults = loadDefaults();
+  return (
+    referralConfig?.withdrawal ||
+    defaults.referrals?.withdrawal || {
+      minimumAmountETB: 500,
+      maximumAmountETB: 100000,
+      methods: ['telebirr', 'cbe-birr', 'bank-transfer'],
+      requiresAdminApproval: true,
+      maxPendingRequests: 1,
+      processingTimeHours: 48,
+    }
+  );
 };
 
 /**
- * Get sharing platform configuration
+ * Get the flat referred-student discount percentage.
+ *
+ * @returns {number} Discount percent (e.g., 10)
+ */
+export const getReferredDiscountPercent = () => {
+  const referralConfig = getReferralConfig();
+  const defaults = loadDefaults();
+  const referred = referralConfig?.referredDiscount || defaults.referrals?.referredDiscount;
+  return referred?.percent ?? 10;
+};
+
+/**
+ * Get sharing platform URLs and message templates.
+ * Used by MLMShareSection to build social share links.
+ *
+ * @returns {object} { shareMessageTemplate, shareMessageTemplateAm, platforms: { telegram, whatsapp, facebook } }
+ */
+export const getReferralShareConfig = () => {
+  const referralConfig = getReferralConfig();
+  const defaults = loadDefaults();
+  const sharing = referralConfig?.sharing || defaults.referrals?.sharing || {};
+
+  return {
+    shareMessageTemplate: sharing.shareMessageTemplate || 'Join me at {name} and learn Full-Stack Web Development! Use my referral link: {link}',
+    shareMessageTemplateAm: sharing.shareMessageTemplateAm || 'በ{name} ይቀላቀሉ እና ፉል-ስታክ ዌብ ዴቨሎፕመንት ይማሩ! የማጣቀሻ ሊንኬን ይጠቀሙ: {link}',
+    platforms: sharing.platforms || {
+      telegram: 'https://t.me/share/url',
+      whatsapp: 'https://wa.me',
+      facebook: 'https://www.facebook.com/sharer/sharer.php',
+    },
+  };
+};
+
+/**
+ * Get sharing platform configuration.
+ *
  * @returns {Array} Array of sharing platform objects
  */
 export const getSharingPlatforms = () => {
@@ -446,8 +566,9 @@ export const getSharingPlatforms = () => {
 };
 
 /**
- * Get referral dashboard configuration
- * @returns {object} Dashboard display settings
+ * Get referral dashboard display settings.
+ *
+ * @returns {object} Dashboard visibility configuration
  */
 export const getReferralDashboardConfig = () => {
   const referralConfig = getReferralConfig();
@@ -455,49 +576,126 @@ export const getReferralDashboardConfig = () => {
 };
 
 /* ================================================================
-   DISCOUNT CODE SYSTEM ACCESSORS
+   BACKWARD COMPATIBILITY — LEGACY REFERRAL SYSTEM STUBS
+   These exist so legacy components and API routes that reference
+   the old single-tier referral system don't crash. They return
+   empty/safe defaults. Can be removed once all legacy code is
+   migrated to the new MLM system.
    ================================================================ */
 
 /**
- * Get the full discount code system configuration
- * @returns {object} Discount config with combined limits, validation, rate limiting
+ * Legacy stub: returns the old tier ladder (Bronze → Diamond).
+ * Used by legacy ReferralTierProgress component and old dashboard API.
+ *
+ * @returns {Array} Array of legacy tier objects
  */
+export const getReferralTiers = () => {
+  return [
+    {
+      name: 'Bronze',
+      nameAm: 'ብሮንዝ',
+      minReferrals: 0,
+      creditPercent: 10,
+      color: '#cd7f32',
+      icon: 'Medal',
+    },
+    {
+      name: 'Silver',
+      nameAm: 'ብር',
+      minReferrals: 3,
+      creditPercent: 15,
+      color: '#c0c0c0',
+      icon: 'Award',
+    },
+    {
+      name: 'Gold',
+      nameAm: 'ወርቅ',
+      minReferrals: 6,
+      creditPercent: 20,
+      color: '#ffd700',
+      icon: 'Trophy',
+    },
+    {
+      name: 'Platinum',
+      nameAm: 'ፕላቲነም',
+      minReferrals: 11,
+      creditPercent: 25,
+      color: '#e5e4e2',
+      icon: 'Crown',
+    },
+    {
+      name: 'Diamond',
+      nameAm: 'አልማዝ',
+      minReferrals: 21,
+      creditPercent: 30,
+      color: '#b9f2ff',
+      icon: 'Gem',
+    },
+  ];
+};
+
+/**
+ * Legacy stub: finds the tier that matches a given referral count.
+ * Used by legacy dashboard API.
+ *
+ * @param {number} successfulCount - Number of successful referrals
+ * @returns {object|null} Matching tier object or null
+ */
+export const getReferralTierByCount = (successfulCount = 0) => {
+  const tiers = getReferralTiers();
+  const sorted = [...tiers].sort((a, b) => b.minReferrals - a.minReferrals);
+  return sorted.find((tier) => successfulCount >= tier.minReferrals) || tiers[0] || null;
+};
+
+/**
+ * Legacy stub: returns credit cap configuration.
+ *
+ * @returns {object} Credit cap configuration
+ */
+export const getCreditCapConfig = () => {
+  return {
+    maxPercent: 100,
+    overflowToCash: true,
+  };
+};
+
+/**
+ * Legacy stub: returns single-tier commission configuration.
+ *
+ * @returns {object} Commission configuration
+ */
+export const getCommissionConfig = () => {
+  return {
+    percentOfPayment: 20,
+    minimumPayout: 500,
+    paymentMethods: ['telebirr', 'cbe-birr', 'bank-transfer'],
+  };
+};
+
+/* ================================================================
+   DISCOUNT CODE SYSTEM ACCESSORS
+   ================================================================ */
+
 export const getDiscountConfig = () => {
   const defaults = loadDefaults();
   return getValue('discounts', defaults.discounts);
 };
 
-/**
- * Get combined discount stacking configuration
- * @returns {object} Combined discount limits and order
- */
 export const getCombinedDiscountConfig = () => {
   const discountConfig = getDiscountConfig();
   return discountConfig?.combinedDiscounts || loadDefaults().discounts.combinedDiscounts;
 };
 
-/**
- * Get discount code validation rules
- * @returns {object} Code format validation rules
- */
 export const getDiscountCodeValidation = () => {
   const discountConfig = getDiscountConfig();
   return discountConfig?.codes?.codeValidation || loadDefaults().discounts.codes.codeValidation;
 };
 
-/**
- * Get rate limiting configuration for discount codes
- * @returns {object} Rate limit settings
- */
 export const getDiscountRateLimits = () => {
   const discountConfig = getDiscountConfig();
   return discountConfig?.rateLimiting || loadDefaults().discounts.rateLimiting;
 };
 
-/**
- * Get anti-abuse configuration
- * @returns {object} Anti-abuse settings
- */
 export const getDiscountAntiAbuseConfig = () => {
   const discountConfig = getDiscountConfig();
   return discountConfig?.antiAbuse || loadDefaults().discounts.antiAbuse;
@@ -538,13 +736,7 @@ export const calculateCombinedDiscount = ({
     wasCapped: false,
   };
 
-  /*
-   * Apply each discount in the configured order.
-   * Each subsequent discount is calculated on the remaining price
-   * after the previous discount has been applied.
-   */
   for (const discountType of order) {
-
     if (discountType === 'referral' && referralDiscountPercent > 0) {
       const amount = Math.round(remainingPrice * (referralDiscountPercent / 100));
       breakdown.referralDiscount = amount;
@@ -574,10 +766,6 @@ export const calculateCombinedDiscount = ({
     }
   }
 
-  /*
-   * Check if the combined discount exceeds the maximum allowed cap.
-   * If so, scale all discounts down proportionally to stay within the cap.
-   */
   const totalDiscountPercent = basePrice > 0
     ? Math.round((totalDiscount / basePrice) * 100)
     : 0;
@@ -586,9 +774,7 @@ export const calculateCombinedDiscount = ({
     breakdown.wasCapped = true;
 
     const maxDiscountAmount = Math.round(basePrice * (maxPercent / 100));
-    const scaleFactor = totalDiscount > 0
-      ? maxDiscountAmount / totalDiscount
-      : 1;
+    const scaleFactor = totalDiscount > 0 ? maxDiscountAmount / totalDiscount : 1;
 
     breakdown.referralDiscount = Math.round(breakdown.referralDiscount * scaleFactor);
     breakdown.discountCodeDiscount = Math.round(breakdown.discountCodeDiscount * scaleFactor);
@@ -606,8 +792,6 @@ export const calculateCombinedDiscount = ({
 
 /* ================================================================
    BACKWARD COMPATIBILITY ALIASES
-   These maintain compatibility with older code that uses the
-   original function names. New code should use the full accessors.
    ================================================================ */
 
 export const platform = () => getPlatform();

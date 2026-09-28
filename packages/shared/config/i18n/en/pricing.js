@@ -1,0 +1,46 @@
+/**
+ * @fileoverview English — Pricing Page Namespace
+ * Path: packages/shared/config/i18n/en/pricing.js
+ */
+
+module.exports = {
+  pricing: {
+    heading: 'Simple & Transparent Tuition',
+    subheading: 'Choose the learning path that fits your goals.',
+    fullPass: 'Full Academy Access Pass',
+    masterclass: 'Full-Stack Software Masterclass',
+    instantAccess: 'Instant access to all 5 phases & course modules',
+    hdPlaylists: ' HD pre-recorded video masterclasses',
+    timestampsNotes: 'Timestamped session breakdowns & lecture notes',
+    githubAssets: 'GitHub source code repositories & starter kits',
+    telegramCommunity: 'Private Telegram developer mentorship community',
+    enrollToday: 'Enroll Today & Start Learning',
+    goToPortal: 'Go to Classroom Portal',
+    selectPhasesToContinue: 'Select phases to continue',
+    selectAtLeastOne: 'Select at least one phase to continue',
+    tuitionEyebrow: 'Tuition',
+    allPhasesValue: 'All 5 phases',
+    completeCurriculum: 'Complete curriculum',
+    valueLabel: 'value',
+    bestValue: 'Best Value',
+    selected: 'Selected',
+    selectFullCourse: 'Select Full Course',
+    savePercent: 'Save {percent}%',
+    objectives: 'objectives',
+    weeksUnit: 'weeks',
+    phaseLabel: 'Phase',
+    orBuildYourOwn: 'Or Build Your Own Path',
+    selectIndividualPhases: 'Select individual phases at {price} {currency} each. Bulk discounts applied automatically.',
+    customModeActive: 'Custom Mode Active',
+    switchToCustom: 'Switch to Custom',
+    addToCart: 'Add to Cart — {price} {currency}',
+    removeFromCart: 'Remove from Cart',
+    prerequisitesRequired: 'Prerequisites Required',
+    lockedPrerequisiteMsg: 'Complete {prerequisites} first to unlock this phase.',
+    andLabel: ' & Phase ',
+    phaseUnit: 'phase',
+    phasesUnit: 'phases',
+    offLabel: 'off',
+    totalLabel: 'Total',
+  },
+};

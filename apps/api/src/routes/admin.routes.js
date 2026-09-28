@@ -7,6 +7,7 @@
 const { Router } = require('express');
 const paymentController = require('../controllers/payment.controller');
 const adminController = require('../controllers/admin.controller');
+const mlmController = require('../controllers/mlm-referral.controller');
 const { authenticateAdmin } = require('../middleware/admin.middleware');
 const { uploadThumbnail } = require('../middleware/upload.middleware');
 
@@ -31,5 +32,10 @@ router.get('/students/:id', adminController.getStudentById);
 // Course management
 router.post('/courses', uploadThumbnail, adminController.createCourse);
 router.patch('/courses/:id', uploadThumbnail, adminController.updateCourse);
+
+// MLM withdrawal management
+router.get('/referrals/mlm/withdrawals', mlmController.adminGetWithdrawals);
+router.patch('/referrals/mlm/withdrawals/:id', mlmController.adminProcessWithdrawal);
+router.get('/referrals/mlm/stats', mlmController.adminGetStats);
 
 module.exports = router;

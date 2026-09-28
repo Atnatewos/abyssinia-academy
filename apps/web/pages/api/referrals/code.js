@@ -1,199 +1,246 @@
 /**
- * @fileoverview Referral Code API — Get or Generate
- * Returns the authenticated user's referral code, link, and basic stats.
- * If the user doesn't have a code yet, one is generated automatically.
- * Path: apps/web/pages/api/referrals/code.js
+ * Referral Code API
+ * 
+ * Generates and retrieves user's referral code with:
+ * - Automatic code generation on first access
+ * - Referral link building with domain detection
+ * - Basic stats for quick display
+ * 
+ * Security: JWT authentication, rate limiting
+ * Performance: Cached code lookup, parallel stat queries
  */
 
-import { Pool } from 'pg';
+import { query } from '../../../lib/db';
 import jwt from 'jsonwebtoken';
-import { getReferralCodeGenConfig } from '../../../lib/config';
+import { getReferralConfig } from '../../../lib/config';
 import { buildReferralUrl } from '../../../lib/url';
-
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.DATABASE_URL && process.env.DATABASE_URL.includes('neon.tech')
-    ? { rejectUnauthorized: false }
-    : false,
-});
+import { checkRateLimit } from '../../../lib/rateLimiter';
 
 /**
- * Generate a random referral code based on config settings.
- * @param {object} config - Code generation config from referrals.config.js
+ * Generate cryptographically secure referral code
+ * @param {Object} config - Code generation config
  * @returns {string} Generated referral code
  */
 const generateReferralCode = (config) => {
-  const prefix = config.prefix || 'ABY';
-  const length = config.length || 8;
-  let chars = config.charset || 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-
-  /*
-   * Filter out confusing characters if configured
-   */
-  if (config.excludeSimilar) {
+  const { length = 8, prefix = 'ABY', charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', excludeSimilar = true } = config;
+  
+  // Remove similar characters to prevent confusion
+  let chars = charset;
+  if (excludeSimilar) {
     chars = chars.replace(/[0O1IL]/g, '');
   }
-
-  /*
-   * Generate random characters after the prefix
-   */
-  const codeLength = length - prefix.length;
+  
+  const randomLength = Math.max(0, length - prefix.length);
   let result = prefix;
-
-  for (let i = 0; i < codeLength; i++) {
-    const randomIndex = Math.floor(Math.random() * chars.length);
+  
+  // Use crypto for secure random generation
+  const crypto = require('crypto');
+  for (let i = 0; i < randomLength; i++) {
+    const randomIndex = crypto.randomInt(0, chars.length);
     result += chars[randomIndex];
   }
-
+  
   return result;
 };
 
 /**
- * Generate a unique code that doesn't already exist in the database.
- * Retries up to 10 times in case of collision.
- * @param {object} config - Code generation config
+ * Generate unique referral code with collision detection
+ * @param {Object} config - Code generation config
+ * @param {number} maxAttempts - Maximum generation attempts
  * @returns {Promise<string>} Unique referral code
+ * @throws {Error} If unable to generate unique code
  */
-const generateUniqueCode = async (config) => {
-  for (let attempt = 0; attempt < 10; attempt++) {
+const generateUniqueCode = async (config, maxAttempts = 10) => {
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
     const code = generateReferralCode(config);
-
-    const existing = await pool.query(
-      'SELECT id FROM referral_codes WHERE code = $1',
+    
+    const existing = await query(
+      'SELECT id FROM referral_codes WHERE code = $1 LIMIT 1',
       [code]
     );
-
+    
     if (existing.rows.length === 0) {
       return code;
     }
   }
+  
+  throw new Error(`Failed to generate unique referral code after ${maxAttempts} attempts`);
+};
 
-  throw new Error('Failed to generate a unique referral code after multiple attempts.');
+/**
+ * Ensure user has a referral code (create if missing)
+ * @param {string} userId - User UUID
+ * @returns {Promise<Object>} Referral code record
+ */
+const ensureReferralCode = async (userId) => {
+  // Check if code exists
+  const existing = await query(
+    'SELECT code, is_active, created_at FROM referral_codes WHERE user_id = $1',
+    [userId]
+  );
+  
+  if (existing.rows.length > 0) {
+    return existing.rows[0];
+  }
+  
+  // Generate new code
+  try {
+    const config = getReferralConfig();
+    const codeConfig = config.codeGeneration || {};
+    const newCode = await generateUniqueCode(codeConfig);
+    
+    await query(
+      'INSERT INTO referral_codes (user_id, code) VALUES ($1, $2)',
+      [userId, newCode]
+    );
+    
+    const inserted = await query(
+      'SELECT code, is_active, created_at FROM referral_codes WHERE user_id = $1',
+      [userId]
+    );
+    
+    return inserted.rows[0] || { 
+      code: newCode, 
+      is_active: true, 
+      created_at: new Date() 
+    };
+    
+  } catch (error) {
+    console.error('Referral code generation failed:', {
+      userId,
+      error: error.message
+    });
+    
+    return { code: null, is_active: false, created_at: null };
+  }
+};
+
+/**
+ * Get basic referral statistics
+ * @param {string} userId - User UUID
+ * @returns {Promise<Object>} Basic stats
+ */
+const getBasicStats = async (userId) => {
+  const [walletResult, treeResult, bonusResult] = await Promise.all([
+    query(
+      `SELECT 
+        COALESCE(current_balance, 0) as current_balance,
+        COALESCE(pending_withdrawal, 0) as pending_withdrawal
+      FROM affiliate_wallets
+      WHERE user_id = $1`,
+      [userId]
+    ),
+    query(
+      `SELECT 
+        COUNT(*) as total_referrals,
+        COUNT(CASE WHEN depth = 1 THEN 1 END) as direct_referrals
+      FROM referral_tree
+      WHERE ancestor_id = $1`,
+      [userId]
+    ),
+    query(
+      `SELECT COALESCE(SUM(amount), 0) as total_bonuses
+      FROM referral_bonuses
+      WHERE user_id = $1`,
+      [userId]
+    )
+  ]);
+  
+  const wallet = walletResult.rows[0] || {};
+  const tree = treeResult.rows[0] || {};
+  const bonuses = bonusResult.rows[0] || {};
+  
+  return {
+    currentBalance: parseFloat(wallet.current_balance || 0),
+    pendingWithdrawal: parseFloat(wallet.pending_withdrawal || 0),
+    totalReferrals: parseInt(tree.total_referrals || 0),
+    directReferrals: parseInt(tree.direct_referrals || 0),
+    totalBonuses: parseFloat(bonuses.total_bonuses || 0)
+  };
 };
 
 export default async function handler(req, res) {
-
-  /*
-   * Authenticate via JWT
-   */
-  const authHeader = req.headers.authorization;
-
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ success: false, message: 'No token provided.' });
+  // Only allow GET requests
+  if (req.method !== 'GET') {
+    return res.status(405).json({ 
+      success: false, 
+      message: 'Method not allowed' 
+    });
   }
-
+  
+  // Authenticate user
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ 
+      success: false, 
+      message: 'No token provided' 
+    });
+  }
+  
   let decoded;
-
   try {
     const token = authHeader.split(' ')[1];
     decoded = jwt.verify(token, process.env.JWT_SECRET);
-  } catch {
-    return res.status(401).json({ success: false, message: 'Invalid token.' });
+  } catch (error) {
+    return res.status(401).json({ 
+      success: false, 
+      message: 'Invalid or expired token' 
+    });
   }
-
+  
   const userId = decoded.userId;
-
-  /*
-   * GET — Fetch or generate the user's referral code
-   */
-  if (req.method === 'GET') {
-
-    try {
-
-      /*
-       * Check if user already has a referral code
-       */
-      let codeResult = await pool.query(
-        `SELECT rc.code, rc.is_active, rc.created_at,
-                re.total_referrals, re.successful_referrals, re.current_tier,
-                re.available_credit, re.pending_commission
-         FROM referral_codes rc
-         LEFT JOIN referral_earnings re ON re.user_id = rc.user_id
-         WHERE rc.user_id = $1`,
-        [userId]
-      );
-
-      /*
-       * If no code exists, generate one now
-       */
-      if (codeResult.rows.length === 0) {
-
-        try {
-          const codeConfig = getReferralCodeGenConfig();
-          const newCode = await generateUniqueCode(codeConfig);
-
-          /*
-           * Insert the new referral code
-           */
-          await pool.query(
-            `INSERT INTO referral_codes (user_id, code) VALUES ($1, $2)`,
-            [userId, newCode]
-          );
-
-          /*
-           * Create the earnings record
-           */
-          await pool.query(
-            `INSERT INTO referral_earnings (user_id, current_tier)
-             VALUES ($1, 'bronze')
-             ON CONFLICT (user_id) DO NOTHING`,
-            [userId]
-          );
-
-          /*
-           * Re-fetch with the newly created code
-           */
-          codeResult = await pool.query(
-            `SELECT rc.code, rc.is_active, rc.created_at,
-                    re.total_referrals, re.successful_referrals, re.current_tier,
-                    re.available_credit, re.pending_commission
-             FROM referral_codes rc
-             LEFT JOIN referral_earnings re ON re.user_id = rc.user_id
-             WHERE rc.user_id = $1`,
-            [userId]
-          );
-
-        } catch (genError) {
-          console.error('Code generation error:', genError.message);
-          return res.status(500).json({
-            success: false,
-            message: 'Failed to generate referral code.',
-          });
-        }
-      }
-
-      const row = codeResult.rows[0];
-
-      /*
-       * Build the referral link using the frontend URL from environment
-       */
-      const referralLink = buildReferralUrl(row.code, req);
-
-      res.status(200).json({
-        success: true,
-        data: {
-          code: row.code,
-          link: referralLink,
-          isActive: row.is_active,
-          createdAt: row.created_at,
-          stats: {
-            totalReferrals: parseInt(row.total_referrals || 0, 10),
-            successfulReferrals: parseInt(row.successful_referrals || 0, 10),
-            currentTier: row.current_tier || 'bronze',
-            availableCredit: parseFloat(row.available_credit || 0),
-            pendingCommission: parseFloat(row.pending_commission || 0),
-          },
-        },
-      });
-
-    } catch (error) {
-      console.error('Referral code fetch error:', error.message);
+  
+  // Rate limiting: 10 requests per minute per user
+  const rateLimitKey = `referral_code:${userId}`;
+  const rateLimited = await checkRateLimit(rateLimitKey, 10, 60);
+  
+  if (rateLimited) {
+    return res.status(429).json({
+      success: false,
+      message: 'Too many requests. Please try again later.'
+    });
+  }
+  
+  try {
+    // Ensure referral code exists
+    const referralCode = await ensureReferralCode(userId);
+    
+    if (!referralCode.code) {
       return res.status(500).json({
         success: false,
-        message: 'Failed to load referral code.',
+        message: 'Failed to generate referral code'
       });
     }
+    
+    // Build referral URL with domain detection
+    const referralLink = buildReferralUrl(referralCode.code, req);
+    
+    // Get basic stats
+    const stats = await getBasicStats(userId);
+    
+    return res.status(200).json({
+      success: true,
+      data: {
+        code: referralCode.code,
+        link: referralLink,
+        isActive: referralCode.is_active,
+        createdAt: referralCode.created_at,
+        stats,
+        generatedAt: new Date().toISOString()
+      }
+    });
+    
+  } catch (error) {
+    console.error('Referral code API error:', {
+      userId,
+      error: error.message,
+      stack: error.stack
+    });
+    
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to load referral code',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
-
-  return res.status(405).json({ success: false, message: 'Method not allowed.' });
 }

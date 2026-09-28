@@ -31,7 +31,7 @@ const landingConfig = {
    * Display text: i18n → landing.heroVisual.*
    */
   heroVisual: {
-    filename: 'Abyssinia_Masterclass.jsx',
+    filename: 'Abyssinia_Masterclass.tsx',
     previewImage: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=800&q=80',
     previewDuration: '45:10',
     sessions: [

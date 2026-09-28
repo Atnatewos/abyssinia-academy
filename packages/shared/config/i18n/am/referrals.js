@@ -1,0 +1,402 @@
+/**
+ * @fileoverview Amharic — Referral System & MLM Namespace
+ *
+ * Contains:
+ *   - Legacy referral keys (backward compat with old dashboard)
+ *   - MLM 4-level referral keys under `mlm` namespace
+ *     (dashboard, tree, commissions, bonuses, withdrawals, howItWorks, tabs)
+ *   - Admin withdrawal processing keys
+ *   - Admin MLM stats keys
+ *
+ * Path: packages/shared/config/i18n/am/referrals.js
+ */
+
+module.exports = {
+  referrals: {
+    /* ============================================================
+     * LEGACY KEYS
+     * ============================================================ */
+    dashboardTitle: 'የማጣቀሻ ዳሽቦርድ',
+    dashboardSubtitle: 'አቢሲኒያ አካዳሚን ያጋሩ እና ሽልማት ያግኙ!',
+    yourCode: 'የእርስዎ የማጣቀሻ ኮድ',
+    yourLink: 'የእርስዎ የማጣቀሻ ሊንክ',
+    copied: 'ተቀድቷል!',
+
+    totalReferrals: 'ጠቅላላ ማጣቀሻዎች',
+    creditBalance: 'የክሬዲት ቀሪ ሒሳብ',
+    cashEarned: 'የተገኘ ጥሬ ገንዘብ',
+    currentTier: 'አሁን ያለዎት ደረጃ',
+    perReferral: 'በአንድ ማጣቀሻ',
+
+    tierBronze: 'ብሮንዝ',
+    tierSilver: 'ብር',
+    tierGold: 'ወርቅ',
+    tierPlatinum: 'ፕላቲነም',
+    tierDiamond: 'አልማዝ',
+
+    tierProgress: 'የደረጃ እድገት',
+    referralsNeeded: 'ለ{tier} ደረጃ {count} ተጨማሪ ማጣቀሻ(ዎች) ያስፈልጋሉ',
+    nextTier: 'ቀጣይ: {tier}',
+    currentTierLabel: 'አሁን: {tier}',
+
+    earningsBreakdown: 'የገቢ ዝርዝር',
+    creditEarned: 'የተገኘ ክሬዲት',
+    creditUsed: 'የተጠቀሙት ክሬዲት',
+    availableCredit: 'ያለ ክሬዲት',
+    commissionEarned: 'የተገኘ ኮሚሽን',
+    pendingPayout: 'በመጠባበቅ ላይ ያለ ክፍያ',
+    totalValueEarned: 'ጠቅላላ የተገኘ ዋጋ',
+    creditCapReached: 'የክሬዲት ጣሪያ ላይ ደርሰዋል፣ አሁን የጥሬ ገንዘብ ኮሚሽን ያገኛሉ!',
+
+    referralHistory: 'የማጣቀሻ ታሪክ',
+    noReferrals: 'እስካሁን ማንንም አልጋበዙም። ማግኘት ለመጀመር ሊንክዎን ያጋሩ!',
+    name: 'ስም',
+    status: 'ሁኔታ',
+    discount: 'ቅናሽ',
+    credit: 'ክሬዲት',
+    date: 'ቀን',
+
+    statusRegistered: 'ተመዝግቧል',
+    statusEnrolled: 'ተመዝግቧል',
+    statusCompleted: 'ተጠናቋል',
+    statusExpired: 'ጊዜው አልፎበታል',
+    statusRefunded: 'ተመላሽ ተደርጓል',
+
+    howItWorks: 'እንዴት እንደሚሰራ',
+    step1Title: 'ሊንክዎን ያጋሩ',
+    step1Desc: 'ልዩ የማጣቀሻ ሊንክዎን ይቅዱ እና በቴሌግራም፣ ዋትስአፕ ወይም በማንኛውም ቦታ ለጓደኞችዎ ያጋሩ።',
+    step2Title: 'እነሱ ይመዘገባሉ እና ይመዘገባሉ',
+    step2Desc: 'አንድ ሰው ሊንክዎን ተጠቅሞ ሲመዘገብ እና ምዝገባውን ሲያጠናቅቅ፣ እርስዎ ክሬዲት ያገኛሉ።',
+    step3Title: 'ክሬዲት ያግኙ',
+    step3Desc: 'ለራስዎ ግዢ የሚሆን ክሬዲት ያከማቹ። ባጣቀሱ ቁጥር ደረጃዎ እና ሽልማትዎ ከፍ ይላል።',
+    step4Title: 'የጥሬ ገንዘብ ኮሚሽን ያግኙ',
+    step4Desc: 'ክሬዲትዎ ከኮርስ ዋጋዎ 100% ሲደርስ፣ ተጨማሪ ማጣቀሻዎች የጥሬ ገንዘብ ኮሚሽን ያስገኙልዎታል!',
+
+    invitedBy: 'በ{name} ተጋብዘዋል!',
+    discountApplied: 'በምዝገባዎ ላይ {percent}% ቅናሽ ያገኛሉ።',
+    referralCodeApplied: 'የማጣቀሻ ኮድ ተተግብሯል: {code}',
+
+    referralDiscount: 'የማጣቀሻ ቅናሽ ({percent}%)',
+    creditApplied: 'ክሬዲት ተተግብሯል',
+    applyCredit: 'ክሬዲት ይጠቀሙ',
+    availableCreditLabel: 'ያለ: {amount} ETB',
+    creditAppliedLabel: 'የተጠቀሙት ክሬዲት: {amount} ETB',
+    youPay: 'የሚከፍሉት',
+    youSaved: '{amount} ETB ቆጥበዋል ({percent}% ቅናሽ!)',
+
+    shareTitle: 'ያጋሩ እና ያግኙ',
+    shareSubtitle: 'በአንድ ማጣቀሻ {percent}% ክሬዲት ለማግኘት ሊንክዎን ያጋሩ!',
+    shareMessage: '🚀 በአቢሲኒያ አካዳሚ ይቀላቀሉና {discount}% ቅናሽ ያግኙ! ፉል-ስታክ ዌብ ዴቨሎፕመንት ይማሩ: ',
+    shareMessageAm: '🚀 Join me at Abyssinia Academy and get {discount}% off your enrollment! Learn Full-Stack Web Development: ',
+
+    shareCopyLink: 'ሊንክ ቅዳ',
+    shareTelegram: 'ቴሌግራም',
+    shareWhatsApp: 'ዋትስአፕ',
+    shareFacebook: 'ፌስቡክ',
+
+    invalidCode: 'ልክ ያልሆነ የማጣቀሻ ኮድ።',
+    selfReferral: 'የራስዎን የማጣቀሻ ኮድ መጠቀም አይችሉም።',
+    codeAlreadyUsed: 'ይህ የማጣቀሻ ኮድ ለእርስዎ መለያ አስቀድሞ ጥቅም ላይ ውሏል።',
+    loadError: 'የማጣቀሻ ውሂብ መጫን አልተሳካም። እባክዎ እንደገና ይሞክሩ።',
+
+    haveReferralCode: 'የማጣቀሻ ኮድ አለዎት?',
+    enterReferralCode: 'የማጣቀሻ ኮድ ያስገቡ',
+
+    /* ============================================================
+     * MLM 4-LEVEL SYSTEM — nested under `mlm` namespace
+     * Components access via: t.referrals.mlm.<section>.<key>
+     * ============================================================ */
+    mlm: {
+      /* Auth & load states */
+      authRequired: 'የማጣቀሻ ዳሽቦርድዎን ለማየት እባክዎ ይግቡ።',
+      loadError: 'የMLM ዳሽቦርድ ውሂብ መጫን አልተሳካም። እባክዎ እንደገና ይሞክሩ።',
+
+      /* Dashboard header */
+      dashboard: {
+        title: 'የማጣቀሻ ዳሽቦርድ',
+        subtitle: 'የ4-ደረጃ ኮሚሽን አውታረ መረብዎን፣ ቦነሶችን እና ወጪዎችን ይከታተሉ።',
+        loading: 'የዳሽቦርድዎ በመጫን ላይ...',
+        retry: 'እንደገና ሞክር',
+      },
+
+      /* Tab navigation labels */
+      tabs: {
+        overview: 'አጠቃላይ እይታ',
+        tree: 'ዛፍ',
+        commissions: 'ኮሚሽኖች',
+        bonuses: 'ቦነሶች',
+        withdrawals: 'ወጪዎች',
+      },
+
+      /* Stats cards */
+      stats: {
+        commissionBalance: 'የኮሚሽን ቀሪ ሒሳብ',
+        creditBalance: 'የክሬዲት ቀሪ ሒሳብ',
+        teamSize: 'የቡድን መጠን',
+        directReferrals: 'ቀጥታ ማጣቀሻዎች',
+        locked: 'ተቆልፏል',
+        lockedCommission: 'ተቆልፏል (7-ቀን)',
+        pendingWithdrawal: 'በመጠባበቅ ላይ ያለ ወጪ',
+        totalEarned: 'ጠቅላላ የተገኘ',
+        totalWithdrawn: 'ጠቅላላ የወጣ',
+        forCourses: 'ለኮርስ ግዢዎች',
+        acrossLevels: 'በ4 ደረጃዎች',
+        level1Only: 'ደረጃ 1 ብቻ',
+      },
+
+      // mlm.stats Money Model v2 keys
+      availableNow: 'አሁን ያለ',
+      allUnlocked: 'ሙሉ በሙሉ ማውጣት ይቻላል',
+      bonusEarnings: 'የቦነስ ገቢ',
+      bonusEarningsSub: 'የዕድሜ ልክ የቦነስ ክሬዲቶች',
+
+      /* Earnings breakdown section */
+      earningsBreakdown: 'የገቢ ዝርዝር',
+      monthlySummary: 'በዚህ ወር',
+      monthlyCommission: 'ኮሚሽን',
+      monthlyBonus: 'ቦነስ',
+      monthlyPayout: 'ጠቅላላ ክፍያ',
+
+      /* Share section */
+      share: {
+        title: 'የማጣቀሻ ሊንክዎን ያጋሩ',
+        subtitle: 'ይህን ሊንክ ለጓደኞችዎ ያጋሩ። ሲቀላቀሉ እና ሲገዙ፣ ኮሚሽን ያገኛሉ።',
+        codeLabel: 'የእርስዎ የማጣቀሻ ኮድ',
+        linkLabel: 'የእርስዎ የማጣቀሻ ሊንክ',
+        copyCode: 'ኮድ ቅዳ',
+        copyLink: 'ሊንክ ቅዳ',
+        copied: 'ወደ ቅንጥብ ሰሌዳ ተቀድቷል',
+        copyFailed: 'መቅዳት አልተሳካም',
+      },
+
+      /* Commission history table */
+      commissions: {
+        title: 'የኮሚሽን ታሪክ',
+        allLevels: 'ሁሉም',
+        date: 'ቀን',
+        source: 'ከ',
+        level: 'ደረጃ',
+        amount: 'መጠን',
+        status: 'ሁኔታ',
+        unlocks: 'ይከፈታል',
+        available: 'ያለ',
+        locked: 'ተቆልፏል',
+        empty: 'እስካሁን ኮሚሽን የለም። ማጋራት ይጀምሩ!',
+        page: 'ገጽ',
+      },
+
+      /* Bonus progress tracker */
+      bonuses: {
+        title: 'የቦነስ እድገት',
+        subtitle: 'ቦነሶች ክሬዲቶች ናቸው። ምድቦች ራሳቸውን የቻሉ ናቸው — ሁሉንም ተፈጻሚ ቦነሶች በአንድ ጊዜ ያሳኩ።',
+        directReferral: 'የቀጥታ ማጣቀሻ ቦነስ',
+        milestone: 'የምዕራፍ ቦነስ',
+        rank: 'የደረጃ ስኬት',
+        teamBonus: 'የቡድን ቦነስ',
+        speedBonus: 'የፍጥነት ቦነስ',
+        nextAt: 'ቀጣይ:',
+        reaches: '→',
+        maxReached: 'ከፍተኛ ደረጃ ተገኝቷል!',
+        nonStackingNote: 'በእያንዳንዱ ምድብ ውስጥ፣ ከፍተኛው የተገኘ ጣሪያ ብቻ ይቆጠራል። አዲስ ጣሪያ ሲያልፉ ልዩነቱ (ዴልታ) ይሰጣል።',
+      },
+
+      /* Downline tree view */
+      tree: {
+        title: 'የእርስዎ የታችኛው ዛፍ',
+        members: 'አባላት',
+        empty: 'እስካሁን የቡድን አባላት የሉም። አውታረ መረብዎን ለመገንባት ማጣቀሻ ሊንክዎን ያጋሩ!',
+      },
+
+      /* Level explanation (How It Works) */
+      howItWorks: {
+        title: 'የ4-ደረጃ ስርዓት እንዴት እንደሚሰራ',
+        description: 'በአውታረ መረብዎ ውስጥ አንድ ሰው ግዢ ሲፈጽም፣ እርስዎ እና ከእርስዎ በላይ ያሉ እስከ 3 ሰዎች ኮሚሽን ያገኛሉ።',
+        youEarn: 'ከታች ካሉት 4 ደረጃዎች ያገኛሉ',
+        level1: 'ደረጃ 1',
+        level2: 'ደረጃ 2',
+        level3: 'ደረጃ 3',
+        level4: 'ደረጃ 4',
+        beyondLevel4: 'ደረጃ 5+',
+        noCommission: 'ኮሚሽን የለም',
+        totalPerSale: 'በአንድ ሽያጭ ጠቅላላ ኮሚሽን',
+        unlockPeriod: 'የመክፈቻ ጊዜ',
+        days: 'ቀናት',
+        perSale: 'በአንድ ሽያጭ',
+        exampleYou: 'እርስዎ (አበበ)',
+        exampleLevel1: 'ቤቲ',
+        exampleLevel2: 'አቤል',
+        exampleLevel3: 'ዳዊት',
+        exampleLevel4: 'ሄለን',
+      },
+
+      /* Withdrawal panel */
+      withdrawal: {
+        title: 'ወጪ ይጠይቁ',
+        subtitle: 'ያለውን የኮሚሽን ቀሪ ሒሳብዎ ወደ ተመራጭ የመክፈያ ዘዴ ያውጡ።',
+        historyTitle: 'የወጪ ታሪክ',
+        availableBalance: 'ያለ ቀሪ ሒሳብ',
+        pendingNotice: 'አስቀድመው በመጠባበቅ ላይ ያለ የወጪ ጥያቄ አለዎት። እባክዎ እስኪሰራ ይጠብቁ።',
+        amountLabel: 'መጠን (ETB)',
+        methodLabel: 'የመክፈያ ዘዴ',
+        accountLabel: 'የአካውንት ቁጥር',
+        nameLabel: 'የአካውንት ባለቤት ስም',
+        bankLabel: 'የባንክ ስም',
+        minimumIs: 'ዝቅተኛው ወጪ',
+        submitBtn: 'ወጪ ይጠይቁ',
+        submitting: 'በማስገባት ላይ...',
+        submitted: 'የወጪ ጥያቄ ገብቷል። አስተዳዳሪ በ48 ሰዓት ውስጥ ያስተናግዳል።',
+        noHistory: 'እስካሁን የወጪ ጥያቄ የለም።',
+
+        // mlm.withdrawal Money Model v2 keys
+        lockedHint: 'በ7-ቀን መቆለፊያ ውስጥ {amount} ETB አለዎት።',
+
+        /* Method labels */
+        method_telebirr: 'ቴሌብር',
+        method_cbe_birr: 'ሲቢኢ ብር',
+        method_bank_transfer: 'የባንክ ዝውውር',
+
+        /* Status labels */
+        status_pending: 'በመጠባበቅ ላይ',
+        status_approved: 'ጸድቋል',
+        status_paid: 'ተከፍሏል',
+        status_rejected: 'ውድቅ ተደርጓል',
+
+        /* Validation errors */
+        invalidAmount: 'ትክክለኛ መጠን ያስገቡ',
+        insufficientBalance: 'በቂ ያልሆነ ቀሪ ሒሳብ',
+        accountRequired: 'የአካውንት ቁጥር ያስፈልጋል',
+        nameRequired: 'የአካውንት ስም ያስፈልጋል',
+        bankRequired: 'የባንክ ስም ያስፈልጋል',
+      },
+
+      /* ────────────────────────────────────────────────────────────
+       * FLAT LEGACY MLM KEYS (backward compat)
+       * ──────────────────────────────────────────────────────────── */
+      commissionBalance: 'የኮሚሽን ቀሪ ሒሳብ',
+      teamSize: 'የቡድን መጠን',
+      directReferralsCount: 'ቀጥታ ማጣቀሻዎች',
+      levelLabel: 'ደረጃ {level}',
+      level1Label: 'ደረጃ 1 (ቀጥታ)',
+      level2Label: 'ደረጃ 2',
+      level3Label: 'ደረጃ 3',
+      level4Label: 'ደረጃ 4',
+      commissionPerSale: 'በአንድ ሽያጭ',
+      cashCommission: 'የጥሬ ገንዘብ ኮሚሽን',
+
+      treeViewTitle: 'የእርስዎ የማጣቀሻ ዛፍ',
+      treeViewSubtitle: 'በ4ቱም ደረጃዎች ያለ ቡድንዎ',
+      treeEmptyState: 'እስካሁን ቡድን የለም። ሊንክዎን በማጋራት ይጀምሩ።',
+      treeExpandAll: 'ሁሉንም ክፈት',
+      treeCollapseAll: 'ሁሉንም ዝጋ',
+      treeMemberSince: 'የተቀላቀሉበት {date}',
+      treeEarnedFrom: 'የተገኘ: {amount} ETB',
+      treeLevelMembers: '{count} አባል(ዎች)',
+
+      commissionHistory: 'የኮሚሽን ታሪክ',
+      commissionHistoryEmpty: 'እስካሁን ኮሚሽን የለም። ማጋራት ይጀምሩ!',
+      commissionLocked: 'እስከ {date} ተቆልፏል',
+      commissionStatusCredited: 'ተጨምሯል',
+      commissionStatusReversed: 'ተመልሷል',
+      commissionStatusPaid: 'ተከፍሏል',
+      commissionUnlocksIn: 'በ{days} ቀን(ዎች) ውስጥ ይከፈታል',
+
+      bonusProgress: 'የቦነስ እድገት',
+      bonusProgressSubtitle: 'ክሬዲት ለማግኘት ምዕራፎችን ይድረሱ',
+      bonusCategoryDirect: 'ቀጥታ ማጣቀሻ',
+      bonusCategoryMilestone: 'ምዕራፍ',
+      bonusCategoryRank: 'ደረጃ',
+      bonusCategoryTeam: 'የቡድን ቦነስ',
+      bonusCategorySpeed: 'የፍጥነት ቦነስ',
+      bonusNext: 'ቀጣይ: {name} — {amount} ETB',
+      bonusProgressCount: '{current} / {target}',
+      bonusEarned: '{amount} ETB ተገኝቷል',
+      bonusAwarded: 'ተሰጥቷል',
+      bonusNotYet: 'እስካሁን አልተሰጠም',
+      bonusResetMonthly: 'በየወሩ ይታደሳል',
+
+      withdrawalPanelTitle: 'ወጪዎች',
+      withdrawalPanelSubtitle: 'የኮሚሽን ቀሪ ሒሳብዎን ያውጡ',
+      withdrawalAvailable: 'ለማውጣት ያለ',
+      withdrawalPending: 'በመጠባበቅ ላይ ያለ',
+      withdrawalRequestButton: 'ወጪ ይጠይቁ',
+      withdrawalRequestTitle: 'ወጪ ይጠይቁ',
+      withdrawalMethod: 'የመክፈያ ዘዴ',
+      withdrawalAccountNumber: 'የአካውንት ቁጥር',
+      withdrawalAccountName: 'የአካውንት ስም',
+      withdrawalBankName: 'የባንክ ስም',
+      withdrawalAmount: 'መጠን (ETB)',
+      withdrawalMinimum: 'ዝቅተኛ: {amount} ETB',
+      withdrawalMaximum: 'ከፍተኛ: {amount} ETB',
+      withdrawalSubmit: 'ጥያቄ አስገባ',
+      withdrawalSubmitting: 'በማስገባት ላይ...',
+      withdrawalSuccess: 'የወጪ ጥያቄ ገብቷል። አስተዳዳሪ በ{hours} ሰዓት ውስጥ ያስተናግዳል።',
+      withdrawalHistoryTitle: 'የወጪ ታሪክ',
+      withdrawalHistoryEmpty: 'እስካሁን ወጪ የለም።',
+      withdrawalStatusPending: 'በመጠባበቅ ላይ',
+      withdrawalStatusApproved: 'ጸድቋል',
+      withdrawalStatusPaid: 'ተከፍሏል',
+      withdrawalStatusRejected: 'ውድቅ ተደርጓል',
+      withdrawalRequestedOn: '{date} ተጠይቋል',
+      withdrawalProcessedOn: '{date} ተሰርቷል',
+      withdrawalAdminNote: 'የአስተዳዳሪ ማስታወሻ: {note}',
+
+      withdrawalAmountRequired: 'መጠን ያስፈልጋል።',
+      withdrawalAmountTooLow: 'ዝቅተኛው ወጪ {amount} ETB ነው።',
+      withdrawalAmountTooHigh: 'ከፍተኛው ነጠላ ወጪ {amount} ETB ነው።',
+      withdrawalInsufficientBalance: 'ቀሪ ሒሳብ አይበቃም።',
+      withdrawalMethodRequired: 'የመክፈያ ዘዴ ያስፈልጋል።',
+      withdrawalAccountRequired: 'የአካውንት ቁጥር ያስፈልጋል።',
+      withdrawalAccountNameRequired: 'የአካውንት ስም ያስፈልጋል።',
+      withdrawalBankRequired: 'የባንክ ስም ያስፈልጋል።',
+      withdrawalAlreadyPending: 'አስቀድመው በመጠባበቅ ላይ ያለ የወጪ ጥያቄ አለዎት።',
+
+      withdrawalCannotWithdraw: 'ለማውጣት ቢያንስ {amount} ETB ያስፈልጋል።',
+      withdrawalHasDebt: 'ያልተከፈለ ዕዳ አለብዎት: {amount} ETB። ድጋፍ ያግኙ።',
+      withdrawalLockedMessage: 'በ7-ቀን መቆለፊያ ጊዜ ውስጥ {amount} ETB አለ።',
+
+      directEarnings: 'የቀጥታ ገቢ',
+      level2Earnings: 'የደረጃ 2 ገቢ',
+      level3Earnings: 'የደረጃ 3 ገቢ',
+      level4Earnings: 'የደረጃ 4 ገቢ',
+
+      explanationTitle: 'የ4-ደረጃ ቡድንዎ እንዴት እንደሚሰራ',
+      explanationIntro: 'በቡድንዎ ውስጥ አንድ ሰው ኮርስ ሲገዛ፣ በዛፉ ውስጥ ካለው ርቀት አንጻር ቋሚ ኮሚሽን ያገኛሉ።',
+      explanationYou: 'እርስዎ',
+      explanationDirect: 'ደረጃ 1 — ቀጥታ ማጣቀሻ',
+      explanationLevel2: 'ደረጃ 2 — የማጣቀሻዎ ማጣቀሻ',
+      explanationLevel3: 'ደረጃ 3',
+      explanationLevel4: 'ደረጃ 4',
+      explanationRule: 'ከገዢው በላይ ያሉት 4ቱ ሰዎች ብቻ ኮሚሽን ያገኛሉ። ደረጃ 5 እና ከዚያ በላይ ምንም አያገኙም።',
+
+      adminWithdrawalsTitle: 'የወጪ ጥያቄዎች',
+      adminWithdrawalsSubtitle: 'የጥሬ ገንዘብ ክፍያዎችን ይገምግሙ እና ያስተናግዱ',
+      adminWithdrawalsEmpty: 'ከማጣሪያዎ ጋር የሚዛመድ የወጪ ጥያቄ የለም።',
+      adminWithdrawalApprove: 'አጽድቅ እና እንደተከፈለ ምልክት አድርግ',
+      adminWithdrawalReject: 'ጥያቄውን ውድቅ አድርግ',
+      adminWithdrawalNote: 'የአስተዳዳሪ ማስታወሻ (በውድቅ ጊዜ ያስፈልጋል)',
+      adminWithdrawalTxRef: 'የግብይት ማጣቀሻ',
+      adminWithdrawalTxRefPlaceholder: 'ለምሳሌ: የቴሌብር TX መለያ',
+      adminWithdrawalConfirmApprove: 'ይህን ወጪ እንደተከፈለ ምልክት ያድርጉ?',
+      adminWithdrawalConfirmReject: 'ይህን ወጪ ውድቅ ያድርጉ? ገንዘቡ ወደ ተጠቃሚው ይመለሳል።',
+      adminWithdrawalApproved: 'ወጪው እንደተከፈለ ምልክት ተደርጓል።',
+      adminWithdrawalRejected: 'ወጪው ውድቅ ተደርጓል። ገንዘቡ ወደ ተጠቃሚው ተመልሷል።',
+
+      adminMlmStatsTitle: 'የማጣቀሻ ስርዓት ጤና',
+      adminMlmStatsSubtitle: 'ኮሚሽኖች፣ ቦነሶች እና የጣሪያ አጠቃቀም',
+      adminMlmTotalCommissions: 'ጠቅላላ የተከፈለ ኮሚሽን',
+      adminMlmTotalBonuses: 'ጠቅላላ የተሰጠ ቦነስ',
+      adminMlmActiveReferrers: 'ንቁ ማጣቀሻዎች',
+      adminMlmPlatformCap: 'የመድረክ ወርሃዊ ጣሪያ',
+      adminMlmPlatformUsed: 'በዚህ ወር ጥቅም ላይ የዋለ',
+      adminMlmPlatformRemaining: 'የቀረ',
+      adminMlmCapWarning: 'የመድረክ ጣሪያ {percent}% ጥቅም ላይ ውሏል።',
+      adminMlmCapExceeded: 'የመድረክ ጣሪያ ላይ ደርሷል። አዲስ ኮሚሽኖች ቆመዋል።',
+
+      loadDashboardError: 'የማጣቀሻ ዳሽቦርድ መጫን አልተሳካም።',
+      loadTreeError: 'የማጣቀሻ ዛፍዎን መጫን አልተሳካም።',
+      loadCommissionsError: 'የኮሚሽን ታሪክ መጫን አልተሳካም።',
+      loadBonusesError: 'የቦነስ ታሪክ መጫን አልተሳካም።',
+      loadWithdrawalsError: 'ወጪዎችን መጫን አልተሳካም።',
+    },
+  },
+};

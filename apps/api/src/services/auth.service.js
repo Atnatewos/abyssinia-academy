@@ -8,18 +8,35 @@ const bcrypt = require('bcryptjs');
 const { generateUserToken, generateAdminToken } = require('../config/jwt');
 const usersDb = require('../database/queries/users');
 const adminsDb = require('../database/queries/admins');
+const mlmDb = require('../database/queries/mlm-referrals');
+const mlmReferralService = require('./mlm-referral.service');
 const { ConflictError, UnauthorizedError } = require('../utils/errors');
 
 /**
- * Register a new student user
+ * Register a new student user.
+ *
+ * After creating the user, ensures they have a wallet. If a valid
+ * referral code is provided, builds the referral tree so the user's
+ * ancestors start earning on their future purchases.
+ *
+ * The referral tree step is best-effort: if it fails, the user is still
+ * created and can register again with the code later. We log the error
+ * but do not fail the request — a broken referral tree should never
+ * prevent someone from signing up.
+ *
  * @param {object} userData - Registration data
+ * @param {string} userData.fullName
+ * @param {string} userData.phone
+ * @param {string} [userData.email]
+ * @param {string} userData.password
+ * @param {string} [userData.referralCode]
  * @returns {object} User and JWT token
  */
 const registerStudent = async (userData) => {
-  const { fullName, phone, email, password } = userData;
+  const { fullName, phone, email, password, referralCode } = userData;
 
   if (!fullName || !phone || !password) {
-    throw new Error('Full name, phone, and password are required.');
+    throw new ConflictError('Full name, phone, and password are required.');
   }
 
   const existingUser = await usersDb.findUserByPhone(phone);
@@ -43,6 +60,33 @@ const registerStudent = async (userData) => {
     email: email || null,
     password: hashedPassword,
   });
+
+  /*
+   * Every user gets a wallet at registration time so no downstream
+   * code has to worry about a missing wallet row.
+   */
+  await mlmDb.ensureWallet(user.id);
+
+  /*
+   * If a referral code was provided, resolve it and build the tree.
+   * Errors here are logged but non-fatal.
+   */
+  if (referralCode && typeof referralCode === 'string' && referralCode.trim()) {
+    try {
+      const code = referralCode.trim().toUpperCase();
+      const referrer = await mlmDb.findUserByReferralCode(code);
+
+      if (referrer && referrer.user_id !== user.id) {
+        await mlmReferralService.buildReferralTree(user.id, referrer.user_id);
+      }
+    } catch (error) {
+      console.error('Referral tree build failed during registration:', {
+        userId: user.id,
+        referralCode,
+        error: error.message,
+      });
+    }
+  }
 
   const token = generateUserToken({ userId: user.id });
 

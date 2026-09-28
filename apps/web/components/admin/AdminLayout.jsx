@@ -28,6 +28,9 @@ import {
   Video,
   Menu,
   X,
+  Banknote,
+  Network,
+  BarChart3,
 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { getItem } from '../../lib/storage';
@@ -156,6 +159,21 @@ const AdminLayout = ({ children, title = 'Dashboard', subtitle = '' }) => {
           icon: Share2,
         },
         {
+          path: '/admin/referrals/mlm/withdrawals',
+          label: t.referrals?.mlm?.adminWithdrawalsTitle || 'MLM Withdrawals',
+          icon: Banknote,
+        },
+        {
+          path: '/admin/referrals/mlm/stats',
+          label: t.referrals?.mlm?.adminMlmStatsTitle || 'MLM Stats',
+          icon: BarChart3,
+        },
+        {
+          path: '/admin/referrals/mlm/tree',
+          label: 'MLM Tree Inspector',
+          icon: Network,
+        },
+        {
           path: '/admin/discussions',
           label: 'Discussions',
           icon: Video,
@@ -250,6 +268,13 @@ const AdminLayout = ({ children, title = 'Dashboard', subtitle = '' }) => {
                     {section.items.map((item) => {
                       const IconComponent = item.icon;
                       const active = isActive(item.path, item.exact);
+
+                      /*
+                       * Hide superadmin-only items for non-superadmin users
+                       */
+                      if (item.superadminOnly && adminUser?.role !== 'superadmin') {
+                        return null;
+                      }
 
                       return (
                         <Link

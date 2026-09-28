@@ -10,6 +10,7 @@ const { ROLES, PERMISSIONS } = require('./constants/roles');
 const validators = require('./utils/validators');
 const formatters = require('./utils/formatters');
 const pricing = require('./utils/pricing');
+const mlm = require('./mlm');
 
 module.exports = {
   config,
@@ -19,4 +20,5 @@ module.exports = {
   validators,
   formatters,
   pricing,
+  mlm,
 };

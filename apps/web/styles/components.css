@@ -8173,3 +8173,907 @@
   border-color: rgba(245, 158, 11, 0.25);
   color: var(--accent-gold);
 }
+
+
+/* ═══════════════════════════════════════════════════════════════
+   MLM REFERRAL DASHBOARD
+   4-Level commission system student dashboard styles.
+   Supports dark/light themes via CSS custom properties.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Dashboard Layout ── */
+.mlm-dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.mlm-dashboard-loading,
+.mlm-dashboard-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 3rem 1rem;
+  color: var(--color-text-muted);
+}
+
+/* ── Tab Navigation ── */
+.mlm-tab-nav {
+  display: flex;
+  gap: 0.25rem;
+  padding: 0.25rem;
+  background: var(--color-surface);
+  border-radius: var(--radius-lg, 12px);
+  border: 1px solid var(--color-border);
+  overflow-x: auto;
+}
+
+.mlm-tab-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1rem;
+  border: none;
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: var(--radius-md, 8px);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.mlm-tab-btn:hover {
+  color: var(--color-text);
+  background: var(--color-surface-hover);
+}
+
+.mlm-tab-btn.active {
+  color: var(--color-accent);
+  background: var(--color-accent-subtle, rgba(245, 158, 11, 0.1));
+}
+
+/* ── Stats Cards ── */
+.mlm-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+.mlm-stat-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1.25rem;
+}
+
+.mlm-stat-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md, 8px);
+  flex-shrink: 0;
+}
+
+.mlm-stat-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.mlm-stat-label {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.mlm-stat-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.mlm-stat-sublabel {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+/* ── Section Titles ── */
+.mlm-section-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: 0.5rem;
+}
+
+.mlm-section-subtitle {
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+  margin-bottom: 1.25rem;
+  line-height: 1.5;
+}
+
+/* ── Overview Columns ── */
+.mlm-overview-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+@media (max-width: 768px) {
+  .mlm-overview-columns {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Share Section ── */
+.mlm-share-field {
+  margin-bottom: 1rem;
+}
+
+.mlm-share-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+  margin-bottom: 0.375rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.mlm-share-input-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 0.875rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md, 8px);
+}
+
+.mlm-share-code {
+  font-family: var(--font-mono, monospace);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-accent);
+  letter-spacing: 0.1em;
+}
+
+.mlm-share-link {
+  flex: 1;
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mlm-copy-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: var(--color-accent-subtle, rgba(245, 158, 11, 0.1));
+  color: var(--color-accent);
+  border-radius: var(--radius-sm, 6px);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.mlm-copy-btn:hover {
+  background: var(--color-accent);
+  color: var(--color-surface);
+}
+
+.mlm-share-buttons {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.mlm-share-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1rem;
+  border-radius: var(--radius-md, 8px);
+  color: white;
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: opacity 0.2s ease;
+}
+
+.mlm-share-btn:hover {
+  opacity: 0.85;
+}
+
+/* ── Level Explanation ── */
+.mlm-level-chain {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 1rem 0;
+}
+
+.mlm-level-node {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  max-width: 420px;
+  padding: 0.75rem 1rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md, 8px);
+}
+
+.mlm-level-you {
+  border-color: var(--color-accent);
+  background: var(--color-accent-subtle, rgba(245, 158, 11, 0.05));
+}
+
+.mlm-level-disabled {
+  opacity: 0.5;
+  border-style: dashed;
+}
+
+.mlm-level-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.mlm-avatar-primary { background: var(--color-accent-subtle); color: var(--color-accent); }
+.mlm-avatar-level-1 { background: rgba(245, 158, 11, 0.15); color: var(--color-accent); }
+.mlm-avatar-level-2 { background: rgba(59, 130, 246, 0.15); color: var(--color-info, #3b82f6); }
+.mlm-avatar-level-3 { background: rgba(139, 92, 246, 0.15); color: var(--color-purple, #8b5cf6); }
+.mlm-avatar-level-4 { background: rgba(107, 114, 128, 0.15); color: var(--color-muted, #6b7280); }
+.mlm-avatar-disabled { background: var(--color-surface); color: var(--color-text-muted); }
+
+.mlm-level-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.mlm-level-name {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.mlm-level-role,
+.mlm-level-tag {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.mlm-tag-disabled {
+  color: var(--color-error, #ef4444);
+}
+
+.mlm-level-amount {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.125rem;
+}
+
+.mlm-amount-value {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--color-accent);
+}
+
+.mlm-amount-label {
+  font-size: 0.7rem;
+  color: var(--color-text-muted);
+}
+
+.mlm-level-connector {
+  display: flex;
+  justify-content: center;
+  color: var(--color-text-muted);
+  padding: 0.125rem 0;
+}
+
+.mlm-level-summary {
+  display: flex;
+  gap: 1.5rem;
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.mlm-summary-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.mlm-summary-label {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.mlm-summary-value {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+/* ── Commission Table ── */
+.mlm-table-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.mlm-level-filter {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.mlm-filter-btn {
+  padding: 0.375rem 0.75rem;
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  font-weight: 500;
+  border-radius: var(--radius-sm, 6px);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.mlm-filter-btn.active {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: white;
+}
+
+.mlm-table-scroll {
+  overflow-x: auto;
+}
+
+.mlm-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.mlm-table th {
+  text-align: left;
+  padding: 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.mlm-table td {
+  padding: 0.75rem;
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text);
+}
+
+.mlm-cell-date {
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+}
+
+.mlm-cell-amount {
+  font-weight: 600;
+  color: var(--color-accent);
+}
+
+.mlm-level-badge {
+  display: inline-block;
+  padding: 0.2rem 0.5rem;
+  border-radius: var(--radius-sm, 6px);
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.mlm-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: var(--radius-full, 999px);
+  font-size: 0.7rem;
+  font-weight: 500;
+}
+
+.mlm-status-badge.unlocked {
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--color-success, #10b981);
+}
+
+.mlm-status-badge.locked {
+  background: rgba(245, 158, 11, 0.1);
+  color: var(--color-warning, #f59e0b);
+}
+
+.mlm-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding-top: 1rem;
+}
+
+.mlm-pagination-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-text);
+  border-radius: var(--radius-sm, 6px);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.mlm-pagination-btn:hover:not(:disabled) {
+  background: var(--color-surface-hover);
+}
+
+.mlm-pagination-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.mlm-pagination-info {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
+
+/* ── Bonus Tracker ── */
+.mlm-bonus-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.mlm-bonus-item-header {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  margin-bottom: 0.5rem;
+}
+
+.mlm-bonus-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm, 6px);
+  flex-shrink: 0;
+}
+
+.mlm-bonus-label {
+  flex: 1;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.mlm-bonus-earned {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-success, #10b981);
+}
+
+.mlm-bonus-progress-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.mlm-bonus-progress-bar {
+  flex: 1;
+  height: 8px;
+  background: var(--color-surface);
+  border-radius: var(--radius-full, 999px);
+  overflow: hidden;
+}
+
+.mlm-bonus-progress-fill {
+  height: 100%;
+  border-radius: var(--radius-full, 999px);
+  transition: width 0.4s ease;
+}
+
+.mlm-bonus-progress-text {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.mlm-bonus-next-info {
+  margin-top: 0.375rem;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.mlm-bonus-maxed {
+  color: var(--color-success, #10b981);
+  font-weight: 500;
+}
+
+.mlm-bonus-note {
+  margin-top: 1.25rem;
+  padding: 0.875rem;
+  background: var(--color-surface);
+  border-radius: var(--radius-md, 8px);
+  border-left: 3px solid var(--color-info, #3b82f6);
+}
+
+.mlm-bonus-note p {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* ── Tree View ── */
+.mlm-tree-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.mlm-tree-count {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
+
+.mlm-tree-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.mlm-tree-node-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.625rem;
+  border-radius: var(--radius-md, 8px);
+  transition: background 0.2s ease;
+}
+
+.mlm-tree-node-row:hover {
+  background: var(--color-surface-hover);
+}
+
+.mlm-tree-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: none;
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.mlm-tree-toggle.invisible {
+  visibility: hidden;
+}
+
+.mlm-tree-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.mlm-tree-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.0625rem;
+  min-width: 0;
+}
+
+.mlm-tree-name {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mlm-tree-meta {
+  font-size: 0.7rem;
+  color: var(--color-text-muted);
+}
+
+.mlm-tree-level {
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 0.15rem 0.4rem;
+  border-radius: var(--radius-sm, 6px);
+  flex-shrink: 0;
+}
+
+.mlm-tree-earnings {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-accent);
+  flex-shrink: 0;
+}
+
+.mlm-tree-children {
+  margin-left: 0.5rem;
+  border-left: 1px solid var(--color-border);
+  padding-left: 0.5rem;
+}
+
+/* ── Withdrawal Panel ── */
+.mlm-withdrawal-panel {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+@media (max-width: 768px) {
+  .mlm-withdrawal-panel {
+    grid-template-columns: 1fr;
+  }
+}
+
+.mlm-withdrawal-balance {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem;
+  background: var(--color-surface);
+  border-radius: var(--radius-md, 8px);
+  margin-bottom: 1.25rem;
+}
+
+.mlm-withdrawal-balance-label {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
+
+.mlm-withdrawal-balance-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-accent);
+}
+
+.mlm-withdrawal-pending-notice {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  border-radius: var(--radius-md, 8px);
+  color: var(--color-warning, #f59e0b);
+  font-size: 0.875rem;
+}
+
+.mlm-withdrawal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.mlm-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.mlm-form-label {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--color-text);
+}
+
+.mlm-form-input {
+  padding: 0.625rem 0.875rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md, 8px);
+  color: var(--color-text);
+  font-size: 0.875rem;
+  transition: border-color 0.2s ease;
+}
+
+.mlm-form-input:focus {
+  outline: none;
+  border-color: var(--color-accent);
+}
+
+.mlm-form-input.error {
+  border-color: var(--color-error, #ef4444);
+}
+
+.mlm-form-error {
+  font-size: 0.7rem;
+  color: var(--color-error, #ef4444);
+}
+
+.mlm-method-selector {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.mlm-method-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.75rem;
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  border-radius: var(--radius-md, 8px);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.mlm-method-btn.active {
+  border-color: var(--color-accent);
+  background: var(--color-accent-subtle, rgba(245, 158, 11, 0.08));
+  color: var(--color-accent);
+}
+
+.mlm-withdrawal-submit {
+  width: 100%;
+  margin-top: 0.5rem;
+}
+
+/* ── Withdrawal History ── */
+.mlm-withdrawal-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.mlm-withdrawal-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.875rem;
+  background: var(--color-surface);
+  border-radius: var(--radius-md, 8px);
+}
+
+.mlm-withdrawal-item-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.mlm-withdrawal-method-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: var(--color-surface-hover);
+  border-radius: var(--radius-sm, 6px);
+  color: var(--color-text-muted);
+}
+
+.mlm-withdrawal-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.mlm-withdrawal-amount {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.mlm-withdrawal-date {
+  font-size: 0.7rem;
+  color: var(--color-text-muted);
+}
+
+.mlm-withdrawal-note {
+  font-size: 0.7rem;
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+.mlm-withdrawal-status {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+/* ── Empty States ── */
+.mlm-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 2.5rem 1rem;
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+}
+
+.mlm-empty-icon {
+  opacity: 0.3;
+}
+
+.mlm-table-loading,
+.mlm-tree-loading {
+  display: flex;
+  justify-content: center;
+  padding: 2rem;
+}
+
+/* ── Responsive ── */
+@media (max-width: 480px) {
+  .mlm-stats-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .mlm-tab-btn span {
+    display: none;
+  }
+
+  .mlm-tab-btn {
+    justify-content: center;
+    padding: 0.625rem;
+  }
+
+  .mlm-share-buttons {
+    flex-direction: column;
+  }
+
+  .mlm-method-selector {
+    flex-direction: column;
+  }
+}

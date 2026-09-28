@@ -1,12 +1,22 @@
 /**
  * @fileoverview Referral Dashboard API
- * Returns complete referral data: tier, earnings breakdown, referral history.
+ *
+ * Returns complete referral data for the student dashboard.
+ * Reads from the new MLM tables (affiliate_wallets, referral_tree,
+ * affiliate_commissions, referral_bonuses) while maintaining the
+ * legacy response shape for backward compatibility.
+ *
  * Path: apps/web/pages/api/referrals/dashboard.js
  */
 
 import { Pool } from 'pg';
 import jwt from 'jsonwebtoken';
-import { getReferralTierByCount, getReferralTiers, getReferralDashboardConfig } from '../../../lib/config';
+import {
+  getReferralTierByCount,
+  getReferralTiers,
+  getReferralDashboardConfig,
+  getCommissionStructure,
+} from '../../../lib/config';
 import { buildReferralUrl } from '../../../lib/url';
 
 const pool = new Pool({
@@ -65,32 +75,78 @@ export default async function handler(req, res) {
     const codeData = codeResult.rows[0];
 
     /*
-     * Fetch earnings data
+     * Try to read from the new MLM affiliate_wallets table first.
+     * Falls back to legacy referral_earnings if wallet doesn't exist.
      */
-    const earningsResult = await pool.query(
-      `SELECT * FROM referral_earnings WHERE user_id = $1`,
+    let earnings = null;
+    let successfulCount = 0;
+
+    const walletResult = await pool.query(
+      `SELECT
+         COALESCE(total_earned, 0) AS total_earned,
+         COALESCE(current_balance, 0) AS current_balance,
+         COALESCE(pending_withdrawal, 0) AS pending_withdrawal,
+         COALESCE(total_withdrawn, 0) AS total_withdrawn
+       FROM affiliate_wallets
+       WHERE user_id = $1`,
       [userId]
     );
 
-    const earnings = earningsResult.rows[0] || {
-      total_credit_earned: 0,
-      total_credit_used: 0,
-      available_credit: 0,
-      total_commission_earned: 0,
-      total_commission_paid: 0,
-      pending_commission: 0,
-      total_referrals: 0,
-      successful_referrals: 0,
-      current_tier: 'bronze',
-    };
+    const userStatsResult = await pool.query(
+      `SELECT
+         COALESCE(direct_referral_count, 0) AS direct_referral_count,
+         COALESCE(total_team_size, 0) AS total_team_size
+       FROM users
+       WHERE id = $1`,
+      [userId]
+    );
+
+    if (walletResult.rows.length > 0) {
+      const wallet = walletResult.rows[0];
+      const userStats = userStatsResult.rows[0] || {};
+
+      successfulCount = parseInt(userStats.direct_referral_count || 0, 10);
+
+      earnings = {
+        total_credit_earned: 0,
+        total_credit_used: 0,
+        available_credit: parseFloat(wallet.total_earned || 0),
+        total_commission_earned: parseFloat(wallet.total_earned || 0),
+        total_commission_paid: parseFloat(wallet.total_withdrawn || 0),
+        pending_commission: parseFloat(wallet.pending_withdrawal || 0),
+        total_referrals: parseInt(userStats.total_team_size || 0, 10),
+        successful_referrals: successfulCount,
+        current_tier: 'bronze',
+      };
+    } else {
+      /*
+       * Fallback to legacy referral_earnings table
+       */
+      const earningsResult = await pool.query(
+        `SELECT * FROM referral_earnings WHERE user_id = $1`,
+        [userId]
+      );
+
+      earnings = earningsResult.rows[0] || {
+        total_credit_earned: 0,
+        total_credit_used: 0,
+        available_credit: 0,
+        total_commission_earned: 0,
+        total_commission_paid: 0,
+        pending_commission: 0,
+        total_referrals: 0,
+        successful_referrals: 0,
+        current_tier: 'bronze',
+      };
+
+      successfulCount = parseInt(earnings.successful_referrals || 0, 10);
+    }
 
     /*
-     * Determine current tier and next tier from config
+     * Determine current tier and next tier from config (legacy stubs)
      */
-    const successfulCount = parseInt(earnings.successful_referrals || 0, 10);
     const currentTier = getReferralTierByCount(successfulCount);
     const allTiers = getReferralTiers();
-
     const nextTier = allTiers.find((t) => t.minReferrals > successfulCount) || null;
 
     /*
@@ -121,6 +177,12 @@ export default async function handler(req, res) {
      * Build the referral link
      */
     const referralLink = buildReferralUrl(codeData.code, req);
+
+    /*
+     * Determine referred student discount percent from config
+     */
+    const commissionConfig = getCommissionStructure();
+    const discountPercent = currentTier?.creditPercent || 10;
 
     res.status(200).json({
       success: true,
@@ -165,6 +227,11 @@ export default async function handler(req, res) {
           createdAt: row.created_at,
           completedAt: row.completed_at,
         })),
+
+        /* Additional MLM context for newer components */
+        mlmEnabled: true,
+        commissionStructure: commissionConfig,
+        discountPercent,
       },
     });
 

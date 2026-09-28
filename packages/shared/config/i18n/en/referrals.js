@@ -1,0 +1,409 @@
+/**
+ * @fileoverview English — Referral System & MLM Namespace
+ *
+ * Contains:
+ *   - Legacy referral keys (backward compat with old dashboard)
+ *   - MLM 4-level referral keys under `mlm` namespace
+ *     (dashboard, tree, commissions, bonuses, withdrawals, howItWorks, tabs)
+ *   - Admin withdrawal processing keys
+ *   - Admin MLM stats keys
+ *
+ * Path: packages/shared/config/i18n/en/referrals.js
+ */
+
+module.exports = {
+  referrals: {
+    /* ============================================================
+     * LEGACY KEYS — kept for existing referral page & API
+     * ============================================================ */
+    dashboardTitle: 'Referral Dashboard',
+    dashboardSubtitle: 'Share Abyssinia Academy and earn rewards!',
+    yourCode: 'Your Referral Code',
+    yourLink: 'Your Referral Link',
+    copied: 'Copied!',
+
+    totalReferrals: 'Total Referrals',
+    creditBalance: 'Credit Balance',
+    cashEarned: 'Cash Earned',
+    currentTier: 'Current Tier',
+    perReferral: 'per referral',
+
+    tierBronze: 'Bronze',
+    tierSilver: 'Silver',
+    tierGold: 'Gold',
+    tierPlatinum: 'Platinum',
+    tierDiamond: 'Diamond',
+
+    tierProgress: 'Tier Progress',
+    referralsNeeded: '{count} more referral(s) needed for {tier}',
+    nextTier: 'Next: {tier}',
+    currentTierLabel: 'Current: {tier}',
+
+    earningsBreakdown: 'Earnings Breakdown',
+    creditEarned: 'Credit Earned',
+    creditUsed: 'Credit Used',
+    availableCredit: 'Available Credit',
+    commissionEarned: 'Commission Earned',
+    pendingPayout: 'Pending Payout',
+    totalValueEarned: 'Total Value Earned',
+    creditCapReached: 'Credit cap reached, earning cash commission!',
+
+    referralHistory: 'Referral History',
+    noReferrals: 'You haven\'t referred anyone yet. Share your link to start earning!',
+    name: 'Name',
+    status: 'Status',
+    discount: 'Discount',
+    credit: 'Credit',
+    date: 'Date',
+
+    statusRegistered: 'Registered',
+    statusEnrolled: 'Enrolled',
+    statusCompleted: 'Completed',
+    statusExpired: 'Expired',
+    statusRefunded: 'Refunded',
+
+    howItWorks: 'How It Works',
+    step1Title: 'Share Your Link',
+    step1Desc: 'Copy your unique referral link and share it with friends on Telegram, WhatsApp, or anywhere.',
+    step2Title: 'They Register & Enroll',
+    step2Desc: 'When someone uses your link to register and completes their enrollment, you earn credit.',
+    step3Title: 'Earn Credit',
+    step3Desc: 'Accumulate credit toward your own purchases. The more you refer, the higher your tier and rewards.',
+    step4Title: 'Earn Cash Commission',
+    step4Desc: 'Once your credit reaches 100% of your course price, additional referrals earn you cash commission!',
+
+    invitedBy: 'You\'ve been invited by {name}!',
+    discountApplied: 'You\'ll receive {percent}% off your enrollment.',
+    referralCodeApplied: 'Referral code applied: {code}',
+
+    referralDiscount: 'Referral Discount ({percent}%)',
+    creditApplied: 'Credit Applied',
+    applyCredit: 'Apply Credit',
+    availableCreditLabel: 'Available: {amount} ETB',
+    creditAppliedLabel: 'Credit Applied: {amount} ETB',
+    youPay: 'You Pay',
+    youSaved: 'You saved {amount} ETB ({percent}% off!)',
+
+    shareTitle: 'Share & Earn',
+    shareSubtitle: 'Share your link to earn {percent}% credit per referral!',
+    shareMessage: '🚀 Join me at Abyssinia Academy and get {discount}% off your enrollment! Learn Full-Stack Web Development: ',
+    shareMessageAm: '🚀 በአቢሲኒያ አካዳሚ ይቀላቀሉና {discount}% ቅናሽ ያግኙ! ፉል-ስታክ ዌብ ዴቨሎፕመንት ይማሩ: ',
+
+    shareCopyLink: 'Copy Link',
+    shareTelegram: 'Telegram',
+    shareWhatsApp: 'WhatsApp',
+    shareFacebook: 'Facebook',
+
+    invalidCode: 'Invalid referral code.',
+    selfReferral: 'You cannot use your own referral code.',
+    codeAlreadyUsed: 'This referral code has already been used for your account.',
+    loadError: 'Failed to load referral data. Please try again.',
+
+    haveReferralCode: 'Have a referral code?',
+    enterReferralCode: 'Enter Referral Code',
+
+    /* ============================================================
+     * MLM 4-LEVEL SYSTEM — nested under `mlm` namespace
+     * Components access via: t.referrals.mlm.<section>.<key>
+     * ============================================================ */
+    mlm: {
+      /* Auth & load states */
+      authRequired: 'Please log in to view your referral dashboard.',
+      loadError: 'Failed to load MLM dashboard data. Please try again.',
+
+      /* Dashboard header */
+      dashboard: {
+        title: 'Referral Dashboard',
+        subtitle: 'Track your 4-level commission network, bonuses, and withdrawals.',
+        loading: 'Loading your referral dashboard...',
+        retry: 'Retry',
+      },
+
+      /* Tab navigation labels */
+      tabs: {
+        overview: 'Overview',
+        tree: 'Tree',
+        commissions: 'Commissions',
+        bonuses: 'Bonuses',
+        withdrawals: 'Withdrawals',
+      },
+
+      /* Stats cards */
+      stats: {
+        commissionBalance: 'Commission Balance',
+        creditBalance: 'Credit Balance',
+        teamSize: 'Team Size',
+        directReferrals: 'Direct Referrals',
+        locked: 'locked',
+        lockedCommission: 'Locked (7-day)',
+        pendingWithdrawal: 'Pending Withdrawal',
+        totalEarned: 'Total Earned',
+        totalWithdrawn: 'Total Withdrawn',
+        forCourses: 'For course purchases',
+        acrossLevels: 'Across 4 levels',
+        level1Only: 'Level 1 only',
+      },
+
+      // mlm.stats Money Model v2 keys
+      availableNow: 'Available Now',
+      allUnlocked: 'Fully withdrawable',
+      bonusEarnings: 'Bonus Earnings',
+      bonusEarningsSub: 'Bonus Credits',
+
+      /* Earnings breakdown section */
+      earningsBreakdown: 'Earnings Breakdown',
+      monthlySummary: 'This Month',
+      monthlyCommission: 'Commission',
+      monthlyBonus: 'Bonus',
+      monthlyPayout: 'Total Payout',
+
+      /* Share section */
+      share: {
+        title: 'Share Your Referral Link',
+        subtitle: 'Share this link with friends. When they join and purchase, you earn commissions.',
+        codeLabel: 'Your Referral Code',
+        linkLabel: 'Your Referral Link',
+        copyCode: 'Copy code',
+        copyLink: 'Copy link',
+        copied: 'Copied to clipboard',
+        copyFailed: 'Failed to copy',
+      },
+
+      /* Commission history table */
+      commissions: {
+        title: 'Commission History',
+        allLevels: 'All',
+        date: 'Date',
+        source: 'From',
+        level: 'Level',
+        amount: 'Amount',
+        status: 'Status',
+        unlocks: 'Unlocks',
+        available: 'Available',
+        locked: 'Locked',
+        empty: 'No commissions yet. Share your link to start earning!',
+        page: 'Page',
+      },
+
+      /* Bonus progress tracker */
+      bonuses: {
+        title: 'Bonus Progress',
+        subtitle: 'Bonuses are credits. Categories are independent — achieve all applicable bonuses simultaneously.',
+        directReferral: 'Direct Referral Bonus',
+        milestone: 'Milestone Bonus',
+        rank: 'Rank Achievement',
+        teamBonus: 'Team Bonus',
+        speedBonus: 'Speed Bonus',
+        nextAt: 'Next:',
+        reaches: '→',
+        maxReached: 'Maximum tier achieved!',
+        nonStackingNote: 'Within each category, only the highest achieved threshold counts. Crossing a new threshold credits the difference (delta).',
+      },
+
+      /* Downline tree view */
+      tree: {
+        title: 'Your Downline Tree',
+        members: 'members',
+        empty: 'No team members yet. Share your referral link to start building your network!',
+      },
+
+      /* Level explanation (How It Works) */
+      howItWorks: {
+        title: 'How the 4-Level System Works',
+        description: 'When someone in your network makes a purchase, you and up to 3 people above you earn commissions.',
+        youEarn: 'You earn from all 4 levels below',
+        level1: 'Level 1',
+        level2: 'Level 2',
+        level3: 'Level 3',
+        level4: 'Level 4',
+        beyondLevel4: 'Level 5+',
+        noCommission: 'No commission',
+        totalPerSale: 'Total commission per sale',
+        unlockPeriod: 'Unlock period',
+        days: 'days',
+        perSale: 'per sale',
+        exampleYou: 'You (Abebe)',
+        exampleLevel1: 'Betty',
+        exampleLevel2: 'Abel',
+        exampleLevel3: 'Dawit',
+        exampleLevel4: 'Helen',
+      },
+
+      /* Withdrawal panel */
+      withdrawal: {
+        title: 'Request Withdrawal',
+        subtitle: 'Withdraw your available commission balance to your preferred payment method.',
+        historyTitle: 'Withdrawal History',
+        availableBalance: 'Available Balance',
+        pendingNotice: 'You already have a pending withdrawal request. Please wait for it to be processed.',
+        amountLabel: 'Amount (ETB)',
+        methodLabel: 'Payment Method',
+        accountLabel: 'Account Number',
+        nameLabel: 'Account Holder Name',
+        bankLabel: 'Bank Name',
+        minimumIs: 'Minimum withdrawal is',
+        submitBtn: 'Request Withdrawal',
+        submitting: 'Submitting...',
+        submitted: 'Withdrawal request submitted. Admin will process within 48 hours.',
+        noHistory: 'No withdrawal requests yet.',
+        lockedHint: 'You have {amount} ETB still in the 7-day lock window.',
+
+        /* Method labels */
+        method_telebirr: 'Telebirr',
+        method_cbe_birr: 'CBE Birr',
+        method_bank_transfer: 'Bank Transfer',
+
+        /* Status labels */
+        status_pending: 'Pending',
+        status_approved: 'Approved',
+        status_paid: 'Paid',
+        status_rejected: 'Rejected',
+
+        /* Validation errors */
+        invalidAmount: 'Enter a valid amount',
+        insufficientBalance: 'Insufficient available balance',
+        accountRequired: 'Account number is required',
+        nameRequired: 'Account name is required',
+        bankRequired: 'Bank name is required',
+      },
+
+      /* ────────────────────────────────────────────────────────────
+       * FLAT LEGACY MLM KEYS (kept for backward compat with older code)
+       * ──────────────────────────────────────────────────────────── */
+      commissionBalance: 'Commission Balance',
+      teamSize: 'Team Size',
+      directReferralsCount: 'Direct Referrals',
+      levelLabel: 'Level {level}',
+      level1Label: 'Level 1 (Direct)',
+      level2Label: 'Level 2',
+      level3Label: 'Level 3',
+      level4Label: 'Level 4',
+      commissionPerSale: 'per sale',
+      cashCommission: 'Cash Commission',
+
+      /* Tree view (flat keys) */
+      treeViewTitle: 'Your Referral Tree',
+      treeViewSubtitle: 'Your team across all 4 levels',
+      treeEmptyState: 'No team yet. Share your link to start building.',
+      treeExpandAll: 'Expand All',
+      treeCollapseAll: 'Collapse All',
+      treeMemberSince: 'Joined {date}',
+      treeEarnedFrom: 'Earned: {amount} ETB',
+      treeLevelMembers: '{count} member(s)',
+
+      /* Commission history (flat keys) */
+      commissionHistory: 'Commission History',
+      commissionHistoryEmpty: 'No commissions yet. Start sharing!',
+      commissionLocked: 'Locked until {date}',
+      commissionStatusCredited: 'Credited',
+      commissionStatusReversed: 'Reversed',
+      commissionStatusPaid: 'Paid',
+      commissionUnlocksIn: 'Unlocks in {days} day(s)',
+
+      /* Bonus progress (flat keys) */
+      bonusProgress: 'Bonus Progress',
+      bonusProgressSubtitle: 'Reach milestones to earn credits',
+      bonusCategoryDirect: 'Direct Referral',
+      bonusCategoryMilestone: 'Milestone',
+      bonusCategoryRank: 'Rank',
+      bonusCategoryTeam: 'Team Bonus',
+      bonusCategorySpeed: 'Speed Bonus',
+      bonusNext: 'Next: {name} — {amount} ETB',
+      bonusProgressCount: '{current} / {target}',
+      bonusEarned: 'Earned {amount} ETB',
+      bonusAwarded: 'Awarded',
+      bonusNotYet: 'Not yet awarded',
+      bonusResetMonthly: 'Resets monthly',
+
+      /* Withdrawal panel (flat keys) */
+      withdrawalPanelTitle: 'Withdrawals',
+      withdrawalPanelSubtitle: 'Cash out your commission balance',
+      withdrawalAvailable: 'Available to Withdraw',
+      withdrawalPending: 'Pending Withdrawal',
+      withdrawalRequestButton: 'Request Withdrawal',
+      withdrawalRequestTitle: 'Request Withdrawal',
+      withdrawalMethod: 'Payout Method',
+      withdrawalAccountNumber: 'Account Number',
+      withdrawalAccountName: 'Account Name',
+      withdrawalBankName: 'Bank Name',
+      withdrawalAmount: 'Amount (ETB)',
+      withdrawalMinimum: 'Minimum: {amount} ETB',
+      withdrawalMaximum: 'Maximum: {amount} ETB',
+      withdrawalSubmit: 'Submit Request',
+      withdrawalSubmitting: 'Submitting...',
+      withdrawalSuccess: 'Withdrawal request submitted. Admin will process within {hours} hours.',
+      withdrawalHistoryTitle: 'Withdrawal History',
+      withdrawalHistoryEmpty: 'No withdrawals yet.',
+      withdrawalStatusPending: 'Pending',
+      withdrawalStatusApproved: 'Approved',
+      withdrawalStatusPaid: 'Paid',
+      withdrawalStatusRejected: 'Rejected',
+      withdrawalRequestedOn: 'Requested {date}',
+      withdrawalProcessedOn: 'Processed {date}',
+      withdrawalAdminNote: 'Admin Note: {note}',
+
+      withdrawalAmountRequired: 'Amount is required.',
+      withdrawalAmountTooLow: 'Minimum withdrawal is {amount} ETB.',
+      withdrawalAmountTooHigh: 'Maximum single withdrawal is {amount} ETB.',
+      withdrawalInsufficientBalance: 'Insufficient balance.',
+      withdrawalMethodRequired: 'Payout method is required.',
+      withdrawalAccountRequired: 'Account number is required.',
+      withdrawalAccountNameRequired: 'Account name is required.',
+      withdrawalBankRequired: 'Bank name is required.',
+      withdrawalAlreadyPending: 'You already have a pending withdrawal request.',
+
+      withdrawalCannotWithdraw: 'You need at least {amount} ETB to withdraw.',
+      withdrawalHasDebt: 'You have an outstanding balance of {amount} ETB. Contact support.',
+      withdrawalLockedMessage: 'You have {amount} ETB in commissions still in the 7-day lock window.',
+
+      /* Level earnings breakdown */
+      directEarnings: 'Direct Earnings',
+      level2Earnings: 'Level 2 Earnings',
+      level3Earnings: 'Level 3 Earnings',
+      level4Earnings: 'Level 4 Earnings',
+
+      /* Explainer section */
+      explanationTitle: 'How Your 4-Level Team Works',
+      explanationIntro: 'When someone in your team purchases a course, you earn a fixed commission based on their distance from you in the tree.',
+      explanationYou: 'You',
+      explanationDirect: 'Level 1 — Direct referral',
+      explanationLevel2: 'Level 2 — Your referral\'s referral',
+      explanationLevel3: 'Level 3',
+      explanationLevel4: 'Level 4',
+      explanationRule: 'Only the 4 people directly above a buyer earn commission. Level 5 and beyond earn nothing.',
+
+      /* Admin — Withdrawals */
+      adminWithdrawalsTitle: 'Withdrawal Requests',
+      adminWithdrawalsSubtitle: 'Review and process cash payouts',
+      adminWithdrawalsEmpty: 'No withdrawal requests match your filters.',
+      adminWithdrawalApprove: 'Approve & Mark Paid',
+      adminWithdrawalReject: 'Reject Request',
+      adminWithdrawalNote: 'Admin Note (required on reject)',
+      adminWithdrawalTxRef: 'Transaction Reference',
+      adminWithdrawalTxRefPlaceholder: 'e.g., Telebirr TX ID',
+      adminWithdrawalConfirmApprove: 'Mark this withdrawal as paid?',
+      adminWithdrawalConfirmReject: 'Reject this withdrawal? Funds will return to the user.',
+      adminWithdrawalApproved: 'Withdrawal marked as paid.',
+      adminWithdrawalRejected: 'Withdrawal rejected. Funds returned to user.',
+
+      /* Admin — MLM Stats */
+      adminMlmStatsTitle: 'Referral System Health',
+      adminMlmStatsSubtitle: 'Commissions, bonuses, and cap usage',
+      adminMlmTotalCommissions: 'Total Commissions Paid',
+      adminMlmTotalBonuses: 'Total Bonuses Awarded',
+      adminMlmActiveReferrers: 'Active Referrers',
+      adminMlmPlatformCap: 'Platform Monthly Cap',
+      adminMlmPlatformUsed: 'Used This Month',
+      adminMlmPlatformRemaining: 'Remaining',
+      adminMlmCapWarning: 'Platform cap is {percent}% used.',
+      adminMlmCapExceeded: 'Platform cap reached. New commissions paused.',
+
+      /* Errors */
+      loadDashboardError: 'Failed to load referral dashboard.',
+      loadTreeError: 'Failed to load your referral tree.',
+      loadCommissionsError: 'Failed to load commission history.',
+      loadBonusesError: 'Failed to load bonus history.',
+      loadWithdrawalsError: 'Failed to load withdrawals.',
+    },
+  },
+};

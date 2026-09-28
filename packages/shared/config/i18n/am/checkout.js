@@ -1,0 +1,48 @@
+/**
+ * @fileoverview Amharic — Checkout Flow Namespace
+ * Path: packages/shared/config/i18n/am/checkout.js
+ */
+
+module.exports = {
+  checkout: {
+    title: 'በአቢሲኒያ አካዳሚ ይመዝገቡ',
+    subtitle: 'በአስተማማኝ ሁኔታ ክፍያ ፈጽመው የቪዲዮ ትምህርቶችን ይክፈቱ።',
+    fullName: 'ሙሉ ስም',
+    phone: 'ስልክ ቁጥር',
+    transactionRef: 'የተላከለት ቁጥር',
+    paymentMethod: 'የክፍያ ዘዴ',
+    tuitionFee: 'የትምህርት ክፍያ',
+    verifying: 'ክፍያው በመረጋገጥ ላይ...',
+    completeEnrollment: 'ምዝገባውን ጨርስ እና ፖርታሉን ክፈት',
+    uploadScreenshot: 'የክፍያ ማረጋገጫ ፎቶ ያስገቡ',
+    pendingTitle: 'ክፍያዎ እየተረጋገጠ ነው',
+    pendingMessage: 'ክፍያዎ እየተረጋገጠ ነው። በ24 ሰዓት ውስጥ ሙሉ አክሰስ ያገኛሉ።',
+    approvedTitle: 'ክፍያ ጸድቋል!',
+    approvedMessage: 'ክፍያዎ ተረጋግጧል። እንኳን ወደ አቢሲኒያ አካዳሚ በደህና መጡ!',
+    rejectedTitle: 'ክፍያ አልተረጋገጠም',
+    rejectedMessage: 'ክፍያዎን ማረጋገጥ አልተቻለም። እባክዎ የደንበኛ ድጋፍ ያግኙ።',
+    noPaymentTitle: 'ምንም ክፍያ አልተገኘም',
+    noPaymentMessage: 'እስካሁን ምንም ክፍያ አላስገቡም።',
+    goToPortal: 'ወደ መማሪያ ክፍል ይሂዱ',
+    viewPricing: 'ዋጋዎችን ይመልከቱ',
+    noPaymentMethods: 'ምንም የክፍያ ዘዴዎች አልተገኙም።',
+    copyToClipboard: 'ወደ ክሊፕቦርድ ይቅዱ',
+    copied: 'ተቀድቷል!',
+    copy: 'ይቅዱ',
+    invalidFileType: 'እባክዎ JPEG፣ PNG ወይም WebP ምስል ያስገቡ።',
+    fileTooLarge: 'የፋይል መጠን ከ{size}MB በታች መሆን አለበት።',
+    fullNameRequired: 'ሙሉ ስም ያስፈልጋል።',
+    phoneRequired: 'ስልክ ቁጥር ያስፈልጋል።',
+    transactionRefRequired: 'የተላከለት ቁጥር ያስፈልጋል።',
+    paymentMethodRequired: 'እባክዎ የክፍያ ዘዴ ይምረጡ።',
+    clickToUpload: 'ስክሪንሻት ለመጫን ይጫኑ',
+    uploadHint: 'JPEG፣ PNG ወይም WebP (ከፍተኛ {size}MB)',
+    accountLabel: 'አካውንት',
+    bankLabel: 'ባንክ: {bankName}',
+    accountNameLabel: 'የአካውንት ስም:',
+    payVia: 'በ{method} ይክፈሉ',
+    purchaseSummaryTitle: 'ግዢ',
+    purchaseFullCourse: 'ሙሉ ኮርስ - ሁሉም 5ቱ ደረጃዎች',
+    purchasePhasesSelected: '{count} ደረጃ(ዎች) ተመርጠዋል',
+  },
+};
