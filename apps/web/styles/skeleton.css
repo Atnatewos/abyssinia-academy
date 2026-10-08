@@ -1,0 +1,374 @@
+/**
+ * Abyssinia Academy — Skeleton Loading System (Shape-Matched)
+ *
+ * Defines primitives, shimmer animation, and layout tokens that every
+ * Skeleton preset consumes. All colors resolve through CSS custom
+ * properties from themes.css so light/dark themes stay in sync.
+ *
+ * Path: apps/web/styles/skeleton.css
+ */
+
+/* ============================================================================
+   BASE PRIMITIVE + SHIMMER
+   ============================================================================ */
+.skeleton-base {
+  background: linear-gradient(
+    90deg,
+    var(--bg-skeleton, rgba(30, 41, 59, 0.5)) 0%,
+    var(--bg-skeleton-strong, rgba(51, 65, 85, 0.7)) 50%,
+    var(--bg-skeleton, rgba(30, 41, 59, 0.5)) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.6s ease-in-out infinite;
+  border-radius: var(--skeleton-radius-md, 0.625rem);
+}
+
+.skeleton-wrapper {
+  width: 100%;
+}
+
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-base {
+    animation: skeleton-pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes skeleton-pulse {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.6;
+    }
+  }
+}
+
+/* ============================================================================
+   TEXT LINES
+   ============================================================================ */
+.skeleton-lines {
+  display: flex;
+  flex-direction: column;
+  gap: var(--skeleton-line-gap, 0.5rem);
+}
+
+.skeleton-line {
+  height: var(--skeleton-line-height, 0.875rem);
+  width: 100%;
+}
+
+.skeleton-line-short {
+  width: 40%;
+}
+
+.skeleton-line-medium {
+  width: 70%;
+}
+
+.skeleton-line-full {
+  width: 100%;
+}
+
+/* ============================================================================
+   GENERIC CARD
+   ============================================================================ */
+.skeleton-card {
+  padding: 1.5rem;
+  border-radius: var(--skeleton-radius-lg, 1.25rem);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.skeleton-card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.skeleton-card-icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.skeleton-card-title {
+  height: 1rem;
+  flex: 1;
+}
+
+.skeleton-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* ============================================================================
+   STATS GRID
+   ============================================================================ */
+.skeleton-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+}
+
+.skeleton-stat-card {
+  padding: 1.25rem;
+  border-radius: var(--skeleton-radius-md, 0.625rem);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.skeleton-stat-label {
+  height: 0.75rem;
+}
+
+.skeleton-stat-value {
+  height: 1.5rem;
+}
+
+.skeleton-stat-trend {
+  height: 0.625rem;
+}
+
+/* ============================================================================
+   TABLE ROWS
+   ============================================================================ */
+.skeleton-table {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.skeleton-table-header {
+  padding: 0.75rem 1rem;
+  border-radius: var(--skeleton-radius-sm, 0.375rem);
+  background: var(--bg-skeleton-strong, rgba(51, 65, 85, 0.7)) !important;
+  animation: none !important;
+  background-size: auto !important;
+}
+
+.skeleton-table-header .skeleton-base {
+  height: 0.75rem;
+}
+
+.skeleton-table-row {
+  padding: 1rem;
+  border-radius: var(--skeleton-radius-sm, 0.375rem);
+}
+
+.skeleton-table-cell {
+  height: 0.875rem;
+}
+
+.skeleton-avatar-text {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  min-width: 0;
+}
+
+.skeleton-avatar-text-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.skeleton-avatar-text-lines .skeleton-line {
+  height: 0.625rem;
+}
+
+.skeleton-pill {
+  height: 1.25rem;
+  width: 4rem;
+  border-radius: 9999px;
+}
+
+.skeleton-badge {
+  height: 1rem;
+  width: 3rem;
+  border-radius: 0.375rem;
+}
+
+/* ============================================================================
+   CIRCLE (avatar)
+   ============================================================================ */
+.skeleton-circle {
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.skeleton-circle-sm {
+  width: 1.75rem;
+  height: 1.75rem;
+}
+
+.skeleton-circle-md {
+  width: 2.5rem;
+  height: 2.5rem;
+}
+
+.skeleton-circle-lg {
+  width: 4rem;
+  height: 4rem;
+}
+
+/* ============================================================================
+   MEDIA (video/image thumbnails)
+   ============================================================================ */
+.skeleton-media {
+  aspect-ratio: 16 / 9;
+  border-radius: var(--skeleton-radius-md, 0.625rem);
+}
+
+.skeleton-media-square {
+  aspect-ratio: 1 / 1;
+}
+
+.skeleton-media-portrait {
+  aspect-ratio: 3 / 4;
+}
+
+/* ============================================================================
+   BONUS CARDS (MLMBonusTracker shape)
+   ============================================================================ */
+.skeleton-bonus-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+}
+
+.skeleton-bonus-card {
+  padding: 1.25rem;
+  border-radius: var(--skeleton-radius-md, 0.625rem);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.skeleton-bonus-card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+.skeleton-bonus-title {
+  height: 0.875rem;
+  flex: 1;
+}
+
+.skeleton-progress-bar {
+  height: 0.5rem;
+  width: 100%;
+  border-radius: 9999px;
+}
+
+.skeleton-bonus-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.skeleton-bonus-footer .skeleton-line {
+  height: 0.625rem;
+}
+
+/* ============================================================================
+   TREE (MLMTreeView shape)
+   ============================================================================ */
+.skeleton-tree {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.skeleton-tree-node {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.625rem 0.75rem;
+  border-radius: var(--skeleton-radius-sm, 0.375rem);
+  transition: margin-left 0.2s ease;
+}
+
+.skeleton-tree-node-depth-1 {
+  margin-left: 1.5rem;
+}
+
+.skeleton-tree-node-depth-2 {
+  margin-left: 3rem;
+}
+
+.skeleton-tree-node-depth-3 {
+  margin-left: 4.5rem;
+}
+
+.skeleton-tree-avatar {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.skeleton-tree-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.skeleton-tree-name {
+  height: 0.75rem;
+  width: 50%;
+}
+
+.skeleton-tree-meta {
+  height: 0.625rem;
+  width: 30%;
+}
+
+/* ============================================================================
+   RESPONSIVE
+   ============================================================================ */
+@media (max-width: 768px) {
+  .skeleton-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .skeleton-bonus-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .skeleton-tree-node-depth-1 {
+    margin-left: 1rem;
+  }
+
+  .skeleton-tree-node-depth-2 {
+    margin-left: 2rem;
+  }
+
+  .skeleton-tree-node-depth-3 {
+    margin-left: 3rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .skeleton-stats-grid {
+    grid-template-columns: 1fr;
+  }
+}

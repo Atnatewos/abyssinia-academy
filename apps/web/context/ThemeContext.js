@@ -1,58 +1,52 @@
 /**
  * @fileoverview Theme Context
- * Dark/light mode management with localStorage persistence.
- * Default: light mode for new visitors.
- * Returning visitors get their saved preference.
+ *
+ * Single source of truth for dark/light mode. Applies BOTH signaling
+ * mechanisms on <html> so every stylesheet convention works:
+ *   - class "light-theme"      (themes.css, design-system.css)
+ *   - attribute data-theme     (referral.css, admin-mlm.css overrides)
+ *
  * Path: apps/web/context/ThemeContext.js
  */
-
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { getItem, setItem } from '@lib/storage';
 
 const ThemeContext = createContext(null);
 
+/**
+ * Applies the theme to the document root using both conventions.
+ * @param {string} themeName - 'light' or 'dark'
+ */
+const applyThemeToDocument = (themeName) => {
+  if (typeof document === 'undefined') return;
+  document.documentElement.classList.toggle('light-theme', themeName === 'light');
+  document.documentElement.setAttribute('data-theme', themeName);
+};
+
 const ThemeProvider = ({ children }) => {
-  /*
-   * Default to light mode for new visitors.
-   * Saved preference overrides the default on mount.
-   */
   const [theme, setThemeState] = useState('light');
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     const savedTheme = getItem('theme', 'light');
     setThemeState(savedTheme);
-    if (typeof document !== 'undefined') {
-      document.documentElement.classList.toggle('light-theme', savedTheme === 'light');
-    }
+    applyThemeToDocument(savedTheme);
     setMounted(true);
   }, []);
 
-  /**
-   * Toggle between light and dark mode.
-   * Persists choice to localStorage.
-   */
   const toggleTheme = useCallback(() => {
     setThemeState((prev) => {
-      const newTheme = prev === 'dark' ? 'light' : 'dark';
-      setItem('theme', newTheme);
-      if (typeof document !== 'undefined') {
-        document.documentElement.classList.toggle('light-theme', newTheme === 'light');
-      }
-      return newTheme;
+      const nextTheme = prev === 'dark' ? 'light' : 'dark';
+      setItem('theme', nextTheme);
+      applyThemeToDocument(nextTheme);
+      return nextTheme;
     });
   }, []);
 
-  /**
-   * Set a specific theme directly.
-   * @param {string} themeName - 'light' or 'dark'
-   */
   const setTheme = useCallback((themeName) => {
     setThemeState(themeName);
     setItem('theme', themeName);
-    if (typeof document !== 'undefined') {
-      document.documentElement.classList.toggle('light-theme', themeName === 'light');
-    }
+    applyThemeToDocument(themeName);
   }, []);
 
   return (
@@ -62,10 +56,6 @@ const ThemeProvider = ({ children }) => {
   );
 };
 
-/**
- * Hook to consume theme context.
- * Returns safe light-mode defaults when used outside ThemeProvider.
- */
 const useTheme = () => {
   const context = useContext(ThemeContext);
   if (context === null) {

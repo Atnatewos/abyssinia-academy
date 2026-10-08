@@ -1,91 +1,159 @@
 /**
  * @fileoverview Hero Visual Card Component
- * Floating code editor card with play button and session list
- * Session data from landing.config.js | Display text from i18n → t.landing.heroVisual.*
+ *
+ * IDE-style preview card matching the foundation design exactly:
+ *   - Filename-only top bar (right aligned) with divider
+ *   - 16:9 preview image with centered gold play button
+ *   - Inset info bar: camera icon + FREE PREVIEW label + gold duration
+ *   - Session list as bordered pill rows: chevron + mono title left,
+ *     mono timestamp right, active row highlighted in gold
+ *
+ * Floating income chips render only when explicitly enabled via
+ * `heroVisual.showIncomeChips` in landing.config.js (default off),
+ * keeping the card pixel-clean unless marketing opts in.
+ *
+ * All text resolves from i18n; all structural data from config.
+ *
  * Path: apps/web/components/landing/HeroVisual.jsx
  */
-
 import React from 'react';
 import Link from 'next/link';
-import { Play, Video } from 'lucide-react';
+import { Play, Video, Coins, TrendingUp, Zap } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
-import { getHeroVisualConfig } from '../../lib/config';
+import {
+  getHeroVisualConfig,
+  getHeroConfig,
+  getCommissionStructure,
+  getBonusConfig,
+  getWithdrawalConfig,
+} from '../../lib/config';
 
-/**
- * HeroVisual — Floating code editor preview card
- * Displays a simulated IDE window with session list
- * Structure from landing.config.js, text from i18n translations
- */
+const CHIP_ICON_MAP = {
+  level1Rate: Coins,
+  directBonus5: TrendingUp,
+  payoutHours: Zap,
+};
+
 const HeroVisual = () => {
   const { t } = useLanguage();
-
-  /*
-   * Structure from landing config
-   * Contains: filename, preview image URL, session times, active states
-   */
   const visualConfig = getHeroVisualConfig();
-  const filename = visualConfig.filename || 'Abyssinia_Masterclass.jsx';
-  const previewImage = visualConfig.previewImage || 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=800&q=80';
-  const previewDuration = visualConfig.previewDuration || '45:10';
-  const sessions = visualConfig.sessions || [];
+  const heroConfig = getHeroConfig();
+  const commissionConfig = getCommissionStructure();
+  const bonusConfig = getBonusConfig();
+  const withdrawalConfig = getWithdrawalConfig();
 
-  /*
-   * Display text from i18n translations
-   * Supports any language — just add the keys to the language file
+  const {
+    filename = 'Abyssinia_Masterclass.tsx',
+    previewImage = '',
+    previewDuration = '45:10',
+    sessions = [],
+    showIncomeChips = false,
+  } = visualConfig || {};
+
+  const labels = t.landing?.heroVisual || {};
+  const incomeChips = heroConfig?.incomeChips || [];
+
+  /**
+   * Resolve a chip label from the hero namespace, tolerating legacy
+   * namespace-prefixed keys stored in older config revisions.
+   *
+   * @param {string} labelKey - Plain or 'hero.'-prefixed i18n key
+   * @returns {string} Raw template containing {amount}
    */
-  const landingI18n = t.landing?.heroVisual || {};
-  const freePreviewLabel = landingI18n.freePreviewLabel || 'FREE PREVIEW';
-  const previewDetail = landingI18n.previewDetail || 'Phase 1 · Week 1 · Class 01';
-  const sessionTitles = landingI18n.sessions || [];
+  const resolveChipLabel = (labelKey) => {
+    const plainKey = String(labelKey || '').replace(/^hero\./, '');
+    return t.hero?.[plainKey] || '';
+  };
+
+  /**
+   * Resolve a chip amountKey from the config graph.
+   *
+   * @param {string} amountKey
+   * @returns {number}
+   */
+  const resolveAmount = (amountKey) => {
+    switch (amountKey) {
+      case 'level1Rate':
+        return commissionConfig?.levelAmounts?.[0] || 0;
+      case 'directBonus5':
+        return bonusConfig?.directReferral?.tiers?.[0]?.amountETB || 0;
+      case 'payoutHours':
+        return withdrawalConfig?.processingTimeHours || 0;
+      default:
+        return 0;
+    }
+  };
 
   return (
     <div className="hero-visual">
-      <div className="hero-visual-card">
-        {/* macOS-style title bar */}
-        <div className="hero-visual-titlebar">
-          <div className="hero-visual-dots">
-            {/* <div className="hero-visual-dot red" />
-            <div className="hero-visual-dot yellow" />
-            <div className="hero-visual-dot green" /> */}
-          </div>
+      <div className="hero-visual-window">
+        {/* Filename-only top bar with divider */}
+        <div className="hero-visual-topbar">
           <span className="hero-visual-filename">{filename}</span>
         </div>
 
-        {/* Preview image with play button overlay */}
+        {/* Preview image, play button, and inset info bar */}
         <div className="hero-visual-preview">
-          <img src={previewImage} alt="Code editor preview" />
+          <img src={previewImage} alt="" />
           <div className="hero-visual-preview-overlay">
-            <Link href="/courses" className="hero-visual-play-btn">
+            <Link
+              href="/courses"
+              className="hero-visual-play-btn"
+              aria-label={labels.freePreviewLabel || 'FREE PREVIEW'}
+            >
               <Play />
             </Link>
           </div>
           <div className="hero-visual-info">
-            <span style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', fontWeight: 500 }}>
-              <Video size={14} style={{ color: 'var(--gold-400)' }} />
-              {freePreviewLabel}: {previewDetail}
+            <span className="hero-visual-info-label">
+              <Video size={14} />
+              {labels.freePreviewLabel || 'FREE PREVIEW'}: {labels.previewDetail || ''}
             </span>
-            <span style={{ color: 'var(--gold-400)', fontFamily: 'var(--font-mono)' }}>
-              {previewDuration}
-            </span>
+            <span className="hero-visual-duration">{previewDuration}</span>
           </div>
         </div>
 
-        {/* Session list — times from config, titles from i18n */}
-        <div className="hero-visual-sessions">
-          {sessions.map((session, index) => {
-            const title = sessionTitles[index] || `Session ${index + 1}`;
+        {/* Session pills: chevron + mono title left, mono time right */}
+        <ul className="hero-visual-sessions">
+          {(labels.sessions || []).map((label, idx) => (
+            <li
+              key={label}
+              className={`hero-visual-session ${sessions[idx]?.isActive ? 'active' : ''}`}
+            >
+              <span className="hero-visual-session-title">
+                <span className="hero-visual-session-chevron" aria-hidden="true">
+                  ›
+                </span>
+                {label}
+              </span>
+              <span className="hero-visual-session-time">{sessions[idx]?.time || ''}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      {/* Optional floating income chips (config-gated, default off) */}
+      {showIncomeChips && (
+        <div className="hero-income-chips">
+          {incomeChips.map((chip) => {
+            const IconComponent = CHIP_ICON_MAP[chip.amountKey] || Coins;
+            const amount = resolveAmount(chip.amountKey);
+            const label = resolveChipLabel(chip.labelKey).replace(
+              /{amount}/g,
+              amount.toLocaleString('en-US')
+            );
             return (
               <div
-                key={index}
-                className={`hero-visual-session ${session.isActive ? 'active' : 'inactive'}`}
+                key={chip.amountKey}
+                className={`hero-income-chip hero-income-chip-${chip.position || 'top-left'}`}
               >
-                <span>&rsaquo; {title}</span>
-                <span className="hero-visual-session-time">{session.time}</span>
+                <IconComponent size={14} />
+                <span>{label}</span>
               </div>
             );
           })}
         </div>
-      </div>
+      )}
     </div>
   );
 };

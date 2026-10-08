@@ -1,170 +1,198 @@
 /**
  * @fileoverview Admin Students Page
- * View all registered students with enrollment status
+ *
+ * Student management interface with search, status filters, and enrollment
+ * details. Loading state uses inline shimmer rows that match the real
+ * admin-table-row markup exactly, so styling is 100% consistent.
+ *
  * Path: apps/web/pages/admin/students/index.jsx
  */
-
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/router';
-import Link from 'next/link';
-import {
-  LayoutDashboard, CreditCard, Users, BookOpen, Settings, LogOut,
-  Code2, Search,
-} from 'lucide-react';
+import { Search, Eye, Mail, Phone } from 'lucide-react';
 import SEOHead from '../../../components/shared/SEOHead';
+import AdminLayout from '../../../components/admin/AdminLayout';
+import { useLanguage } from '../../../context/LanguageContext';
 import { useToast } from '../../../context/ToastContext';
 import apiClient from '../../../lib/api';
+import { getItem } from '../../../lib/storage';
 
-/**
- * AdminStudentsPage - Student management view
- */
 const AdminStudentsPage = () => {
   const router = useRouter();
+  const { t } = useLanguage();
   const toast = useToast();
+
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [selectedStudent, setSelectedStudent] = useState(null);
 
-  const handleLogout = () => {
-    localStorage.removeItem('admin_token');
-    localStorage.removeItem('admin_user');
-    router.push('/admin/login');
-  };
-
-  useEffect(() => {
-    const token = localStorage.getItem('admin_token');
+  const fetchStudents = useCallback(async () => {
+    const token = getItem('admin_token');
     if (!token) {
       router.push('/admin/login');
       return;
     }
-    apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
-    const fetchStudents = async () => {
-      try {
-        const response = await apiClient.get('/admin/students');
-        if (response && response.success) {
-          setStudents(response.data || []);
-        }
-      } catch (err) {
-        if (err?.response?.status === 401) {
-          localStorage.removeItem('admin_token');
-          router.push('/admin/login');
-        } else {
-          toast.error('Failed to load students.');
-        }
-      } finally {
-        setLoading(false);
+    setLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (statusFilter !== 'all') params.append('status', statusFilter);
+      if (searchTerm) params.append('search', searchTerm);
+
+      const response = await apiClient.get(`/admin/students?${params.toString()}`);
+      if (response.success) {
+        setStudents(response.data || []);
+      } else {
+        toast.error(response.message || 'Failed to load students');
       }
-    };
+    } catch (err) {
+      if (err?.response?.status === 401) {
+        router.push('/admin/login');
+      } else {
+        toast.error('Failed to load students');
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [statusFilter, searchTerm, router, toast]);
+
+  useEffect(() => {
     fetchStudents();
-  }, [router]);
+  }, [fetchStudents]);
 
-  const filteredStudents = students.filter((s) => {
-    if (!searchTerm) return true;
-    const term = searchTerm.toLowerCase();
-    return (
-      (s.full_name && s.full_name.toLowerCase().includes(term)) ||
-      (s.phone && s.phone.includes(term)) ||
-      (s.email && s.email.toLowerCase().includes(term))
-    );
-  });
-
-  const navItems = [
-    { path: '/admin', label: 'Dashboard', icon: LayoutDashboard, exact: true },
-    { path: '/admin/payments', label: 'Payments', icon: CreditCard },
-    { path: '/admin/students', label: 'Students', icon: Users },
-    { path: '/admin/courses', label: 'Courses', icon: BookOpen },
-  ];
-
-  const isActive = (path, exact) => {
-    if (exact) return router.pathname === path;
-    return router.pathname.startsWith(path);
+  const getStatusClass = (status) => {
+    if (status === 'active' || status === 'enrolled') return 'status-badge approved';
+    if (status === 'suspended' || status === 'banned') return 'status-badge rejected';
+    return 'status-badge pending';
   };
 
-  const getStatusBadge = (status) => {
-    if (status === 'approved' || status === true) return 'status-badge approved';
-    if (status === 'pending') return 'status-badge pending';
-    return 'status-badge rejected';
+  const formatDate = (dateString) => {
+    if (!dateString) return '—';
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
   };
+
+  /**
+   * Inline shimmer row — uses the EXACT same admin class names so it
+   * inherits all admin-table-row styling. .shimmer class triggers the
+   * background animation defined in components.css.
+   */
+  const renderShimmerRow = (index) => (
+    <div key={`shimmer-${index}`} className="admin-table-row">
+      <div className="admin-table-info">
+        <div className="admin-table-info-top">
+          <div className="admin-table-avatar shimmer" />
+          <div className="admin-table-name-block">
+            <span className="admin-table-name shimmer" style={{ width: '60%', height: '0.875rem' }} />
+            <span className="admin-table-sub shimmer" style={{ width: '40%', height: '0.75rem' }} />
+          </div>
+          <span className="status-badge shimmer" style={{ width: '4rem', height: '1.25rem' }} />
+        </div>
+        <p className="admin-table-meta">
+          <span className="shimmer" style={{ display: 'inline-block', width: '8rem', height: '0.75rem' }} />
+        </p>
+      </div>
+      <div className="admin-table-actions-wrapper">
+        <div className="admin-table-meta-col">
+          <span className="shimmer" style={{ width: '6rem', height: '0.75rem' }} />
+        </div>
+        <div className="admin-table-action-btns">
+          <span className="shimmer" style={{ width: '2rem', height: '2rem', borderRadius: '0.5rem' }} />
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <>
-      <SEOHead title="Manage Students" />
-      <div className="admin-layout">
-        <aside className="admin-sidebar">
-          <Link href="/admin" className="admin-sidebar-brand">
-            <div className="admin-sidebar-logo"><Code2 /></div>
-            <div>
-              <span className="admin-sidebar-name"><span className="text-gradient-gold">ABYSSiNIA</span></span>
-              <span className="admin-sidebar-suffix">Admin Panel</span>
-            </div>
-          </Link>
-          <nav className="admin-nav">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              return (
-                <Link key={item.path} href={item.path} className={`admin-nav-link ${isActive(item.path, item.exact) ? 'active' : ''}`}>
-                  <Icon /><span>{item.label}</span>
-                </Link>
-              );
-            })}
-          </nav>
-          <div className="admin-nav-bottom">
-            <Link href="/admin/settings" className={`admin-nav-link ${isActive('/admin/settings', false) ? 'active' : ''}`}>
-              <Settings /><span>Settings</span>
-            </Link>
-            <button onClick={handleLogout} className="admin-nav-logout">
-              <LogOut /><span>Logout</span>
-            </button>
+      <SEOHead title="Students Management" />
+      <AdminLayout
+        title={t.admin?.students?.title || 'Students Management'}
+        subtitle="View and manage enrolled students"
+      >
+        <div className="admin-toolbar">
+          <div className="admin-search">
+            <Search size={16} />
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search by name, email, or phone..."
+            />
           </div>
-        </aside>
-
-        <div className="admin-main">
-          <header className="admin-header">
-            <div>
-              <h1 className="admin-header-title">Students</h1>
-              <p className="admin-header-subtitle">View and manage registered students</p>
-            </div>
-          </header>
-
-          <main className="admin-content">
-            <div className="admin-search">
-              <Search size={16} />
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search by name, phone, or email..."
-              />
-            </div>
-
-            {loading ? (
-              <div className="spinner"><div className="spinner-circle" /></div>
-            ) : filteredStudents.length === 0 ? (
-              <div className="empty-state">
-                <p className="empty-state-desc">{searchTerm ? 'No students match your search.' : 'No students registered yet.'}</p>
-              </div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                {filteredStudents.map((student) => (
-                  <div key={student.id} className="admin-table-row">
-                    <div className="admin-table-info">
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                        <span className="admin-table-name">{student.full_name}</span>
-                        <span className={getStatusBadge(student.is_enrolled ? 'approved' : student.payment_status)}>
-                          {student.is_enrolled ? 'Enrolled' : student.payment_status || 'N/A'}
-                        </span>
-                      </div>
-                      <p className="admin-table-meta">{student.phone}{student.email ? ` • ${student.email}` : ''}</p>
-                      <p className="admin-table-meta">Joined {new Date(student.created_at).toLocaleDateString()}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </main>
+          <select
+            className="admin-filter-select"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+          >
+            <option value="all">All Students</option>
+            <option value="enrolled">Enrolled</option>
+            <option value="active">Active</option>
+            <option value="suspended">Suspended</option>
+          </select>
         </div>
-      </div>
+
+        {loading ? (
+          <div className="admin-table-wrapper">
+            {Array.from({ length: 6 }).map((_, i) => renderShimmerRow(i))}
+          </div>
+        ) : students.length === 0 ? (
+          <div className="empty-state">
+            <p className="empty-state-desc">
+              {searchTerm || statusFilter !== 'all'
+                ? 'No students match your filters.'
+                : 'No students enrolled yet.'}
+            </p>
+          </div>
+        ) : (
+          <div className="admin-table-wrapper">
+            {students.map((student) => (
+              <div key={student.id} className="admin-table-row">
+                <div className="admin-table-info">
+                  <div className="admin-table-info-top">
+                    <div className="admin-table-avatar">
+                      {student.name?.charAt(0)?.toUpperCase() || '?'}
+                    </div>
+                    <div className="admin-table-name-block">
+                      <span className="admin-table-name">{student.name || 'Unknown'}</span>
+                      <span className="admin-table-sub">{student.email || '—'}</span>
+                    </div>
+                    <span className={getStatusClass(student.status)}>
+                      {student.status}
+                    </span>
+                  </div>
+                  <p className="admin-table-meta">
+                    <Phone size={12} /> {student.phone || 'N/A'}
+                    {' · '}
+                    <Mail size={12} /> {student.email || 'N/A'}
+                  </p>
+                </div>
+
+                <div className="admin-table-actions-wrapper">
+                  <div className="admin-table-meta-col">
+                    <span>Enrolled: {formatDate(student.enrolled_at || student.created_at)}</span>
+                    <span>Phase: {student.current_phase || '—'}</span>
+                  </div>
+                  <div className="admin-table-action-btns">
+                    <button
+                      onClick={() => setSelectedStudent(student)}
+                      className="admin-action-btn view"
+                      title="View details"
+                    >
+                      <Eye size={16} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </AdminLayout>
     </>
   );
 };

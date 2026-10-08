@@ -1,253 +1,255 @@
 /**
- * @fileoverview Main Navigation Component
- * Clean, organized header with profile dropdown menu.
- * 
- * Behavior:
- * - Stays fixed at top ALWAYS (position: fixed, not sticky)
- * - Scroll down: slides up and hides
- * - Scroll up: instantly reappears
- * 
+ * @fileoverview Main Navigation Header
+ *
+ * Premium sticky header built on the existing design-system classes
+ * (nav-header / nav-pills / nav-controls / nav-mobile-menu).
+ * Includes the config-gated "Earn" anchor pill (#earn) that jumps to
+ * the Learn & Earn section on the landing page.
+ *
  * Path: apps/web/components/shared/Navigation.jsx
  */
-
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import {
   Code2,
-  Zap,
+  Menu,
+  X,
   Sun,
   Moon,
   Globe,
-  Menu,
-  X,
+  LogIn,
+  Zap,
+  ChevronDown,
   User,
   Share2,
   LogOut,
   BookOpen,
-  ChevronDown,
-  LogIn,
-  UserPlus,
 } from 'lucide-react';
-import { useTheme } from '../../context/ThemeContext';
 import { useLanguage } from '../../context/LanguageContext';
+import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
+import { getPlatformConfig, getLandingEarnConfig } from '../../lib/config';
 
 const Navigation = () => {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
-  const [hidden, setHidden] = useState(false);
-  const dropdownRef = useRef(null);
-  const prevScrollRef = useRef(0);
   const router = useRouter();
-  const { theme, toggleTheme } = useTheme();
-  const { language, t, toggleLanguage } = useLanguage();
-  const { isAuthenticated, isEnrolled, user, logout } = useAuth();
+  const { t, language, toggleLanguage, mounted: langMounted } = useLanguage();
+  const { theme, toggleTheme, mounted: themeMounted } = useTheme();
+  const { isAuthenticated, user, logout } = useAuth();
 
-  /*
-   * Hide on scroll down, show on scroll up.
-   * Uses requestAnimationFrame for smooth performance.
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+
+  const platformConfig = getPlatformConfig();
+  const brand = platformConfig?.brand || {};
+  const brandName = brand.name || 'ABYSSiNIA';
+  const brandSuffix = brand.suffix || 'Tech Academy';
+
+  /* Earn pill is config-gated so marketing can disable it without a deploy */
+  const earnConfig = getLandingEarnConfig();
+  const earnEnabled = earnConfig?.enabled !== false;
+  const earnAnchorId = earnConfig?.anchorId || 'earn';
+
+  const navLabels = t.landing?.nav || {};
+  const isMounted = langMounted && themeMounted;
+  const isEnrolled = Boolean(user?.is_enrolled || user?.isEnrolled);
+
+  /**
+   * Sticky header elevation on scroll.
    */
   useEffect(() => {
-    let ticking = false;
-
-    const onScroll = () => {
-      if (!ticking) {
-        window.requestAnimationFrame(() => {
-          const current = window.scrollY;
-          const prev = prevScrollRef.current;
-
-          if (current < 20) {
-            setHidden(false);
-          } else if (current > prev && current > 80) {
-            setHidden(true);
-            setProfileDropdownOpen(false);
-          } else if (current < prev) {
-            setHidden(false);
-          }
-
-          prevScrollRef.current = current;
-          ticking = false;
-        });
-        ticking = true;
-      }
-    };
-
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
+    const handleScroll = () => setIsScrolled(window.scrollY > 20);
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll();
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  /**
+   * Close transient menus on route change.
+   */
   useEffect(() => {
-    setMobileMenuOpen(false);
-    setProfileDropdownOpen(false);
+    setIsMobileOpen(false);
+    setIsProfileOpen(false);
   }, [router.pathname]);
 
+  /**
+   * Close the profile dropdown on outside click.
+   */
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setProfileDropdownOpen(false);
-      }
+    if (!isProfileOpen) return undefined;
+    const handleOutside = (event) => {
+      if (!event.target.closest('.nav-profile-dropdown')) setIsProfileOpen(false);
     };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+    document.addEventListener('click', handleOutside);
+    return () => document.removeEventListener('click', handleOutside);
+  }, [isProfileOpen]);
 
-  const navItems = [
-    { path: '/', label: t.nav?.overview || 'Overview' },
-    { path: '/courses', label: t.nav?.courses || 'Courses' },
-    { path: '/portal', label: t.nav?.portal || 'Classroom', requiresEnrollment: true },
-    { path: '/pricing', label: t.nav?.tuition || 'Pricing' },
-    { path: '/contact', label: 'Contact' },
+  const handleLogout = useCallback(async () => {
+    if (typeof logout === 'function') await logout();
+    setIsProfileOpen(false);
+    router.push('/');
+  }, [logout, router]);
+
+  /* Desktop pill set — Earn inserted between Courses and Tuition */
+  const pills = [
+    { href: '/', label: navLabels.overview || 'Overview', exact: true },
+    { href: '/courses', label: navLabels.courses || 'Courses' },
+    ...(earnEnabled ? [{ href: '/#earn', label: navLabels.earn || 'Earn' }] : []),
+    { href: '/pricing', label: navLabels.tuition || 'Tuition' },
+    { href: '/contact', label: navLabels.contact || 'Contact' },
+    ...(isAuthenticated
+      ? [{ href: '/portal', label: navLabels.portal || 'Classroom Portal', dot: isEnrolled }]
+      : []),
   ];
 
-  const isActive = (path) => {
-    if (path === '/') return router.pathname === '/';
-    return router.pathname.startsWith(path);
-  };
-
-  const handleLogout = () => {
-    setMobileMenuOpen(false);
-    setProfileDropdownOpen(false);
-    logout();
-  };
+  const mobileLinks = pills;
 
   return (
-    <header
-      className="nav-header"
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        transform: hidden ? 'translateY(-100%)' : 'translateY(0)',
-        transition: 'transform 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
-        willChange: 'transform',
-      }}
-    >
+    <header className={`nav-header ${isScrolled ? 'nav-scrolled' : ''}`}>
       <div className="nav-inner">
-
-        {/* ── Logo ── */}
-        <Link href="/" className="nav-logo">
+        {/* Brand */}
+        <Link href="/" className="nav-logo" aria-label={brandName}>
           <div className="nav-logo-icon">
             <Code2 />
           </div>
           <div className="nav-logo-text">
-            <span className="nav-logo-name">
-              <span className="text-gradient-gold">ABYSSiNIA</span>
-            </span>
-            <span className="nav-logo-suffix">Tech Academy</span>
+            <span className="nav-logo-name">{brandName}</span>
+            <span className="nav-logo-suffix">{brandSuffix}</span>
           </div>
         </Link>
 
-        {/* ── Desktop Navigation Pills ── */}
-        <nav className="nav-pills">
-          {navItems.map((item) => {
-            if (item.requiresEnrollment && !isEnrolled) return null;
-            const active = isActive(item.path);
+        {/* Desktop pills */}
+        <nav className="nav-pills" aria-label="Primary">
+          {pills.map((pill) => {
+            const active = pill.exact
+              ? router.pathname === pill.href
+              : router.pathname.startsWith(pill.href);
             return (
-              <Link
-                key={item.path}
-                href={item.path}
-                className={`nav-pill ${active ? 'active' : ''}`}
-              >
-                {item.label}
-                {item.path === '/portal' && isEnrolled && (
-                  <span className="nav-pill-dot" />
-                )}
+              <Link key={pill.href} href={pill.href} className={`nav-pill ${active ? 'active' : ''}`}>
+                {pill.label}
+                {pill.dot ? <span className="nav-pill-dot" aria-hidden="true" /> : null}
               </Link>
             );
           })}
         </nav>
 
-        <div style={{ flex: 1 }} />
-
-        {/* ── Right Side Controls ── */}
+        {/* Controls */}
         <div className="nav-controls">
-          <button onClick={toggleLanguage} className="nav-icon-btn" title={language === 'en' ? 'Switch to Amharic' : 'Switch to English'} aria-label="Toggle language">
-            <Globe size={16} />
-            <span className="nav-icon-label">{language === 'en' ? 'EN' : 'አማ'}</span>
+          <button type="button" className="nav-icon-btn" onClick={toggleLanguage} disabled={!isMounted} aria-label="Switch language">
+            <Globe />
+            <span>{isMounted ? language.toUpperCase() : 'EN'}</span>
           </button>
 
-          <button onClick={toggleTheme} className="nav-icon-btn nav-theme-btn" title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'} aria-label="Toggle theme">
-            {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+          <button
+            type="button"
+            className="nav-icon-btn nav-theme-btn"
+            onClick={toggleTheme}
+            disabled={!isMounted}
+            aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+          >
+            {isMounted && (theme === 'dark' ? <Sun /> : <Moon />)}
           </button>
 
           {isAuthenticated ? (
-            <>
-              {isEnrolled && (
-                <span className="nav-enrolled-indicator" title="Enrolled">
-                  <span className="nav-enrolled-indicator-dot" />
+            <div className="nav-profile-dropdown">
+              <button
+                type="button"
+                className="nav-profile-trigger"
+                onClick={() => setIsProfileOpen((prev) => !prev)}
+                aria-expanded={isProfileOpen}
+                aria-haspopup="menu"
+              >
+                <span className="nav-profile-avatar">
+                  {(user?.full_name || user?.fullName || 'A').charAt(0).toUpperCase()}
                 </span>
-              )}
+                <ChevronDown size={14} className={`nav-profile-chevron ${isProfileOpen ? 'open' : ''}`} />
+              </button>
 
-              <div className="nav-profile-dropdown" ref={dropdownRef}>
-                <button
-                  onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
-                  className="nav-profile-trigger"
-                  aria-expanded={profileDropdownOpen}
-                  aria-haspopup="true"
-                >
-                  <span className="nav-profile-avatar">
-                    {(user?.full_name || 'U').charAt(0).toUpperCase()}
-                  </span>
-                  <ChevronDown size={14} className={`nav-profile-chevron ${profileDropdownOpen ? 'open' : ''}`} />
-                </button>
-
-                {profileDropdownOpen && (
-                  <div className="nav-dropdown-menu">
-                    <div className="nav-dropdown-header">
-                      <span className="nav-dropdown-user-name">{user?.full_name || 'Student'}</span>
-                      <span className="nav-dropdown-user-email">{user?.phone || user?.email || ''}</span>
-                    </div>
-                    <div className="nav-dropdown-divider" />
-                    <Link href="/profile" className="nav-dropdown-item" onClick={() => setProfileDropdownOpen(false)}><User size={16} /><span>{t.profile?.title || 'My Profile'}</span></Link>
-                    {isEnrolled && <Link href="/portal" className="nav-dropdown-item" onClick={() => setProfileDropdownOpen(false)}><BookOpen size={16} /><span>{t.nav?.portal || 'My Courses'}</span></Link>}
-                    <Link href="/profile/referrals" className="nav-dropdown-item" onClick={() => setProfileDropdownOpen(false)}><Share2 size={16} /><span>{t.referrals?.dashboardTitle || 'Referrals'}</span></Link>
-                    <div className="nav-dropdown-divider" />
-                    <button onClick={handleLogout} className="nav-dropdown-item nav-dropdown-logout"><LogOut size={16} /><span>{t.auth?.logout || 'Sign Out'}</span></button>
+              {isProfileOpen && (
+                <div className="nav-dropdown-menu" role="menu">
+                  <div className="nav-dropdown-header">
+                    <span className="nav-dropdown-user-name">{user?.full_name || user?.fullName || ''}</span>
+                    <span className="nav-dropdown-user-email">{user?.email || user?.phone || ''}</span>
                   </div>
-                )}
-              </div>
-            </>
+                  <div className="nav-dropdown-divider" />
+                  <Link href="/profile" className="nav-dropdown-item" role="menuitem">
+                    <User size={16} />
+                    {navLabels.myProfile || 'My Profile'}
+                  </Link>
+                  <Link href="/profile/referrals" className="nav-dropdown-item" role="menuitem">
+                    <Share2 size={16} />
+                    {navLabels.referralDashboard || 'Referral Dashboard'}
+                  </Link>
+                  <Link href="/portal" className="nav-dropdown-item" role="menuitem">
+                    <BookOpen size={16} />
+                    {navLabels.portal || 'Classroom Portal'}
+                  </Link>
+                  <div className="nav-dropdown-divider" />
+                  <button type="button" className="nav-dropdown-item nav-dropdown-logout" onClick={handleLogout} role="menuitem">
+                    <LogOut size={16} />
+                    {navLabels.logout || 'Logout'}
+                  </button>
+                </div>
+              )}
+            </div>
           ) : (
             <div className="nav-unauth-group">
-              <Link href="/auth/login" className="nav-signin-btn"><LogIn size={14} /><span>{t.auth?.signIn || 'Sign In'}</span></Link>
-              <Link href="/auth/register" className="nav-signin-btn"><UserPlus size={14} /><span>{t.auth?.register || 'Register'}</span></Link>
-              <Link href="/checkout" className="nav-enroll-btn">
-                <span className="nav-enroll-btn-bg" />
-                <span className="nav-enroll-btn-text"><Zap size={14} /><span>{t.nav?.enrollNow || 'Enroll Now'}</span></span>
+              <Link href="/auth/login" className="nav-signin-btn">
+                <LogIn size={15} />
+                <span>{navLabels.signIn || 'Sign In'}</span>
+              </Link>
+              <Link href="/auth/register" className="nav-enroll-btn">
+                <span className="nav-enroll-btn-bg" aria-hidden="true" />
+                <span className="nav-enroll-btn-text">
+                  <Zap size={15} />
+                  {navLabels.enroll || 'Enroll Now'}
+                </span>
               </Link>
             </div>
           )}
 
-          <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="nav-mobile-toggle" aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'} aria-expanded={mobileMenuOpen}>
-            {mobileMenuOpen ? <X size={18} /> : <Menu size={18} />}
+          <button
+            type="button"
+            className="nav-mobile-toggle"
+            onClick={() => setIsMobileOpen((prev) => !prev)}
+            aria-expanded={isMobileOpen}
+            aria-label={isMobileOpen ? 'Close menu' : 'Open menu'}
+          >
+            {isMobileOpen ? <X /> : <Menu />}
           </button>
         </div>
       </div>
 
-      {/* ── Mobile Navigation Menu ── */}
-      {mobileMenuOpen && (
-        <nav className="nav-mobile-menu">
-          {navItems.map((item) => {
-            if (item.requiresEnrollment && !isEnrolled) return null;
-            return <Link key={item.path} href={item.path} onClick={() => setMobileMenuOpen(false)} className={`nav-mobile-link ${isActive(item.path) ? 'active' : ''}`}>{item.label}</Link>;
-          })}
+      {/* Mobile menu */}
+      {isMobileOpen && (
+        <div className="nav-mobile-menu">
+          {mobileLinks.map((pill) => (
+            <Link key={pill.href} href={pill.href} className={`nav-mobile-link ${router.pathname === pill.href ? 'active' : ''}`}>
+              {pill.label}
+              {pill.dot ? <span className="nav-pill-dot" aria-hidden="true" /> : null}
+            </Link>
+          ))}
           <div className="nav-mobile-divider" />
           {isAuthenticated ? (
             <>
-              <Link href="/profile" onClick={() => setMobileMenuOpen(false)} className="nav-mobile-link"><User size={16} /> {t.profile?.title || 'My Profile'}</Link>
-              {isEnrolled && <Link href="/portal" onClick={() => setMobileMenuOpen(false)} className="nav-mobile-link"><BookOpen size={16} /> {t.nav?.portal || 'My Courses'}</Link>}
-              <Link href="/profile/referrals" onClick={() => setMobileMenuOpen(false)} className="nav-mobile-link"><Share2 size={16} /> {t.referrals?.dashboardTitle || 'Referral Dashboard'}</Link>
-              <button onClick={handleLogout} className="nav-mobile-logout"><LogOut size={16} /> {t.auth?.logout || 'Sign Out'}</button>
+              <Link href="/profile" className="nav-mobile-link">{navLabels.myProfile || 'My Profile'}</Link>
+              <Link href="/profile/referrals" className="nav-mobile-link">{navLabels.referralDashboard || 'Referral Dashboard'}</Link>
+              <button type="button" className="nav-mobile-logout" onClick={handleLogout}>
+                <LogOut size={18} />
+                {navLabels.logout || 'Logout'}
+              </button>
             </>
           ) : (
             <>
-              <Link href="/auth/login" onClick={() => setMobileMenuOpen(false)} className="nav-mobile-link"><LogIn size={16} /> {t.auth?.signIn || 'Sign In'}</Link>
-              <Link href="/checkout" onClick={() => setMobileMenuOpen(false)} className="nav-mobile-cta"><Zap size={16} /> {t.nav?.enrollNow || 'Enroll Now'}</Link>
+              <Link href="/auth/login" className="nav-mobile-link">{navLabels.signIn || 'Sign In'}</Link>
+              <Link href="/auth/register" className="nav-mobile-cta">
+                <Zap size={16} />
+                {navLabels.enroll || 'Enroll Now'}
+              </Link>
             </>
           )}
-        </nav>
+        </div>
       )}
     </header>
   );

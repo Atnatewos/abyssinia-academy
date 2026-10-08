@@ -1,10 +1,14 @@
 /**
  * @fileoverview Admin Payments Page
- * Full payment management with search, filter, tabs, approve/reject, detail modal,
- * and inline copy buttons for quick data access.
+ *
+ * Full payment management with search, filter, tabs, approve/reject,
+ * detail modal, and inline copy buttons for quick data access.
+ *
+ * Loading state uses shape-matched SkeletonTableRows so the shimmer
+ * columns align with the real table columns.
+ *
  * Path: apps/web/pages/admin/payments/index.jsx
  */
-
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import {
@@ -23,9 +27,25 @@ import { useLanguage } from '../../../context/LanguageContext';
 import { useToast } from '../../../context/ToastContext';
 import apiClient from '../../../lib/api';
 import { getItem } from '../../../lib/storage';
+import { SkeletonTableRows } from '../../../components/shared/Skeleton';
+
+/**
+ * Payment column shape for skeleton alignment.
+ * Each entry's width mirrors the real table's grid template.
+ */
+const PAYMENT_SKELETON_COLUMNS = [
+  { width: '2fr', type: 'avatar-text' },
+  { width: '1.5fr', type: 'text' },
+  { width: '1fr', type: 'pill' },
+  { width: '1.2fr', type: 'text' },
+  { width: '0.8fr', type: 'text' },
+];
 
 /**
  * Inline mini copy button for table cells.
+ *
+ * @param {object} props - Component props
+ * @param {string} props.text - Text to copy to clipboard
  */
 const MiniCopyButton = ({ text }) => {
   const [copied, setCopied] = useState(false);
@@ -33,7 +53,6 @@ const MiniCopyButton = ({ text }) => {
   const handleCopy = useCallback(async (e) => {
     e.stopPropagation();
     if (!text) return;
-
     try {
       await navigator.clipboard.writeText(text);
       setCopied(true);
@@ -103,23 +122,22 @@ const AdminPaymentsPage = () => {
     }
 
     setLoading(true);
-
     try {
       const endpoint =
         activeTab === 'all'
           ? '/admin/payments'
           : `/admin/payments?status=${activeTab}`;
-
       const response = await apiClient.get(endpoint);
-
-      if (response && response.success) {
+      if (response.success) {
         setPayments(response.data || []);
+      } else {
+        toast.error(response.message || 'Failed to load payments');
       }
     } catch (err) {
       if (err?.response?.status === 401) {
         router.push('/admin/login');
       } else {
-        toast.error('Failed to load payments.');
+        toast.error('Failed to load payments');
       }
     } finally {
       setLoading(false);
@@ -130,83 +148,80 @@ const AdminPaymentsPage = () => {
     fetchPayments();
   }, [fetchPayments]);
 
-  const handleAction = useCallback(async (paymentId, action) => {
+  const handleAction = async (paymentId, action) => {
     setActionLoading(paymentId);
-
     try {
-      const endpoint =
-        action === 'approve'
-          ? `/admin/payments/${paymentId}/approve`
-          : `/admin/payments/${paymentId}/reject`;
-
-      const response = await apiClient.patch(endpoint);
-
-      if (response && response.success) {
-        toast.success(`Payment ${action}d successfully.`);
+      const response = await apiClient.post(`/admin/payments/${paymentId}/${action}`);
+      if (response.success) {
+        toast.success(response.message || `Payment ${action}d successfully`);
         fetchPayments();
+        if (action === 'approve' || action === 'reject') {
+          setShowDetailModal(false);
+          setSelectedPayment(null);
+        }
       } else {
-        toast.error(response?.message || 'Action failed.');
+        toast.error(response.message || `Failed to ${action} payment`);
       }
     } catch (err) {
-      const message = err?.response?.data?.message || 'Failed to process payment.';
-      toast.error(message);
+      toast.error(`Failed to ${action} payment`);
     } finally {
       setActionLoading(null);
     }
-  }, [fetchPayments, toast]);
+  };
 
-  const handleViewDetail = useCallback((payment) => {
+  const handleViewDetail = (payment) => {
     setSelectedPayment(payment);
     setShowDetailModal(true);
-  }, []);
+  };
 
-  const handleCloseDetail = useCallback(() => {
+  const handleCloseDetail = () => {
     setShowDetailModal(false);
     setSelectedPayment(null);
-  }, []);
+  };
+
+  const getStatusClass = (status) => {
+    if (status === 'approved') return 'status-badge approved';
+    if (status === 'rejected') return 'status-badge rejected';
+    return 'status-badge pending';
+  };
 
   const filteredPayments = payments.filter((payment) => {
     if (!searchTerm) return true;
-    const term = searchTerm.toLowerCase();
+    const search = searchTerm.toLowerCase();
     return (
-      (payment.user_name && payment.user_name.toLowerCase().includes(term)) ||
-      (payment.full_name && payment.full_name.toLowerCase().includes(term)) ||
-      (payment.user_phone && payment.user_phone.includes(term)) ||
-      (payment.reference && payment.reference.toLowerCase().includes(term))
+      payment.user_name?.toLowerCase().includes(search) ||
+      payment.full_name?.toLowerCase().includes(search) ||
+      payment.user_phone?.toLowerCase().includes(search) ||
+      payment.phone?.toLowerCase().includes(search) ||
+      payment.reference?.toLowerCase().includes(search)
     );
   });
 
-  const getStatusClass = (status) => {
-    const classes = {
-      pending: 'status-badge pending',
-      approved: 'status-badge approved',
-      rejected: 'status-badge rejected',
-    };
-    return classes[status] || classes.pending;
-  };
-
   return (
     <>
-      <SEOHead title="Manage Payments" />
+      <SEOHead title="Payments Management" />
       <AdminLayout
-        title={t.admin?.payments || 'Payments'}
-        subtitle="Review and manage payment submissions"
+        title={t.admin?.payments?.title || 'Payments Management'}
+        subtitle="Review, approve, and manage student payments"
       >
-        {/* Tabs */}
-        <div className="admin-tabs">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`admin-tab ${activeTab === tab.id ? 'active' : ''}`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-
-        {/* Search & Filters */}
+        {/* Toolbar */}
         <div className="admin-toolbar">
+          <div className="admin-tabs">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                className={`admin-tab ${activeTab === tab.id ? 'active' : ''}`}
+                onClick={() => setActiveTab(tab.id)}
+              >
+                {tab.label}
+                <span className="admin-tab-count">
+                  {tab.id === 'all'
+                    ? payments.length
+                    : payments.filter((p) => p.status === tab.id).length}
+                </span>
+              </button>
+            ))}
+          </div>
           <div className="admin-search">
             <Search size={16} />
             <input
@@ -224,9 +239,7 @@ const AdminPaymentsPage = () => {
 
         {/* Payments List */}
         {loading ? (
-          <div className="spinner" style={{ marginTop: '2rem' }}>
-            <div className="spinner-circle" />
-          </div>
+          <SkeletonTableRows columns={PAYMENT_SKELETON_COLUMNS} rows={6} />
         ) : filteredPayments.length === 0 ? (
           <div className="empty-state">
             <p className="empty-state-desc">
@@ -268,7 +281,6 @@ const AdminPaymentsPage = () => {
                   <span className="admin-table-amount">
                     {payment.amount?.toLocaleString()} ETB
                   </span>
-
                   <div className="admin-table-action-btns">
                     <button
                       onClick={() => handleViewDetail(payment)}
@@ -277,7 +289,6 @@ const AdminPaymentsPage = () => {
                     >
                       <Eye size={16} />
                     </button>
-
                     {payment.status === 'pending' && (
                       <>
                         <button

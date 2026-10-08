@@ -879,3 +879,2040 @@
   height: 100%;
   border: none;
 }
+
+/* ============================================================================
+   LEARN & EARN ENGINE — centerpiece section
+   ============================================================================ */
+.landing-earn-3d {
+  padding: 4rem 1rem;
+  max-width: 1100px;
+  margin: 0 auto;
+  scroll-margin-top: 96px;
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+}
+
+.earn-steps-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.25rem;
+}
+
+.earn-step-card {
+  background: var(--glass-bg);
+  border: 1px solid var(--border-main);
+  border-radius: 1.25rem;
+  padding: 1.75rem 1.5rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.earn-step-icon {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 1rem;
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  color: var(--accent-gold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.earn-step-title {
+  font-size: 1.0625rem;
+  font-weight: 800;
+  color: var(--text-main);
+  margin: 0;
+}
+
+.earn-step-desc {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* Commission chain */
+.earn-chain-block {
+  background: var(--glass-bg);
+  border: 1px solid var(--border-main);
+  border-radius: 1.25rem;
+  padding: 2rem 1.5rem;
+  text-align: center;
+}
+
+.earn-chain-title {
+  font-size: 1.125rem;
+  font-weight: 800;
+  color: var(--text-main);
+  margin: 0 0 1.5rem;
+}
+
+.earn-chain {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.earn-chain-node {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.75rem 1.25rem;
+  border-radius: 0.875rem;
+  background: var(--surface-secondary);
+  border: 1px solid var(--border-medium);
+  min-width: 92px;
+}
+
+.earn-chain-node.earn-chain-you {
+  border-color: var(--accent-gold);
+  background: rgba(245, 158, 11, 0.08);
+}
+
+.earn-chain-name {
+  font-size: 0.6875rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+  text-transform: uppercase;
+}
+
+.earn-chain-you .earn-chain-name {
+  color: var(--accent-gold);
+}
+
+.earn-chain-amount {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--text-main);
+}
+
+.earn-chain-arrow {
+  color: var(--text-dim);
+  font-size: 1rem;
+}
+
+.earn-chain-note {
+  margin: 1.25rem 0 0;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+/* Calculator + bonus ladder columns */
+.earn-columns {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.earn-calc-card {
+  background: var(--glass-bg);
+  border: 1px solid var(--border-main);
+  border-radius: 1.25rem;
+  padding: 1.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.earn-calc-skeleton {
+  min-height: 320px;
+  border-radius: 1.25rem;
+  background: var(--bg-skeleton);
+  animation: pulse 1.6s ease-in-out infinite;
+}
+
+.earn-calc-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--text-main);
+  margin: 0;
+}
+
+.earn-calc-title svg {
+  color: var(--accent-gold);
+}
+
+.earn-calc-slider-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.earn-calc-slider-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.earn-calc-slider-label strong {
+  color: var(--accent-gold);
+}
+
+.earn-calc-slider-row input[type='range'] {
+  width: 100%;
+  accent-color: var(--accent-gold);
+  cursor: pointer;
+}
+
+.earn-calc-breakdown {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  border-top: 1px solid var(--border-light);
+  padding-top: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.earn-calc-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 0.875rem;
+  color: var(--text-main);
+  font-weight: 700;
+}
+
+.earn-calc-total strong {
+  font-size: 1.5rem;
+  font-weight: 900;
+  color: var(--accent-gold);
+}
+
+.earn-calc-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.75rem;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #0f172a;
+  font-weight: 800;
+  font-size: 0.8125rem;
+  text-decoration: none;
+  transition: transform 0.2s ease;
+}
+
+.earn-calc-cta:hover {
+  transform: translateY(-2px);
+}
+
+.earn-disclaimer {
+  font-size: 0.6875rem;
+  color: var(--text-dim);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.earn-bonus-block {
+  background: var(--glass-bg);
+  border: 1px solid var(--border-main);
+  border-radius: 1.25rem;
+  padding: 1.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.earn-bonus-title {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--text-main);
+  margin: 0;
+}
+
+.earn-bonus-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.earn-chip {
+  padding: 0.375rem 0.75rem;
+  border-radius: 9999px;
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  color: var(--accent-gold);
+  font-size: 0.6875rem;
+  font-weight: 700;
+}
+
+/* Trust footer */
+.earn-trust-block {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.earn-trust-title {
+  text-align: center;
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--text-main);
+  margin: 0;
+}
+
+.earn-trust-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+}
+
+.earn-trust-card {
+  background: var(--surface-secondary);
+  border: 1px solid var(--border-light);
+  border-radius: 1rem;
+  padding: 1.25rem 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  text-align: center;
+}
+
+.earn-trust-card svg {
+  color: var(--accent-gold);
+}
+
+.earn-trust-card strong {
+  font-size: 0.8125rem;
+  color: var(--text-main);
+}
+
+.earn-trust-card span {
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.earn-payout-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.625rem;
+  flex-wrap: wrap;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.earn-payout-row svg {
+  color: var(--accent-gold);
+}
+
+.earn-payout-method {
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  background: var(--surface-secondary);
+  border: 1px solid var(--border-light);
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.earn-payout-note {
+  color: var(--text-dim);
+}
+
+/* ============================================================================
+   SOCIAL PROOF STRIP
+   ============================================================================ */
+.social-proof-strip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2rem;
+  flex-wrap: wrap;
+  padding: 0.875rem 1rem;
+  margin: 0 auto;
+  max-width: 1100px;
+  background: var(--glass-bg);
+  border: 1px solid var(--border-light);
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.social-proof-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.social-proof-item svg {
+  color: var(--accent-gold);
+}
+
+.social-proof-item strong {
+  color: var(--text-main);
+  font-weight: 800;
+}
+
+/* ============================================================================
+   HERO DUAL BADGE + CTA ACTIONS + PRICING HINT + FIVE-STAT BAR
+   ============================================================================ */
+.hero-badge-row {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.hero-badge-earn {
+  border-color: rgba(16, 185, 129, 0.35);
+  color: var(--color-success, #10b981);
+}
+
+.hero-badge-earn svg {
+  color: var(--color-success, #10b981);
+  fill: none;
+}
+
+.cta-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.pricing-referral-hint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin: 2rem auto 0;
+  max-width: 34rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.75rem;
+  background: rgba(16, 185, 129, 0.06);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  color: var(--color-success, #10b981);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.stats-bar-five {
+  grid-template-columns: repeat(5, 1fr);
+}
+
+/* ============================================================================
+   LIGHT THEME REFINEMENTS
+   ============================================================================ */
+.light-theme .landing-phase-outcome-tag {
+  background: rgba(140, 120, 90, 0.06);
+  border-color: rgba(140, 120, 90, 0.18);
+}
+
+.light-theme .landing-pricing-eyebrow {
+  color: var(--gold-700);
+  background: rgba(180, 83, 9, 0.08);
+}
+
+.light-theme .earn-step-card,
+.light-theme .earn-chain-block,
+.light-theme .earn-calc-card,
+.light-theme .earn-bonus-block {
+  background: var(--bg-card-solid);
+  box-shadow: var(--shadow-md);
+}
+
+.light-theme .social-proof-strip {
+  background: var(--bg-card-solid);
+  box-shadow: var(--shadow-sm);
+}
+
+.light-theme .earn-chain-amount,
+.light-theme .earn-calc-total strong {
+  color: var(--gold-700);
+}
+
+/* ============================================================================
+   RESPONSIVE + REDUCED MOTION
+   ============================================================================ */
+@media (max-width: 900px) {
+  .earn-steps-grid,
+  .earn-trust-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .earn-columns {
+    grid-template-columns: 1fr;
+  }
+  .stats-bar-five {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 560px) {
+  .earn-steps-grid,
+  .earn-trust-grid {
+    grid-template-columns: 1fr;
+  }
+  .stats-bar-five {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .social-proof-strip {
+    border-radius: 1.25rem;
+    gap: 0.875rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-reward-badge-3d,
+  .landing-phase-timeline::before,
+  .earn-calc-skeleton {
+    animation: none;
+  }
+  .landing-pricing-equal-card,
+  .landing-phase-card-3d {
+    transform: none;
+    transition: none;
+  }
+}
+
+/* ============================================================================
+   EARNINGS CALCULATOR — 4-LEVEL NETWORK MODEL
+   ============================================================================ */
+.earn-calc-chain {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  flex-wrap: wrap;
+  padding: 0.75rem;
+  background: var(--surface-secondary);
+  border: 1px solid var(--border-light);
+  border-radius: 0.75rem;
+}
+
+.earn-calc-chain-node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.125rem;
+  min-width: 3.25rem;
+  padding: 0.375rem 0.625rem;
+  border-radius: 0.625rem;
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+}
+
+.earn-calc-chain-label {
+  font-size: 0.5625rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+  text-transform: uppercase;
+}
+
+.earn-calc-chain-count {
+  font-size: 0.9375rem;
+  font-weight: 800;
+  color: var(--accent-gold);
+}
+
+.earn-calc-chain-arrow {
+  color: var(--text-dim);
+  font-size: 0.875rem;
+}
+
+.earn-calc-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border-light);
+}
+
+.earn-calc-rows-title {
+  font-size: 0.6875rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-dim);
+}
+
+.earn-calc-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+}
+
+.earn-calc-row-label {
+  font-weight: 700;
+  color: var(--text-main);
+  min-width: 5.5rem;
+}
+
+.earn-calc-row-math {
+  flex: 1;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+}
+
+.earn-calc-row-amount {
+  font-weight: 700;
+  color: var(--accent-gold);
+  white-space: nowrap;
+}
+
+.earn-calc-empty-note {
+  font-size: 0.6875rem;
+  color: var(--text-dim);
+  font-style: italic;
+  margin: 0;
+}
+
+.earn-calc-speed-note {
+  font-size: 0.6875rem;
+  color: var(--color-info, #3b82f6);
+  background: rgba(59, 130, 246, 0.06);
+  border: 1px solid rgba(59, 130, 246, 0.18);
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.625rem;
+  margin: 0.25rem 0 0;
+  line-height: 1.5;
+}
+
+/* Light theme refinements for the calculator block */
+.light-theme .earn-calc-chain {
+  background: var(--bg-card-solid);
+  box-shadow: var(--shadow-sm);
+}
+
+.light-theme .earn-calc-chain-count,
+.light-theme .earn-calc-row-amount {
+  color: var(--gold-700);
+}
+
+@media (max-width: 560px) {
+  .earn-calc-row {
+    flex-wrap: wrap;
+  }
+  .earn-calc-row-math {
+    width: 100%;
+    order: 3;
+  }
+}
+
+/* ============================================================================
+   CALCULATOR V2 — NUMBER INPUT BOXES + QUICK CHIPS
+   ============================================================================ */
+
+/* Input group: label + slider + number box + optional chips */
+.earn-calc-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.earn-calc-input-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.earn-calc-input-label {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.earn-calc-input-sub {
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+/* Slider + number input side-by-side */
+.earn-calc-input-row {
+  display: grid;
+  grid-template-columns: 1fr 5rem;
+  gap: 0.625rem;
+  align-items: center;
+}
+
+.earn-calc-input-row input[type='range'] {
+  width: 100%;
+  accent-color: var(--accent-gold);
+  cursor: pointer;
+}
+
+.earn-calc-input-row input[type='number'] {
+  width: 100%;
+  padding: 0.5rem 0.625rem;
+  border-radius: 0.5rem;
+  background: var(--surface-secondary);
+  border: 1px solid var(--border-medium);
+  color: var(--text-main);
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-align: center;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  -moz-appearance: textfield;
+}
+
+.earn-calc-input-row input[type='number']::-webkit-outer-spin-button,
+.earn-calc-input-row input[type='number']::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.earn-calc-input-row input[type='number']:focus {
+  outline: none;
+  border-color: var(--accent-gold);
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.18);
+}
+
+/* Quick-select chips row */
+.earn-calc-chips {
+  display: flex;
+  gap: 0.375rem;
+  flex-wrap: wrap;
+  padding-top: 0.25rem;
+}
+
+.earn-calc-chip {
+  padding: 0.25rem 0.625rem;
+  border-radius: 9999px;
+  background: transparent;
+  border: 1px solid var(--border-medium);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.earn-calc-chip:hover {
+  border-color: var(--accent-gold);
+  color: var(--accent-gold);
+}
+
+.earn-calc-chip.active {
+  background: rgba(245, 158, 11, 0.12);
+  border-color: var(--accent-gold);
+  color: var(--accent-gold);
+}
+
+/* Network size summary line */
+.earn-calc-network-total {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-align: center;
+  padding: 0.5rem 0;
+  margin: 0;
+}
+
+.earn-calc-network-total strong {
+  color: var(--accent-gold);
+  font-family: var(--font-mono);
+  font-weight: 800;
+}
+
+/* ── Light theme refinements ── */
+.light-theme .earn-calc-input-row input[type='number'] {
+  background: #ffffff;
+  border-color: rgba(140, 120, 90, 0.2);
+}
+
+.light-theme .earn-calc-input-row input[type='number']:focus {
+  border-color: var(--gold-700);
+  box-shadow: 0 0 0 3px rgba(180, 83, 9, 0.15);
+}
+
+.light-theme .earn-calc-chip {
+  border-color: rgba(140, 120, 90, 0.25);
+}
+
+.light-theme .earn-calc-chip.active {
+  background: rgba(180, 83, 9, 0.08);
+  border-color: var(--gold-700);
+  color: var(--gold-700);
+}
+
+.light-theme .earn-calc-network-total strong {
+  color: var(--gold-700);
+}
+
+/* ── Mobile: stack input row ── */
+@media (max-width: 480px) {
+  .earn-calc-input-row {
+    grid-template-columns: 1fr;
+  }
+  .earn-calc-input-row input[type='number'] {
+    width: 100%;
+  }
+}
+
+/* ── Reduced motion: kill chip transitions ── */
+@media (prefers-reduced-motion: reduce) {
+  .earn-calc-chip,
+  .earn-calc-input-row input[type='number'] {
+    transition: none;
+  }
+}
+
+/* ============================================================================
+   RAIL CARD 2 — NEXT TIER PROGRESS
+   Append-only block: paste at the VERY END of apps/web/styles/landing-3d.css
+   so these rules win the cascade over any earlier missing/conflicting ones.
+   Styles the "Next bonus within reach" rail card: row layout, separated
+   name/amount header, visible progress bar, and spaced footer counters.
+   ============================================================================ */
+.earn-next-tier-card {
+  background: var(--glass-bg);
+  border: 1px solid var(--border-main);
+  border-radius: 1.25rem;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.earn-next-tier-empty {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin: 0;
+  font-style: italic;
+}
+
+.earn-next-tier-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.earn-next-tier-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+/* Header row: tier name left, award amount right — never run together */
+.earn-next-tier-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.earn-next-tier-name {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-main);
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.earn-next-tier-amount {
+  font-size: 0.6875rem;
+  font-weight: 800;
+  color: var(--accent-gold);
+  font-family: var(--font-mono);
+  white-space: nowrap;
+}
+
+/* Progress track + fill */
+.earn-next-tier-bar {
+  height: 6px;
+  border-radius: 9999px;
+  background: var(--surface-secondary);
+  border: 1px solid var(--border-light);
+  overflow: hidden;
+  position: relative;
+  width: 100%;
+}
+
+.earn-next-tier-bar-fill {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #f59e0b, #10b981);
+  border-radius: 9999px;
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Footer row: "12 / 20" left, "8 more" right — never concatenated */
+.earn-next-tier-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.5rem;
+  font-size: 0.625rem;
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+}
+
+/* ============================================================================
+   RAIL CARD 3 — PAYOUT TIMELINE
+   Vertical dotted timeline explaining lock → payout flow, plus the
+   payout method chips row at the bottom of the card.
+   ============================================================================ */
+.earn-payout-card {
+  background: var(--glass-bg);
+  border: 1px solid var(--border-main);
+  border-radius: 1.25rem;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.earn-payout-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  list-style: none;
+  padding: 0;
+  margin: 0 0 0.75rem 0;
+  position: relative;
+}
+
+/* Connecting gradient line behind the dots */
+.earn-payout-timeline::before {
+  content: '';
+  position: absolute;
+  top: 0.625rem;
+  bottom: 0.625rem;
+  left: 0.875rem;
+  width: 2px;
+  background: linear-gradient(
+    to bottom,
+    rgba(245, 158, 11, 0.5),
+    rgba(16, 185, 129, 0.5)
+  );
+}
+
+.earn-payout-step {
+  display: grid;
+  grid-template-columns: 1.75rem 1fr;
+  gap: 0.75rem;
+  padding: 0.5rem 0;
+  position: relative;
+}
+
+.earn-payout-dot {
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 50%;
+  background: var(--bg-card-solid, var(--surface-secondary));
+  border: 2px solid var(--accent-gold);
+  color: var(--accent-gold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 2;
+  flex-shrink: 0;
+}
+
+.earn-payout-dot svg {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+/* Title and description stack vertically — never inline-run */
+.earn-payout-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  padding-top: 0.125rem;
+  min-width: 0;
+}
+
+.earn-payout-body strong {
+  font-size: 0.8125rem;
+  font-weight: 800;
+  color: var(--text-main);
+  display: block;
+}
+
+.earn-payout-body span {
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+  display: block;
+}
+
+/* Method chips row */
+.earn-payout-methods {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  flex-wrap: wrap;
+  padding-top: 0.625rem;
+  border-top: 1px solid var(--border-light);
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+}
+
+.earn-payout-methods svg {
+  color: var(--accent-gold);
+  flex-shrink: 0;
+}
+
+.earn-payout-method {
+  padding: 0.1875rem 0.5rem;
+  border-radius: 9999px;
+  background: var(--surface-secondary);
+  border: 1px solid var(--border-light);
+  font-weight: 700;
+  color: var(--text-main);
+  font-size: 0.625rem;
+  white-space: nowrap;
+}
+
+/* ============================================================================
+   LIGHT THEME REFINEMENTS — rail cards 2 & 3
+   ============================================================================ */
+.light-theme .earn-next-tier-card,
+.light-theme .earn-payout-card {
+  background: var(--bg-card-solid);
+  box-shadow: var(--shadow-md);
+}
+
+.light-theme .earn-next-tier-amount {
+  color: var(--gold-700);
+}
+
+.light-theme .earn-next-tier-bar-fill {
+  background: linear-gradient(90deg, #d97706, #059669);
+}
+
+.light-theme .earn-payout-dot {
+  background: #ffffff;
+  border-color: var(--gold-700);
+  color: var(--gold-700);
+}
+
+/* ============================================================================
+   RESPONSIVE + REDUCED MOTION — rail cards 2 & 3
+   ============================================================================ */
+@media (max-width: 560px) {
+  .earn-next-tier-foot {
+    flex-wrap: wrap;
+    gap: 0.25rem;
+  }
+
+  .earn-next-tier-head {
+    flex-wrap: wrap;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .earn-next-tier-bar-fill {
+    transition: none;
+  }
+}
+
+/* ============================================================================
+   EARN RAIL SPACING HARMONIZATION
+   Append this block to the VERY END of apps/web/styles/landing-3d.css.
+
+   What it normalizes:
+     1. Uniform 1.5rem vertical rhythm between all rail cards
+        (bonus ladder / next-tier progress / payout timeline).
+     2. Removes stray margins so gaps never collapse or double up.
+     3. Stretches the rail column to match the taller calculator column,
+        and lets the last card absorb leftover height — no empty void
+        beside the calculator on desktop.
+     4. Equalizes internal padding across all three rail cards.
+     5. Pins the payout-method chips to the bottom of the stretched card
+        so the timeline content stays top-aligned.
+   ============================================================================ */
+
+/* Column pair: stretch both columns to the same height so the rail
+   never ends mid-air next to the taller calculator card */
+.earn-columns {
+  align-items: stretch;
+}
+
+/* Rail becomes a plain full-height flex column (sticky + internal scroll
+   are no longer needed once the rail matches the calculator height) */
+.earn-rail {
+  position: static;
+  top: auto;
+  max-height: none;
+  overflow: visible;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding-right: 0;
+  scrollbar-width: none;
+}
+
+.earn-rail::-webkit-scrollbar {
+  display: none;
+}
+
+/* Kill any inherited or stray margins on rail children so the flex gap
+   is the single source of truth for vertical spacing */
+.earn-rail > * {
+  margin: 0;
+}
+
+/* Equal internal padding for all three rail cards */
+.earn-bonus-block,
+.earn-next-tier-card,
+.earn-payout-card {
+  padding: 1.5rem;
+}
+
+/* The last rail card absorbs leftover vertical space, filling the column
+   edge-to-edge instead of leaving a void under it */
+.earn-payout-card {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Keep the method chips anchored to the card bottom when stretched */
+.earn-payout-card .earn-payout-methods {
+  margin-top: auto;
+  padding-top: 0.875rem;
+}
+
+/* Slightly airier rhythm between next-tier progress rows */
+.earn-next-tier-list {
+  gap: 1rem;
+}
+
+/* Bonus ladder chips get a touch more breathing room */
+.earn-bonus-chips {
+  gap: 0.5rem;
+}
+
+/* Mobile: rail stacks naturally; stretch rules become no-ops */
+@media (max-width: 1024px) {
+  .earn-columns {
+    align-items: start;
+  }
+
+  .earn-rail {
+    gap: 1.25rem;
+  }
+
+  .earn-payout-card {
+    flex: 0 0 auto;
+  }
+}
+
+/**
+ * Abyssinia Academy — Landing Page Income-Opportunity Styles
+ *
+ * APPEND this block to the VERY END of apps/web/styles/landing-3d.css.
+ * Styles the new income band (3 cards), hero income subline, and
+ * floating income chips overlaid on the hero visual.
+ *
+ * All colors resolve through CSS custom properties from themes.css.
+ * Light-theme overrides are grouped at the end of the block.
+ */
+
+/* ============================================================================
+   INCOME BAND — 3-card opportunity strip
+   ============================================================================ */
+.landing-income-band {
+  padding: 4.5rem 1rem;
+  max-width: 1180px;
+  margin: 0 auto;
+}
+
+.income-band-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.25rem;
+  margin-top: 2.5rem;
+}
+
+.income-band-card {
+  position: relative;
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border-main);
+  border-radius: 1.25rem;
+  padding: 1.75rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.income-band-card:hover {
+  transform: translateY(-6px);
+  border-color: rgba(245, 158, 11, 0.45);
+  box-shadow: 0 24px 60px -12px var(--glow-color);
+}
+
+.income-band-icon {
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 0.875rem;
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  color: var(--accent-gold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.25rem;
+}
+
+.income-band-amount {
+  font-size: 2.25rem;
+  font-weight: 900;
+  color: var(--text-main);
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.income-band-amount-unit {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--accent-gold);
+  letter-spacing: 0.05em;
+}
+
+.income-band-title {
+  font-size: 1.0625rem;
+  font-weight: 800;
+  color: var(--text-main);
+  margin: 0;
+}
+
+.income-band-unit {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent-gold);
+  margin: 0;
+}
+
+.income-band-desc {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  line-height: 1.55;
+  margin: 0;
+}
+
+.income-band-cta {
+  display: flex;
+  justify-content: center;
+  margin-top: 2rem;
+}
+
+/* ============================================================================
+   HERO — income subline + floating chips
+   ============================================================================ */
+.hero-income-subline {
+  font-size: 0.9375rem;
+  color: var(--accent-gold);
+  font-weight: 600;
+  line-height: 1.5;
+  margin: 0.75rem 0 0;
+  max-width: 34rem;
+  padding: 0.625rem 1rem;
+  background: rgba(245, 158, 11, 0.06);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  border-radius: 0.625rem;
+  display: inline-block;
+}
+
+.hero-income-chips {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 3;
+}
+
+.hero-income-chip {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.4375rem 0.75rem;
+  border-radius: 9999px;
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  color: var(--accent-gold);
+  font-size: 0.6875rem;
+  font-weight: 800;
+  font-family: var(--font-mono);
+  white-space: nowrap;
+  box-shadow: 0 10px 30px -8px rgba(0, 0, 0, 0.5);
+  animation: income-chip-float 6s ease-in-out infinite;
+}
+
+.hero-income-chip svg {
+  color: var(--accent-gold);
+}
+
+.hero-income-chip-top-left {
+  top: 18%;
+  left: -4%;
+  animation-delay: 0s;
+}
+
+.hero-income-chip-top-right {
+  top: 30%;
+  right: -2%;
+  animation-delay: 1.2s;
+}
+
+.hero-income-chip-bottom-right {
+  bottom: 22%;
+  right: 6%;
+  animation-delay: 2.4s;
+}
+
+@keyframes income-chip-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+/* ============================================================================
+   LIGHT THEME REFINEMENTS
+   ============================================================================ */
+.light-theme .income-band-card {
+  background: var(--bg-card-solid);
+  box-shadow: var(--shadow-md);
+}
+
+.light-theme .income-band-amount {
+  color: var(--text-main);
+}
+
+.light-theme .income-band-amount-unit,
+.light-theme .income-band-unit {
+  color: var(--gold-700);
+}
+
+.light-theme .income-band-icon {
+  background: rgba(180, 83, 9, 0.08);
+  border-color: rgba(180, 83, 9, 0.3);
+  color: var(--gold-700);
+}
+
+.light-theme .hero-income-subline {
+  color: var(--gold-700);
+  background: rgba(180, 83, 9, 0.06);
+  border-color: rgba(180, 83, 9, 0.25);
+}
+
+.light-theme .hero-income-chip {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(180, 83, 9, 0.4);
+  color: var(--gold-700);
+  box-shadow: 0 8px 24px -6px rgba(0, 0, 0, 0.15);
+}
+
+.light-theme .hero-income-chip svg {
+  color: var(--gold-700);
+}
+
+/* ============================================================================
+   RESPONSIVE + REDUCED MOTION
+   ============================================================================ */
+@media (max-width: 680px) {
+  .income-band-grid {
+    grid-template-columns: 1fr;
+    max-width: 28rem;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .hero-income-chip {
+    font-size: 0.625rem;
+    padding: 0.375rem 0.625rem;
+  }
+
+  .hero-income-chip-top-left {
+    left: 0;
+  }
+
+  .hero-income-chip-top-right {
+    right: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-income-chip {
+    animation: none;
+  }
+
+  .income-band-card {
+    transition: none;
+  }
+}
+
+/* ============================================================================
+   POLISH PASS — chip placement, band grid balance, hero float restore
+   Append-only overrides; these rules win the cascade over earlier blocks.
+   ============================================================================ */
+
+/* Floating chips sit INSIDE the card bounds — no clipped stray dots */
+.hero-income-chips {
+  z-index: 4;
+}
+
+.hero-income-chip {
+  z-index: 4;
+  box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.55);
+}
+
+.hero-income-chip-top-left {
+  top: 10%;
+  left: 4%;
+}
+
+.hero-income-chip-top-right {
+  top: 26%;
+  right: 4%;
+}
+
+.hero-income-chip-bottom-right {
+  bottom: 16%;
+  right: 6%;
+}
+
+/* Session rows: title takes remaining width with ellipsis */
+.hero-visual-session-title {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Restore the signature float + subtle 3D tilt on the IDE window */
+@keyframes hero-window-float {
+  0%,
+  100% {
+    transform: perspective(1200px) rotateY(-2deg) translateY(0);
+  }
+  50% {
+    transform: perspective(1200px) rotateY(-2deg) translateY(-10px);
+  }
+}
+
+.hero-visual-window,
+.hero-visual-card {
+  animation: hero-window-float 6s ease-in-out infinite;
+}
+
+/* Income band: balanced three-column row with equal-height cards */
+.income-band-grid {
+  grid-template-columns: repeat(3, 1fr);
+  align-items: stretch;
+}
+
+.income-band-card {
+  height: 100%;
+}
+
+.income-band-desc {
+  flex: 1;
+}
+
+/* Tight suffix (hours) hugs the number; spaced suffix (ETB) breathes */
+.income-band-amount-unit {
+  margin-left: 0.25rem;
+}
+
+.income-band-amount-unit-tight {
+  margin-left: 0;
+}
+
+@media (max-width: 900px) {
+  .income-band-grid {
+    grid-template-columns: 1fr;
+    max-width: 30rem;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+/* Light theme: lifted window shadow keeps the float readable on cream */
+.light-theme .hero-visual-window,
+.light-theme .hero-visual-card {
+  box-shadow: var(--shadow-lg);
+}
+
+.light-theme .hero-income-chip {
+  box-shadow: 0 10px 26px -8px rgba(15, 23, 42, 0.25);
+}
+
+/* Reduced motion: freeze the float, keep the information */
+@media (prefers-reduced-motion: reduce) {
+  .hero-visual-window,
+  .hero-visual-card,
+  .hero-income-chip {
+    animation: none;
+    transform: none;
+  }
+}
+
+/* ============================================================================
+   HERO VISUAL — exact-match IDE card
+   Filename-only top bar, inset info bar, and bordered session pills with
+   mono typography. Appended last so these rules win over earlier blocks.
+   ============================================================================ */
+.hero-visual {
+  position: relative;
+}
+
+.hero-visual-window {
+  background: var(--bg-card-solid, #0d1420);
+  border: 1px solid rgba(245, 158, 11, 0.22);
+  border-radius: 1.25rem;
+  padding: 1.25rem;
+  box-shadow: 0 24px 60px -20px rgba(0, 0, 0, 0.55);
+}
+
+.hero-visual-topbar {
+  display: flex;
+  justify-content: flex-end;
+  padding-bottom: 0.875rem;
+  border-bottom: 1px solid var(--border-light);
+  margin-bottom: 1rem;
+}
+
+.hero-visual-filename {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--text-dim);
+}
+
+.hero-visual-preview {
+  position: relative;
+  border-radius: 0.875rem;
+  overflow: hidden;
+  background: #05070c;
+}
+
+.hero-visual-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  opacity: 0.85;
+}
+
+.hero-visual-preview-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(180deg, rgba(5, 7, 12, 0.25) 0%, rgba(5, 7, 12, 0.55) 100%);
+}
+
+.hero-visual-play-btn {
+  width: 4rem;
+  height: 4rem;
+  border-radius: 50%;
+  background: var(--accent-gold);
+  color: #10141d;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10px 30px -8px rgba(245, 158, 11, 0.5);
+  transition: transform 0.2s ease;
+}
+
+.hero-visual-play-btn:hover {
+  transform: scale(1.06);
+}
+
+.hero-visual-play-btn svg {
+  width: 1.5rem;
+  height: 1.5rem;
+  fill: currentColor;
+  margin-left: 2px;
+}
+
+/* Inset info bar pinned inside the preview */
+.hero-visual-info {
+  position: absolute;
+  left: 0.75rem;
+  right: 0.75rem;
+  bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  background: rgba(8, 11, 18, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-radius: 0.625rem;
+  padding: 0.625rem 0.875rem;
+}
+
+.hero-visual-info-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #f4f6fa;
+  letter-spacing: 0.02em;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hero-visual-info-label svg {
+  color: var(--accent-gold);
+  flex-shrink: 0;
+}
+
+.hero-visual-duration {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--accent-gold);
+  flex-shrink: 0;
+}
+
+/* Session pills */
+.hero-visual-sessions {
+  list-style: none;
+  margin: 1rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.hero-visual-session {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  border: 1px solid var(--border-light);
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 0.625rem;
+  padding: 0.75rem 1rem;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.hero-visual-session:hover {
+  border-color: var(--border-medium);
+}
+
+.hero-visual-session-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hero-visual-session-chevron {
+  color: var(--text-dim);
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.hero-visual-session-time {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  flex-shrink: 0;
+}
+
+.hero-visual-session.active {
+  border-color: rgba(245, 158, 11, 0.35);
+  background: rgba(245, 158, 11, 0.05);
+}
+
+.hero-visual-session.active .hero-visual-session-title,
+.hero-visual-session.active .hero-visual-session-chevron {
+  color: var(--accent-gold);
+}
+
+/* Light theme parity */
+.light-theme .hero-visual-window {
+  background: var(--bg-card-solid);
+  border-color: rgba(180, 83, 9, 0.25);
+  box-shadow: var(--shadow-lg);
+}
+
+.light-theme .hero-visual-session {
+  background: rgba(140, 120, 90, 0.04);
+}
+
+.light-theme .hero-visual-session.active {
+  background: rgba(180, 83, 9, 0.06);
+  border-color: rgba(180, 83, 9, 0.3);
+}
+
+.light-theme .hero-visual-session.active .hero-visual-session-title,
+.light-theme .hero-visual-session.active .hero-visual-session-chevron {
+  color: var(--gold-700);
+}
+
+/* Reduced motion: freeze hover/press transitions on the play button */
+@media (prefers-reduced-motion: reduce) {
+  .hero-visual-play-btn,
+  .hero-visual-session {
+    transition: none;
+  }
+}
+
+/* ============================================================================
+   EARN COCKPIT — compact calculator + sticky live result + tabbed rail
+   ============================================================================ */
+.earn-cockpit-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 22rem);
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.earn-cockpit-inputs-card,
+.earn-cockpit-result {
+  background: var(--glass-bg);
+  border: 1px solid var(--border-main);
+  border-radius: 1.25rem;
+  padding: 1.25rem;
+}
+
+/* Result panel sticks beside the inputs on desktop */
+.earn-cockpit-result {
+  position: sticky;
+  top: 96px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+  max-height: calc(100vh - 120px);
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(245, 158, 11, 0.25) transparent;
+}
+
+.earn-cockpit-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.earn-network-chip {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: var(--accent-gold);
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  padding: 0.25rem 0.625rem;
+  border-radius: 9999px;
+  white-space: nowrap;
+}
+
+/* One compact row per level: badge · rate · slider · number */
+.earn-cockpit-row {
+  display: grid;
+  grid-template-columns: 2.25rem 4.75rem minmax(0, 1fr) 4.25rem;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.375rem 0;
+}
+
+.earn-cockpit-badge {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 0.625rem;
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  color: var(--accent-gold);
+  font-size: 0.6875rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.earn-cockpit-rate {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.earn-cockpit-slider {
+  width: 100%;
+  accent-color: var(--accent-gold);
+  cursor: pointer;
+}
+
+.earn-cockpit-number {
+  width: 100%;
+  padding: 0.4375rem 0.5rem;
+  border-radius: 0.5rem;
+  background: var(--surface-secondary);
+  border: 1px solid var(--border-medium);
+  color: var(--text-main);
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  text-align: center;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.earn-cockpit-number:focus {
+  outline: none;
+  border-color: var(--accent-gold);
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.18);
+}
+
+/* Preset row */
+.earn-cockpit-presets {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  flex-wrap: wrap;
+  margin-top: 0.875rem;
+  padding-top: 0.875rem;
+  border-top: 1px solid var(--border-light);
+}
+
+.earn-cockpit-presets-label {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: var(--text-dim);
+  margin-right: 0.25rem;
+}
+
+/* Collapsible full math */
+.earn-cockpit-details {
+  margin-top: 0.875rem;
+  padding-top: 0.875rem;
+  border-top: 1px solid var(--border-light);
+}
+
+.earn-cockpit-details-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+.earn-cockpit-details-toggle svg {
+  transition: transform 0.2s ease;
+}
+
+.earn-cockpit-details-toggle svg.open {
+  transform: rotate(180deg);
+}
+
+.earn-cockpit-details-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+  padding-top: 0.875rem;
+}
+
+/* Result panel internals */
+.earn-cockpit-result-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+}
+
+.earn-cockpit-result-label {
+  display: block;
+  font-size: 0.6875rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-dim);
+  margin-bottom: 0.375rem;
+}
+
+.earn-cockpit-mini-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.375rem;
+}
+
+.earn-cockpit-mini-cell {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.375rem;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+  background: var(--surface-secondary);
+  border: 1px solid var(--border-light);
+  border-radius: 0.5rem;
+  padding: 0.3125rem 0.5rem;
+}
+
+.earn-cockpit-mini-cell em {
+  font-style: normal;
+  color: var(--text-dim);
+}
+
+.earn-cockpit-bonus-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+}
+
+.earn-cockpit-result-sub {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  color: var(--text-dim);
+  margin-top: 0.375rem;
+}
+
+/* Tabbed reference rail — three cards share one slot */
+.earn-rail-tabbed {
+  margin-top: 1.25rem;
+  background: var(--glass-bg);
+  border: 1px solid var(--border-main);
+  border-radius: 1.25rem;
+  padding: 1.25rem;
+}
+
+.earn-rail-tabs {
+  display: flex;
+  gap: 0.375rem;
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--border-light);
+  padding-bottom: 0.875rem;
+  margin-bottom: 1rem;
+}
+
+.earn-rail-tab {
+  padding: 0.4375rem 0.875rem;
+  border-radius: 9999px;
+  border: 1px solid transparent;
+  background: none;
+  color: var(--text-dim);
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: color 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+}
+
+.earn-rail-tab:hover {
+  color: var(--text-main);
+}
+
+.earn-rail-tab.active {
+  background: rgba(245, 158, 11, 0.1);
+  border-color: rgba(245, 158, 11, 0.3);
+  color: var(--accent-gold);
+}
+
+/* ── Responsive ── */
+@media (max-width: 1024px) {
+  .earn-cockpit-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .earn-cockpit-result {
+    position: static;
+    max-height: none;
+    overflow: visible;
+  }
+}
+
+/* Mobile: result becomes a sticky bottom bar (total + CTA always visible) */
+@media (max-width: 768px) {
+  .earn-cockpit-result {
+    position: sticky;
+    bottom: 0;
+    top: auto;
+    z-index: 30;
+    background: var(--bg-card-solid, rgba(13, 20, 32, 0.96));
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-radius: 1rem 1rem 0 0;
+    margin: 0 -1rem;
+    padding: 0.875rem 1rem calc(0.875rem + env(safe-area-inset-bottom));
+    box-shadow: 0 -12px 32px -12px rgba(0, 0, 0, 0.5);
+  }
+
+  .earn-cockpit-result-grid {
+    display: none;
+  }
+}
+
+@media (max-width: 560px) {
+  .earn-cockpit-row {
+    grid-template-columns: 2rem minmax(0, 1fr) 3.75rem;
+  }
+
+  .earn-cockpit-rate {
+    display: none;
+  }
+}
+
+/* ── Light theme ── */
+.light-theme .earn-cockpit-inputs-card,
+.light-theme .earn-cockpit-result,
+.light-theme .earn-rail-tabbed {
+  background: var(--bg-card-solid);
+  box-shadow: var(--shadow-md);
+}
+
+.light-theme .earn-network-chip {
+  color: var(--gold-700);
+}
+
+.light-theme .earn-rail-tab.active {
+  color: var(--gold-700);
+  background: rgba(180, 83, 9, 0.08);
+  border-color: rgba(180, 83, 9, 0.3);
+}
+
+/* ── Reduced motion ── */
+@media (prefers-reduced-motion: reduce) {
+  .earn-cockpit-details-toggle svg,
+  .earn-rail-tab,
+  .earn-cockpit-number {
+    transition: none;
+  }
+}

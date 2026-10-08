@@ -1,13 +1,10 @@
 /**
- * @fileoverview Admin Single User Detail API
+ * @fileoverview Admin User Referral History API
  *
- * Returns one user object (never an array) with schema-verified columns
- * and a derived enrollment status. Verified against the users table:
- *   id, full_name, email, phone, avatar_url, is_enrolled, enrolled_at,
- *   direct_referral_count, total_team_size, paying_direct_count,
- *   paying_team_size, lifetime_referral_earnings, last_active, created_at
+ * Returns the users directly referred by the target user, resolved via
+ * the verified `referred_by_user_id` column on the users table.
  *
- * Path: apps/web/pages/api/admin/users/[id]/index.js
+ * Path: apps/web/pages/api/admin/users/[id]/referrals.js
  */
 import { Pool } from 'pg';
 import jwt from 'jsonwebtoken';
@@ -21,10 +18,10 @@ const pool = new Pool({
 });
 
 /**
- * Validate and decode admin JWT from the Authorization header.
- * @param {string} authHeader - Raw Authorization header value
- * @returns {object} Decoded admin payload
- * @throws {Error} With status code attached for clean routing
+ * Validate and decode admin JWT.
+ * @param {string} authHeader - Authorization header
+ * @returns {object} Decoded payload
+ * @throws {Error} With status code attached
  */
 const verifyAdmin = (authHeader) => {
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -32,15 +29,13 @@ const verifyAdmin = (authHeader) => {
     err.status = 401;
     throw err;
   }
-
   const token = authHeader.slice(7);
   const adminSecret = process.env.JWT_ADMIN_SECRET;
   if (!adminSecret) {
-    const err = new Error('JWT_ADMIN_SECRET is not configured on the server');
+    const err = new Error('JWT_ADMIN_SECRET is not configured');
     err.status = 500;
     throw err;
   }
-
   try {
     return jwt.verify(token, adminSecret);
   } catch {
@@ -66,39 +61,29 @@ export default async function handler(req, res) {
     const sql = `
       SELECT
         id,
-        full_name,
-        email,
-        phone,
-        avatar_url,
-        is_enrolled,
-        enrolled_at,
-        direct_referral_count,
-        total_team_size,
-        paying_direct_count,
-        paying_team_size,
-        lifetime_referral_earnings,
-        last_active,
-        created_at,
-        updated_at,
-        CASE WHEN is_enrolled = TRUE THEN 'enrolled' ELSE 'registered' END AS status,
-        'user' AS role
+        full_name AS referred_name,
+        email AS referred_email,
+        phone AS referred_phone,
+        is_enrolled AS referred_is_enrolled,
+        created_at
       FROM users
-      WHERE id = $1
-      LIMIT 1
+      WHERE referred_by_user_id = $1
+      ORDER BY created_at DESC
+      LIMIT 50
     `;
 
     const result = await pool.query(sql, [userId]);
 
     return res.status(200).json({
       success: true,
-      data: result.rows[0] || null,
+      data: result.rows,
     });
   } catch (error) {
-    console.error('[admin/users/[id]] Error:', error.message);
+    console.error('[admin/users/[id]/referrals] Error:', error.message);
     const status = error.status || 500;
     return res.status(status).json({
       success: false,
-      message: error.message || 'Failed to load user details.',
+      message: error.message || 'Failed to load referral history.',
     });
   }
 }

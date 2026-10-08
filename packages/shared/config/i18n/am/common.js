@@ -3,31 +3,27 @@
  * ናቪጌሽን፣ ባነር፣ ገጽታ፣ ግርጌ፣ auth፣ admin፣ contact.
  * Path: packages/shared/config/i18n/am/common.js
  */
-
 module.exports = {
   nav: {
     overview: 'ዋና ገፅ',
     courses: 'ኮርሶች',
     portal: 'መማሪያ ክፍል',
     tuition: 'ክፍያ',
-    enrollNow: 'አሁኑኑ ይመዝገቡ',
+    enrollNow: 'አሁኑኩ ይመዝገቡ',
     claimDiscount: 'ቅናሽ ያግኙ →',
   },
-
   banner: {
-    text: '🚀 ለአዲሱ ዙር ምዝገባ ተጀምሯል! ፉል ስታክ ዌብ አፕሊኬሽን ዴቨሎፕመንት በኦንላይን ይማሩ!',
+    text: '💰 ተማሪዎች እየተማሩ ያገኛሉ — በአንድ ሽያጭ እስከ {total} ETB · በ{hours} ሰዓት ያውጡ።',
+    claimDiscount: 'እንዴት እንደሚያገኙ ይመልከቱ →',
   },
-
   theme: {
     light: 'ብርሃናማ ሞድ',
     dark: 'ጨለማማ ሞድ',
     languageName: 'አማርኛ',
   },
-
   footer: {
     rights: 'መብቱ በህግ የተጠበቀ ነው።',
   },
-
   auth: {
     login: 'ግባ',
     register: 'ይመዝገቡ',
@@ -37,9 +33,8 @@ module.exports = {
     confirmPassword: 'የይለፍ ቃል ያረጋግጡ',
     forgotPassword: 'የይለፍ ቃል ረሱ?',
     noAccount: 'መለያ የሎትም?',
-    hasAccount: 'ቀድሞውኑ መለያ አለዎት?',
+    hasAccount: 'ቀድሞውኩ መለያ አለዎት?',
   },
-
   admin: {
     dashboard: 'ዳሽቦርድ',
     payments: 'ክፍያዎች',
@@ -58,7 +53,6 @@ module.exports = {
     confirmApprove: 'ይህን ክፍያ ማጽደቅዎን እርግጠኛ ነዎት?',
     confirmReject: 'ይህን ክፍያ ውድቅ ማድረግዎን እርግጠኛ ነዎት?',
   },
-
   contact: {
     title: 'ያግኙን',
     subtitle: 'እኛ ለመርዳት እዚህ ነን። እኛን ለማግኘት የተሻለውን መንገድ ይምረጡ።',

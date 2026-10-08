@@ -9077,3 +9077,368 @@
     flex-direction: column;
   }
 }
+
+/* ============================================================================
+   BRUTAL FORCE SKELETON OVERRIDE — PHASE A
+   Targets the REAL class names found in diagnostic grep:
+     - .spinner (bare div, sometimes with .spinner-sm)
+     - .spinner-circle (rotating border element)
+     - .spinner-lg (large variant)
+   
+   Button spinners use lucide animate-spin, NOT these classes, so they're safe.
+   Original spinner definitions at lines 3113-3134 are overridden with !important.
+   ============================================================================ */
+
+/* KILL the rotating border animation on ALL spinner-circle instances */
+.spinner-circle,
+.spinner .spinner-circle,
+.spinner-lg .spinner-circle,
+.spinner-sm .spinner-circle {
+  border: none !important;
+  border-top-color: transparent !important;
+  animation: none !important;
+  width: 100% !important;
+  height: 8rem !important;
+  background: linear-gradient(
+    90deg,
+    var(--bg-skeleton, rgba(30, 41, 59, 0.5)) 0%,
+    var(--bg-skeleton-strong, rgba(51, 65, 85, 0.7)) 50%,
+    var(--bg-skeleton, rgba(30, 41, 59, 0.5)) 100%
+  ) !important;
+  background-size: 200% 100% !important;
+  animation: skeleton-shimmer-brutal 1.6s ease-in-out infinite !important;
+  border-radius: 0.625rem !important;
+}
+
+/* Transform .spinner containers (wrapper variant with children) */
+.spinner:not(:empty),
+.spinner-lg,
+.spinner-sm {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 2rem 0 !important;
+}
+
+/* Self-closing .spinner (no children) → skeleton block */
+.spinner:empty {
+  display: block !important;
+  width: 100% !important;
+  height: 8rem !important;
+  background: linear-gradient(
+    90deg,
+    var(--bg-skeleton, rgba(30, 41, 59, 0.5)) 0%,
+    var(--bg-skeleton-strong, rgba(51, 65, 85, 0.7)) 50%,
+    var(--bg-skeleton, rgba(30, 41, 59, 0.5)) 100%
+  ) !important;
+  background-size: 200% 100% !important;
+  animation: skeleton-shimmer-brutal 1.6s ease-in-out infinite !important;
+  border-radius: 0.625rem !important;
+}
+
+/* .spinner-sm variant → shorter skeleton */
+.spinner-sm:empty,
+.spinner-sm .spinner-circle {
+  height: 4rem !important;
+}
+
+/* Loading container wrappers → ensure they have breathing room */
+.mlm-dashboard-loading,
+.mlm-table-loading,
+.mlm-tree-loading,
+.admin-table-loading,
+.page-loading,
+.section-loading {
+  min-height: 200px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 1rem !important;
+}
+
+/* Shimmer animation keyframe */
+@keyframes skeleton-shimmer-brutal {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Reduced motion fallback */
+@media (prefers-reduced-motion: reduce) {
+  .spinner-circle,
+  .spinner .spinner-circle,
+  .spinner:empty,
+  .spinner-sm:empty,
+  .spinner-sm .spinner-circle {
+    animation: skeleton-pulse-brutal 2s ease-in-out infinite !important;
+  }
+
+  @keyframes skeleton-pulse-brutal {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.6;
+    }
+  }
+}
+
+/* ============================================================================
+   BUTTON SPINNER PROTECTION — these MUST keep rotating
+   Buttons use lucide animate-spin or inline SVG, not .spinner-circle,
+   but we protect any edge cases where a button might use the legacy classes.
+   ============================================================================ */
+button .spinner-circle,
+.btn .spinner-circle,
+[class*="btn-"] .spinner-circle,
+.complete-btn .spinner-circle,
+.action-btn .spinner-circle {
+  display: inline-block !important;
+  width: 1.25rem !important;
+  height: 1.25rem !important;
+  border: 2px solid transparent !important;
+  border-top-color: currentColor !important;
+  border-radius: 50% !important;
+  background: none !important;
+  animation: btn-spin-protected 1s linear infinite !important;
+}
+
+@keyframes btn-spin-protected {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ============================================================================
+   BRUTAL FORCE SKELETON OVERRIDE — PLATFORM-WIDE (v2)
+   
+   Transforms EVERY content-area spinner into a shimmer skeleton block.
+   Button spinners are PROTECTED: they use lucide animate-spin, not
+   .spinner-circle, and the protection selectors below reinforce that.
+   
+   Scope: 30 spinner-circle instances across 37 files. All surfaces
+   get an acceptable shimmer placeholder; premium surfaces additionally
+   render shape-matched JSX skeletons via the Skeleton.jsx presets.
+   
+   Original spinner defs at line ~3113 are overridden with !important.
+   ============================================================================ */
+
+/* Kill the rotating border on every .spinner-circle instance */
+.spinner-circle,
+.spinner .spinner-circle,
+.spinner-lg .spinner-circle,
+.spinner-sm .spinner-circle {
+  border: none !important;
+  border-top-color: transparent !important;
+  width: 100% !important;
+  height: 8rem !important;
+  background: linear-gradient(
+    90deg,
+    var(--bg-skeleton, rgba(30, 41, 59, 0.5)) 0%,
+    var(--bg-skeleton-strong, rgba(51, 65, 85, 0.7)) 50%,
+    var(--bg-skeleton, rgba(30, 41, 59, 0.5)) 100%
+  ) !important;
+  background-size: 200% 100% !important;
+  animation: skeleton-shimmer 1.6s ease-in-out infinite !important;
+  border-radius: 0.625rem !important;
+}
+
+/* .spinner wrappers retain their inline margin/padding but no longer center */
+.spinner:not(:empty),
+.spinner-lg,
+.spinner-sm {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  justify-content: flex-start !important;
+}
+
+/* Self-closing .spinner (no children) → full-width shimmer block */
+.spinner:empty {
+  display: block !important;
+  width: 100% !important;
+  height: 8rem !important;
+  background: linear-gradient(
+    90deg,
+    var(--bg-skeleton, rgba(30, 41, 59, 0.5)) 0%,
+    var(--bg-skeleton-strong, rgba(51, 65, 85, 0.7)) 50%,
+    var(--bg-skeleton, rgba(30, 41, 59, 0.5)) 100%
+  ) !important;
+  background-size: 200% 100% !important;
+  animation: skeleton-shimmer 1.6s ease-in-out infinite !important;
+  border-radius: 0.625rem !important;
+}
+
+/* .spinner-sm variant → shorter skeleton */
+.spinner-sm:empty,
+.spinner-sm .spinner-circle {
+  height: 4rem !important;
+}
+
+/* Known loading container wrappers → minimum height so skeleton breathes */
+.mlm-dashboard-loading,
+.mlm-table-loading,
+.mlm-tree-loading,
+.admin-table-loading,
+.page-loading,
+.section-loading {
+  min-height: 200px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  gap: 1rem !important;
+}
+
+/* Reduced motion fallback for ALL spinner-derived skeletons */
+@media (prefers-reduced-motion: reduce) {
+  .spinner-circle,
+  .spinner .spinner-circle,
+  .spinner:empty,
+  .spinner-sm:empty,
+  .spinner-sm .spinner-circle {
+    animation: skeleton-pulse 2s ease-in-out infinite !important;
+  }
+}
+
+/* ============================================================================
+   BUTTON SPINNER PROTECTION — these MUST keep rotating
+   
+   Buttons use lucide animate-spin on inline SVG, NOT .spinner-circle,
+   so this block is defensive insurance for any edge case.
+   ============================================================================ */
+button .spinner-circle,
+.btn .spinner-circle,
+[class*="btn-"] .spinner-circle,
+.complete-btn .spinner-circle,
+.action-btn .spinner-circle,
+button .spinner,
+.btn .spinner {
+  display: inline-block !important;
+  width: 1.25rem !important;
+  height: 1.25rem !important;
+  border: 2px solid transparent !important;
+  border-top-color: currentColor !important;
+  border-radius: 50% !important;
+  background: none !important;
+  animation: btn-spin-protected 1s linear infinite !important;
+}
+
+@keyframes btn-spin-protected {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ============================================================================
+   ADMIN SHIMMER SKELETON — Inline loading state using real admin markup
+   
+   The .shimmer class turns ANY admin-table-* element into a shimmer skeleton
+   that inherits all the existing admin.css styling. This ensures loading states
+   match the real content pixel-perfectly — no separate skeleton component needed.
+   
+   Usage: Add className="shimmer" plus inline width/height to placeholder spans
+   inside admin-table-row markup during loading states.
+   ============================================================================ */
+
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--bg-skeleton, rgba(30, 41, 59, 0.5)) 0%,
+    var(--bg-skeleton-strong, rgba(51, 65, 85, 0.7)) 50%,
+    var(--bg-skeleton, rgba(30, 41, 59, 0.5)) 100%
+  ) !important;
+  background-size: 200% 100% !important;
+  animation: shimmer-slide 1.6s ease-in-out infinite !important;
+  border-radius: 0.375rem !important;
+  color: transparent !important;
+  border: none !important;
+  display: inline-block;
+  min-height: 0.75rem;
+}
+
+/* Preserve avatar shape when shimmered */
+.admin-table-avatar.shimmer,
+.user-detail-avatar.shimmer {
+  border-radius: 50% !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  flex-shrink: 0;
+}
+
+/* Preserve badge shape when shimmered */
+.status-badge.shimmer,
+.role-badge.shimmer,
+.phase-badge.shimmer {
+  border-radius: 9999px !important;
+}
+
+/* Preserve action button shape when shimmered */
+.admin-table-action-btns .shimmer {
+  border-radius: 0.5rem !important;
+}
+
+@keyframes shimmer-slide {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Reduced motion fallback */
+@media (prefers-reduced-motion: reduce) {
+  .shimmer {
+    animation: shimmer-pulse 2s ease-in-out infinite !important;
+  }
+
+  @keyframes shimmer-pulse {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.6;
+    }
+  }
+}
+
+/* Stat cards shimmer support for user detail page */
+.stat-card .shimmer {
+  border-radius: 0.375rem;
+}
+
+.user-detail-header .shimmer {
+  display: inline-block;
+}
+
+.user-detail-meta .shimmer {
+  display: inline-block;
+  margin-right: 0.5rem;
+}
+
+/* Light theme adjustment */
+.light-theme .shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(140, 120, 90, 0.08) 0%,
+    rgba(140, 120, 90, 0.16) 50%,
+    rgba(140, 120, 90, 0.08) 100%
+  ) !important;
+  background-size: 200% 100% !important;
+}

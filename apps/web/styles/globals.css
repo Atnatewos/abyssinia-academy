@@ -1,13 +1,14 @@
 /**
  * Abyssinia Academy - Global Styles Entry Point
- * Imports all modular CSS files in the correct cascade order
+ * Imports all modular CSS files in the correct cascade order and defines
+ * base resets, theme-aware chrome (scrollbar, selection), anchor offsets,
+ * and page-level layout primitives.
+ *
  * Path: apps/web/styles/globals.css
  */
-
 @import url('https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,600,700,800,900&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300,400,500,600,700,800,900&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap');
-
 @import './themes.css';
 @import './animations.css';
 @import './design-system.css';
@@ -19,6 +20,7 @@
 @import './admin-mobile.css';
 @import './referral.css';
 @import './admin-mlm.css';
+@import './skeleton.css';
 
 /* ============================================================================
    CSS RESET
@@ -79,7 +81,7 @@ p, h1, h2, h3, h4, h5, h6 {
 }
 
 /* ============================================================================
-   GLOBAL SCROLLBAR
+   GLOBAL SCROLLBAR (theme-aware)
    ============================================================================ */
 * {
   scrollbar-width: thin;
@@ -104,12 +106,29 @@ p, h1, h2, h3, h4, h5, h6 {
   background: rgba(245, 158, 11, 0.5);
 }
 
+.light-theme * {
+  scrollbar-color: rgba(180, 83, 9, 0.35) transparent;
+}
+
+.light-theme ::-webkit-scrollbar-thumb {
+  background: rgba(180, 83, 9, 0.35);
+}
+
+.light-theme ::-webkit-scrollbar-thumb:hover {
+  background: rgba(180, 83, 9, 0.55);
+}
+
 /* ============================================================================
-   SELECTION & FOCUS
+   SELECTION & FOCUS (theme-aware)
    ============================================================================ */
 ::selection {
   background: rgba(245, 158, 11, 0.3);
   color: #ffffff;
+}
+
+.light-theme ::selection {
+  background: rgba(217, 119, 6, 0.25);
+  color: #1a1815;
 }
 
 :focus-visible {
@@ -120,6 +139,14 @@ p, h1, h2, h3, h4, h5, h6 {
 
 :focus:not(:focus-visible) {
   outline: none;
+}
+
+/* ============================================================================
+   ANCHOR OFFSETS — targets clear the sticky header
+   ============================================================================ */
+#earn,
+#landing-phases {
+  scroll-margin-top: 96px;
 }
 
 /* ============================================================================
@@ -227,7 +254,7 @@ p, h1, h2, h3, h4, h5, h6 {
 }
 
 /* ============================================================================
-   FLOATING GLOW BACKGROUND
+   FLOATING GLOW BACKGROUND (softened in light theme)
    ============================================================================ */
 .floating-glow-container {
   position: fixed;
@@ -268,6 +295,12 @@ p, h1, h2, h3, h4, h5, h6 {
   height: 500px;
   background: rgba(217, 119, 6, 0.1);
   filter: blur(130px);
+}
+
+.light-theme .floating-glow-orb-1,
+.light-theme .floating-glow-orb-2,
+.light-theme .floating-glow-orb-3 {
+  opacity: 0.45;
 }
 
 /* ============================================================================

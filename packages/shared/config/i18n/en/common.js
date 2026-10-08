@@ -3,7 +3,6 @@
  * Nav, banner, theme, footer, auth, admin, contact.
  * Path: packages/shared/config/i18n/en/common.js
  */
-
 module.exports = {
   nav: {
     overview: 'Overview',
@@ -13,21 +12,19 @@ module.exports = {
     enrollNow: 'Enroll Now',
     claimDiscount: 'Claim Discount →',
   },
-
   banner: {
-    text: '🚀 Next Cohort Enrolling! Master Full-Stack Engineering with Masterclasses.',
+    /* Income-first announcement — {percent} injected at render */
+    text: '💰 Students earn while they learn — up to {total} ETB per sale · Withdraw in {hours}h.',
+    claimDiscount: 'See How You Earn →',
   },
-
   theme: {
     light: 'Light Mode',
     dark: 'Dark Mode',
     languageName: 'English',
   },
-
   footer: {
     rights: 'All rights reserved.',
   },
-
   auth: {
     login: 'Login',
     register: 'Register',
@@ -39,7 +36,6 @@ module.exports = {
     noAccount: "Don't have an account?",
     hasAccount: 'Already have an account?',
   },
-
   admin: {
     dashboard: 'Dashboard',
     payments: 'Payments',
@@ -58,7 +54,6 @@ module.exports = {
     confirmApprove: 'Are you sure you want to approve this payment?',
     confirmReject: 'Are you sure you want to reject this payment?',
   },
-
   contact: {
     title: 'Contact Us',
     subtitle: 'We are here to help. Choose the best way to reach us.',

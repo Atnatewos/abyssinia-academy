@@ -1,25 +1,21 @@
 /**
  * @fileoverview Pricing Showcase — Equal Card Grid
- * Database-driven pricing via usePaymentConfig hook.
- * No price flicker — shows skeleton while loading.
- * Full course card + auto-generated phase cards.
- * Remove a phase from phases/index.js → card disappears. Add → card appears.
- * 
+ *
+ * Database-driven pricing via usePaymentConfig hook (no price flicker).
+ * Full course card + auto-generated phase cards, plus the referral
+ * discount hint line sourced from referrals config.
+ *
  * Path: apps/web/components/landing/PricingShowcase.jsx
  */
-
 import { useMemo } from 'react';
 import Link from 'next/link';
-import { Sparkles, Check, Zap, ArrowRight, Crown } from 'lucide-react';
+import { Check, Zap, ArrowRight, Crown } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
 import usePortalCourse from '../../hooks/usePortalCourse';
 import usePaymentConfig from '../../hooks/usePaymentConfig';
+import { getReferredDiscountPercent } from '../../lib/config';
 
-/**
- * PricingShowcase — Equal grid of pricing cards.
- * Uses DB-first pricing so admin changes show immediately.
- */
 const PricingShowcase = () => {
   const { t, language } = useLanguage();
   const { isAuthenticated } = useAuth();
@@ -31,9 +27,10 @@ const PricingShowcase = () => {
   const perPhasePrice = perPhase.amountETB || 0;
   const currency = perPhase.currency || 'ETB';
 
-  /*
-   * Auto-calculate discount percentage — never hardcoded
-   */
+  /* Referred-student discount percent from shared config */
+  const referralPercent = getReferredDiscountPercent();
+
+  /* Auto-calculate launch discount percentage — never hardcoded */
   const discountPercent = useMemo(() => {
     const original = fullCourse.originalAmountETB || 0;
     const current = fullCourse.amountETB || 0;
@@ -45,15 +42,10 @@ const PricingShowcase = () => {
     ? '/checkout?mode=full-course'
     : '/auth/login?redirect=/checkout?mode=full-course';
 
-  /*
-   * Build the complete card array
-   */
+  /* Build the complete card array */
   const allCards = useMemo(() => {
     const cards = [];
 
-    /*
-     * Card 0: Full Course (Premium)
-     */
     cards.push({
       id: 'full-course',
       type: 'full-course',
@@ -77,12 +69,8 @@ const PricingShowcase = () => {
       isPremium: true,
     });
 
-    /*
-     * Cards 1-5: Individual Phases (auto-generated)
-     */
     (coursePhases || []).forEach((phase, index) => {
       const weekCount = phase.weeks ? phase.weeks.length : 0;
-
       cards.push({
         id: phase.id || `phase-${index + 1}`,
         type: 'phase',
@@ -109,9 +97,7 @@ const PricingShowcase = () => {
     return cards;
   }, [coursePhases, fullCourse, perPhasePrice, currency, discountPercent, enrollHref, t, language]);
 
-  /*
-   * Phase accent colors
-   */
+  /* Phase accent palette */
   const phaseAccentColors = [
     'rgba(245,158,11,0.08)',
     'rgba(59,130,246,0.08)',
@@ -119,7 +105,6 @@ const PricingShowcase = () => {
     'rgba(139,92,246,0.08)',
     'rgba(236,72,153,0.08)',
   ];
-
   const phaseBorderColors = [
     'rgba(245,158,11,0.25)',
     'rgba(59,130,246,0.25)',
@@ -127,12 +112,8 @@ const PricingShowcase = () => {
     'rgba(139,92,246,0.25)',
     'rgba(236,72,153,0.25)',
   ];
-
   const phaseNumberColors = ['#f59e0b', '#3b82f6', '#10b981', '#8b5cf6', '#ec4899'];
 
-  /*
-   * Loading skeleton — no price flicker
-   */
   if (pricingLoading || !pricing) {
     return (
       <section className="landing-pricing-3d">
@@ -186,17 +167,18 @@ const PricingShowcase = () => {
                   {card.badge}
                 </span>
               )}
-
               {card.number && (
                 <div className="landing-pricing-equal-number" style={{ background: accentColor }}>
                   {card.number}
                 </div>
               )}
-
               <h3 className="landing-pricing-equal-title">
                 {isFullCourse ? (
                   <>
-                    <Crown size={16} style={{ color: 'var(--accent-gold)', marginRight: '0.375rem', display: 'inline', verticalAlign: 'middle' }} />
+                    <Crown
+                      size={16}
+                      style={{ color: 'var(--accent-gold)', marginRight: '0.375rem', display: 'inline', verticalAlign: 'middle' }}
+                    />
                     {card.title}
                   </>
                 ) : (
@@ -204,7 +186,6 @@ const PricingShowcase = () => {
                 )}
               </h3>
               <p className="landing-pricing-equal-subtitle">{card.subtitle}</p>
-
               <div className="landing-pricing-equal-price-row">
                 <span className="landing-pricing-equal-price">
                   {card.price.toLocaleString()} {card.currency}
@@ -215,7 +196,6 @@ const PricingShowcase = () => {
                   </span>
                 )}
               </div>
-
               {card.originalPrice && card.discountPercent > 0 && (
                 <div className="landing-pricing-equal-save-row">
                   <span className="landing-pricing-equal-original">
@@ -227,7 +207,6 @@ const PricingShowcase = () => {
                   </span>
                 </div>
               )}
-
               <ul className="landing-pricing-equal-features">
                 {card.features.map((feature, fi) => (
                   <li key={fi}>
@@ -236,17 +215,22 @@ const PricingShowcase = () => {
                   </li>
                 ))}
               </ul>
-
-              <Link
-                href={card.href}
-                className={`landing-pricing-equal-cta ${isFullCourse ? 'primary' : ''}`}
-              >
+              <Link href={card.href} className={`landing-pricing-equal-cta ${isFullCourse ? 'primary' : ''}`}>
                 <span>{card.ctaText}</span>
                 <ArrowRight size={14} />
               </Link>
             </div>
           );
         })}
+      </div>
+
+      {/* Referral discount hint — percent sourced from config */}
+      <div className="pricing-referral-hint">
+        <span aria-hidden="true">🎁</span>
+        <span>
+          {(t.landing?.pricingOverview?.referralHint || "Have a friend's code? Save {percent}% at checkout.")
+            .replace('{percent}', String(referralPercent))}
+        </span>
       </div>
     </section>
   );

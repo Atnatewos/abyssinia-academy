@@ -10,35 +10,27 @@
  *
  * Path: packages/shared/config/i18n/en/referrals.js
  */
-
 module.exports = {
   referrals: {
-    /* ============================================================
-     * LEGACY KEYS — kept for existing referral page & API
-     * ============================================================ */
     dashboardTitle: 'Referral Dashboard',
     dashboardSubtitle: 'Share Abyssinia Academy and earn rewards!',
     yourCode: 'Your Referral Code',
     yourLink: 'Your Referral Link',
     copied: 'Copied!',
-
     totalReferrals: 'Total Referrals',
     creditBalance: 'Credit Balance',
     cashEarned: 'Cash Earned',
     currentTier: 'Current Tier',
     perReferral: 'per referral',
-
     tierBronze: 'Bronze',
     tierSilver: 'Silver',
     tierGold: 'Gold',
     tierPlatinum: 'Platinum',
     tierDiamond: 'Diamond',
-
     tierProgress: 'Tier Progress',
     referralsNeeded: '{count} more referral(s) needed for {tier}',
     nextTier: 'Next: {tier}',
     currentTierLabel: 'Current: {tier}',
-
     earningsBreakdown: 'Earnings Breakdown',
     creditEarned: 'Credit Earned',
     creditUsed: 'Credit Used',
@@ -47,21 +39,18 @@ module.exports = {
     pendingPayout: 'Pending Payout',
     totalValueEarned: 'Total Value Earned',
     creditCapReached: 'Credit cap reached, earning cash commission!',
-
     referralHistory: 'Referral History',
-    noReferrals: 'You haven\'t referred anyone yet. Share your link to start earning!',
+    noReferrals: "You haven't referred anyone yet. Share your link to start earning!",
     name: 'Name',
     status: 'Status',
     discount: 'Discount',
     credit: 'Credit',
     date: 'Date',
-
     statusRegistered: 'Registered',
     statusEnrolled: 'Enrolled',
     statusCompleted: 'Completed',
     statusExpired: 'Expired',
     statusRefunded: 'Refunded',
-
     howItWorks: 'How It Works',
     step1Title: 'Share Your Link',
     step1Desc: 'Copy your unique referral link and share it with friends on Telegram, WhatsApp, or anywhere.',
@@ -71,11 +60,9 @@ module.exports = {
     step3Desc: 'Accumulate credit toward your own purchases. The more you refer, the higher your tier and rewards.',
     step4Title: 'Earn Cash Commission',
     step4Desc: 'Once your credit reaches 100% of your course price, additional referrals earn you cash commission!',
-
-    invitedBy: 'You\'ve been invited by {name}!',
-    discountApplied: 'You\'ll receive {percent}% off your enrollment.',
+    invitedBy: "You've been invited by {name}!",
+    discountApplied: "You'll receive {percent}% off your enrollment.",
     referralCodeApplied: 'Referral code applied: {code}',
-
     referralDiscount: 'Referral Discount ({percent}%)',
     creditApplied: 'Credit Applied',
     applyCredit: 'Apply Credit',
@@ -83,43 +70,29 @@ module.exports = {
     creditAppliedLabel: 'Credit Applied: {amount} ETB',
     youPay: 'You Pay',
     youSaved: 'You saved {amount} ETB ({percent}% off!)',
-
     shareTitle: 'Share & Earn',
     shareSubtitle: 'Share your link to earn {percent}% credit per referral!',
     shareMessage: '🚀 Join me at Abyssinia Academy and get {discount}% off your enrollment! Learn Full-Stack Web Development: ',
     shareMessageAm: '🚀 በአቢሲኒያ አካዳሚ ይቀላቀሉና {discount}% ቅናሽ ያግኙ! ፉል-ስታክ ዌብ ዴቨሎፕመንት ይማሩ: ',
-
     shareCopyLink: 'Copy Link',
     shareTelegram: 'Telegram',
     shareWhatsApp: 'WhatsApp',
     shareFacebook: 'Facebook',
-
     invalidCode: 'Invalid referral code.',
     selfReferral: 'You cannot use your own referral code.',
     codeAlreadyUsed: 'This referral code has already been used for your account.',
     loadError: 'Failed to load referral data. Please try again.',
-
     haveReferralCode: 'Have a referral code?',
     enterReferralCode: 'Enter Referral Code',
-
-    /* ============================================================
-     * MLM 4-LEVEL SYSTEM — nested under `mlm` namespace
-     * Components access via: t.referrals.mlm.<section>.<key>
-     * ============================================================ */
     mlm: {
-      /* Auth & load states */
       authRequired: 'Please log in to view your referral dashboard.',
       loadError: 'Failed to load MLM dashboard data. Please try again.',
-
-      /* Dashboard header */
       dashboard: {
         title: 'Referral Dashboard',
         subtitle: 'Track your 4-level commission network, bonuses, and withdrawals.',
         loading: 'Loading your referral dashboard...',
         retry: 'Retry',
       },
-
-      /* Tab navigation labels */
       tabs: {
         overview: 'Overview',
         tree: 'Tree',
@@ -127,8 +100,6 @@ module.exports = {
         bonuses: 'Bonuses',
         withdrawals: 'Withdrawals',
       },
-
-      /* Stats cards */
       stats: {
         commissionBalance: 'Commission Balance',
         creditBalance: 'Credit Balance',
@@ -143,21 +114,15 @@ module.exports = {
         acrossLevels: 'Across 4 levels',
         level1Only: 'Level 1 only',
       },
-
-      // mlm.stats Money Model v2 keys
       availableNow: 'Available Now',
       allUnlocked: 'Fully withdrawable',
       bonusEarnings: 'Bonus Earnings',
       bonusEarningsSub: 'Bonus Credits',
-
-      /* Earnings breakdown section */
       earningsBreakdown: 'Earnings Breakdown',
       monthlySummary: 'This Month',
       monthlyCommission: 'Commission',
       monthlyBonus: 'Bonus',
       monthlyPayout: 'Total Payout',
-
-      /* Share section */
       share: {
         title: 'Share Your Referral Link',
         subtitle: 'Share this link with friends. When they join and purchase, you earn commissions.',
@@ -168,8 +133,6 @@ module.exports = {
         copied: 'Copied to clipboard',
         copyFailed: 'Failed to copy',
       },
-
-      /* Commission history table */
       commissions: {
         title: 'Commission History',
         allLevels: 'All',
@@ -184,8 +147,6 @@ module.exports = {
         empty: 'No commissions yet. Share your link to start earning!',
         page: 'Page',
       },
-
-      /* Bonus progress tracker */
       bonuses: {
         title: 'Bonus Progress',
         subtitle: 'Bonuses are credits. Categories are independent — achieve all applicable bonuses simultaneously.',
@@ -199,15 +160,11 @@ module.exports = {
         maxReached: 'Maximum tier achieved!',
         nonStackingNote: 'Within each category, only the highest achieved threshold counts. Crossing a new threshold credits the difference (delta).',
       },
-
-      /* Downline tree view */
       tree: {
         title: 'Your Downline Tree',
         members: 'members',
         empty: 'No team members yet. Share your referral link to start building your network!',
       },
-
-      /* Level explanation (How It Works) */
       howItWorks: {
         title: 'How the 4-Level System Works',
         description: 'When someone in your network makes a purchase, you and up to 3 people above you earn commissions.',
@@ -228,8 +185,6 @@ module.exports = {
         exampleLevel3: 'Dawit',
         exampleLevel4: 'Helen',
       },
-
-      /* Withdrawal panel */
       withdrawal: {
         title: 'Request Withdrawal',
         subtitle: 'Withdraw your available commission balance to your preferred payment method.',
@@ -247,29 +202,19 @@ module.exports = {
         submitted: 'Withdrawal request submitted. Admin will process within 48 hours.',
         noHistory: 'No withdrawal requests yet.',
         lockedHint: 'You have {amount} ETB still in the 7-day lock window.',
-
-        /* Method labels */
         method_telebirr: 'Telebirr',
         method_cbe_birr: 'CBE Birr',
         method_bank_transfer: 'Bank Transfer',
-
-        /* Status labels */
         status_pending: 'Pending',
         status_approved: 'Approved',
         status_paid: 'Paid',
         status_rejected: 'Rejected',
-
-        /* Validation errors */
         invalidAmount: 'Enter a valid amount',
         insufficientBalance: 'Insufficient available balance',
         accountRequired: 'Account number is required',
         nameRequired: 'Account name is required',
         bankRequired: 'Bank name is required',
       },
-
-      /* ────────────────────────────────────────────────────────────
-       * FLAT LEGACY MLM KEYS (kept for backward compat with older code)
-       * ──────────────────────────────────────────────────────────── */
       commissionBalance: 'Commission Balance',
       teamSize: 'Team Size',
       directReferralsCount: 'Direct Referrals',
@@ -280,8 +225,6 @@ module.exports = {
       level4Label: 'Level 4',
       commissionPerSale: 'per sale',
       cashCommission: 'Cash Commission',
-
-      /* Tree view (flat keys) */
       treeViewTitle: 'Your Referral Tree',
       treeViewSubtitle: 'Your team across all 4 levels',
       treeEmptyState: 'No team yet. Share your link to start building.',
@@ -290,8 +233,6 @@ module.exports = {
       treeMemberSince: 'Joined {date}',
       treeEarnedFrom: 'Earned: {amount} ETB',
       treeLevelMembers: '{count} member(s)',
-
-      /* Commission history (flat keys) */
       commissionHistory: 'Commission History',
       commissionHistoryEmpty: 'No commissions yet. Start sharing!',
       commissionLocked: 'Locked until {date}',
@@ -299,8 +240,6 @@ module.exports = {
       commissionStatusReversed: 'Reversed',
       commissionStatusPaid: 'Paid',
       commissionUnlocksIn: 'Unlocks in {days} day(s)',
-
-      /* Bonus progress (flat keys) */
       bonusProgress: 'Bonus Progress',
       bonusProgressSubtitle: 'Reach milestones to earn credits',
       bonusCategoryDirect: 'Direct Referral',
@@ -314,8 +253,6 @@ module.exports = {
       bonusAwarded: 'Awarded',
       bonusNotYet: 'Not yet awarded',
       bonusResetMonthly: 'Resets monthly',
-
-      /* Withdrawal panel (flat keys) */
       withdrawalPanelTitle: 'Withdrawals',
       withdrawalPanelSubtitle: 'Cash out your commission balance',
       withdrawalAvailable: 'Available to Withdraw',
@@ -341,7 +278,6 @@ module.exports = {
       withdrawalRequestedOn: 'Requested {date}',
       withdrawalProcessedOn: 'Processed {date}',
       withdrawalAdminNote: 'Admin Note: {note}',
-
       withdrawalAmountRequired: 'Amount is required.',
       withdrawalAmountTooLow: 'Minimum withdrawal is {amount} ETB.',
       withdrawalAmountTooHigh: 'Maximum single withdrawal is {amount} ETB.',
@@ -351,28 +287,21 @@ module.exports = {
       withdrawalAccountNameRequired: 'Account name is required.',
       withdrawalBankRequired: 'Bank name is required.',
       withdrawalAlreadyPending: 'You already have a pending withdrawal request.',
-
       withdrawalCannotWithdraw: 'You need at least {amount} ETB to withdraw.',
       withdrawalHasDebt: 'You have an outstanding balance of {amount} ETB. Contact support.',
       withdrawalLockedMessage: 'You have {amount} ETB in commissions still in the 7-day lock window.',
-
-      /* Level earnings breakdown */
       directEarnings: 'Direct Earnings',
       level2Earnings: 'Level 2 Earnings',
       level3Earnings: 'Level 3 Earnings',
       level4Earnings: 'Level 4 Earnings',
-
-      /* Explainer section */
       explanationTitle: 'How Your 4-Level Team Works',
       explanationIntro: 'When someone in your team purchases a course, you earn a fixed commission based on their distance from you in the tree.',
       explanationYou: 'You',
       explanationDirect: 'Level 1 — Direct referral',
-      explanationLevel2: 'Level 2 — Your referral\'s referral',
+      explanationLevel2: "Level 2 — Your referral's referral",
       explanationLevel3: 'Level 3',
       explanationLevel4: 'Level 4',
       explanationRule: 'Only the 4 people directly above a buyer earn commission. Level 5 and beyond earn nothing.',
-
-      /* Admin — Withdrawals */
       adminWithdrawalsTitle: 'Withdrawal Requests',
       adminWithdrawalsSubtitle: 'Review and process cash payouts',
       adminWithdrawalsEmpty: 'No withdrawal requests match your filters.',
@@ -385,8 +314,6 @@ module.exports = {
       adminWithdrawalConfirmReject: 'Reject this withdrawal? Funds will return to the user.',
       adminWithdrawalApproved: 'Withdrawal marked as paid.',
       adminWithdrawalRejected: 'Withdrawal rejected. Funds returned to user.',
-
-      /* Admin — MLM Stats */
       adminMlmStatsTitle: 'Referral System Health',
       adminMlmStatsSubtitle: 'Commissions, bonuses, and cap usage',
       adminMlmTotalCommissions: 'Total Commissions Paid',
@@ -397,8 +324,6 @@ module.exports = {
       adminMlmPlatformRemaining: 'Remaining',
       adminMlmCapWarning: 'Platform cap is {percent}% used.',
       adminMlmCapExceeded: 'Platform cap reached. New commissions paused.',
-
-      /* Errors */
       loadDashboardError: 'Failed to load referral dashboard.',
       loadTreeError: 'Failed to load your referral tree.',
       loadCommissionsError: 'Failed to load commission history.',
