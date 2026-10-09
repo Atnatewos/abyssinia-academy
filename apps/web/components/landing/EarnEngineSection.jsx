@@ -29,7 +29,9 @@ import {
 import { useLanguage } from '../../context/LanguageContext';
 import {
   getBonusConfig,
+  getCommissionStructure,
   getLandingEarnConfig,
+  getReferredDiscountPercent,
   getTrustRulesConfig,
   getWithdrawalConfig,
 } from '../../lib/config';
@@ -81,6 +83,7 @@ const EarnEngineSection = () => {
   const trustConfig = getTrustRulesConfig();
   const bonusConfig = getBonusConfig();
   const withdrawalConfig = getWithdrawalConfig();
+  const commissionConfig = getCommissionStructure();
 
   const anchorId = earnConfig?.anchorId || 'earn';
   const calcConfig = earnConfig?.calculator || {};
@@ -186,7 +189,29 @@ const EarnEngineSection = () => {
   }, [bonusConfig, directCount, teamCount]);
 
   const processingHours = withdrawalConfig?.processingTimeHours || 48;
-  const unlockDays = 7;
+  const unlockDays = commissionConfig?.unlockDelayDays || 7;
+
+  /**
+   * Config-driven values for every {token} placeholder this section
+   * renders. Business numbers stay out of copy files entirely.
+   */
+  const templateValues = {
+    percent: getReferredDiscountPercent(),
+    hours: processingHours,
+    days: unlockDays,
+  };
+
+  /**
+   * Resolves {token} placeholders in an i18n template against config.
+   * Unknown tokens are returned untouched so gaps stay visible.
+   *
+   * @param {string} template - Raw i18n string
+   * @returns {string} Copy with all known tokens injected
+   */
+  const inject = (template) =>
+    String(template || '').replace(/{(\w+)}/g, (match, key) =>
+      templateValues[key] !== undefined ? String(templateValues[key]) : match
+    );
   const methods = withdrawalConfig?.methods || [];
   const methodLabel = (method) =>
     t.referrals?.mlm?.withdrawal?.[`method_${method.replace(/-/g, '_')}`] || method;
@@ -212,7 +237,9 @@ const EarnEngineSection = () => {
         <span className="landing-pricing-eyebrow">{labels.eyebrow || 'Learn & Earn'}</span>
         <h2 className="landing-pricing-title">{labels.title || 'Your Knowledge Pays. Literally.'}</h2>
         <p className="landing-pricing-subtitle">
-          {labels.subtitle || 'Share your link — friends get a discount, you earn real cash.'}
+          {inject(
+            labels.subtitle || 'Share your link — friends get a discount, you earn real cash.'
+          )}
         </p>
       </div>
 
@@ -226,7 +253,7 @@ const EarnEngineSection = () => {
                 <IconComponent size={20} />
               </div>
               <h3 className="earn-step-title">{labels[`step${index + 1}Title`] || ''}</h3>
-              <p className="earn-step-desc">{labels[`step${index + 1}Desc`] || ''}</p>
+              <p className="earn-step-desc">{inject(labels[`step${index + 1}Desc`])}</p>
             </div>
           );
         })}

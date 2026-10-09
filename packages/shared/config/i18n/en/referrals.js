@@ -8,6 +8,8 @@
  *   - Admin withdrawal processing keys
  *   - Admin MLM stats keys
  *
+ * Template variables ({hours}) resolved from config — never hardcoded.
+ *
  * Path: packages/shared/config/i18n/en/referrals.js
  */
 module.exports = {
@@ -199,7 +201,8 @@ module.exports = {
         minimumIs: 'Minimum withdrawal is',
         submitBtn: 'Request Withdrawal',
         submitting: 'Submitting...',
-        submitted: 'Withdrawal request submitted. Admin will process within 48 hours.',
+        /* Template variable {hours} injected from referrals config */
+        submitted: 'Withdrawal request submitted. Admin will process within {hours} hours.',
         noHistory: 'No withdrawal requests yet.',
         lockedHint: 'You have {amount} ETB still in the 7-day lock window.',
         method_telebirr: 'Telebirr',
@@ -268,6 +271,7 @@ module.exports = {
       withdrawalMaximum: 'Maximum: {amount} ETB',
       withdrawalSubmit: 'Submit Request',
       withdrawalSubmitting: 'Submitting...',
+      /* Template variable {hours} injected from referrals config */
       withdrawalSuccess: 'Withdrawal request submitted. Admin will process within {hours} hours.',
       withdrawalHistoryTitle: 'Withdrawal History',
       withdrawalHistoryEmpty: 'No withdrawals yet.',

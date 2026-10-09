@@ -1,5 +1,9 @@
 /**
  * @fileoverview English — Checkout Flow Namespace
+ *
+ * Template variable {minutes} resolved from payments.approval.slaMinutes —
+ * never hardcoded.
+ *
  * Path: packages/shared/config/i18n/en/checkout.js
  */
 
@@ -16,7 +20,8 @@ module.exports = {
     completeEnrollment: 'Complete Enrollment & Unlock Portal',
     uploadScreenshot: 'Upload Payment Screenshot (Optional)',
     pendingTitle: 'Payment Under Review',
-    pendingMessage: 'Your payment is being verified. You will get access within 24 hours after confirmation.',
+    /* Template variable {minutes} injected from payments config */
+    pendingMessage: 'Your payment is being verified. You will get access within {minutes} minutes after confirmation.',
     approvedTitle: 'Payment Approved!',
     approvedMessage: 'Your payment has been verified. Welcome to Abyssinia Academy!',
     rejectedTitle: 'Payment Not Verified',

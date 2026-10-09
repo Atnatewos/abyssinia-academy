@@ -1,12 +1,8 @@
 /**
  * @fileoverview Amharic — Referral System & MLM Namespace
  *
- * Contains:
- *   - Legacy referral keys (backward compat with old dashboard)
- *   - MLM 4-level referral keys under `mlm` namespace
- *     (dashboard, tree, commissions, bonuses, withdrawals, howItWorks, tabs)
- *   - Admin withdrawal processing keys
- *   - Admin MLM stats keys
+ * Full parity with English. Template variables ({hours}) resolved from
+ * config — never hardcoded.
  *
  * Path: packages/shared/config/i18n/am/referrals.js
  */
@@ -199,14 +195,15 @@ module.exports = {
         minimumIs: 'ዝቅተኛው ወጪ',
         submitBtn: 'ወጪ ይጠይቁ',
         submitting: 'በማስገባት ላይ...',
-        submitted: 'የወጪ ጥያቄ ገብቷል። አስተዳዳሪ በ48 ሰዓት ውስጥ ያስተናግዳል።',
+        /* Template variable {hours} injected from referrals config */
+        submitted: 'የወጪ ጥያቄ ገብቷል። አስተዳዳሪ በ{hours} ሰዓት ውስጥ ያስተናግዳል።',
         noHistory: 'እስካሁን የወጪ ጥያቄ የለም።',
         lockedHint: 'በ7-ቀን መቆለፊያ ውስጥ {amount} ETB አለዎት።',
         method_telebirr: 'ቴሌብር',
         method_cbe_birr: 'ሲቢኢ ብር',
         method_bank_transfer: 'የባንክ ዝውውር',
         status_pending: 'በመጠባበቅ ላይ',
-        status_approved: 'ጸድቋል',
+        status_approved: 'ጸድቷል',
         status_paid: 'ተከፍሏል',
         status_rejected: 'ውድቅ ተደርጓል',
         invalidAmount: 'ትክክለኛ መጠን ያስገቡ',
@@ -268,11 +265,12 @@ module.exports = {
       withdrawalMaximum: 'ከፍተኛ: {amount} ETB',
       withdrawalSubmit: 'ጥያቄ አስገባ',
       withdrawalSubmitting: 'በማስገባት ላይ...',
+      /* Template variable {hours} injected from referrals config */
       withdrawalSuccess: 'የወጪ ጥያቄ ገብቷል። አስተዳዳሪ በ{hours} ሰዓት ውስጥ ያስተናግዳል።',
       withdrawalHistoryTitle: 'የወጪ ታሪክ',
       withdrawalHistoryEmpty: 'እስካሁን ወጪ የለም።',
       withdrawalStatusPending: 'በመጠባበቅ ላይ',
-      withdrawalStatusApproved: 'ጸድቋል',
+      withdrawalStatusApproved: 'ጸድቷል',
       withdrawalStatusPaid: 'ተከፍሏል',
       withdrawalStatusRejected: 'ውድቅ ተደርጓል',
       withdrawalRequestedOn: '{date} ተጠይቋል',

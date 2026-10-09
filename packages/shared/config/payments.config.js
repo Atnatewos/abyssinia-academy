@@ -7,6 +7,10 @@
  * Pricing is admin-overridable via the admin_settings table (DB-first).
  * The values here are the fallback defaults.
  *
+ * Approval SLA: approval.slaMinutes is consumed by every checkout +
+ * pending-message surface that promises an approval time. Change this
+ * one value to update the entire platform.
+ *
  * Path: packages/shared/config/payments.config.js
  */
 
@@ -178,13 +182,18 @@ const paymentsConfig = {
 
   /*
    * Approval flow — manual review by admin.
+   *
+   * slaMinutes is the platform promise for approval time. Consumed by
+   * checkout pending messages, i18n templates, and admin SLA displays.
    */
   approval: {
     isManual: true,
     adminReviewRequired: true,
     autoApproveAfterHours: null,
-    pendingMessage: 'Your payment is being verified. You will get access within 24 hours after confirmation.',
-    pendingMessageAm: 'ክፍያዎ እየተረጋገጠ ነው። ከተረጋገጠ በ24 ሰዓት ውስጥ መዳሻ ያገኛሉ።',
+    /* Approval SLA: admin verifies within 15 minutes */
+    slaMinutes: 15,
+    pendingMessage: 'Your payment is being verified. You will get access within {minutes} minutes after confirmation.',
+    pendingMessageAm: 'ክፍያዎ እየተረጋገጠ ነው። ከተረጋገጠ በ{minutes} ደቂቃዎች ውስጥ መዳረሻ ያገኛሉ።',
     approvedMessage: 'Payment approved! Welcome to Abyssinia Academy!',
     approvedMessageAm: 'ክፍያዎ ተቀባይነት አግኝቷል! እንኳን ወደ አቢሲኒያ አካዳሚ በደህና መጡ!',
     rejectedMessage: 'Payment could not be verified. Please contact support.',

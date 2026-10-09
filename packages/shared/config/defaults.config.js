@@ -5,6 +5,10 @@
  * the shape of its corresponding live config file so the config bridge
  * never encounters a missing key.
  *
+ * SLA mirrors:
+ *   - withdrawal.processingTimeHours: 24 (payout SLA)
+ *   - approval.slaMinutes: 15 (approval SLA)
+ *
  * Path: packages/shared/config/defaults.config.js
  */
 
@@ -94,8 +98,10 @@ const defaultsConfig = {
       },
     },
     approval: {
-      pendingMessage: 'Your payment is being verified.',
-      pendingMessageAm: 'ክፍያዎ እየተረጋገጠ ነው።',
+      /* Approval SLA mirror: 15 minutes */
+      slaMinutes: 15,
+      pendingMessage: 'Your payment is being verified. You will get access within {minutes} minutes.',
+      pendingMessageAm: 'ክፍያዎ እየተረጋገጠ ነው። በ{minutes} ደቂቃዎች ውስጥ መዳረሻ ያገኛሉ።',
     },
     screenshotUpload: {
       maxSize: 5 * 1024 * 1024,
@@ -258,7 +264,8 @@ const defaultsConfig = {
       methods: ['telebirr', 'cbe-birr', 'bank-transfer'],
       requiresAdminApproval: true,
       maxPendingRequests: 1,
-      processingTimeHours: 48,
+      /* Payout SLA mirror: 24 hours */
+      processingTimeHours: 24,
     },
     registration: {
       showReferralBanner: true,

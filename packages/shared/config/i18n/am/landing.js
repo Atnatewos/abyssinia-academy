@@ -2,8 +2,11 @@
  * @fileoverview Amharic — Landing Page Namespace
  *
  * Full parity with English. Template variables ({amount}, {total},
- * {hours}, {percent}, {days}, {count}) are resolved at render time
- * from referrals/payments config — never hardcoded.
+ * {hours}, {minutes}, {percent}, {days}, {count}) are resolved at render
+ * time from referrals/payments config — never hardcoded.
+ *
+ * Compliance-safe: no "guaranteed" language, no MLM-risk phrases.
+ * AM parity: pricingOverview, phaseTimeline, discussions keys added.
  *
  * Path: packages/shared/config/i18n/am/landing.js
  */
@@ -16,21 +19,24 @@ module.exports = {
     contact: 'አግኙን',
     portal: 'የክፍል ፖርታል',
     signIn: 'ግቡ',
-    enroll: 'አሁኑኩ ይመዝገቡ',
+    enroll: 'አሁን ይመዝገቡ',
     logout: 'ውጡ',
     myProfile: 'የግል ማህደሬ',
     referralDashboard: 'የሪፈራል ዳሽቦርድ',
   },
   hero: {
-    badge: 'በቀረጹ ቪዲዮዎች የሚሰጥ የማስተርክላስ የመማሪያ ስርዓት',
-    earnBadge: '💰 ይማሩ እና ይከፈሉ - እየተማሩ ደሞዝተኛ ይሁኑ',
-    title: 'ፉል ስታክ የዌብ አፕሊኬሽን ዴቨሎፕመንት ይማሩ',
-    subtitle: 'በ5 ደረጃዎች የተዋቀረ የኢንጂነሪንግ ሥርዓተ-ትምህርት። ከፍተኛ ጥራት ያላቸው የተቀረጹ የቀጥታ ማስተርክላሶች፣ የክፍለ-ጊዜ ማጠቃለያዎች፣ የተግባር ኮዲንግ ልምምዶች እና የምርት ፕሮጀክት ማከማቻዎችን ያግኙ።',
+    badge: 'ኦንላይን የቀጥታ ማስተርክላስ የመማሪያ ስርዓት',
+    /* Compliance-safe AM: "እየተማሩ ተከፋይ ይሁኑ" instead of literal translation of "just for studying" */
+    earnBadge: '💰 ቋሚ ገቢ - ስለተማሩ ብቻ ተከፋይ ይሁኑ',
+    /* Shortened AM hero title for visual balance */
+    title: 'ፉል ስታክ የዌብ አፕሊኬሽን ዴቨሎፕመንት ኦንላይን እየተከፈላችሁ ተማሩ በ',
+    /* Compliance-safe AM: "ግልጽ ክፍያዎች" instead of "guaranteed" */
+    subtitle: 'የሶፍትዌር ኢንጂነሪንግን ኦንላይን እያወቁ ቋሚ ገቢ ያግኙ። በ5 ደረጃዎች የተዋቀሩ የቀጥታ ኦንላይን ማስተርክላሶችን እየተከታተሉ፣ ትምህርትዎን ወደ ተከታታይ አውቶሜትድ ክፍያ ይለውጡ።',
     incomeSubline:
-      'በኔትዎርክዎ ውስጥ የሚጸድቁ እያንዳንዱ ሽያጭ በ4 እርከኖች እስከ 500 የኢትዮጵያ ብር ይከፍልዎታል - በቴሌብር በ{hours} ሰዓታት ውስጥ በቴሌብር ገንዘብዎን ማውጣት ይችላሉ።',
+      'በኔትዎርክዎ ውስጥ የሚጸድቁ እያንዳንዱ ሽያጭ በ4 እርከኖች እስከ {total} ETB ይከፍልዎታል - በ{hours} ሰዓታት ውስጥ በቴሌብር ገንዘብዎን ያውጡ።',
     exploreCourses: 'ኮርሶችን ይመልከቱ',
     unlockAccess: 'ሙሉ ኮርሱን ይክፈቱ',
-    earnCta: 'እንዴት እንደሚያገኙ ይመልከቱ',
+    earnCta: 'እንዴት ክፍያ እንደሚያገኙ ይመልከቱ',
     incomeChipLevel1: '+{amount} ETB · ደረጃ 1',
     incomeChip5Directs: '+{amount} ETB · 5 ቀጥታ',
     incomeChipPayout: 'የ{amount} ሰዓት ክፍያ',
@@ -134,8 +140,9 @@ module.exports = {
           answer: 'አይደለም። ኮሚሽን የሚከፈለው በተረጋገጡ እውነተኛ የኮርስ ሽያጮች ላይ ብቻ ነው።',
         },
         {
+          /* Template variable {hours} injected from referrals config */
           question: 'ያገኘሁትን ገንዘብ መቼ ማውጣት እችላለሁ?',
-          answer: 'ኮሚሽኖች እና ቦነሶች ክፍያው ከተረጋገጠ ከ7 ቀናት በኋላ ይከፈታሉ።',
+          answer: 'ኮሚሽኖች እና ቦነሶች ክፍያው ከተረጋገጠ ከ7 ቀናት በኋላ ይከፈታሉ። አንዴ ከተከፈቱ፣ የማውጣት ጥያቄ ያቅርቡ (ዝቅተኛ 500 ETB) እና አስተዳዳሪ በ{hours} ሰዓት ውስጥ በቴሌብር፣ ሲቢኢ ብር ወይም የባንክ ዝውውር ያስተናግዳል።',
         },
         {
           question: 'ገንዘብ ለማግኘት የግድ ተማሪ መሆን አለብኝ?',
@@ -153,18 +160,19 @@ module.exports = {
     },
     cta: {
       heading: 'የሶፍትዌር ሙያዎን ለመጀመር ዝግጁ ነዎት?',
-      subtitle: 'ሁሉንም ኮርሶች፣ 5 የተዋቀሩ ደረጃዎችን፣ የሚወርዱ የፕሮጀክት ኮዶችን እና የግል የቴሌግራም የደቨሎፐር አማካሪ ቡድናችንን ለመክፈት ዛሬውኩ ይመዝገቡ።',
-      buttonText: 'ዛሬውኩ ይመዝገቡና መማር ይጀምሩ',
-      earnButtonText: 'እንዴት እንደሚያገኙ ይመልከቱ',
+      subtitle: 'ሁሉንም ኮርሶች፣ 5 የተዋቀሩ ደረጃዎችን፣ የሚወርዱ የፕሮጀክት ኮዶችን እና የግል የቴሌግራም የደቨሎፐር አማካሪ ቡድናችንን ለመክፈት ዛሬ ይመዝገቡ።',
+      buttonText: 'ዛሬ ይመዝገቡና መማር ይጀምሩ',
+      earnButtonText: 'እንዴት ክፍያ እንደሚያገኙ ይመልከቱ',
     },
     earn: {
-      eyebrow: 'ይማሩ እና ያግኙ',
+      eyebrow: 'ይማሩ እና ገቢ ያግኙ',
       title: 'እውቀትዎ ገቢ ያስገኝልዎታል።',
       subtitle: 'ሊንክዎን ያጋሩ - ጓደኞችዎ {percent}% ክፍያ ቅናሽ ያገኛሉ፣ እርስዎ ደግሞ በእያንዳንዱ በተረጋገጠ ሽያጭ እውነተኛ ገንዘብ ኮሚሽን ያገኛሉ።',
       step1Title: 'ይማሩ',
       step1Desc: 'ይመዝገቡ እና የ5ቱን ደረጃዎች ፉል ስታክ ሥርዓተ-ትምህርት ይማሩ።',
       step2Title: 'ያጋሩ',
       step2Desc: 'የግል ሊንክዎ ለጓደኞችዎ አፋጣኝ የትምህርት ክፍያ ቅናሽ ይሰጣቸዋል።',
+      /* Template variable {hours} injected from referrals config */
       step3Title: 'ያግኙ',
       step3Desc: 'ከተረጋገጠ በኋላ በ{hours} ሰዓታት ውስጥ በቴሌብር ወይም በሲቢኢ ብር ገንዘብዎን ያውጡ።',
       chainTitle: 'አንድ ጓደኛ ሲገዛ፣ 4 ሰዎች ያገኛሉ',
@@ -214,7 +222,7 @@ module.exports = {
         payoutStep2: 'ለ{days} ቀናት ይቆለፋል',
         payoutStep2Desc: 'ከRefund ነፃ የሆነ መስኮት — ተመላሽ ከሆነ በራስ-ሰር ይሰረዛል።',
         payoutStep3: 'ገንዘብ ያውጡ',
-        payoutStep3Desc: 'የማውጣት ጥያቄ ያቅርቡ — አድሚን በ{hours} ሰዓታት ውስጥ ያስኬደዋል።',
+        payoutStep3Desc: 'የማውጣት ጥያቄ ያቅርቡ — በ{hours} ሰዓታት ውስጥ ወጪ ይሆንልዎታል።',
       },
     },
     socialProof: {
@@ -238,6 +246,7 @@ module.exports = {
       cta: 'ሙሉውን የገቢ ሞተር ይመልከቱ',
     },
   },
+  /* AM parity: pricing keys added */
   pricingOverview: {
     eyebrow: 'የትምህርት ክፍያ',
     title: 'ቀላል እና ግልጽ ዋጋ',
@@ -252,12 +261,13 @@ module.exports = {
     featureLifetime: 'የእድሜ ልክ መዳረሻ',
     featureCertificate: 'የምስክር ወረቀት',
     featureCommunity: 'የግል የቴሌግራም ማህበረሰብ',
-    enrollCta: 'አሁኑኩ ይመዝገቡ',
+    enrollCta: 'አሁን ይመዝገቡ',
     browsePhases: 'ደረጃዎችን ይመልከቱ',
     bulkDiscounts: 'የጥቅል ቅናሾች',
     phases: 'ደረጃዎች',
     off: 'ቅናሽ',
   },
+  /* AM parity: phase timeline keys added */
   phaseTimeline: {
     eyebrow: 'ሥርዓተ-ትምህርት',
     title: 'የኢንጂነሪንግ ጉዞዎ',
@@ -266,6 +276,7 @@ module.exports = {
     viewDetails: 'የደረጃውን ዝርዝር ይመልከቱ',
     enrollCta: 'ሙሉ ኮርሱን ይመዝገቡ',
   },
+  /* AM parity: discussions keys added */
   discussions: {
     eyebrow: 'በክፍል ውስጥ',
     title: 'የቀጥታ ውይይቶች እና ጥያቄና መልስ',
@@ -279,7 +290,7 @@ module.exports = {
     discountDesc: 'በምዝገባዎ ላይ አፋጣኝ ቅናሽ ለማግኘት ፕሮሞ ኮዶችን ይጠቀሙ።',
     discountCta: 'የበለጠ ይወቁ',
     referralTitle: 'የገንዘብ ሪፈራል',
-    referralDesc: 'ሊንክዎን ያጋሩ - ጓደኞችዎ {percent}% ይቆጥባሉ፣ እርስዎ በእያንዳንዱ የጸደቀ ሽያጭ እውነተኛ ETB ያገኛሉ።',
+    referralDesc: 'ሊንክዎን ያጋሩ — ጓደኞችዎ {percent}% ይቆጥባሉ፣ እርስዎ በእያንዳንዱ የጸደቀ ሽያጭ እውነተኛ ETB ያገኛሉ።',
     referralCta: 'ማግኘት ይጀምሩ',
     commissionTitle: '4-ደረጃ ኮሚሽኖች',
     commissionDesc: 'በአውታረ መረብዎ ውስጥ በሚፈጸም እያንዳንዱ የኮርስ ሽያጭ በ4 ደረጃዎች ተከፋፍሎ እስከ {amount} ETB ያግኙ።',

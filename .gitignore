@@ -9,3 +9,8 @@ dist/
 *.log
 .DS_Store
 coverage/
+
+# Debug/session artifacts - never commit
+*_files.txt
+nul
+*.log

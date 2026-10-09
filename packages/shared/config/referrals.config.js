@@ -5,6 +5,10 @@
  * commission chain, paying-gated bonuses, caps, withdrawal rules,
  * sharing platforms, and the public earn-stats listing gate.
  *
+ * Payout SLA: withdrawal.processingTimeHours is consumed by every
+ * landing + dashboard + referral surface that promises a payout time.
+ * Change this one value to update the entire platform.
+ *
  * Path: packages/shared/config/referrals.config.js
  */
 const referralsConfig = {
@@ -85,7 +89,8 @@ const referralsConfig = {
     methods: ['telebirr', 'cbe-birr', 'bank-transfer'],
     requiresAdminApproval: true,
     maxPendingRequests: 1,
-    processingTimeHours: 48,
+    /* Payout SLA: admin processes within 24 hours */
+    processingTimeHours: 24,
   },
   registration: {
     showReferralBanner: true,
@@ -97,7 +102,7 @@ const referralsConfig = {
     shareMessageTemplate:
       '🚀 Join me at {name} and get {discount}% off your enrollment! Learn Full-Stack Web Development: {link}',
     shareMessageTemplateAm:
-      '🚀 በ{name} ይቀላሉ እና {discount}% ቅናሽ ያኙ! ል-ስክ ዌ ዴቨሎመንት ማሩ: {link}',
+      '🚀 በ{name} ይቀላቀሉ እና {discount}% ቅናሽ ያግኙ! ፉል-ስታክ ዌብ ዴቨሎፕመንት ይማሩ: {link}',
     platforms: {
       telegram: 'https://t.me/share/url',
       whatsapp: 'https://wa.me',

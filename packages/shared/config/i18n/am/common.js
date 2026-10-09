@@ -14,7 +14,7 @@ module.exports = {
   },
   banner: {
     text: '💰 ተማሪዎች እየተማሩ ያገኛሉ — በአንድ ሽያጭ እስከ {total} ETB · በ{hours} ሰዓት ያውጡ።',
-    claimDiscount: 'እንዴት እንደሚያገኙ ይመልከቱ →',
+    claimDiscount: 'እንዴት ክፍያ እንደሚያገኙ ይመልከቱ →',
   },
   theme: {
     light: 'ብርሃናማ ሞድ',

@@ -1,5 +1,9 @@
 /**
  * @fileoverview Amharic — Checkout Flow Namespace
+ *
+ * Template variable {minutes} resolved from payments.approval.slaMinutes —
+ * never hardcoded.
+ *
  * Path: packages/shared/config/i18n/am/checkout.js
  */
 
@@ -16,7 +20,8 @@ module.exports = {
     completeEnrollment: 'ምዝገባውን ጨርስ እና ፖርታሉን ክፈት',
     uploadScreenshot: 'የክፍያ ማረጋገጫ ፎቶ ያስገቡ',
     pendingTitle: 'ክፍያዎ እየተረጋገጠ ነው',
-    pendingMessage: 'ክፍያዎ እየተረጋገጠ ነው። በ24 ሰዓት ውስጥ ሙሉ አክሰስ ያገኛሉ።',
+    /* Template variable {minutes} injected from payments config */
+    pendingMessage: 'ክፍያዎ እየተረጋገጠ ነው። ከተረጋገጠ በ{minutes} ደቂቃዎች ውስጥ ሙሉ አክሰስ ያገኛሉ።',
     approvedTitle: 'ክፍያ ጸድቋል!',
     approvedMessage: 'ክፍያዎ ተረጋግጧል። እንኳን ወደ አቢሲኒያ አካዳሚ በደህና መጡ!',
     rejectedTitle: 'ክፍያ አልተረጋገጠም',

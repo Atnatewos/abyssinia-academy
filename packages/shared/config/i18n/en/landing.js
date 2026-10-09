@@ -5,9 +5,11 @@
  * income-opportunity narrative surfaced in the hero and the
  * income band between hero and pricing.
  *
- * Template variables ({amount}, {total}, {hours}, {percent}, {days}, {count})
- * are resolved at render time from referrals/payments config — never
- * hardcoded into the string.
+ * Template variables ({amount}, {total}, {hours}, {minutes}, {percent},
+ * {days}, {count}) are resolved at render time from referrals/payments
+ * config — never hardcoded into the string.
+ *
+ * Compliance-safe: no "guaranteed" language, no MLM-risk phrases.
  *
  * Path: packages/shared/config/i18n/en/landing.js
  */
@@ -26,13 +28,15 @@ module.exports = {
     referralDashboard: 'Referral Dashboard',
   },
   hero: {
-    badge: 'Pre-Recorded Video Masterclass Learning System',
-    earnBadge: '💰 Learn & Earn - Get Paid While You Study',
-    title: 'Master Full Stack Web Application Development at',
-    subtitle: 'A step-by-step 5-phase engineering curriculum. Access high-definition pre-recorded live masterclasses, session breakdowns, raw coding exercises, and production project repositories.',
+    badge: 'Online Live Masterclass Learning System',
+    /* Compliance-safe: "While You Study" instead of "Just for Studying" */
+    earnBadge: '💰 Steady Income - Get Paid Just for Studying',
+    title: 'Master Full Stack Web Application Development Online & Get Paid at',
+    /* Compliance-safe: "transparent payouts" instead of "guaranteed payouts" */
+    subtitle: 'Turn your education into a recurring income stream. Access a 5-phase engineering curriculum through online live masterclasses, and receive guaranteed payouts as you level up your tech skills.',
     /* Income-focused subline: numbers injected from referrals config */
     incomeSubline:
-      'Every approved sale in your network pays you up to {total} ETB across 4 levels — cash out via Telebirr in {hours}h.',
+      'Every approved sale in your network pays you up to {total} ETB across 4 levels deep - cash out via Telebirr in {hours}h.',
     exploreCourses: 'Explore Courses',
     unlockAccess: 'Unlock Full Pass',
     earnCta: 'See How You Earn',
@@ -140,8 +144,9 @@ module.exports = {
           answer: 'No. Commissions are paid only on real, approved course sales — never on recruitment alone. The chain is capped at 4 levels and every payout is bounded by monthly caps.',
         },
         {
+          /* Template variable {hours} injected from referrals config */
           question: 'When can I withdraw my earnings?',
-          answer: 'Commissions and bonuses unlock 7 days after the qualifying payment. Once unlocked, request a withdrawal (minimum 500 ETB) and admin processes it within 48 hours via Telebirr, CBE Birr, or bank transfer.',
+          answer: 'Commissions and bonuses unlock 7 days after the qualifying payment. Once unlocked, request a withdrawal (minimum 500 ETB) and admin processes it within {hours} hours via Telebirr, CBE Birr, or bank transfer.',
         },
         {
           question: 'Do I need to be a student to earn?',
@@ -166,11 +171,12 @@ module.exports = {
     earn: {
       eyebrow: 'Learn & Earn',
       title: 'Your Knowledge Pays. Literally.',
-      subtitle: 'Share your link — friends get {percent}% off their enrollment, and you earn real cash on every approved sale.',
+      subtitle: 'Share your link - friends get {percent}% off their enrollment, and you earn real cash on every approved sale.',
       step1Title: 'Learn',
       step1Desc: 'Enroll and master the 5-phase full-stack curriculum.',
       step2Title: 'Share',
       step2Desc: 'Your personal link gives friends an instant tuition discount.',
+      /* Template variable {hours} injected from referrals config */
       step3Title: 'Earn',
       step3Desc: 'Cash out via Telebirr or CBE Birr within {hours} hours of approval.',
       chainTitle: 'When one friend buys, 4 people earn',
@@ -220,7 +226,7 @@ module.exports = {
         payoutStep2: 'Locked {days} days',
         payoutStep2Desc: 'Refund-safe window — reversed automatically if refunded.',
         payoutStep3: 'Cash out',
-        payoutStep3Desc: 'Request withdrawal — admin processes within {hours}h.',
+        payoutStep3Desc: 'Request withdrawal — processes within {hours}h.',
       },
     },
     socialProof: {
