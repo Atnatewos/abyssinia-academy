@@ -1,7 +1,14 @@
 /**
  * @fileoverview Profile API Route
- * Handles fetching (GET) and updating (PUT) user profile data.
+ * 
+ * Handles fetching (GET) and updating (POST/PUT) user profile data.
  * Authenticated via JWT — reads userId from the verified token.
+ * 
+ * Supports email updates with:
+ *   - Format validation
+ *   - Uniqueness enforcement (excludes current user)
+ *   - Typed error codes for client-side handling
+ * 
  * Path: apps/web/pages/api/profile/index.js
  */
 
@@ -14,6 +21,15 @@ const pool = new Pool({
     ? { rejectUnauthorized: false }
     : false,
 });
+
+/* 
+ * Validation rules — business constants mirrored client-side for UX only.
+ * The server remains the source of truth.
+ */
+const NAME_MIN_LENGTH = 2;
+const NAME_MAX_LENGTH = 100;
+const PHONE_PATTERN = /^\+?[0-9]{9,15}$/;
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 export default async function handler(req, res) {
 
@@ -169,25 +185,71 @@ export default async function handler(req, res) {
   }
 
   /*
-   * PUT — Update profile data
+   * POST / PUT — Update profile data (accepts both for frontend compatibility)
    */
-  if (req.method === 'PUT') {
+  if (req.method === 'POST' || req.method === 'PUT') {
 
     try {
 
       const { fullName, phone, email } = req.body;
 
-      if (!fullName || !fullName.trim()) {
-        return res.status(400).json({ success: false, message: 'Full name is required.' });
+      /* Validate full name */
+      const trimmedName = String(fullName || '').trim();
+      if (!trimmedName || trimmedName.length < NAME_MIN_LENGTH || trimmedName.length > NAME_MAX_LENGTH) {
+        return res.status(400).json({ 
+          success: false, 
+          code: 'INVALID_NAME',
+          message: `Full name must be between ${NAME_MIN_LENGTH} and ${NAME_MAX_LENGTH} characters.` 
+        });
       }
 
+      /* Validate phone (optional but must be valid if provided) */
+      const trimmedPhone = String(phone || '').trim();
+      if (trimmedPhone && !PHONE_PATTERN.test(trimmedPhone)) {
+        return res.status(400).json({ 
+          success: false, 
+          code: 'INVALID_PHONE',
+          message: 'Please provide a valid phone number.' 
+        });
+      }
+
+      /* Validate email (optional but must be valid if provided) */
+      const trimmedEmail = String(email || '').trim().toLowerCase();
+      if (trimmedEmail && !EMAIL_PATTERN.test(trimmedEmail)) {
+        return res.status(400).json({ 
+          success: false, 
+          code: 'INVALID_EMAIL',
+          message: 'Please provide a valid email address.' 
+        });
+      }
+
+      /* Check email uniqueness (excluding current user) */
+      if (trimmedEmail) {
+        const emailCheck = await pool.query(
+          `SELECT id FROM users WHERE email = $1 AND id <> $2 LIMIT 1`,
+          [trimmedEmail, userId]
+        );
+
+        if (emailCheck.rows.length > 0) {
+          return res.status(409).json({ 
+            success: false, 
+            code: 'EMAIL_TAKEN',
+            message: 'This email is already used by another account.' 
+          });
+        }
+      }
+
+      /* Update the user record */
       const result = await pool.query(
         `UPDATE users
-         SET full_name = $1, phone = $2, email = $3,
-             profile_completed = true, updated_at = CURRENT_TIMESTAMP
+         SET full_name = $1, 
+             phone = $2, 
+             email = $3,
+             profile_completed = true, 
+             updated_at = CURRENT_TIMESTAMP
          WHERE id = $4
          RETURNING id, full_name, phone, email, avatar_url, profile_completed`,
-        [fullName.trim(), phone?.trim() || null, email?.trim() || null, userId]
+        [trimmedName, trimmedPhone || null, trimmedEmail || null, userId]
       );
 
       const updated = result.rows[0];

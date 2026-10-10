@@ -186,7 +186,7 @@ module.exports = {
         subtitle: 'ያለውን የኮሚሽን ቀሪ ሒሳብዎ ወደ ተመራጭ የመክፈያ ዘዴ ያውጡ።',
         historyTitle: 'የወጪ ታሪክ',
         availableBalance: 'ያለ ቀሪ ሒሳብ',
-        pendingNotice: 'አስቀድመው በመጠባበቅ ላይ ያለ የወጪ ጥያቄ አለዎት። እባክዎ እስኪሰራ ይጠብቁ።',
+        pendingNotice: 'የወጪ ጥያቄዎ ተልኳል። እባክዎ እስኪላክልዎት ይጠብቁ።',
         amountLabel: 'መጠን (ETB)',
         methodLabel: 'የመክፈያ ዘዴ',
         accountLabel: 'የአካውንት ቁጥር',

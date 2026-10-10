@@ -192,7 +192,7 @@ module.exports = {
         subtitle: 'Withdraw your available commission balance to your preferred payment method.',
         historyTitle: 'Withdrawal History',
         availableBalance: 'Available Balance',
-        pendingNotice: 'You already have a pending withdrawal request. Please wait for it to be processed.',
+        pendingNotice: 'Your withdrawal request has been submitted. Please wait for it to be processed.',
         amountLabel: 'Amount (ETB)',
         methodLabel: 'Payment Method',
         accountLabel: 'Account Number',

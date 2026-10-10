@@ -21,7 +21,7 @@ const referralsConfig = {
   },
   commissionStructure: {
     maxLevels: 4,
-    levelAmounts: [200, 150, 100, 50],
+    levelAmounts: [300, 150, 100, 50],
     totalPerSale: 500,
     maxTotalPerSaleETB: 500,
     currency: 'ETB',

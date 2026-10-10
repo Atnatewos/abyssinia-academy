@@ -2601,3 +2601,545 @@
     transition: none;
   }
 }
+
+/* ============================================================================
+   ADMIN "COMING SOON" STUB STYLING
+   Beautiful placeholder for unfinished admin CRUD routes. Pairs with
+   AdminComingSoon component — shimmer preview + friendly message card.
+   ============================================================================ */
+
+.admin-coming-soon {
+  position: relative;
+  margin-top: 1rem;
+  border-radius: 1.25rem;
+  border: 1px dashed var(--border-medium, rgba(148, 163, 184, 0.25));
+  background: var(--bg-card-solid, #0f172a);
+  overflow: hidden;
+  min-height: 28rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1.5rem;
+}
+
+/* Faded preview layer behind the message card */
+.admin-coming-soon-preview {
+  position: absolute;
+  inset: 0;
+  padding: 1.25rem;
+  opacity: 0.18;
+  pointer-events: none;
+}
+
+.admin-coming-soon-toolbar {
+  display: flex;
+  gap: 0.625rem;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.admin-coming-soon-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+/* Foreground message card — centered over the preview */
+.admin-coming-soon-message {
+  position: relative;
+  z-index: 2;
+  max-width: 28rem;
+  width: 100%;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.admin-coming-soon-icon {
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.18), rgba(139, 92, 246, 0.18));
+  color: var(--accent-gold, #f59e0b);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.25rem;
+}
+
+.admin-coming-soon-eyebrow {
+  font-size: 0.6875rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent-gold, #f59e0b);
+}
+
+.admin-coming-soon-title {
+  font-size: 1.375rem;
+  font-weight: 800;
+  color: var(--text-main, #f8fafc);
+  margin: 0;
+  line-height: 1.25;
+}
+
+.admin-coming-soon-description {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-main, #f8fafc);
+  margin: 0;
+}
+
+.admin-coming-soon-detail {
+  font-size: 0.875rem;
+  color: var(--text-muted, #94a3b8);
+  line-height: 1.55;
+  margin: 0;
+}
+
+.admin-coming-soon-actions {
+  display: flex;
+  gap: 0.625rem;
+  margin-top: 1rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.admin-coming-soon-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.625rem 1.25rem;
+  border-radius: 0.625rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1px solid transparent;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.admin-coming-soon-btn.secondary {
+  background: var(--surface-secondary, rgba(15, 23, 42, 0.4));
+  border-color: var(--border-medium, rgba(148, 163, 184, 0.2));
+  color: var(--text-muted, #94a3b8);
+}
+
+.admin-coming-soon-btn.secondary:hover {
+  color: var(--text-main, #f8fafc);
+  border-color: var(--border-hover, rgba(245, 158, 11, 0.4));
+}
+
+.admin-coming-soon-btn.primary {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #0f172a;
+}
+
+.admin-coming-soon-btn.primary:hover {
+  box-shadow: 0 6px 20px -6px rgba(245, 158, 11, 0.5);
+  transform: translateY(-1px);
+}
+
+.admin-coming-soon-note {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--text-dim, #64748b);
+}
+
+/* ── Profile edit form styling ── */
+.profile-edit-page {
+  padding: 2rem 0;
+}
+
+.profile-edit-section {
+  padding: 1.25rem;
+  background: var(--surface-secondary, rgba(15, 23, 42, 0.4));
+  border: 1px solid var(--border-light, rgba(148, 163, 184, 0.12));
+  border-radius: 1rem;
+  margin-bottom: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.profile-edit-section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--text-main, #f8fafc);
+}
+
+.profile-edit-section-subtitle {
+  margin: -0.25rem 0 0;
+  font-size: 0.8125rem;
+  color: var(--text-muted, #94a3b8);
+  line-height: 1.5;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.form-group label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-muted, #94a3b8);
+}
+
+.input-with-icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-with-icon svg:first-child {
+  position: absolute;
+  left: 0.875rem;
+  color: var(--text-dim, #64748b);
+  pointer-events: none;
+}
+
+.input-with-icon input {
+  width: 100%;
+  padding: 0.75rem 0.875rem 0.75rem 2.5rem;
+  background: var(--bg-card-solid, #0f172a);
+  border: 1px solid var(--border-medium, rgba(148, 163, 184, 0.2));
+  border-radius: 0.5rem;
+  color: var(--text-main, #f8fafc);
+  font-size: 0.875rem;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.input-with-icon input:focus {
+  border-color: var(--accent-gold, #f59e0b);
+}
+
+.input-with-icon input.input-readonly,
+.input-with-icon input:disabled {
+  background: var(--surface-secondary, rgba(15, 23, 42, 0.4));
+  color: var(--text-muted, #94a3b8);
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.input-with-toggle input {
+  padding-right: 2.75rem;
+}
+
+.input-toggle-btn {
+  position: absolute;
+  right: 0.5rem;
+  background: none;
+  border: none;
+  color: var(--text-dim, #64748b);
+  cursor: pointer;
+  padding: 0.375rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.375rem;
+  transition: color 0.2s ease;
+}
+
+.input-toggle-btn:hover {
+  color: var(--accent-gold, #f59e0b);
+}
+
+.form-hint {
+  margin: 0;
+  font-size: 0.6875rem;
+  color: var(--text-dim, #64748b);
+  font-style: italic;
+}
+
+/* ── Light theme parity ── */
+.light-theme .admin-coming-soon {
+  background: #ffffff;
+  border-color: rgba(15, 23, 42, 0.15);
+}
+
+.light-theme .admin-coming-soon-title,
+.light-theme .admin-coming-soon-description {
+  color: #0f172a;
+}
+
+.light-theme .admin-coming-soon-btn.secondary {
+  background: #ffffff;
+  border-color: rgba(15, 23, 42, 0.15);
+  color: #475569;
+}
+
+.light-theme .profile-edit-section {
+  background: #f8fafc;
+  border-color: rgba(15, 23, 42, 0.1);
+}
+
+.light-theme .profile-edit-section-title {
+  color: #0f172a;
+}
+
+.light-theme .input-with-icon input {
+  background: #ffffff;
+  border-color: rgba(15, 23, 42, 0.15);
+  color: #0f172a;
+}
+
+.light-theme .input-with-icon input.input-readonly,
+.light-theme .input-with-icon input:disabled {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+/* ── Responsive: stack stub buttons on mobile ── */
+@media (max-width: 480px) {
+  .admin-coming-soon-actions {
+    width: 100%;
+  }
+
+  .admin-coming-soon-btn {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .admin-coming-soon-title {
+    font-size: 1.125rem;
+  }
+}
+
+/* ── Reduced motion: skip hover transforms ── */
+@media (prefers-reduced-motion: reduce) {
+  .admin-coming-soon-btn.primary:hover {
+    transform: none;
+  }
+}
+
+/* ============================================================================
+   PROFILE EDIT REDESIGN — identity header, two-column grid, dirty pill,
+   strength meter, inline field errors. Scoped under profile-edit-* so no
+   existing surface shifts.
+   ============================================================================ */
+
+.profile-edit-shell {
+  max-width: 64rem;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* ── Identity header card ── */
+.profile-edit-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 1.25rem;
+  background: var(--bg-card-solid, #0f172a);
+  border: 1px solid var(--border-light, rgba(148, 163, 184, 0.12));
+  border-radius: 1rem;
+}
+
+.profile-edit-avatar {
+  width: 4rem;
+  height: 4rem;
+  border-radius: 50%;
+  background: rgba(245, 158, 11, 0.12);
+  color: var(--accent-gold, #f59e0b);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: 800;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.profile-edit-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.profile-edit-identity {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.profile-edit-identity h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--text-main, #f8fafc);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profile-edit-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--text-muted, #94a3b8);
+}
+
+/* ── Responsive two-column grid ── */
+.profile-edit-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.25rem;
+  align-items: start;
+}
+
+@media (min-width: 1024px) {
+  .profile-edit-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* ── Action row + dirty pill ── */
+.profile-edit-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-top: 0.25rem;
+}
+
+.profile-dirty-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  color: var(--accent-gold, #f59e0b);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* ── Inline field errors ── */
+.profile-field-error {
+  margin: 0.25rem 0 0;
+  font-size: 0.6875rem;
+  color: #ef4444;
+}
+
+.input-with-icon input.input-error {
+  border-color: rgba(239, 68, 68, 0.55);
+}
+
+.input-with-icon input.input-error:focus {
+  border-color: #ef4444;
+}
+
+/* ── Password strength meter ── */
+.profile-strength {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  margin-top: 0.375rem;
+}
+
+.profile-strength-bars {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.profile-strength-bar {
+  height: 0.375rem;
+  flex: 1;
+  border-radius: 9999px;
+  background: var(--surface-secondary, rgba(148, 163, 184, 0.15));
+  transition: background 0.2s ease;
+}
+
+.profile-strength-bar.filled-weak {
+  background: #ef4444;
+}
+
+.profile-strength-bar.filled-fair {
+  background: #f59e0b;
+}
+
+.profile-strength-bar.filled-strong {
+  background: #10b981;
+}
+
+.profile-strength-label {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: var(--text-muted, #94a3b8);
+}
+
+/* ── Light theme parity ── */
+.light-theme .profile-edit-header {
+  background: #ffffff;
+  border-color: rgba(15, 23, 42, 0.1);
+}
+
+.light-theme .profile-edit-identity h2 {
+  color: #0f172a;
+}
+
+.light-theme .profile-strength-bar {
+  background: rgba(15, 23, 42, 0.1);
+}
+
+/* ── Reduced motion: skip meter transitions ── */
+@media (prefers-reduced-motion: reduce) {
+  .profile-strength-bar {
+    transition: none;
+  }
+}
+
+/* ── Modal success/error variants ── */
+.modal-content.modal-success,
+.modal-content.modal-error {
+  text-align: center;
+}
+
+.modal-icon {
+  width: 4rem;
+  height: 4rem;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1rem;
+}
+
+.modal-icon.success {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+}
+
+.modal-icon.error {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+}
+
+.modal-success h3 {
+  color: #10b981;
+}
+
+.modal-error h3 {
+  color: #ef4444;
+}
