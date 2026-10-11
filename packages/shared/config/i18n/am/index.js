@@ -21,6 +21,7 @@ const profile = require('./profile');
 const referrals = require('./referrals');
 const discounts = require('./discounts');
 const contact = require('./contact');
+const notifications = require('./notifications');
 
 module.exports = {
   ...common,
@@ -37,4 +38,5 @@ module.exports = {
   ...referrals,
   ...discounts,
   ...contact,
+  ...notifications,
 };

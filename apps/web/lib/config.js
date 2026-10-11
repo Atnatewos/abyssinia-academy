@@ -21,7 +21,7 @@ const loadConfig = () => {
     cachedConfig = require('../../../packages/shared/config');
   } catch {
     try {
-      cachedConfig = require('@shared/config');
+      cachedConfig = require('@shared.config');
     } catch {
       cachedConfig = null;
     }
@@ -103,6 +103,19 @@ const loadDefaults = () => {
         rateLimiting: { perIP: { validatePerMinute: 10, applyPerMinute: 3, totalPerDay: 20 }, perUser: { validatePerMinute: 5, applyPerMinute: 3 } },
         antiAbuse: { enabled: true, riskThresholds: { normal: 20, suspicious: 50, high: 75, critical: 100 }, actions: { suspicious: 'log', high: 'flag_for_review', critical: 'block_and_notify' }, autoDisableThreshold: 5 },
         publicListing: { enabled: false, showOnPricingPage: true },
+      },
+      notifications: {
+        retentionDays: 30,
+        maxPerUser: 200,
+        readArchiveDays: 14,
+        refreshIntervalMs: 60000,
+        pageSize: 20,
+        types: {},
+        groupingRules: ['today', 'yesterday', 'thisWeek', 'older'],
+        categories: [
+          { id: 'all', labelKey: 'notification.filter.all' },
+          { id: 'unread', labelKey: 'notification.filter.unread' },
+        ],
       },
     };
   }
@@ -491,6 +504,31 @@ export const getReferralPublicListingConfig = () => {
       rateLimitPerMinute: 30,
     }
   );
+};
+
+/* ================================================================
+   NOTIFICATIONS SYSTEM ACCESSORS
+   ================================================================ */
+/**
+ * Notifications system configuration accessor.
+ * Returns retention policy, refresh interval, types, and grouping rules.
+ * @returns {object} Notifications config
+ */
+export const getNotificationsConfig = () => {
+  const defaults = loadDefaults();
+  return getValue('notifications', defaults.notifications || {
+    retentionDays: 30,
+    maxPerUser: 200,
+    readArchiveDays: 14,
+    refreshIntervalMs: 60000,
+    pageSize: 20,
+    types: {},
+    groupingRules: ['today', 'yesterday', 'thisWeek', 'older'],
+    categories: [
+      { id: 'all', labelKey: 'notification.filter.all' },
+      { id: 'unread', labelKey: 'notification.filter.unread' },
+    ],
+  });
 };
 
 /* ================================================================

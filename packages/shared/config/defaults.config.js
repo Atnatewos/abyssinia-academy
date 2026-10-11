@@ -13,6 +13,109 @@
  */
 
 const defaultsConfig = {
+  notifications: {
+    retentionDays: 30,
+    maxPerUser: 200,
+    readArchiveDays: 14,
+    refreshIntervalMs: 60000,
+    pageSize: 20,
+    types: {
+      payment_approved: {
+        icon: 'CheckCircle',
+        severity: 'success',
+        category: 'payments',
+        titleKey: 'notification.paymentApproved.title',
+        bodyKey: 'notification.paymentApproved.body',
+      },
+      payment_rejected: {
+        icon: 'XCircle',
+        severity: 'critical',
+        category: 'payments',
+        titleKey: 'notification.paymentRejected.title',
+        bodyKey: 'notification.paymentRejected.body',
+      },
+      commission_unlocked: {
+        icon: 'Unlock',
+        severity: 'success',
+        category: 'referrals',
+        titleKey: 'notification.commissionUnlocked.title',
+        bodyKey: 'notification.commissionUnlocked.body',
+      },
+      bonus_awarded: {
+        icon: 'Trophy',
+        severity: 'success',
+        category: 'referrals',
+        titleKey: 'notification.bonusAwarded.title',
+        bodyKey: 'notification.bonusAwarded.body',
+      },
+      referral_signed_up: {
+        icon: 'UserPlus',
+        severity: 'info',
+        category: 'referrals',
+        titleKey: 'notification.referralSignedUp.title',
+        bodyKey: 'notification.referralSignedUp.body',
+      },
+      referral_purchased: {
+        icon: 'ShoppingCart',
+        severity: 'success',
+        category: 'referrals',
+        titleKey: 'notification.referralPurchased.title',
+        bodyKey: 'notification.referralPurchased.body',
+      },
+      withdrawal_approved: {
+        icon: 'Banknote',
+        severity: 'success',
+        category: 'payments',
+        titleKey: 'notification.withdrawalApproved.title',
+        bodyKey: 'notification.withdrawalApproved.body',
+      },
+      withdrawal_rejected: {
+        icon: 'AlertTriangle',
+        severity: 'critical',
+        category: 'payments',
+        titleKey: 'notification.withdrawalRejected.title',
+        bodyKey: 'notification.withdrawalRejected.body',
+      },
+      password_changed: {
+        icon: 'Key',
+        severity: 'warning',
+        category: 'security',
+        titleKey: 'notification.passwordChanged.title',
+        bodyKey: 'notification.passwordChanged.body',
+      },
+      enrollment_granted: {
+        icon: 'GraduationCap',
+        severity: 'success',
+        category: 'enrollment',
+        titleKey: 'notification.enrollmentGranted.title',
+        bodyKey: 'notification.enrollmentGranted.body',
+      },
+      phase_unlocked: {
+        icon: 'BookOpen',
+        severity: 'success',
+        category: 'enrollment',
+        titleKey: 'notification.phaseUnlocked.title',
+        bodyKey: 'notification.phaseUnlocked.body',
+      },
+      suspension_warning: {
+        icon: 'ShieldOff',
+        severity: 'critical',
+        category: 'security',
+        titleKey: 'notification.suspensionWarning.title',
+        bodyKey: 'notification.suspensionWarning.body',
+      },
+    },
+    groupingRules: ['today', 'yesterday', 'thisWeek', 'older'],
+    categories: [
+      { id: 'all', labelKey: 'notification.filter.all' },
+      { id: 'unread', labelKey: 'notification.filter.unread' },
+      { id: 'payments', labelKey: 'notification.filter.payments' },
+      { id: 'referrals', labelKey: 'notification.filter.referrals' },
+      { id: 'enrollment', labelKey: 'notification.filter.enrollment' },
+      { id: 'security', labelKey: 'notification.filter.security' },
+    ],
+  },
+
   payments: {
     pricing: {
       fullCourse: {

@@ -6,6 +6,13 @@
  * Includes the config-gated "Earn" anchor pill (#earn) that jumps to
  * the Learn & Earn section on the landing page.
  *
+ * Features:
+ *   - Config-gated Earn pill (marketing can disable without deploy)
+ *   - Notification bell icon with unread badge (authenticated users only)
+ *   - Profile dropdown with avatar + quick links
+ *   - Language + theme toggle controls
+ *   - Mobile-responsive menu with slide-up panel
+ *
  * Path: apps/web/components/shared/Navigation.jsx
  */
 import { useState, useEffect, useCallback } from 'react';
@@ -30,6 +37,7 @@ import { useLanguage } from '../../context/LanguageContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import { getPlatformConfig, getLandingEarnConfig } from '../../lib/config';
+import NotificationBell from '../notifications/NotificationBell';
 
 const Navigation = () => {
   const router = useRouter();
@@ -151,6 +159,9 @@ const Navigation = () => {
             {isMounted && (theme === 'dark' ? <Sun /> : <Moon />)}
           </button>
 
+          {/* Notification bell — authenticated users only */}
+          {isAuthenticated && <NotificationBell />}
+
           {isAuthenticated ? (
             <div className="nav-profile-dropdown">
               <button
@@ -233,6 +244,11 @@ const Navigation = () => {
           <div className="nav-mobile-divider" />
           {isAuthenticated ? (
             <>
+              {/* Mobile notification bell — centered in its own row */}
+              <div className="nav-mobile-notifications">
+                <NotificationBell />
+              </div>
+              <div className="nav-mobile-divider" />
               <Link href="/profile" className="nav-mobile-link">{navLabels.myProfile || 'My Profile'}</Link>
               <Link href="/profile/referrals" className="nav-mobile-link">{navLabels.referralDashboard || 'Referral Dashboard'}</Link>
               <button type="button" className="nav-mobile-logout" onClick={handleLogout}>
