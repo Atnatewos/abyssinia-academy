@@ -2,8 +2,9 @@
  * @fileoverview Notifications Configuration
  *
  * Single source of truth for the in-app notification system:
- *   - 12 notification types with icon + severity + i18n keys
+ *   - 13 notification types with icon + severity + i18n keys + channel flags
  *   - Retention policy (30 days default, 200 max per user)
+ *   - Broadcast rate limit + history page size (admin-only)
  *   - Grouping rules (today, yesterday, thisWeek, older)
  *   - Filter categories (All, Unread, Payments, Referrals, etc.)
  *   - Refresh interval (60s when tab is active, paused when backgrounded)
@@ -26,13 +27,18 @@ const notificationsConfig = {
   refreshIntervalMs: 60000,
   pageSize: 20,
 
+  /* Admin broadcast controls */
+  broadcastRateLimitSeconds: 60,
+  broadcastHistoryPageSize: 20,
+
   /*
    * Notification types — each entry defines:
    *   - icon: Lucide icon name (rendered by NotificationBell)
-   *   - severity: info | success | warning | critical
-   *   - category: payments | referrals | enrollment | security
+   *   - severity: info | success | warning | critical (default severity)
+   *   - category: payments | referrals | enrollment | security | admin
    *   - titleKey: i18n key for title (resolved at render time)
    *   - bodyKey: i18n key for body (resolved at render time)
+   *   - channels: { inApp: bool, telegram: bool } — delivery routing flags
    */
   types: {
     payment_approved: {
@@ -41,6 +47,7 @@ const notificationsConfig = {
       category: 'payments',
       titleKey: 'notification.paymentApproved.title',
       bodyKey: 'notification.paymentApproved.body',
+      channels: { inApp: true, telegram: false },
     },
     payment_rejected: {
       icon: 'XCircle',
@@ -48,6 +55,7 @@ const notificationsConfig = {
       category: 'payments',
       titleKey: 'notification.paymentRejected.title',
       bodyKey: 'notification.paymentRejected.body',
+      channels: { inApp: true, telegram: true },
     },
     commission_unlocked: {
       icon: 'Unlock',
@@ -55,6 +63,7 @@ const notificationsConfig = {
       category: 'referrals',
       titleKey: 'notification.commissionUnlocked.title',
       bodyKey: 'notification.commissionUnlocked.body',
+      channels: { inApp: true, telegram: false },
     },
     bonus_awarded: {
       icon: 'Trophy',
@@ -62,6 +71,7 @@ const notificationsConfig = {
       category: 'referrals',
       titleKey: 'notification.bonusAwarded.title',
       bodyKey: 'notification.bonusAwarded.body',
+      channels: { inApp: true, telegram: false },
     },
     referral_signed_up: {
       icon: 'UserPlus',
@@ -69,6 +79,7 @@ const notificationsConfig = {
       category: 'referrals',
       titleKey: 'notification.referralSignedUp.title',
       bodyKey: 'notification.referralSignedUp.body',
+      channels: { inApp: true, telegram: false },
     },
     referral_purchased: {
       icon: 'ShoppingCart',
@@ -76,6 +87,7 @@ const notificationsConfig = {
       category: 'referrals',
       titleKey: 'notification.referralPurchased.title',
       bodyKey: 'notification.referralPurchased.body',
+      channels: { inApp: true, telegram: false },
     },
     withdrawal_approved: {
       icon: 'Banknote',
@@ -83,6 +95,7 @@ const notificationsConfig = {
       category: 'payments',
       titleKey: 'notification.withdrawalApproved.title',
       bodyKey: 'notification.withdrawalApproved.body',
+      channels: { inApp: true, telegram: true },
     },
     withdrawal_rejected: {
       icon: 'AlertTriangle',
@@ -90,6 +103,7 @@ const notificationsConfig = {
       category: 'payments',
       titleKey: 'notification.withdrawalRejected.title',
       bodyKey: 'notification.withdrawalRejected.body',
+      channels: { inApp: true, telegram: true },
     },
     password_changed: {
       icon: 'Key',
@@ -97,6 +111,7 @@ const notificationsConfig = {
       category: 'security',
       titleKey: 'notification.passwordChanged.title',
       bodyKey: 'notification.passwordChanged.body',
+      channels: { inApp: true, telegram: false },
     },
     enrollment_granted: {
       icon: 'GraduationCap',
@@ -104,6 +119,7 @@ const notificationsConfig = {
       category: 'enrollment',
       titleKey: 'notification.enrollmentGranted.title',
       bodyKey: 'notification.enrollmentGranted.body',
+      channels: { inApp: true, telegram: false },
     },
     phase_unlocked: {
       icon: 'BookOpen',
@@ -111,6 +127,7 @@ const notificationsConfig = {
       category: 'enrollment',
       titleKey: 'notification.phaseUnlocked.title',
       bodyKey: 'notification.phaseUnlocked.body',
+      channels: { inApp: true, telegram: false },
     },
     suspension_warning: {
       icon: 'ShieldOff',
@@ -118,6 +135,15 @@ const notificationsConfig = {
       category: 'security',
       titleKey: 'notification.suspensionWarning.title',
       bodyKey: 'notification.suspensionWarning.body',
+      channels: { inApp: true, telegram: true },
+    },
+    admin_announcement: {
+      icon: 'Megaphone',
+      severity: 'info',
+      category: 'admin',
+      titleKey: 'notification.adminAnnouncement.title',
+      bodyKey: 'notification.adminAnnouncement.body',
+      channels: { inApp: true, telegram: false },
     },
   },
 
@@ -132,6 +158,7 @@ const notificationsConfig = {
     { id: 'referrals', labelKey: 'notification.filter.referrals' },
     { id: 'enrollment', labelKey: 'notification.filter.enrollment' },
     { id: 'security', labelKey: 'notification.filter.security' },
+    { id: 'admin', labelKey: 'notification.filter.admin' },
   ],
 };
 

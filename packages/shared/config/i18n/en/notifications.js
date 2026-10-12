@@ -2,14 +2,16 @@
  * @fileoverview English — Notifications Namespace
  *
  * Complete display text for the in-app notification system:
- *   - 12 notification types (title + body templates)
- *   - Filter labels (All, Unread, Payments, etc.)
+ *   - 13 notification types (title + body templates)
+ *   - Filter labels (All, Unread, Payments, Referrals, Enrollment, Security, Admin)
  *   - Group headers (Today, Yesterday, This Week, Older)
  *   - Time formatting (Just now, Xm ago, Xh ago, etc.)
- *   - Empty states, actions, and UI chrome
+ *   - Management actions (dismiss, clear read, mark all read)
+ *   - Toast templates for refresh + cleanup feedback
+ *   - Empty states and UI chrome
  *
- * Template variables ({count}, {amount}, {method}, etc.) are injected
- * at render time from notification tokens.
+ * Template variables ({count}, {amount}, {method}, {title}, {body}, etc.)
+ * are injected at render time from notification tokens.
  *
  * Path: packages/shared/config/i18n/en/notifications.js
  */
@@ -25,6 +27,15 @@ module.exports = {
     empty: "You're all caught up!",
     emptySubtitle: 'New notifications will appear here',
 
+    /* ── Management actions ── */
+    dismiss: 'Dismiss',
+    clearRead: 'Clear read',
+    dismissedToast: 'Notification dismissed',
+    clearedReadToast: '{count} read notification(s) removed',
+    newNotificationsToast: '{count} new notification(s)',
+    dismissFailed: 'Failed to dismiss notification',
+    clearReadFailed: 'Failed to clear read notifications',
+
     /* ── Filter chips ── */
     filter: {
       all: 'All',
@@ -33,6 +44,7 @@ module.exports = {
       referrals: 'Referrals',
       enrollment: 'Enrollment',
       security: 'Security',
+      admin: 'Admin',
     },
 
     /* ── Date grouping headers ── */
@@ -98,6 +110,15 @@ module.exports = {
     suspensionWarning: {
       title: 'Account suspended',
       body: 'Your account was suspended. Reason: {reason}',
+    },
+    adminAnnouncement: {
+      /*
+       * Broadcast template — admin writes raw {title} and {body} tokens
+       * at compose time; they are injected verbatim from the broadcast
+       * endpoint payload.
+       */
+      title: '{title}',
+      body: '{body}',
     },
   },
 };

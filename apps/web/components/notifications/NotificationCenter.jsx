@@ -68,7 +68,7 @@ const NotificationCenter = () => {
           <button
             type="button"
             className="btn-secondary"
-            onClick={onMarkAllRead}
+            onClick={markAllRead}
             disabled={unreadCount === 0 || loading}
           >
             <CheckCheck size={16} />

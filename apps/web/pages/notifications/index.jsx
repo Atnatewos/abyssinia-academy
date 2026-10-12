@@ -8,9 +8,9 @@
  *   - Filter chips: All, Unread, Payments, Referrals, Enrollment, Security
  *   - Date grouping: Today, Yesterday, This Week, Older
  *   - Mark individual or all as read
- *   - Manual refresh button
- *   - Empty state with illustration
- *   - Mobile-first responsive design
+ *   - Clear read (bulk cleanup) + manual refresh
+ *   - Per-item dismiss (×) on every row
+ *   - Empty state with illustration + loading skeletons
  *
  * Uses useNotifications hook for state + visibility-based polling.
  * All copy from i18n; icons from config.
@@ -19,7 +19,7 @@
  */
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, RefreshCw, CheckCheck, Inbox } from 'lucide-react';
+import { ArrowLeft, RefreshCw, CheckCheck, Trash2, Inbox } from 'lucide-react';
 import SEOHead from '../../components/shared/SEOHead';
 import PageLayout from '../../components/shared/PageLayout';
 import useNotifications from '../../hooks/useNotifications';
@@ -38,6 +38,7 @@ import {
   GraduationCap,
   BookOpen,
   ShieldOff,
+  X,
 } from 'lucide-react';
 
 /* Icon map from config type.icon → Lucide component */
@@ -145,7 +146,16 @@ const resolveI18n = (notification, t) => {
 const NotificationsPage = () => {
   const { t } = useLanguage();
   const config = getNotificationsConfig();
-  const { notifications, loading, unreadCount, refresh, markRead, markAllRead } = useNotifications();
+  const {
+    notifications,
+    loading,
+    unreadCount,
+    refresh,
+    markRead,
+    markAllRead,
+    dismiss,
+    clearRead,
+  } = useNotifications();
 
   const [activeFilter, setActiveFilter] = useState('all');
   const labels = t.notification || {};
@@ -178,6 +188,11 @@ const NotificationsPage = () => {
     });
   }, [notifications, activeFilter, config]);
 
+  const readCount = useMemo(
+    () => notifications.filter((n) => n.is_read).length,
+    [notifications]
+  );
+
   const groups = groupByDate(filteredNotifications, labels);
 
   const handleNotificationClick = (notification) => {
@@ -200,6 +215,16 @@ const NotificationsPage = () => {
             <div className="notifications-title-row">
               <h1>{labels.bell || 'Notifications'}</h1>
               <div className="notifications-actions">
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  onClick={clearRead}
+                  disabled={readCount === 0 || loading}
+                  aria-label={labels.clearRead || 'Clear read'}
+                >
+                  <Trash2 size={16} />
+                  <span>{labels.clearRead || 'Clear read'}</span>
+                </button>
                 <button
                   type="button"
                   className="btn-secondary"
@@ -266,22 +291,39 @@ const NotificationsPage = () => {
                     const timeAgo = formatTimeAgo(notification.created_at, labels.timeAgo || {});
 
                     return (
-                      <Link
+                      <div
                         key={notification.id}
-                        href={notification.link || '#'}
                         className={`notification-item ${!notification.is_read ? 'unread' : ''} severity-${notification.severity}`}
-                        onClick={() => handleNotificationClick(notification)}
                       >
-                        <div className={`notification-icon ${notification.severity}`}>
-                          <Icon size={24} />
-                        </div>
-                        <div className="notification-content">
-                          <p className="notification-title">{title}</p>
-                          <p className="notification-body">{body}</p>
-                          <span className="notification-time">{timeAgo}</span>
-                        </div>
+                        <Link
+                          href={notification.link || '#'}
+                          className="notification-item-link"
+                          onClick={() => handleNotificationClick(notification)}
+                        >
+                          <div className={`notification-icon ${notification.severity}`}>
+                            <Icon size={24} />
+                          </div>
+                          <div className="notification-content">
+                            <p className="notification-title">{title}</p>
+                            <p className="notification-body">{body}</p>
+                            <span className="notification-time">{timeAgo}</span>
+                          </div>
+                        </Link>
+                        <button
+                          type="button"
+                          className="notification-dismiss"
+                          onClick={(event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            dismiss(notification.id);
+                          }}
+                          aria-label={labels.dismiss || 'Dismiss'}
+                          title={labels.dismiss || 'Dismiss'}
+                        >
+                          <X size={14} />
+                        </button>
                         {!notification.is_read && <span className="notification-unread-dot" />}
-                      </Link>
+                      </div>
                     );
                   })}
                 </div>

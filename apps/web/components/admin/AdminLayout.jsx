@@ -31,13 +31,14 @@ import {
   Banknote,
   Network,
   BarChart3,
+  Megaphone,
 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { getItem } from '../../lib/storage';
 
 /**
  * AdminLayout — Provides the sidebar + header shell for all admin pages.
- * 
+ *
  * Mobile behavior:
  * - Sidebar hidden by default, slides in from left with hamburger toggle
  * - Dark overlay behind sidebar, tap to close
@@ -172,6 +173,11 @@ const AdminLayout = ({ children, title = 'Dashboard', subtitle = '' }) => {
           path: '/admin/referrals/mlm/tree',
           label: 'MLM Tree Inspector',
           icon: Network,
+        },
+        {
+          path: '/admin/announcements',
+          label: t.admin?.announcements?.navLabel || 'Announcements',
+          icon: Megaphone,
         },
         {
           path: '/admin/discussions',

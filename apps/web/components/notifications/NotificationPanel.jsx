@@ -6,14 +6,14 @@
  *   - Mobile (<768px): full-screen overlay (slides up from bottom)
  *   - Grouped by date (Today, Yesterday, This Week, Older)
  *   - Mark read on click + navigate to link
- *   - Refresh + Mark all read buttons in header
+ *   - Header actions: clear read, mark all read, refresh, close
+ *   - Per-item dismiss (×) revealed on hover (always visible on touch)
  *   - Empty state with illustration
  *
  * All copy from i18n; icons from config (Lucide).
  *
  * Path: apps/web/components/notifications/NotificationPanel.jsx
  */
-import { useState } from 'react';
 import Link from 'next/link';
 import {
   CheckCircle,
@@ -30,6 +30,7 @@ import {
   ShieldOff,
   RefreshCw,
   CheckCheck,
+  Trash2,
   X,
   Inbox,
 } from 'lucide-react';
@@ -137,6 +138,55 @@ const resolveI18n = (notification, t) => {
   };
 };
 
+/**
+ * Single notification row: link wrapper + dismiss button + unread dot.
+ */
+const NotificationRow = ({ notification, onMarkRead, onDismiss, onClose, labels, t, iconSize }) => {
+  const Icon = ICON_MAP[notification.icon] || CheckCircle;
+  const { title, body } = resolveI18n(notification, t);
+  const timeAgo = formatTimeAgo(notification.created_at, labels.timeAgo || {});
+
+  const handleClick = () => {
+    if (!notification.is_read) onMarkRead(notification.id);
+    if (notification.link) onClose();
+  };
+
+  return (
+    <div
+      className={`notification-item ${!notification.is_read ? 'unread' : ''} severity-${notification.severity}`}
+    >
+      <Link
+        href={notification.link || '#'}
+        className="notification-item-link"
+        onClick={handleClick}
+      >
+        <div className={`notification-icon ${notification.severity}`}>
+          <Icon size={iconSize} />
+        </div>
+        <div className="notification-content">
+          <p className="notification-title">{title}</p>
+          <p className="notification-body">{body}</p>
+          <span className="notification-time">{timeAgo}</span>
+        </div>
+      </Link>
+      <button
+        type="button"
+        className="notification-dismiss"
+        onClick={(event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          onDismiss(notification.id);
+        }}
+        aria-label={labels.dismiss || 'Dismiss'}
+        title={labels.dismiss || 'Dismiss'}
+      >
+        <X size={14} />
+      </button>
+      {!notification.is_read && <span className="notification-unread-dot" />}
+    </div>
+  );
+};
+
 const NotificationPanel = ({
   notifications,
   loading,
@@ -144,31 +194,14 @@ const NotificationPanel = ({
   onRefresh,
   onMarkRead,
   onMarkAllRead,
+  onDismiss,
+  onClearRead,
   onClose,
   labels,
 }) => {
   const { t } = useLanguage();
-  const [activeFilter, setActiveFilter] = useState('all');
-
   const groups = groupByDate(notifications, labels);
-
-  const filteredNotifications =
-    activeFilter === 'all'
-      ? notifications
-      : activeFilter === 'unread'
-      ? notifications.filter((n) => !n.is_read)
-      : notifications.filter((n) => n.type === activeFilter || n.severity === activeFilter);
-
-  const filteredGroups = groupByDate(filteredNotifications, labels);
-
-  const handleNotificationClick = (notification) => {
-    if (!notification.is_read) {
-      onMarkRead(notification.id);
-    }
-    if (notification.link) {
-      onClose();
-    }
-  };
+  const hasRead = notifications.some((n) => n.is_read);
 
   return (
     <>
@@ -177,6 +210,16 @@ const NotificationPanel = ({
         <div className="notification-panel-header">
           <h3>{labels.bell || 'Notifications'}</h3>
           <div className="notification-panel-actions">
+            <button
+              type="button"
+              className="notification-panel-btn"
+              onClick={onClearRead}
+              disabled={!hasRead || loading}
+              aria-label={labels.clearRead || 'Clear read'}
+              title={labels.clearRead || 'Clear read'}
+            >
+              <Trash2 size={16} />
+            </button>
             <button
               type="button"
               className="notification-panel-btn"
@@ -222,40 +265,28 @@ const NotificationPanel = ({
                 </div>
               ))}
             </div>
-          ) : filteredNotifications.length === 0 ? (
+          ) : notifications.length === 0 ? (
             <div className="notification-empty">
               <Inbox size={48} />
               <p>{labels.empty || "You're all caught up!"}</p>
               <span>{labels.emptySubtitle || 'New notifications will appear here'}</span>
             </div>
           ) : (
-            filteredGroups.map((group) => (
+            groups.map((group) => (
               <div key={group.label} className="notification-group">
                 <h4 className="notification-group-label">{group.label}</h4>
-                {group.items.map((notification) => {
-                  const Icon = ICON_MAP[notification.icon] || CheckCircle;
-                  const { title, body } = resolveI18n(notification, t);
-                  const timeAgo = formatTimeAgo(notification.created_at, labels.timeAgo || {});
-
-                  return (
-                    <Link
-                      key={notification.id}
-                      href={notification.link || '#'}
-                      className={`notification-item ${!notification.is_read ? 'unread' : ''} severity-${notification.severity}`}
-                      onClick={() => handleNotificationClick(notification)}
-                    >
-                      <div className={`notification-icon ${notification.severity}`}>
-                        <Icon size={20} />
-                      </div>
-                      <div className="notification-content">
-                        <p className="notification-title">{title}</p>
-                        <p className="notification-body">{body}</p>
-                        <span className="notification-time">{timeAgo}</span>
-                      </div>
-                      {!notification.is_read && <span className="notification-unread-dot" />}
-                    </Link>
-                  );
-                })}
+                {group.items.map((notification) => (
+                  <NotificationRow
+                    key={notification.id}
+                    notification={notification}
+                    onMarkRead={onMarkRead}
+                    onDismiss={onDismiss}
+                    onClose={onClose}
+                    labels={labels}
+                    t={t}
+                    iconSize={20}
+                  />
+                ))}
               </div>
             ))
           )}
@@ -275,38 +306,46 @@ const NotificationPanel = ({
         <div className="notification-overlay-content" onClick={(e) => e.stopPropagation()}>
           <div className="notification-panel-header">
             <h3>{labels.bell || 'Notifications'}</h3>
-            <button type="button" className="notification-panel-btn" onClick={onClose} aria-label="Close">
-              <X size={20} />
-            </button>
+            <div className="notification-panel-actions">
+              <button
+                type="button"
+                className="notification-panel-btn"
+                onClick={onClearRead}
+                disabled={!hasRead || loading}
+                aria-label={labels.clearRead || 'Clear read'}
+              >
+                <Trash2 size={18} />
+              </button>
+              <button
+                type="button"
+                className="notification-panel-btn"
+                onClick={onMarkAllRead}
+                disabled={unreadCount === 0 || loading}
+                aria-label={labels.markAllRead || 'Mark all as read'}
+              >
+                <CheckCheck size={18} />
+              </button>
+              <button type="button" className="notification-panel-btn" onClick={onClose} aria-label="Close">
+                <X size={20} />
+              </button>
+            </div>
           </div>
           <div className="notification-panel-content">
-            {/* Same content as desktop */}
-            {filteredGroups.map((group) => (
+            {groups.map((group) => (
               <div key={group.label} className="notification-group">
                 <h4 className="notification-group-label">{group.label}</h4>
-                {group.items.map((notification) => {
-                  const Icon = ICON_MAP[notification.icon] || CheckCircle;
-                  const { title, body } = resolveI18n(notification, t);
-                  const timeAgo = formatTimeAgo(notification.created_at, labels.timeAgo || {});
-
-                  return (
-                    <Link
-                      key={notification.id}
-                      href={notification.link || '#'}
-                      className={`notification-item ${!notification.is_read ? 'unread' : ''} severity-${notification.severity}`}
-                      onClick={() => handleNotificationClick(notification)}
-                    >
-                      <div className={`notification-icon ${notification.severity}`}>
-                        <Icon size={20} />
-                      </div>
-                      <div className="notification-content">
-                        <p className="notification-title">{title}</p>
-                        <p className="notification-body">{body}</p>
-                        <span className="notification-time">{timeAgo}</span>
-                      </div>
-                    </Link>
-                  );
-                })}
+                {group.items.map((notification) => (
+                  <NotificationRow
+                    key={notification.id}
+                    notification={notification}
+                    onMarkRead={onMarkRead}
+                    onDismiss={onDismiss}
+                    onClose={onClose}
+                    labels={labels}
+                    t={t}
+                    iconSize={20}
+                  />
+                ))}
               </div>
             ))}
           </div>

@@ -2,7 +2,8 @@
  * @fileoverview Amharic — Notifications Namespace
  *
  * Full AM parity with the English notifications namespace.
- * Covers all 12 notification types + UI chrome + time formatting.
+ * Covers all 13 notification types + UI chrome + management actions
+ * + time formatting + toast templates.
  *
  * Path: packages/shared/config/i18n/am/notifications.js
  */
@@ -12,10 +13,18 @@ module.exports = {
     bell: 'ማሳወቂያዎች',
     markAllRead: 'ሁሉንም እንደተነበቡ ምልክት ያድርጉ',
     refresh: 'አድስ',
-    viewAll: 'ሁሉንም ማሳወቂያዎች ይመልከቱ',
+    viewAll: 'ሁሉንም ማሳቂያዎች ይመልከቱ',
     backToProfile: 'ወደ መገለጫ ተመለስ',
     empty: 'ሁሉም ተይዘዋል!',
-    emptySubtitle: 'አዳዲስ ማሳወቂያዎች እ ovh',
+    emptySubtitle: 'አዳዲስ ማሳወያዎች እህ ይያሉ',
+
+    dismiss: 'አጥፋ',
+    clearRead: 'የተነበቡን አጽዳ',
+    dismissedToast: 'ማሳወቂያው ተወግዷል',
+    clearedReadToast: '{count} የተነበቡ ማሳቂያዎች ተወደዋል',
+    newNotificationsToast: '{count} አዲስ ማሳወቂያዎች',
+    dismissFailed: 'ማሳወቂያን ማጥፋት አልተሳካም',
+    clearReadFailed: 'የተነበቡትን ማጽዳት አልተሳካም',
 
     filter: {
       all: 'ሁሉም',
@@ -24,6 +33,7 @@ module.exports = {
       referrals: 'ማጣቀሻዎች',
       enrollment: 'ምዝገባ',
       security: 'ደህንነት',
+      admin: 'አስተዳዳሪ',
     },
 
     groupToday: 'ዛሬ',
@@ -86,6 +96,10 @@ module.exports = {
     suspensionWarning: {
       title: 'መለያ ታግዷል',
       body: 'መለያዎ ታግዷል። ምክንያት: {reason}',
+    },
+    adminAnnouncement: {
+      title: '{title}',
+      body: '{body}',
     },
   },
 };
