@@ -23,7 +23,7 @@
  * Path: apps/web/pages/api/admin/notifications/broadcast.js
  */
 import jwt from 'jsonwebtoken';
-import { query } from '../../../../lib/db';
+import { query } from '../../../lib/db';
 
 /* 
  * The shared notification service provides type configs and i18n keys.
