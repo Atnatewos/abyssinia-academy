@@ -2,13 +2,14 @@
  * @fileoverview Admin Announcements Composer + History
  *
  * Two-tab admin page:
- *   1. Compose — send a broadcast to all / enrolled / targeted users.
- *      Targeted mode has a live user picker:
+ *   1. Compose — send a broadcast to all / enrolled / specific users.
+ *      Specific-users mode has a live picker backed by the dedicated
+ *      /api/admin/notifications/user-search endpoint:
  *        - Debounced search by name, phone, or email
- *        - Click to add as a chip (multi-select supported)
- *        - Chips removable individually
- *   2. History — paginated list of every past broadcast with
- *      sent-by attribution, audience, severity, and recipient count.
+ *        - Click a result to add it as a removable chip (multi-select)
+ *        - Already-selected users are filtered out of results
+ *   2. History — paginated list of every past broadcast with sent-by
+ *      attribution, audience, severity, and recipient count.
  *
  * Config-driven: audience options, severity options, rate limit,
  * history page size, and all copy come from i18n + config.
@@ -86,8 +87,24 @@ const resolveKey = (t, key) => {
 };
 
 /**
- * Format a timestamp into a short relative or absolute string.
- * Used in the history table — keeps output simple and locale-agnostic.
+ * Normalize a raw user row from the search endpoint into the shape the
+ * picker, chips, and payload builder all consume. Tolerates both camel
+ * and snake case so a future contract change cannot break the UI.
+ *
+ * @param {object} raw - Raw user object from the API
+ * @returns {{id: string, fullName: string, phone: string, email: string, isEnrolled: boolean}}
+ */
+const normalizeUser = (raw) => ({
+  id: raw.id,
+  fullName: raw.fullName || raw.full_name || raw.name || 'Unknown',
+  phone: raw.phone || '',
+  email: raw.email || '',
+  isEnrolled: raw.isEnrolled === true || raw.is_enrolled === true,
+});
+
+/**
+ * Format a timestamp into a short relative or absolute string for the
+ * history table — keeps output simple and locale-agnostic.
  */
 const formatHistoryTime = (isoString, labels) => {
   if (!isoString) return '—';
@@ -124,7 +141,7 @@ const AdminAnnouncementsPage = () => {
   const [severity, setSeverity] = useState('info');
 
   /* ── Targeted audience: multi-select user picker ── */
-  const [selectedUsers, setSelectedUsers] = useState([]); /* [{ id, full_name, phone, email }] */
+  const [selectedUsers, setSelectedUsers] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -142,7 +159,7 @@ const AdminAnnouncementsPage = () => {
   const [historyTotal, setHistoryTotal] = useState(0);
   const [historyTotalPages, setHistoryTotalPages] = useState(1);
 
-  /* ── Validation ── */
+  /* ── Validation ─ */
   const isValid = useMemo(() => {
     if (!title.trim() || title.length < 3) return false;
     if (!body.trim() || body.length < 10) return false;
@@ -153,8 +170,9 @@ const AdminAnnouncementsPage = () => {
   const PreviewIcon = SEVERITY_ICON_MAP[severity] || Info;
 
   /**
-   * Debounced user search — fires 300ms after the user stops typing.
-   * Uses the existing /api/admin/users search endpoint for consistency.
+   * Debounced user search against the dedicated search endpoint.
+   * Fires 300ms after the admin stops typing; results are normalized
+   * and pre-filtered against the already-selected chip list.
    */
   useEffect(() => {
     if (searchTimerRef.current) {
@@ -172,17 +190,25 @@ const AdminAnnouncementsPage = () => {
       setIsSearching(true);
       try {
         const token = getItem('admin_token');
-        if (!token) return;
+        if (!token) {
+          setSearchResults([]);
+          return;
+        }
         const response = await fetch(
-          `/api/admin/users?search=${encodeURIComponent(term)}&limit=15`,
+          `/api/admin/notifications/user-search?q=${encodeURIComponent(term)}&limit=15`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         const data = await response.json();
+
         if (data.success) {
-          /* Filter out users already in the selected list */
+          const rawUsers = Array.isArray(data.data)
+            ? data.data
+            : data.data?.users || [];
           const selectedIds = new Set(selectedUsers.map((u) => u.id));
-          const results = (data.data?.users || []).filter((u) => !selectedIds.has(u.id));
-          setSearchResults(results);
+          const normalized = rawUsers
+            .filter((u) => u && u.id && !selectedIds.has(u.id))
+            .map(normalizeUser);
+          setSearchResults(normalized);
         } else {
           setSearchResults([]);
         }
@@ -200,22 +226,16 @@ const AdminAnnouncementsPage = () => {
         searchTimerRef.current = null;
       }
     };
-    // selectedUsers in deps ensures already-picked users are filtered out
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchQuery, selectedUsers]);
 
   /**
-   * Add a user from the search results to the selected list.
+   * Add a user from the search results to the selected chip list.
    */
   const handleSelectUser = useCallback((user) => {
     setSelectedUsers((prev) => {
       if (prev.some((u) => u.id === user.id)) return prev;
-      return [...prev, {
-        id: user.id,
-        full_name: user.full_name || user.fullName || user.name || 'User',
-        phone: user.phone || '',
-        email: user.email || '',
-      }];
+      return [...prev, user];
     });
     setSearchQuery('');
     setSearchResults([]);
@@ -257,12 +277,13 @@ const AdminAnnouncementsPage = () => {
     }
   }, [historyPageSize, toast, L]);
 
-  /* Fetch history on first tab switch and on page change */
+  /* Fetch history whenever the tab is active and the page changes */
   useEffect(() => {
     if (activeTab === 'history') {
       loadHistory(historyPage);
     }
-  }, [activeTab, historyPage, loadHistory]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab]);
 
   /* ── Submit handler ── */
   const handleSubmit = useCallback(() => {
@@ -314,6 +335,11 @@ const AdminAnnouncementsPage = () => {
       setConfirmText('');
     }
   }, [confirmText, title, body, severity, audience, selectedUsers, toast, L]);
+
+  const handleHistoryPageChange = useCallback((nextPage) => {
+    setHistoryPage(nextPage);
+    loadHistory(nextPage);
+  }, [loadHistory]);
 
   const titleCount = title.length;
   const bodyCount = body.length;
@@ -403,7 +429,7 @@ const AdminAnnouncementsPage = () => {
                         {selectedUsers.map((user) => (
                           <span key={user.id} className="ann-chip">
                             <span className="ann-chip-label">
-                              {user.full_name}
+                              {user.fullName}
                               <span className="ann-chip-sub">
                                 {user.phone || user.email}
                               </span>
@@ -455,16 +481,19 @@ const AdminAnnouncementsPage = () => {
                             disabled={sending}
                           >
                             <div className="ann-search-result-avatar">
-                              {(user.full_name || user.fullName || 'U').charAt(0).toUpperCase()}
+                              {user.fullName.charAt(0).toUpperCase()}
                             </div>
                             <div className="ann-search-result-info">
                               <span className="ann-search-result-name">
-                                {user.full_name || user.fullName || user.name}
+                                {user.fullName}
                               </span>
                               <span className="ann-search-result-meta">
                                 {user.phone || '—'} · {user.email || L('admin.announcements.noEmail')}
                               </span>
                             </div>
+                            {user.isEnrolled && (
+                              <GraduationCap size={14} className="ann-search-result-enrolled" />
+                            )}
                           </button>
                         ))}
                       </div>
@@ -707,7 +736,7 @@ const AdminAnnouncementsPage = () => {
                       <button
                         type="button"
                         className="ann-page-btn"
-                        onClick={() => setHistoryPage((p) => Math.max(1, p - 1))}
+                        onClick={() => handleHistoryPageChange(Math.max(1, historyPage - 1))}
                         disabled={historyPage === 1 || historyLoading}
                       >
                         <ChevronLeft size={14} />
@@ -718,7 +747,7 @@ const AdminAnnouncementsPage = () => {
                       <button
                         type="button"
                         className="ann-page-btn"
-                        onClick={() => setHistoryPage((p) => Math.min(historyTotalPages, p + 1))}
+                        onClick={() => handleHistoryPageChange(Math.min(historyTotalPages, historyPage + 1))}
                         disabled={historyPage === historyTotalPages || historyLoading}
                       >
                         <ChevronRight size={14} />
