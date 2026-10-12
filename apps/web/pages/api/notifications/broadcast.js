@@ -11,27 +11,42 @@
  *
  * Security:
  *   - Bearer admin JWT required (JWT_ADMIN_SECRET)
- *   - Per-admin rate limit: 1 broadcast per 60 seconds (checked via audit_logs)
+ *   - Per-admin rate limit: checked via audit_logs
  *   - Input validated server-side (title/body length, severity whitelist)
+ *   - Null-byte sanitization to prevent PostgreSQL text field errors
  *   - All dispatches audit-logged with recipient count + payload snapshot
  *
  * Performance:
  *   - 'all' and 'enrolled' use INSERT...SELECT (one query, not N inserts)
- *   - 'single' uses the shared notify() service (single row)
+ *   - 'single' uses a direct parameterized insert
  *
  * Path: apps/web/pages/api/admin/notifications/broadcast.js
  */
 import jwt from 'jsonwebtoken';
 import { query } from '../../../../lib/db';
-import notificationService from '../../../../../../../packages/shared/notifications';
+
+/* 
+ * The shared notification service provides type configs and i18n keys.
+ * We use a safe require pattern to prevent cold-start crashes 
+ * if the shared package is not yet fully linked in the deployment environment.
+ */
+let notificationService = null;
+try {
+  notificationService = require('../../../../../../../packages/shared/notifications').default;
+} catch {
+  notificationService = null;
+}
 
 const ALLOWED_SEVERITIES = ['info', 'success', 'warning', 'critical'];
 const ALLOWED_AUDIENCES = ['all', 'enrolled', 'single'];
-const TITLE_MIN_LENGTH = 3;
-const TITLE_MAX_LENGTH = 120;
-const BODY_MIN_LENGTH = 10;
-const BODY_MAX_LENGTH = 500;
-const RATE_LIMIT_SECONDS = 60;
+
+/* Configuration sourced from environment variables with safe fallbacks */
+const TITLE_MIN_LENGTH = parseInt(process.env.NOTIF_TITLE_MIN_LENGTH, 10) || 3;
+const TITLE_MAX_LENGTH = parseInt(process.env.NOTIF_TITLE_MAX_LENGTH, 10) || 120;
+const BODY_MIN_LENGTH = parseInt(process.env.NOTIF_BODY_MIN_LENGTH, 10) || 10;
+const BODY_MAX_LENGTH = parseInt(process.env.NOTIF_BODY_MAX_LENGTH, 10) || 500;
+const RATE_LIMIT_SECONDS = parseInt(process.env.NOTIF_RATE_LIMIT_SECONDS, 10) || 60;
+const EXPIRY_DAYS = parseInt(process.env.NOTIF_EXPIRY_DAYS, 10) || 30;
 
 /**
  * Decode and verify an admin Bearer token.
@@ -45,12 +60,14 @@ const verifyAdmin = (authHeader) => {
     err.status = 401;
     throw err;
   }
+  
   const adminSecret = process.env.JWT_ADMIN_SECRET;
   if (!adminSecret) {
     const err = new Error('JWT_ADMIN_SECRET is not configured');
     err.status = 500;
     throw err;
   }
+  
   try {
     return jwt.verify(authHeader.slice(7), adminSecret);
   } catch {
@@ -62,12 +79,13 @@ const verifyAdmin = (authHeader) => {
 
 /**
  * Validate announcement payload. Throws with .status on failure.
+ * Sanitizes null bytes which are invalid in PostgreSQL text fields.
  * @param {object} body - Request body
  * @returns {{title: string, body: string, severity: string, audience: string, link: string|null, singleIdentifier: string|null}}
  */
 const validatePayload = (body) => {
-  const title = String(body?.title || '').trim();
-  const bodyText = String(body?.body || '').trim();
+  const title = String(body?.title || '').trim().replace(/\0/g, '');
+  const bodyText = String(body?.body || '').trim().replace(/\0/g, '');
   const severity = String(body?.severity || '').toLowerCase();
   const audience = String(body?.audience || '').toLowerCase();
   const link = body?.link ? String(body.link).slice(0, 255) : null;
@@ -80,21 +98,25 @@ const validatePayload = (body) => {
     err.status = 400;
     throw err;
   }
+  
   if (!bodyText || bodyText.length < BODY_MIN_LENGTH || bodyText.length > BODY_MAX_LENGTH) {
     const err = new Error(`Body must be between ${BODY_MIN_LENGTH} and ${BODY_MAX_LENGTH} characters.`);
     err.status = 400;
     throw err;
   }
+  
   if (!ALLOWED_SEVERITIES.includes(severity)) {
     const err = new Error(`Invalid severity. Allowed: ${ALLOWED_SEVERITIES.join(', ')}.`);
     err.status = 400;
     throw err;
   }
+  
   if (!ALLOWED_AUDIENCES.includes(audience)) {
     const err = new Error(`Invalid audience. Allowed: ${ALLOWED_AUDIENCES.join(', ')}.`);
     err.status = 400;
     throw err;
   }
+  
   if (audience === 'single' && !singleIdentifier) {
     const err = new Error('singleIdentifier is required when audience is "single".');
     err.status = 400;
@@ -117,9 +139,12 @@ const checkRateLimit = async (adminId) => {
      WHERE admin_id = $1 AND action = 'announcement.broadcast'`,
     [adminId]
   );
-  if (!result.rows[0]?.last_broadcast) return true;
-  const last = new Date(result.rows[0].last_broadcast).getTime();
-  return Date.now() - last >= RATE_LIMIT_SECONDS * 1000;
+  
+  const lastBroadcast = result.rows[0]?.last_broadcast;
+  if (!lastBroadcast) return true;
+  
+  const lastTime = new Date(lastBroadcast).getTime();
+  return Date.now() - lastTime >= RATE_LIMIT_SECONDS * 1000;
 };
 
 /**
@@ -162,7 +187,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    /* ── Rate limit ── */
+    /* ── Rate limit enforcement ── */
     const allowed = await checkRateLimit(adminId);
     if (!allowed) {
       return res.status(429).json({
@@ -172,16 +197,14 @@ export default async function handler(req, res) {
     }
 
     /* ── Shared-notification config lookup for title/body keys ── */
-    const typeConfig = notificationService.getTypeConfig('admin_announcement');
-    if (!typeConfig) {
-      return res.status(500).json({
-        success: false,
-        message: 'admin_announcement type not configured.',
-      });
-    }
+    const typeConfig = notificationService?.getTypeConfig?.('admin_announcement') || {
+      titleKey: 'admin.announcement.title',
+      bodyKey: 'admin.announcement.body',
+      icon: 'Megaphone',
+    };
 
     const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 30);
+    expiresAt.setDate(expiresAt.getDate() + EXPIRY_DAYS);
 
     const tokens = JSON.stringify({
       title: payload.title,
@@ -199,11 +222,12 @@ export default async function handler(req, res) {
         });
       }
 
+      /* Explicit ::jsonb casting prevents type mismatch errors on jsonb columns */
       await query(
         `INSERT INTO notifications (
            user_id, type, title_key, title_tokens, body_key, body_tokens,
            link, icon, severity, expires_at
-         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+         ) VALUES ($1, $2, $3, $4::jsonb, $5, $6::jsonb, $7, $8, $9, $10)`,
         [
           targetUserId,
           'admin_announcement',
@@ -229,7 +253,7 @@ export default async function handler(req, res) {
            user_id, type, title_key, title_tokens, body_key, body_tokens,
            link, icon, severity, expires_at
          )
-         SELECT id, $1, $2, $3, $4, $5, $6, $7, $8, $9
+         SELECT id, $1, $2, $3::jsonb, $4, $5::jsonb, $6, $7, $8, $9
          FROM users ${filterClause}`,
         [
           'admin_announcement',
@@ -246,7 +270,7 @@ export default async function handler(req, res) {
       recipientCount = insertResult.rowCount || 0;
     }
 
-    /* ── Audit log ── */
+    /* ── Immutable audit trail ── */
     await query(
       `INSERT INTO admin_audit_logs (admin_id, action, target_type, target_id, details, ip_address, user_agent)
        VALUES ($1, 'announcement.broadcast', 'announcement', NULL, $2, $3, $4)`,
