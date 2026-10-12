@@ -8,6 +8,9 @@
  * Referral tree building is best-effort: if it fails, the user is still
  * created and can continue. Errors are logged but never fail the request.
  *
+ * Notifications fired (best-effort):
+ *   - referral_signed_up → referrer (when new user joins with valid code)
+ *
  * Path: apps/web/pages/api/auth/register.js
  */
 
@@ -17,6 +20,7 @@ import jwt from 'jsonwebtoken';
 import { getReferredDiscountPercent } from '../../../lib/config';
 import sharedMlm from '@shared/mlm';
 import referralsConfig from '@shared/config/referrals.config';
+import { notify } from '../../../lib/notifications';
 
 /*
  * Adapter for the shared MLM module — matches its expected `db` shape.
@@ -139,6 +143,18 @@ export default async function handler(req, res) {
           referralCode: validatedReferralCode,
           error: treeError.message,
         });
+      }
+
+      /*
+       * Notify the referrer that someone joined via their link.
+       * Best-effort — registration must succeed regardless.
+       */
+      try {
+        await notify(referrerId, 'referral_signed_up', {
+          name: fullName,
+        }, '/profile/referrals');
+      } catch (notifError) {
+        console.error('[notify] referral_signed_up failed:', notifError.message);
       }
     } else {
       /*

@@ -5,11 +5,15 @@
  * and had commissions distributed, reverses those commissions so the
  * ledger stays consistent.
  *
+ * Notifications fired (best-effort):
+ *   - payment_rejected → buyer
+ *
  * Path: apps/web/pages/api/admin/payments/[id]/reject.js
  */
 import { pool, query } from '../../../../../lib/db';
 import jwt from 'jsonwebtoken';
 import sharedMlm from '../../../../../../../packages/shared/mlm';
+import { notify } from '../../../../../lib/notifications';
 
 /*
  * Adapter for the shared MLM module — matches its expected `db` shape.
@@ -95,6 +99,21 @@ export default async function handler(req, res) {
         paymentId: id,
         error: reversalError.message,
       });
+    }
+
+    /*
+     * Notify the buyer their payment was rejected. The reason field
+     * accepts any admin-provided note; fall back to a generic message
+     * if none was supplied.
+     */
+    try {
+      const rejectionReason = req.body?.reason || 'The transaction could not be verified. Please contact support.';
+      await notify(payment.user_id, 'payment_rejected', {
+        amount: parseFloat(payment.amount),
+        reason: rejectionReason,
+      }, '/profile/payments');
+    } catch (notifError) {
+      console.error('[notify] payment rejection notification failed:', notifError.message);
     }
 
     res.status(200).json({

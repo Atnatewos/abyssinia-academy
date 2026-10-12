@@ -8,12 +8,18 @@
  * MLM operations are wrapped in try/catch so a failure in the referral
  * subsystem never blocks the student from gaining access.
  *
+ * Notifications fired (best-effort, never block the approval):
+ *   - payment_approved → buyer
+ *   - referral_purchased → referrer (if buyer joined via referral code)
+ *   - bonus_awarded → each user who earned a bonus on this sale
+ *
  * Path: apps/web/pages/api/admin/payments/[id]/approve.js
  */
 import { pool, query } from '../../../../../lib/db';
 import jwt from 'jsonwebtoken';
 import sharedMlm from '../../../../../../../packages/shared/mlm';
 import referralsConfig from '../../../../../../../packages/shared/config/referrals.config';
+import { notify } from '../../../../../lib/notifications';
 
 /*
  * Adapter for the shared MLM module — matches its expected `db` shape.
@@ -185,7 +191,21 @@ export default async function handler(req, res) {
 
         for (const row of commissionRows.rows) {
           try {
-            await sharedMlm.awardEligibleBonuses(mlmDb, referralsConfig, row.earning_user_id);
+            const bonusResult = await sharedMlm.awardEligibleBonuses(mlmDb, referralsConfig, row.earning_user_id);
+            
+            /* Notify each user who earned a bonus on this sale. */
+            if (bonusResult && bonusResult.awarded && bonusResult.awarded.length > 0) {
+              for (const bonus of bonusResult.awarded) {
+                try {
+                  await notify(row.earning_user_id, 'bonus_awarded', {
+                    bonusName: bonus.name,
+                    amount: bonus.amount,
+                  }, '/profile/referrals');
+                } catch (notifErr) {
+                  console.error('[notify] bonus_awarded failed:', notifErr.message);
+                }
+              }
+            }
           } catch (bonusError) {
             console.error('Bonus award failed for user:', {
               userId: row.earning_user_id,
@@ -201,6 +221,49 @@ export default async function handler(req, res) {
         buyerId: payment.user_id,
         error: mlmError.message,
       });
+    }
+
+    /*
+     * Notifications — best-effort, fire-and-forget. Never block the
+     * approval response on notification delivery.
+     */
+    try {
+      /* Notify the buyer that their payment was approved. */
+      await notify(payment.user_id, 'payment_approved', {
+        amount: parseFloat(payment.amount),
+        method: payment.method || 'bank-transfer',
+      }, '/profile/payments');
+
+      /*
+       * If the buyer joined via a referral code, notify their referrer
+       * that a downline member just purchased.
+       */
+      if (payment.referred_by_code) {
+        const referrerResult = await query(
+          `SELECT rc.user_id, u.full_name
+           FROM referral_codes rc
+           JOIN users u ON u.id = rc.user_id
+           WHERE rc.code = $1 AND rc.is_active = true
+           LIMIT 1`,
+          [payment.referred_by_code]
+        );
+
+        if (referrerResult.rows.length > 0) {
+          const referrer = referrerResult.rows[0];
+          const buyerResult = await query(
+            'SELECT full_name FROM users WHERE id = $1',
+            [payment.user_id]
+          );
+          const buyerName = buyerResult.rows[0]?.full_name || 'A member of your team';
+
+          await notify(referrer.user_id, 'referral_purchased', {
+            name: buyerName,
+            amount: parseFloat(payment.amount),
+          }, '/profile/referrals');
+        }
+      }
+    } catch (notifError) {
+      console.error('[notify] payment approval notifications failed:', notifError.message);
     }
 
     res.status(200).json({

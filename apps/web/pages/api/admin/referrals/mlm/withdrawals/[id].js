@@ -7,11 +7,16 @@
  * single transaction so the request status and the wallet settlement
  * always move together. Accepts `note` or legacy `adminNote` field.
  *
+ * Notifications fired (best-effort):
+ *   - withdrawal_approved → user (when admin marks paid)
+ *   - withdrawal_rejected → user (when admin rejects)
+ *
  * Path: apps/web/pages/api/admin/referrals/mlm/withdrawals/[id].js
  */
 
 import { pool } from '../../../../../../lib/db';
 import jwt from 'jsonwebtoken';
+import { notify } from '../../../../../../lib/notifications';
 
 export default async function handler(req, res) {
   if (req.method !== 'PATCH') {
@@ -125,6 +130,28 @@ export default async function handler(req, res) {
     );
 
     await client.query('COMMIT');
+
+    /*
+     * Notify the user of the admin decision. Best-effort — the
+     * withdrawal record is already committed, so a notification
+     * failure must not roll back the transaction.
+     */
+    try {
+      if (action === 'approve') {
+        await notify(withdrawal.user_id, 'withdrawal_approved', {
+          amount,
+          method: withdrawal.method || 'bank-transfer',
+        }, '/profile/referrals');
+      } else {
+        const rejectionReason = resolvedNote || 'Could not be verified. Please contact support.';
+        await notify(withdrawal.user_id, 'withdrawal_rejected', {
+          amount,
+          reason: rejectionReason,
+        }, '/profile/referrals');
+      }
+    } catch (notifError) {
+      console.error('[notify] withdrawal notification failed:', notifError.message);
+    }
 
     res.status(200).json({
       success: true,

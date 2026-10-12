@@ -11,11 +11,15 @@
  *   - Same-password rejection prevents no-op rotations
  *   - Parameterized SQL only
  *
+ * Notifications fired (best-effort):
+ *   - password_changed → user (with timestamp)
+ *
  * Path: apps/web/pages/api/profile/password.js
  */
 import { Pool } from 'pg';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import { notify } from '../../../lib/notifications';
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -109,6 +113,24 @@ export default async function handler(req, res) {
       hashed,
       userId,
     ]);
+
+    /*
+     * Notify the user that their password was changed. Includes the
+     * timestamp so they can verify the change was authorized.
+     * Best-effort — the password change itself is already committed.
+     */
+    try {
+      const changeDate = new Date().toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      });
+      await notify(userId, 'password_changed', {
+        date: changeDate,
+      }, '/profile/edit');
+    } catch (notifError) {
+      console.error('[notify] password_changed failed:', notifError.message);
+    }
 
     return res.status(200).json({
       success: true,
