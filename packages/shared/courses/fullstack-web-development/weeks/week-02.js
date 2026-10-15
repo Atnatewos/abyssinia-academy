@@ -40,7 +40,7 @@ const WEEK_02 = {
     createLesson({
       id: 'p1-w2-l2',
       title: 'Basics of HTML - part II',
-      isFreePreview: false,
+      isFreePreview: true,
       notes: 'Continue mastering HTML with advanced tags and real-world page structure.',
       mainVideo: mainVideo(
         'Basics of HTML - part II',

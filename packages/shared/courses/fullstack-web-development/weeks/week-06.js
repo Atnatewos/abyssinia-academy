@@ -16,7 +16,7 @@ const WEEK_06 = {
     createLesson({
       id: 'p1-w6-l1',
       title: 'Responsive website development: Bootstrap',
-      isFreePreview: false,
+      isFreePreview: true,
       notes: 'Learn the most popular CSS framework used by millions of developers worldwide.',
       mainVideo: mainVideo(
         'Responsive website development: Bootstrap',
@@ -38,7 +38,7 @@ const WEEK_06 = {
     createLesson({
       id: 'p1-w6-l2',
       title: 'Bootstrap - Demo',
-      isFreePreview: false,
+      isFreePreview: true,
       notes: 'Hands-on demonstration of building a responsive website with Bootstrap.',
       mainVideo: mainVideo(
         'Bootstrap Demo',

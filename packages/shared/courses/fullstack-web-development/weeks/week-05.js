@@ -16,7 +16,7 @@ const WEEK_05 = {
     createLesson({
       id: 'p1-w5-l1',
       title: 'Responsive website development - media queries',
-      isFreePreview: false,
+      isFreePreview: true,
       notes: 'Learn how to make your websites look perfect on every screen size.',
       mainVideo: mainVideo(
         'Responsive website development - media queries',
@@ -37,7 +37,7 @@ const WEEK_05 = {
       createLesson({
       id: 'p1-w5-l2',
       title: 'Media Queries - Demo',
-      isFreePreview: false,
+      isFreePreview: true,
       notes: 'Learn how to make your websites look perfect on every screen size.',
       mainVideo: mainVideo(
         'Media Queries Demo',

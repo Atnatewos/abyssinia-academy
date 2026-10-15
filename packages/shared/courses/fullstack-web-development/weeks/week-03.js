@@ -16,7 +16,7 @@ const WEEK_03 = {
     createLesson({
       id: 'p1-w3-l1',
       title: 'Basics of CSS',
-      isFreePreview: false,
+      isFreePreview: true,
       notes: 'Learn how to style your HTML pages with Cascading Style Sheets.',
       mainVideo: mainVideo(
         'Basics of CSS',
@@ -40,7 +40,7 @@ const WEEK_03 = {
         createLesson({
       id: 'p1-w3-l1',
       title: 'Suggested videos to watch',
-      isFreePreview: false,
+      isFreePreview: true,
       notes: 'Learn how to style your HTML pages with Cascading Style Sheets.',
       // mainVideo: mainVideo(
       //   'Basics of CSS',
@@ -58,7 +58,7 @@ const WEEK_03 = {
     createLesson({
       id: 'p1-w3-l2',
       title: 'CSS Properties',
-      isFreePreview: false,
+      isFreePreview: true,
       notes: 'Deep dive into the most important CSS properties for professional web development.',
       mainVideo: mainVideo(
         'CSS Properties',

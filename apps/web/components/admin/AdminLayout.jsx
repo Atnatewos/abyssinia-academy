@@ -135,13 +135,18 @@ const AdminLayout = ({ children, title = 'Dashboard', subtitle = '' }) => {
         },
         {
           path: '/admin/users',
-          label: t.admin?.students || 'Users',
+          label: t.admin?.students || 'Students',
           icon: Users,
         },
         {
           path: '/admin/courses',
           label: t.admin?.courses || 'Courses',
           icon: BookOpen,
+        },
+        {
+          path: '/admin/referrals/mlm/withdrawals',
+          label: t.referrals?.mlm?.adminWithdrawalsTitle || 'MLM Withdrawals',
+          icon: Banknote,
         },
       ],
     },
@@ -160,18 +165,13 @@ const AdminLayout = ({ children, title = 'Dashboard', subtitle = '' }) => {
           icon: Share2,
         },
         {
-          path: '/admin/referrals/mlm/withdrawals',
-          label: t.referrals?.mlm?.adminWithdrawalsTitle || 'MLM Withdrawals',
-          icon: Banknote,
-        },
-        {
           path: '/admin/referrals/mlm/stats',
           label: t.referrals?.mlm?.adminMlmStatsTitle || 'MLM Stats',
           icon: BarChart3,
         },
         {
           path: '/admin/referrals/mlm/tree',
-          label: 'MLM Tree Inspector',
+          label: 'Network Node Radar',
           icon: Network,
         },
         {

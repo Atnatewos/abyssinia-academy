@@ -16,7 +16,7 @@ const WEEK_04 = {
     createLesson({
       id: 'p1-w4-l1',
       title: 'Rebuilding Apple.com\'s homepage using HTML & CSS',
-      isFreePreview: false,
+      isFreePreview: true,
       notes: 'Apply everything you have learned by rebuilding a professional website from scratch.',
       mainVideo: mainVideo(
         'Rebuilding Apple.com\'s homepage using HTML & CSS',
@@ -36,7 +36,7 @@ const WEEK_04 = {
         createLesson({
       id: 'p1-w4-l1',
       title: 'Re-building Apple\'s Website Step-by-Step Guide',
-      isFreePreview: false,
+      isFreePreview: true,
       notes: 'Apply everything you have learned by rebuilding a professional website from scratch.',
       // mainVideo: mainVideo(
       //   'Rebuilding Apple.com\'s homepage using HTML & CSS',
@@ -53,7 +53,7 @@ const WEEK_04 = {
     createLesson({
       id: 'p1-w4-l2',
       title: 'Introduction to UX/UI design',
-      isFreePreview: false,
+      isFreePreview: true,
       notes: 'Understand the principles of user experience and user interface design.',
       mainVideo: mainVideo(
         'Introduction to UX/UI design',
@@ -74,7 +74,7 @@ const WEEK_04 = {
         createLesson({
       id: 'p1-w4-l2',
       title: 'Suggested video to watch',
-      isFreePreview: false,
+      isFreePreview: true,
       notes: 'Understand the principles of user experience and user interface design.',
       // mainVideo: mainVideo(
       //   'Introduction to UX/UI design',
