@@ -17,3 +17,6 @@ nul
 
 # WIP: Agent system (in-progress, will move to pages/api/ later)
 apps/web/pages/admin/agents/
+
+# WIP: Agent system (in-progress, will move to pages/api/ later)
+apps/web/pages/profile/agents.jsx

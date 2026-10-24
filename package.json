@@ -23,6 +23,23 @@
     "react-dom": "^18.2.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.64.1",
     "concurrently": "^8.2.2"
-  }
+  },
+  "main": "fix-imports.js",
+  "directories": {
+    "test": "tests"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Atnatewos/abyssinia-academy.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Atnatewos/abyssinia-academy/issues"
+  },
+  "homepage": "https://github.com/Atnatewos/abyssinia-academy#readme"
 }
