@@ -5,8 +5,13 @@
  * After creating the user, builds the referral tree via the shared MLM
  * module so ancestors start earning on future purchases.
  *
- * Referral tree building is best-effort: if it fails, the user is still
- * created and can continue. Errors are logged but never fail the request.
+ * Agent provisioning (Money Model v2.5):
+ *   Every enrolled student is automatically an agent. On registration we
+ *   generate a unique agent code and provision default agent settings so
+ *   the student can start earning instantly on agent-coded sales.
+ *
+ * Referral tree building and agent provisioning are best-effort: if
+ * either fails, the user is still created and can continue.
  *
  * Notifications fired (best-effort):
  *   - referral_signed_up → referrer (when new user joins with valid code)
@@ -17,7 +22,12 @@
 import { pool, query } from '../../../lib/db';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { getReferredDiscountPercent } from '../../../lib/config';
+import {
+  getReferredDiscountPercent,
+  isAgentsEnabled,
+  getAgentDefaultCommission,
+  getAgentCodeGeneration,
+} from '../../../lib/config';
 import sharedMlm from '@shared/mlm';
 import referralsConfig from '@shared/config/referrals.config';
 import { notify } from '../../../lib/notifications';
@@ -28,6 +38,110 @@ import { notify } from '../../../lib/notifications';
 const mlmDb = {
   query,
   getClient: () => pool.connect(),
+};
+
+/**
+ * Generate a cryptographically secure agent code from config rules.
+ *
+ * @param {object} codeConfig - { prefix, length, charset, excludeSimilar }
+ * @returns {string} Generated agent code
+ */
+const generateAgentCode = (codeConfig) => {
+  const {
+    length = 12,
+    prefix = 'AGT-',
+    charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
+    excludeSimilar = true,
+  } = codeConfig || {};
+
+  /* Remove visually similar characters to reduce transposition errors */
+  let chars = charset;
+  if (excludeSimilar) {
+    chars = chars.replace(/[0O1IL]/g, '');
+  }
+
+  const randomLength = Math.max(0, length - prefix.length);
+  let result = prefix;
+
+  /* crypto.randomInt is CSPRNG-backed — matches referrals/code.js pattern */
+  const crypto = require('crypto');
+  for (let i = 0; i < randomLength; i++) {
+    result += chars[crypto.randomInt(0, chars.length)];
+  }
+  return result;
+};
+
+/**
+ * Generate a unique agent code with collision detection.
+ *
+ * @param {object} codeConfig - { prefix, length, charset, excludeSimilar }
+ * @param {number} maxAttempts - Maximum generation attempts
+ * @returns {Promise<string>} Unique agent code
+ * @throws {Error} If unable to generate unique code
+ */
+const generateUniqueAgentCode = async (codeConfig, maxAttempts = 10) => {
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    const code = generateAgentCode(codeConfig);
+    const existing = await query(
+      'SELECT id FROM agent_codes WHERE code = $1 LIMIT 1',
+      [code]
+    );
+    if (existing.rows.length === 0) return code;
+  }
+  throw new Error(
+    `Failed to generate unique agent code after ${maxAttempts} attempts`
+  );
+};
+
+/**
+ * Provision the agent code and default settings for a new user.
+ * Idempotent: uses ON CONFLICT DO NOTHING so re-runs are safe.
+ *
+ * All operations run in a single transaction. If any step fails, the
+ * whole provisioning rolls back and the caller is informed via the
+ * thrown error (which the caller catches and logs).
+ *
+ * @param {string} userId - User UUID
+ * @returns {Promise<void>}
+ */
+const provisionAgentAccount = async (userId) => {
+  if (!isAgentsEnabled()) return;
+
+  const codeConfig = getAgentCodeGeneration();
+  const defaultCommission = getAgentDefaultCommission();
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    /* 1. Generate + insert unique agent code */
+    const agentCode = await generateUniqueAgentCode(codeConfig);
+    await client.query(
+      `INSERT INTO agent_codes (user_id, code, is_active)
+       VALUES ($1, $2, true)
+       ON CONFLICT (user_id) DO NOTHING`,
+      [userId, agentCode]
+    );
+
+    /* 2. Insert default agent settings */
+    const commissionType =
+      defaultCommission?.type === 'percentage' ? 'percentage' : 'fixed';
+    const commissionValue = Number(defaultCommission?.value) || 500;
+
+    await client.query(
+      `INSERT INTO agent_settings (user_id, commission_type, commission_value, is_active)
+       VALUES ($1, $2, $3, true)
+       ON CONFLICT (user_id) DO NOTHING`,
+      [userId, commissionType, commissionValue]
+    );
+
+    await client.query('COMMIT');
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
 };
 
 export default async function handler(req, res) {
@@ -104,6 +218,19 @@ export default async function handler(req, res) {
     );
 
     const user = result.rows[0];
+
+    /*
+     * Agent provisioning — every student is automatically an agent.
+     * Runs best-effort: a failure here must not block registration.
+     */
+    try {
+      await provisionAgentAccount(user.id);
+    } catch (agentError) {
+      console.error('Agent provisioning failed during registration:', {
+        userId: user.id,
+        error: agentError.message,
+      });
+    }
 
     /*
      * Legacy referrals record — kept for audit trail only.

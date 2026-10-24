@@ -2,16 +2,21 @@
  * @fileoverview Admin Approve Payment API
  *
  * Approves a payment, creates the enrollment record using the purchase_mode
- * and selected_phases stored on the payment itself, then distributes MLM
- * commissions and awards bonuses via the shared MLM module.
+ * and selected_phases stored on the payment itself, then distributes
+ * commissions:
  *
- * MLM operations are wrapped in try/catch so a failure in the referral
- * subsystem never blocks the student from gaining access.
+ *   - If the payment has agent_id → agent commission fires (instant, no lock)
+ *     MLM distribution is SKIPPED (agent code overrides MLM per Money Model v2.5)
+ *
+ *   - If no agent_id → MLM 4-level distribution runs as before
+ *
+ * Both commission paths are best-effort and wrapped in try/catch so a
+ * failure in either subsystem never blocks the student from gaining access.
  *
  * Notifications fired (best-effort, never block the approval):
  *   - payment_approved → buyer
- *   - referral_purchased → referrer (if buyer joined via referral code)
- *   - bonus_awarded → each user who earned a bonus on this sale
+ *   - referral_purchased → referrer (if buyer joined via referral code and no agent)
+ *   - bonus_awarded → each user who earned a bonus on this sale (MLM path)
  *
  * Path: apps/web/pages/api/admin/payments/[id]/approve.js
  */
@@ -19,9 +24,10 @@
 import { pool, query } from '../../../../../lib/db';
 import jwt from 'jsonwebtoken';
 import sharedMlm from '../../../../../../../packages/shared/mlm';
+import sharedAgents from '../../../../../../../packages/shared/agents';
 import referralsConfig from '../../../../../../../packages/shared/config/referrals.config';
 import { notify } from '../../../../../lib/notifications';
-import { getPaymentConfig } from '../../../../../lib/config';
+import { getPaymentConfig, getAgentConfig, isAgentsEnabled } from '../../../../../lib/config';
 
 /*
  * Adapter for the shared MLM module — matches its expected `db` shape.
@@ -152,6 +158,13 @@ export default async function handler(req, res) {
       [payment.user_id]
     );
 
+    /*
+     * Determine commission path.
+     *   Agent attribution (payment.agent_id) takes precedence and skips MLM.
+     */
+    const hasAgentAttribution =
+      isAgentsEnabled() && payment.agent_id && payment.agent_id !== payment.user_id;
+
     /* Admin audit log. */
     await query(
       `INSERT INTO admin_audit_logs (admin_id, action, target_type, target_id, details, ip_address, user_agent)
@@ -164,71 +177,107 @@ export default async function handler(req, res) {
           method: payment.method,
           purchaseMode,
           selectedPhases: purchaseMode === 'full-course' ? 'all' : selectedPhases,
+          agentAttributed: Boolean(hasAgentAttribution),
+          agentId: hasAgentAttribution ? payment.agent_id : null,
         }),
         req.headers['x-forwarded-for'] || req.socket.remoteAddress || null,
         req.headers['user-agent'] || null,
       ]
     );
 
-    /*
-     * MLM side-effects — best-effort. Logged on failure.
-     * Wrapped in try/catch so a broken referral subsystem never blocks
-     * the student from gaining access.
-     */
-    try {
-      const saleAmount = parseFloat(payment.amount);
-      
-      const distribution = await sharedMlm.distributeCommissions(
-        mlmDb,
-        referralsConfig,
-        payment.user_id,
-        id,
-        saleAmount
-      );
+    /* ── Commission path A: AGENT ATTRIBUTED ── */
+    if (hasAgentAttribution) {
+      try {
+        const saleAmount = parseFloat(payment.amount);
+        const agentConfig = getAgentConfig();
 
-      /*
-       * Award bonuses to every user who received a commission on this
-       * sale. Their cached counters were already bumped at registration
-       * time, so bonus thresholds are evaluated against current values.
-       */
-      if (distribution.distributed > 0) {
-        const commissionRows = await query(
-          'SELECT DISTINCT earning_user_id FROM affiliate_commissions WHERE payment_id = $1',
-          [id]
+        const agentResult = await sharedAgents.distributeAgentCommission(
+          mlmDb,
+          agentConfig,
+          id,
+          payment.agent_id,
+          payment.user_id,
+          saleAmount
         );
 
-        for (const row of commissionRows.rows) {
+        if (agentResult.distributed > 0) {
+          /* Best-effort notify the agent of their instant commission */
           try {
-            const bonusResult = await sharedMlm.awardEligibleBonuses(mlmDb, referralsConfig, row.earning_user_id);
-            
-            /* Notify each user who earned a bonus on this sale. */
-            if (bonusResult && bonusResult.awarded && bonusResult.awarded.length > 0) {
-              for (const bonus of bonusResult.awarded) {
-                try {
-                  await notify(row.earning_user_id, 'bonus_awarded', {
-                    bonusName: bonus.name,
-                    amount: bonus.amount,
-                  }, '/profile/referrals');
-                } catch (notifErr) {
-                  console.error('[notify] bonus_awarded failed:', notifErr.message);
+            await notify(payment.agent_id, 'commission_unlocked', {
+              amount: agentResult.totalCommission,
+            }, '/profile/agents');
+          } catch (notifErr) {
+            console.error('[notify] agent commission notification failed:', notifErr.message);
+          }
+        } else {
+          console.warn('Agent commission not distributed:', {
+            paymentId: id,
+            agentId: payment.agent_id,
+            reason: agentResult.reason,
+          });
+        }
+      } catch (agentError) {
+        console.error('Agent commission distribution failed after payment approval:', {
+          paymentId: id,
+          agentId: payment.agent_id,
+          error: agentError.message,
+        });
+      }
+    } else {
+      /* ── Commission path B: MLM (existing behavior) ── */
+      try {
+        const saleAmount = parseFloat(payment.amount);
+
+        const distribution = await sharedMlm.distributeCommissions(
+          mlmDb,
+          referralsConfig,
+          payment.user_id,
+          id,
+          saleAmount
+        );
+
+        /*
+         * Award bonuses to every user who received a commission on this
+         * sale. Best-effort — failures are logged per-user.
+         */
+        if (distribution.distributed > 0) {
+          const commissionRows = await query(
+            'SELECT DISTINCT earning_user_id FROM affiliate_commissions WHERE payment_id = $1',
+            [id]
+          );
+
+          for (const row of commissionRows.rows) {
+            try {
+              const bonusResult = await sharedMlm.awardEligibleBonuses(mlmDb, referralsConfig, row.earning_user_id);
+
+              if (bonusResult && bonusResult.awarded && bonusResult.awarded.length > 0) {
+                for (const bonus of bonusResult.awarded) {
+                  try {
+                    await notify(row.earning_user_id, 'bonus_awarded', {
+                      bonusName: bonus.name,
+                      amount: bonus.amount,
+                    }, '/profile/referrals');
+                  } catch (notifErr) {
+                    console.error('[notify] bonus_awarded failed:', notifErr.message);
+                  }
                 }
               }
+            } catch (bonusError) {
+              console.error('Bonus award failed for user:', {
+                userId: row.earning_user_id,
+                paymentId: id,
+                error: bonusError.message,
+              });
             }
-          } catch (bonusError) {
-            console.error('Bonus award failed for user:', {
-              userId: row.earning_user_id,
-              paymentId: id,
-              error: bonusError.message,
-            });
           }
         }
+      } catch (mlmError) {
+        console.error('MLM commission distribution failed after payment approval:', {
+          paymentId: id,
+          buyerId: payment.user_id,
+          error: mlmError.message,
+        });
       }
-    } catch (mlmError) {
-      console.error('Commission distribution failed after payment approval:', {
-        paymentId: id,
-        buyerId: payment.user_id,
-        error: mlmError.message,
-      });
     }
 
     /*
@@ -243,10 +292,10 @@ export default async function handler(req, res) {
       }, '/profile/payments');
 
       /*
-       * If the buyer joined via a referral code, notify their referrer
-       * that a downline member just purchased.
+       * If the buyer joined via a referral code AND was not agent-attributed,
+       * notify their referrer that a downline member just purchased.
        */
-      if (payment.referred_by_code) {
+      if (!hasAgentAttribution && payment.referred_by_code) {
         const referrerResult = await query(
           `SELECT rc.user_id, u.full_name
            FROM referral_codes rc
@@ -280,6 +329,7 @@ export default async function handler(req, res) {
       data: {
         purchaseMode,
         selectedPhases: purchaseMode === 'full-course' ? null : selectedPhases,
+        agentAttributed: Boolean(hasAgentAttribution),
       },
     });
   } catch (error) {

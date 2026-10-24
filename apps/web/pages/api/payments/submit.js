@@ -1,15 +1,27 @@
 /**
  * @fileoverview Payment Submission API Route
+ *
  * Handles payment proof submission with Cloudinary screenshot upload.
  * MLM commission distribution happens on admin approval, not here.
- * This route only records the payment and the discount metadata.
+ * This route only records the payment, discount metadata, and agent
+ * attribution.
+ *
+ * Agent attribution (Money Model v2.5):
+ *   When the buyer enters a valid agent code at checkout, `agentId` is
+ *   passed in the form data. We validate that the agent exists, is
+ *   active, and is not the buyer themselves, then store the agent_id on
+ *   the payment so the approval endpoint can fire the agent commission.
+ *
+ *   Agent code overrides MLM: if agentId is stored, the approval flow
+ *   skips the MLM tree entirely.
+ *
  * Path: apps/web/pages/api/payments/submit.js
  */
 
 import { Pool } from 'pg';
 import jwt from 'jsonwebtoken';
 import { uploadToCloudinary } from '../../../lib/cloudinary';
-import { getPaymentConfig } from '../../../lib/config';
+import { getPaymentConfig, isAgentsEnabled } from '../../../lib/config';
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -117,17 +129,64 @@ async function parseFormData(req) {
 }
 
 /**
+ * Validate an agent UUID against the agent_codes table.
+ * Returns the agent's user ID if valid & active & not self, else null.
+ *
+ * @param {string} rawAgentId - Raw agent_id string from form
+ * @param {string} buyerId - Buyer's user ID
+ * @returns {Promise<string|null>} Validated agent user ID or null
+ */
+async function resolveAgentId(rawAgentId, buyerId) {
+  if (!isAgentsEnabled()) return null;
+  if (!rawAgentId || typeof rawAgentId !== 'string') return null;
+
+  const cleanId = rawAgentId.trim();
+  if (!cleanId) return null;
+
+  /* Loose UUID shape check — full validation still happens via SQL */
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cleanId)) {
+    return null;
+  }
+
+  /* Self-referral guard */
+  if (cleanId === buyerId) return null;
+
+  try {
+    const result = await pool.query(
+      `SELECT ac.user_id, ac.is_active, ags.is_active AS settings_active
+       FROM agent_codes ac
+       LEFT JOIN agent_settings ags ON ags.user_id = ac.user_id
+       WHERE ac.user_id = $1`,
+      [cleanId]
+    );
+
+    if (result.rows.length === 0) return null;
+    const row = result.rows[0];
+    if (!row.is_active) return null;
+    if (row.settings_active === false) return null;
+
+    return row.user_id;
+  } catch (error) {
+    console.error('Agent ID validation failed:', {
+      agentId: cleanId,
+      error: error.message,
+    });
+    return null;
+  }
+}
+
+/**
  * POST /api/payments/submit
  * Submit payment proof for admin review.
  *
- * This endpoint does NOT distribute MLM commissions. It stores:
+ * This endpoint does NOT distribute MLM or agent commissions. It stores:
  *   - The payment record (with purchase_mode, selected_phases, discounts)
+ *   - The agent attribution (agent_id) when a valid agent code was used
  *   - The user's payment_status = 'pending'
  *   - The discount code usage record (if a code was applied)
- *   - The referred-user credit consumption (if credit was applied)
  *
- * Actual commission distribution happens in
- * /api/admin/payments/[id]/approve.js on admin approval.
+ * Commission distribution happens in:
+ *   - /api/admin/payments/[id]/approve.js  (MLM + agent)
  */
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -172,6 +231,7 @@ export default async function handler(req, res) {
       discountCode: discountCodeRaw,
       discountCodeAmount: discountCodeAmountRaw,
       creditApplied: creditAppliedRaw,
+      agentId: agentIdRaw,
     } = fields;
 
     /* Parse selected phases for individual-phases purchases. */
@@ -213,7 +273,18 @@ export default async function handler(req, res) {
       });
     }
 
-    /* Upload screenshot to Cloudinary if provided. */
+    /*
+     * Validate the agent attribution. Returns null if:
+     *   - Agent feature disabled
+     *   - Agent ID malformed / nonexistent
+     *   - Agent inactive
+     *   - Self-attribution attempted
+     */
+    const validatedAgentId = await resolveAgentId(agentIdRaw, user.id);
+
+    /*
+     * Upload screenshot to Cloudinary if provided.
+     */
     let screenshotUrl = null;
     const screenshotConfig = paymentConfig.screenshotUpload || {};
     const maxSize = screenshotConfig.maxSize || 5 * 1024 * 1024;
@@ -252,17 +323,16 @@ export default async function handler(req, res) {
 
     /*
      * Create the payment record.
-     * Stores purchase metadata + discount breakdown so the admin approval
-     * endpoint knows exactly what the student bought without recomputing.
+     * Stores purchase metadata + discount breakdown + agent attribution.
      */
     const paymentResult = await pool.query(
       `INSERT INTO payments (
          user_id, amount, method, status, reference,
          purchase_mode, selected_phases,
          referral_discount_amount, discount_code_used, discount_code_amount,
-         credit_applied, transaction_id, created_at
+         credit_applied, transaction_id, agent_id, created_at
        )
-       VALUES ($1, $2, $3, 'pending', $4, $5, $6, $7, $8, $9, $10, $11, CURRENT_TIMESTAMP)
+       VALUES ($1, $2, $3, 'pending', $4, $5, $6, $7, $8, $9, $10, $11, $12, CURRENT_TIMESTAMP)
        RETURNING id`,
       [
         user.id,
@@ -276,6 +346,7 @@ export default async function handler(req, res) {
         discountCodeAmount,
         creditApplied,
         screenshotUrl,
+        validatedAgentId,
       ]
     );
 
@@ -294,10 +365,8 @@ export default async function handler(req, res) {
     );
 
     /*
-     * Record discount code usage so the code's current_total_uses counter
-     * and the usage log stay in sync. The code's eligibility was already
-     * validated client-side via /api/discounts/validate, but we increment
-     * the counter here so it reflects the actual submission.
+     * Record discount code usage so the code's counter and usage log
+     * stay in sync. Eligibility was already validated client-side.
      */
     if (discountCode && discountCodeAmount > 0) {
       const discountCodeResult = await pool.query(
@@ -336,13 +405,9 @@ export default async function handler(req, res) {
     }
 
     /*
-     * If the student applied MLM bonus credits toward this purchase,
-     * deduct from their bonus ledger. Credits are computed as the sum of
-     * referral_bonuses for the user, minus the sum of any prior credit_applied
-     * on their payments.
-     *
-     * We insert a negative "redemption" bonus row so the ledger stays
-     * append-only. This preserves the audit trail without mutating history.
+     * Credit balance check — if the student applied MLM bonus credits
+     * toward this purchase, verify they have enough, then record a
+     * negative "redemption" bonus row to keep the ledger append-only.
      */
     if (creditApplied > 0) {
       const bonusSumResult = await pool.query(
@@ -381,6 +446,7 @@ export default async function handler(req, res) {
         selectedPhases,
         discountCodeApplied: Boolean(discountCode),
         creditApplied: creditApplied > 0,
+        agentAttributed: Boolean(validatedAgentId),
       },
     });
   } catch (error) {
