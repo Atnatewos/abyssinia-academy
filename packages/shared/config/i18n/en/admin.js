@@ -22,7 +22,7 @@ module.exports = {
         'Our team is crafting a polished experience for this page. It will be available soon with full create, edit, and delete flows.',
       subtitle: 'This feature is coming soon',
       contactSupport: 'Need this now? Contact support',
-      supportEmail: 'support@abyssinia-academy.com',
+      supportEmail: process.env.SUPPORT_EMAIL || 'support@abyssinia-academy.com',
       footerNote: 'Engineering team is on it — this page will be live in a future update.',
       defaultTitle: 'Feature Coming Soon',
       defaultBack: 'Back',

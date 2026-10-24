@@ -9442,3 +9442,135 @@ button .spinner,
   ) !important;
   background-size: 200% 100% !important;
 }
+
+
+/* ============================================================================
+   LANGUAGE DROPDOWN
+   Replaces the cycling language button. Anchored to the trigger, theme-aware,
+   auto-flips to avoid clipping at viewport edges.
+   ============================================================================ */
+
+.language-dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.language-dropdown-trigger {
+  /* Inherits .nav-icon-btn styling; only state modifiers below */
+}
+
+.language-dropdown-trigger.open {
+  background: var(--bg-icon-btn-hover);
+  color: var(--text-nav-icon-hover);
+}
+
+/* ── Menu ── */
+.language-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 190px;
+  list-style: none;
+  margin: 0;
+  padding: 0.375rem;
+  background: var(--bg-card-solid);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--border-nav-scrolled);
+  border-radius: 12px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4);
+  z-index: 55;
+  animation: language-dropdown-fade-in 0.18s ease;
+}
+
+@keyframes language-dropdown-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ── Option row ── */
+.language-dropdown-option {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  width: 100%;
+  padding: 0.55rem 0.75rem;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.language-dropdown-option:hover,
+.language-dropdown-option:focus-visible {
+  background: var(--bg-ghost-hover);
+  color: var(--text-main);
+  outline: none;
+}
+
+.language-dropdown-option.active {
+  background: rgba(245, 158, 11, 0.12);
+  color: var(--accent-gold);
+  font-weight: 650;
+}
+
+/* Locale code badge */
+.language-dropdown-option-code {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: var(--text-dim);
+  min-width: 1.75rem;
+  letter-spacing: 0.05em;
+}
+
+.language-dropdown-option.active .language-dropdown-option-code {
+  color: var(--accent-gold);
+}
+
+/* Native label */
+.language-dropdown-option-label {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Active check icon */
+.language-dropdown-option-check {
+  color: var(--accent-gold);
+  flex-shrink: 0;
+}
+
+/* Light theme adjustments */
+.light-theme .language-dropdown-menu {
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.08);
+}
+
+/* Mobile: dropdown becomes right-anchored and can overflow to full width */
+@media (max-width: 480px) {
+  .language-dropdown-menu {
+    min-width: 170px;
+  }
+  .language-dropdown-option {
+    padding: 0.625rem 0.75rem;
+  }
+}
+
+/* Reduced motion — no slide-in, only fade */
+@media (prefers-reduced-motion: reduce) {
+  .language-dropdown-menu {
+    animation: none;
+  }
+}

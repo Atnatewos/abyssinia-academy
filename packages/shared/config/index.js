@@ -14,6 +14,8 @@ const landingConfig = require('./landing.config');
 const phasesConfig = require('./phases.config');
 const referralsConfig = require('./referrals.config');
 const discountsConfig = require('./discounts.config');
+const notificationsConfig = require('./notifications.config');
+const agentsConfig = require('./agents.config');
 
 module.exports = {
   platform: platformConfig,
@@ -25,4 +27,6 @@ module.exports = {
   phases: phasesConfig,
   referrals: referralsConfig,
   discounts: discountsConfig,
+  notifications: notificationsConfig,
+  agents: agentsConfig,
 };

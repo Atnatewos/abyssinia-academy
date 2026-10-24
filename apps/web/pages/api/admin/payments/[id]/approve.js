@@ -15,11 +15,13 @@
  *
  * Path: apps/web/pages/api/admin/payments/[id]/approve.js
  */
+
 import { pool, query } from '../../../../../lib/db';
 import jwt from 'jsonwebtoken';
 import sharedMlm from '../../../../../../../packages/shared/mlm';
 import referralsConfig from '../../../../../../../packages/shared/config/referrals.config';
 import { notify } from '../../../../../lib/notifications';
+import { getPaymentConfig } from '../../../../../lib/config';
 
 /*
  * Adapter for the shared MLM module — matches its expected `db` shape.
@@ -75,7 +77,13 @@ export default async function handler(req, res) {
     const purchaseMode = payment.purchase_mode || 'full-course';
     const selectedPhases = payment.selected_phases || null;
 
-    if (!['full-course', 'individual-phases'].includes(purchaseMode)) {
+    const paymentConfig = getPaymentConfig();
+    const validModes = paymentConfig.purchaseModes || {
+      fullCourse: { enabled: true, id: 'full-course' },
+      individualPhases: { enabled: true, id: 'individual-phases' },
+    };
+
+    if (!Object.values(validModes).some(m => m.id === purchaseMode && m.enabled !== false)) {
       return res.status(400).json({
         success: false,
         message: `Invalid purchase_mode on payment record: ${purchaseMode}.`,

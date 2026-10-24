@@ -10,7 +10,7 @@
  *   - Config-gated Earn pill (marketing can disable without deploy)
  *   - Notification bell icon with unread badge (authenticated users only)
  *   - Profile dropdown with avatar + quick links
- *   - Language + theme toggle controls
+ *   - Language dropdown + theme toggle controls
  *   - Mobile-responsive menu with slide-up panel
  *
  * Path: apps/web/components/shared/Navigation.jsx
@@ -24,7 +24,6 @@ import {
   X,
   Sun,
   Moon,
-  Globe,
   LogIn,
   Zap,
   ChevronDown,
@@ -38,10 +37,11 @@ import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import { getPlatformConfig, getLandingEarnConfig } from '../../lib/config';
 import NotificationBell from '../notifications/NotificationBell';
+import LanguageToggle from './LanguageToggle';
 
 const Navigation = () => {
   const router = useRouter();
-  const { t, language, toggleLanguage, mounted: langMounted } = useLanguage();
+  const { t, mounted: langMounted } = useLanguage();
   const { theme, toggleTheme, mounted: themeMounted } = useTheme();
   const { isAuthenticated, user, logout } = useAuth();
 
@@ -144,10 +144,8 @@ const Navigation = () => {
 
         {/* Controls */}
         <div className="nav-controls">
-          <button type="button" className="nav-icon-btn" onClick={toggleLanguage} disabled={!isMounted} aria-label="Switch language">
-            <Globe />
-            <span>{isMounted ? language.toUpperCase() : 'EN'}</span>
-          </button>
+          {/* Language dropdown — replaces the cycling button */}
+          <LanguageToggle />
 
           <button
             type="button"
@@ -244,7 +242,6 @@ const Navigation = () => {
           <div className="nav-mobile-divider" />
           {isAuthenticated ? (
             <>
-              {/* Mobile notification bell — centered in its own row */}
               <div className="nav-mobile-notifications">
                 <NotificationBell />
               </div>

@@ -6,6 +6,8 @@
 
 const en = require('./en.config');
 const am = require('./am.config');
+const ti = require('./ti.config');
+const om = require('./om.config');
 
 const i18n = {
   defaultLanguage: 'en',
@@ -13,11 +15,15 @@ const i18n = {
   supportedLanguages: [
     { code: 'en', name: 'English', nativeName: 'English' },
     { code: 'am', name: 'Amharic', nativeName: 'አማርኛ' },
+    { code: 'ti', name: 'Tigrinya', nativeName: 'ትግርኛ' },
+    { code: 'om', name: 'Oromo', nativeName: 'Afaan Oromoo' },
   ],
 
   translations: {
     en,
     am,
+    ti,
+    om,
   },
 
   getTranslations(lang) {

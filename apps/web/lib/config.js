@@ -86,7 +86,7 @@ const loadDefaults = () => {
         registration: { showReferralBanner: true, autoApplyCode: true, allowCodeChange: false, cookieDurationDays: 30 },
         sharing: {
           shareMessageTemplate: 'Join me at {name} and learn Full-Stack Web Development! Use my referral link: {link}',
-          shareMessageTemplateAm: 'በ{name} ይቀቀሉ እና ፉል-ስታክ ብ ዴቨሎፕመንት ይማሩ! የማጣቀሻ ንኬን ይጠቀሙ: {link}',
+          shareMessageTemplateAm: 'በ{name} ይቀቀ እና ፉል-ስታ ብ ዴቨሎመንት ይማሩ! የማጣቀሻ ኬን ይጠሙ: {link}',
           platforms: { telegram: 'https://t.me/share/url', whatsapp: 'https://wa.me', facebook: 'https://www.facebook.com/sharer/sharer.php' },
         },
         dashboard: { showTierProgress: true, showEarningsBreakdown: true, showReferralHistory: true, showHowItWorks: true, historyPerPage: 10 },
@@ -467,7 +467,7 @@ export const getReferralShareConfig = () => {
   const sharing = referralConfig?.sharing || defaults.referrals?.sharing || {};
   return {
     shareMessageTemplate: sharing.shareMessageTemplate || 'Join me at {name} and learn Full-Stack Web Development! Use my referral link: {link}',
-    shareMessageTemplateAm: sharing.shareMessageTemplateAm || 'በ{name} ይቀቀሉ እና ፉል-ስታክ ብ ዴሎፕመንት ይማሩ! የማጣቀሻ ንኬን ይጠቀሙ: {link}',
+    shareMessageTemplateAm: sharing.shareMessageTemplateAm || 'በ{name} ይቀቀ እና ፉል-ስታ ብ ዴሎፕመንት ይማሩ! የማጣቀሻ ንን ይጠቀ: {link}',
     platforms: sharing.platforms || {
       telegram: 'https://t.me/share/url',
       whatsapp: 'https://wa.me',
@@ -536,7 +536,7 @@ export const getNotificationsConfig = () => {
    ================================================================ */
 export const getReferralTiers = () => {
   return [
-    { name: 'Bronze', nameAm: 'ብሮንዝ', minReferrals: 0, creditPercent: 10, color: '#cd7f32', icon: 'Medal' },
+    { name: 'Bronze', nameAm: 'ብንዝ', minReferrals: 0, creditPercent: 10, color: '#cd7f32', icon: 'Medal' },
     { name: 'Silver', nameAm: 'ብር', minReferrals: 3, creditPercent: 15, color: '#c0c0c0', icon: 'Award' },
     { name: 'Gold', nameAm: 'ወርቅ', minReferrals: 6, creditPercent: 20, color: '#ffd700', icon: 'Trophy' },
     { name: 'Platinum', nameAm: 'ፕላቲነም', minReferrals: 11, creditPercent: 25, color: '#e5e4e2', icon: 'Crown' },

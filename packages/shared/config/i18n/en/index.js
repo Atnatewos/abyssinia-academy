@@ -6,13 +6,12 @@
  * consumer code needs to change.
  *
  * To add a new namespace:
- *   1. Create the file in this folder (e.g., notifications.js)
+ *   1. Create the file in this folder (e.g., agents.js)
  *   2. require it below
  *   3. Spread it into the exported object
  *
  * Path: packages/shared/config/i18n/en/index.js
  */
-
 const common = require('./common');
 const landing = require('./landing');
 const courses = require('./courses');
@@ -28,6 +27,7 @@ const referrals = require('./referrals');
 const discounts = require('./discounts');
 const contact = require('./contact');
 const notifications = require('./notifications');
+const agents = require('./agents');
 
 module.exports = {
   ...common,
@@ -45,4 +45,5 @@ module.exports = {
   ...discounts,
   ...contact,
   ...notifications,
+  ...agents,
 };

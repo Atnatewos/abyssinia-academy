@@ -9,6 +9,7 @@
 import { Pool } from 'pg';
 import jwt from 'jsonwebtoken';
 import { uploadToCloudinary } from '../../../lib/cloudinary';
+import { getPaymentConfig } from '../../../lib/config';
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -198,10 +199,41 @@ export default async function handler(req, res) {
       });
     }
 
+    /* Validate amount against config. */
+    const paymentConfig = getPaymentConfig();
+    const pricing = paymentConfig.pricing || {};
+    const minAmount = purchaseMode === 'individual-phases'
+      ? (pricing.perPhase?.amountETB || 500)
+      : (pricing.fullCourse?.amountETB || 1000);
+
+    if (amount < minAmount) {
+      return res.status(400).json({
+        success: false,
+        message: `Payment amount must be at least ${minAmount} ETB.`,
+      });
+    }
+
     /* Upload screenshot to Cloudinary if provided. */
     let screenshotUrl = null;
+    const screenshotConfig = paymentConfig.screenshotUpload || {};
+    const maxSize = screenshotConfig.maxSize || 5 * 1024 * 1024;
 
     if (file && file.buffer && file.buffer.length > 0) {
+      if (file.size > maxSize) {
+        return res.status(400).json({
+          success: false,
+          message: `Screenshot size must be under ${maxSize / (1024 * 1024)}MB.`,
+        });
+      }
+
+      const allowedTypes = screenshotConfig.allowedTypes || ['image/jpeg', 'image/png', 'image/webp'];
+      if (!allowedTypes.includes(file.mimetype)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Only JPEG, PNG, and WebP images are allowed.',
+        });
+      }
+
       try {
         const uploadResult = await uploadToCloudinary(file.buffer, {
           folder: 'abyssinia-academy/payments',

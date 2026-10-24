@@ -1,0 +1,46 @@
+/**
+ * @fileoverview Oromo — Pricing Page Namespace
+ * Path: packages/shared/config/i18n/om/pricing.js
+ */
+
+module.exports = {
+  pricing: {
+    heading: 'Kaffaltii Barnootaa Salphaa & Ifa Ta\'e',
+    subheading: 'Karaa barnootaa kaayyoo keetiif mijatu filadhu.',
+    fullPass: 'Paasii Hayyama Akademii Guutuu',
+    masterclass: 'Maastarkilaasii Softweerii Istakii Guutuu',
+    instantAccess: 'Hayyama battalumaa kutaa barnootaa 5 fi moduulota koorsii hundaaf',
+    hdPlaylists: 'Maastarkilaasii viidiyoo duraan waraabame HD',
+    timestampsNotes: 'Adda baasii afaanii yeroo qabu & yaadannoo barnootaa',
+    githubAssets: 'Kuusaa koodii madda GitHub & kiitii jalqabaa',
+    telegramCommunity: 'Hawaasa gorsaa developparaa Telegram dhuunfaa',
+    enrollToday: 'Har\'a Galmaa\'i & Barachuu Jalqabi',
+    goToPortal: 'Gara Portaalii Kutaa Barnootaatti Deebi\'i',
+    selectPhasesToContinue: 'Itti fufuuf kutaa barnootaa filadhu',
+    selectAtLeastOne: 'Itti fufuuf kutaa barnootaa tokko yoo xiqqaate filadhu',
+    tuitionEyebrow: 'Kaffaltii Barnootaa',
+    allPhasesValue: 'Kutaa barnootaa 5 hunda',
+    completeCurriculum: 'Sirna barnootaa guutuu',
+    valueLabel: 'gatii',
+    bestValue: 'Gatii Gaarii',
+    selected: 'Filatame',
+    selectFullCourse: 'Koorsii Guutuu Filadhu',
+    savePercent: '{percent}% Qusadhu',
+    objectives: 'kaayyoo',
+    weeksUnit: 'torban',
+    phaseLabel: 'Kutaa Barnootaa',
+    orBuildYourOwn: 'Yookaan Karaa Kee Ijaari',
+    selectIndividualPhases: 'Kutaa barnootaa adda addaa {price} {currency} tokkoon tokkoon filadhu. Hir\'isaawwan baay\'ee ofumaan hojiirra oolu.',
+    customModeActive: 'Haalli Addaa Socho\'aa',
+    switchToCustom: 'Gara Addaatti Jijjiiri',
+    addToCart: 'Gara Gaarii Dabali — {price} {currency}',
+    removeFromCart: 'Gara Gaarii Keessaa Haqi',
+    prerequisitesRequired: 'Dursaan Barbaachisa',
+    lockedPrerequisiteMsg: 'Kutaa barnootaa kana banuuf duraan {prerequisites} xumuri.',
+    andLabel: ' & Kutaa Barnootaa ',
+    phaseUnit: 'kutaa barnootaa',
+    phasesUnit: 'kutaa barnootaa',
+    offLabel: 'hir\'isa',
+    totalLabel: 'Waliigala',
+  },
+};
