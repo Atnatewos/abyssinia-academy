@@ -25,7 +25,7 @@ module.exports = {
     enroll: 'Enroll Now',
     logout: 'Logout',
     myProfile: 'My Profile',
-    referralDashboard: 'Referral Dashboard',
+    referralDashboard: 'Financial Dashboard',
   },
   hero: {
     badge: 'Online Live Masterclass Learning System',

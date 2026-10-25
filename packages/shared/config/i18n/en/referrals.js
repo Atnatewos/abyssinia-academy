@@ -14,7 +14,7 @@
  */
 module.exports = {
   referrals: {
-    dashboardTitle: 'Referral Dashboard',
+    dashboardTitle: 'Financial Dashboard',
     dashboardSubtitle: 'Share Abyssinia Academy and earn rewards!',
     yourCode: 'Your Referral Code',
     yourLink: 'Your Referral Link',
@@ -87,12 +87,12 @@ module.exports = {
     haveReferralCode: 'Have a referral code?',
     enterReferralCode: 'Enter Referral Code',
     mlm: {
-      authRequired: 'Please log in to view your referral dashboard.',
+      authRequired: 'Please log in to view your Financial dashboard.',
       loadError: 'Failed to load MLM dashboard data. Please try again.',
       dashboard: {
-        title: 'Referral Dashboard',
+        title: 'Financial Dashboard',
         subtitle: 'Track your 4-level commission network, bonuses, and withdrawals.',
-        loading: 'Loading your referral dashboard...',
+        loading: 'Loading your financial dashboard...',
         retry: 'Retry',
       },
       tabs: {
@@ -329,8 +329,8 @@ module.exports = {
       adminMlmPlatformRemaining: 'Remaining',
       adminMlmCapWarning: 'Platform cap is {percent}% used.',
       adminMlmCapExceeded: 'Platform cap reached. New commissions paused.',
-      loadDashboardError: 'Failed to load referral dashboard.',
-      loadTreeError: 'Failed to load your referral tree.',
+      loadDashboardError: 'Failed to load financial dashboard.',
+      loadTreeError: 'Failed to load your financial tree.',
       loadCommissionsError: 'Failed to load commission history.',
       loadBonusesError: 'Failed to load bonus history.',
       loadWithdrawalsError: 'Failed to load withdrawals.',
