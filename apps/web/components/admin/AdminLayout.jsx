@@ -14,6 +14,7 @@ import {
   CreditCard,
   Users,
   BookOpen,
+  Briefcase,
   Settings,
   LogOut,
   Code2,
@@ -139,6 +140,11 @@ const AdminLayout = ({ children, title = 'Dashboard', subtitle = '' }) => {
           icon: Users,
         },
         {
+          path: '/admin/agents',
+          label: t.admin?.agentsTitle || 'Agents',
+          icon: Briefcase,
+        },
+        {
           path: '/admin/courses',
           label: t.admin?.courses || 'Courses',
           icon: BookOpen,
@@ -231,7 +237,7 @@ const AdminLayout = ({ children, title = 'Dashboard', subtitle = '' }) => {
 
       {/* ── Mobile Sidebar Overlay ── */}
       <div
-        className={`admin-sidebar-overlay ${mobileSidebarOpen ? 'active' : ''}`}
+        className={`admin-sidebar-overlay ${mobileSidebarOpen ? 'active': ''}`}
         onClick={() => setMobileSidebarOpen(false)}
         aria-hidden="true"
       />
@@ -286,7 +292,7 @@ const AdminLayout = ({ children, title = 'Dashboard', subtitle = '' }) => {
                         <Link
                           key={item.path}
                           href={item.path}
-                          className={`admin-nav-link ${active ? 'active' : ''}`}
+                          className={`admin-nav-link ${active ? 'active': ''}`}
                           onClick={() => setMobileSidebarOpen(false)}
                         >
                           <IconComponent size={18} />

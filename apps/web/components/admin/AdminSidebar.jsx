@@ -1,6 +1,6 @@
 /**
  * @fileoverview Admin Sidebar Component
- * Navigation sidebar for the admin dashboard
+ * Navigation sidebar for the admin dashboard.
  * Path: apps/web/components/admin/AdminSidebar.jsx
  */
 
@@ -11,15 +11,12 @@ import {
   CreditCard,
   Users,
   BookOpen,
+  Briefcase,
   Settings,
   LogOut,
   Code2,
 } from 'lucide-react';
 
-/**
- * AdminSidebar - Fixed sidebar navigation for admin pages
- * Highlights the current active route
- */
 const AdminSidebar = () => {
   const router = useRouter();
 
@@ -40,6 +37,12 @@ const AdminSidebar = () => {
       label: 'Students',
       icon: Users,
     },
+    /* Agent Management Link */
+    {
+      path: '/admin/agents',
+      label: 'Agents',
+      icon: Briefcase,
+    },
     {
       path: '/admin/courses',
       label: 'Courses',
@@ -47,20 +50,11 @@ const AdminSidebar = () => {
     },
   ];
 
-  /**
-   * Check if a navigation item is active
-   * @param {string} path - Route path
-   * @param {boolean} exact - Whether to match exactly
-   * @returns {boolean} Whether the route is active
-   */
   const isActive = (path, exact = false) => {
     if (exact) return router.pathname === path;
     return router.pathname.startsWith(path);
   };
 
-  /**
-   * Handle admin logout
-   */
   const handleLogout = () => {
     localStorage.removeItem('admin_token');
     localStorage.removeItem('admin_user');
@@ -69,7 +63,6 @@ const AdminSidebar = () => {
 
   return (
     <aside className="w-64 min-h-screen bg-slate-900/50 border-r border-slate-700/30 p-6 flex flex-col fixed left-0 top-0 z-30">
-      {/* Brand */}
       <Link href="/admin" className="flex items-center gap-3 mb-10">
         <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 via-amber-500 to-yellow-600 flex items-center justify-center">
           <Code2 className="w-6 h-6 text-slate-950 font-bold" />
@@ -84,7 +77,6 @@ const AdminSidebar = () => {
         </div>
       </Link>
 
-      {/* Navigation */}
       <nav className="flex-1 space-y-1">
         {navItems.map((item) => {
           const IconComponent = item.icon;
@@ -107,7 +99,6 @@ const AdminSidebar = () => {
         })}
       </nav>
 
-      {/* Bottom Actions */}
       <div className="pt-4 border-t border-slate-700/30 space-y-1">
         <Link
           href="/admin/settings"

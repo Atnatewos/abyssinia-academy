@@ -7,6 +7,7 @@
  *   - Targeted user picker labels (search, chips, empty states)
  *   - History tab labels (columns, pagination, empty state)
  *   - Shared stub copy (eyebrow, heading, description, CTAs)
+ *   - Agent management labels
  *
  * All copy is config-driven — no hardcoded strings in JSX components.
  *
@@ -130,5 +131,16 @@ module.exports = {
       validationFailed: 'Please fill in all required fields',
       sendFailed: 'Failed to send announcement. Please try again.',
     },
+
+    /* ── Agent Management ── */
+    agentsTitle: 'Agent Management',
+    agentsSubtitle: 'Configure agent commission rates and view performance.',
+    agentName: 'Agent Name',
+    agentCode: 'Agent Code',
+    agentSales: 'Total Sales',
+    agentEarned: 'Total Earned',
+    commissionType: 'Commission Type',
+    commissionValue: 'Commission Value',
+    agentStatus: 'Status',
   },
 };

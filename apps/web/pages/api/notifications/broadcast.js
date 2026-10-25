@@ -3,36 +3,22 @@
  *
  * POST /api/admin/notifications/broadcast
  *
- * Fans out an admin announcement to a targeted audience:
- *   - audience: 'all' | 'enrolled' | 'single'
- *   - singleIdentifier: phone OR email (required when audience === 'single')
- *   - title, body: raw strings inserted as title_tokens/body_tokens
- *   - severity: 'info' | 'success' | 'warning' | 'critical'
+ * Fans out an admin announcement to a targeted audience.
+ * Fixed the relative path to the shared notifications package.
  *
- * Security:
- *   - Bearer admin JWT required (JWT_ADMIN_SECRET)
- *   - Per-admin rate limit: checked via audit_logs
- *   - Input validated server-side (title/body length, severity whitelist)
- *   - Null-byte sanitization to prevent PostgreSQL text field errors
- *   - All dispatches audit-logged with recipient count + payload snapshot
- *
- * Performance:
- *   - 'all' and 'enrolled' use INSERT...SELECT (one query, not N inserts)
- *   - 'single' uses a direct parameterized insert
- *
- * Path: apps/web/pages/api/admin/notifications/broadcast.js
+ * Path: apps/web/pages/api/notifications/broadcast.js
  */
 import jwt from 'jsonwebtoken';
 import { query } from '../../../lib/db';
 
 /* 
  * The shared notification service provides type configs and i18n keys.
- * We use a safe require pattern to prevent cold-start crashes 
- * if the shared package is not yet fully linked in the deployment environment.
+ * Path resolution: broadcast.js -> notifications -> api -> pages -> web -> apps -> root
+ * (6 levels up to reach the monorepo root).
  */
 let notificationService = null;
 try {
-  notificationService = require('../../../../../../../packages/shared/notifications').default;
+  notificationService = require('../../../../../../packages/shared/notifications').default;
 } catch {
   notificationService = null;
 }
@@ -48,12 +34,6 @@ const BODY_MAX_LENGTH = parseInt(process.env.NOTIF_BODY_MAX_LENGTH, 10) || 500;
 const RATE_LIMIT_SECONDS = parseInt(process.env.NOTIF_RATE_LIMIT_SECONDS, 10) || 60;
 const EXPIRY_DAYS = parseInt(process.env.NOTIF_EXPIRY_DAYS, 10) || 30;
 
-/**
- * Decode and verify an admin Bearer token.
- * @param {string} authHeader - Authorization header value
- * @returns {object} Decoded admin payload
- * @throws {Error} With .status attached
- */
 const verifyAdmin = (authHeader) => {
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     const err = new Error('Missing or malformed Authorization header');
@@ -77,12 +57,6 @@ const verifyAdmin = (authHeader) => {
   }
 };
 
-/**
- * Validate announcement payload. Throws with .status on failure.
- * Sanitizes null bytes which are invalid in PostgreSQL text fields.
- * @param {object} body - Request body
- * @returns {{title: string, body: string, severity: string, audience: string, link: string|null, singleIdentifier: string|null}}
- */
 const validatePayload = (body) => {
   const title = String(body?.title || '').trim().replace(/\0/g, '');
   const bodyText = String(body?.body || '').trim().replace(/\0/g, '');
@@ -126,12 +100,6 @@ const validatePayload = (body) => {
   return { title, body: bodyText, severity, audience, link, singleIdentifier };
 };
 
-/**
- * Enforce per-admin rate limit by checking the most recent broadcast
- * audit_log row for this admin. Returns false if the admin must wait.
- * @param {string} adminId - Admin user ID
- * @returns {Promise<boolean>} True if allowed
- */
 const checkRateLimit = async (adminId) => {
   const result = await query(
     `SELECT MAX(created_at) AS last_broadcast
@@ -147,11 +115,6 @@ const checkRateLimit = async (adminId) => {
   return Date.now() - lastTime >= RATE_LIMIT_SECONDS * 1000;
 };
 
-/**
- * Resolve the target user ID for a 'single' audience by phone or email.
- * @param {string} identifier - Phone or email
- * @returns {Promise<string|null>} User ID or null
- */
 const resolveSingleUser = async (identifier) => {
   const result = await query(
     `SELECT id FROM users WHERE phone = $1 OR email = $1 LIMIT 1`,
@@ -187,7 +150,6 @@ export default async function handler(req, res) {
   }
 
   try {
-    /* ── Rate limit enforcement ── */
     const allowed = await checkRateLimit(adminId);
     if (!allowed) {
       return res.status(429).json({
@@ -196,7 +158,6 @@ export default async function handler(req, res) {
       });
     }
 
-    /* ── Shared-notification config lookup for title/body keys ── */
     const typeConfig = notificationService?.getTypeConfig?.('admin_announcement') || {
       titleKey: 'admin.announcement.title',
       bodyKey: 'admin.announcement.body',
@@ -222,7 +183,6 @@ export default async function handler(req, res) {
         });
       }
 
-      /* Explicit ::jsonb casting prevents type mismatch errors on jsonb columns */
       await query(
         `INSERT INTO notifications (
            user_id, type, title_key, title_tokens, body_key, body_tokens,
@@ -243,7 +203,6 @@ export default async function handler(req, res) {
       );
       recipientCount = 1;
     } else {
-      /* Bulk fan-out via INSERT...SELECT — one query regardless of audience size */
       const filterClause = payload.audience === 'enrolled'
         ? 'WHERE is_enrolled = true'
         : '';
@@ -270,7 +229,6 @@ export default async function handler(req, res) {
       recipientCount = insertResult.rowCount || 0;
     }
 
-    /* ── Immutable audit trail ── */
     await query(
       `INSERT INTO admin_audit_logs (admin_id, action, target_type, target_id, details, ip_address, user_agent)
        VALUES ($1, 'announcement.broadcast', 'announcement', NULL, $2, $3, $4)`,
