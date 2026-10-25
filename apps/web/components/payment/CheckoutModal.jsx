@@ -18,7 +18,11 @@ import usePaymentConfig from '../../hooks/usePaymentConfig';
 import { useLanguage } from '../../context/LanguageContext';
 import { useToast } from '../../context/ToastContext';
 import apiClient from '../../lib/api';
-import { getApprovalConfig, getCheckoutModalConfig, calculateCombinedDiscount } from '../../lib/config';
+import {
+  getApprovalConfig,
+  getCheckoutModalConfig,
+  calculateCombinedDiscount,
+} from '../../lib/config';
 
 const CheckoutModal = ({
   isOpen = false,
@@ -83,7 +87,7 @@ const CheckoutModal = ({
     if (purchaseMode === 'full-course') return [];
     return selectedPhases.map((phaseId) => {
       const phase = coursePhases.find((p) => (p.id || `phase-${p.number}`) === phaseId);
-      return phase ? (language === 'am' ? (phase.title_am || phase.title) : phase.title) : phaseId;
+      return phase ? (language === 'am' ? phase.title_am || phase.title : phase.title) : phaseId;
     });
   }, [purchaseMode, selectedPhases, coursePhases, language]);
 
@@ -100,7 +104,9 @@ const CheckoutModal = ({
     } else {
       document.body.style.overflow = '';
     }
-    return () => { document.body.style.overflow = ''; };
+    return () => {
+      document.body.style.overflow = '';
+    };
   }, [isOpen]);
 
   useEffect(() => {
@@ -111,17 +117,20 @@ const CheckoutModal = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
-  const handleDiscountApplied = useCallback((data) => {
-    setDiscountCode(data.code);
-    if (data.type === 'percentage') {
-      setDiscountCodePercent(data.value);
-      setDiscountCodeFixed(0);
-    } else {
-      setDiscountCodePercent(0);
-      setDiscountCodeFixed(data.discountAmount);
-    }
-    if (onDiscountApplied) onDiscountApplied(data);
-  }, [onDiscountApplied]);
+  const handleDiscountApplied = useCallback(
+    (data) => {
+      setDiscountCode(data.code);
+      if (data.type === 'percentage') {
+        setDiscountCodePercent(data.value);
+        setDiscountCodeFixed(0);
+      } else {
+        setDiscountCodePercent(0);
+        setDiscountCodeFixed(data.discountAmount);
+      }
+      if (onDiscountApplied) onDiscountApplied(data);
+    },
+    [onDiscountApplied]
+  );
 
   const handleDiscountRemoved = useCallback(() => {
     setDiscountCode('');
@@ -144,16 +153,27 @@ const CheckoutModal = ({
       if (referralCode) formData.append('referralCode', referralCode);
       if (discountCode) {
         formData.append('discountCode', discountCode);
-        formData.append('discountCodeAmount', String(discountBreakdown.discountCodeDiscount));
+        formData.append(
+          'discountCodeAmount',
+          String(discountBreakdown.discountCodeDiscount)
+        );
       }
       if (referralDiscountPercent > 0) {
         formData.append('referralDiscountPercent', String(referralDiscountPercent));
-        formData.append('referralDiscountAmount', String(discountBreakdown.referralDiscount));
+        formData.append(
+          'referralDiscountAmount',
+          String(discountBreakdown.referralDiscount)
+        );
       }
       if (purchaseMode === 'individual-phases' && selectedPhases.length > 0) {
         formData.append('selectedPhases', JSON.stringify(selectedPhases));
       }
-      if (paymentData.screenshot) formData.append('screenshot', paymentData.screenshot);
+      if (paymentData.screenshot) {
+        formData.append('screenshot', paymentData.screenshot);
+      }
+      if (paymentData.agentId) {
+        formData.append('agentId', paymentData.agentId);
+      }
 
       const response = await apiClient.post('/payments/submit', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
@@ -161,10 +181,16 @@ const CheckoutModal = ({
 
       if (response && response.success) {
         setPaymentSubmitted(true);
-        toast.success(language === 'am' ? approvalConfig.pendingMessageAm : approvalConfig.pendingMessage);
+        toast.success(
+          language === 'am'
+            ? approvalConfig.pendingMessageAm
+            : approvalConfig.pendingMessage
+        );
       }
     } catch {
-      toast.error(language === 'am' ? 'ክፍያ መላክ አልተሳካም።' : 'Payment submission failed.');
+      toast.error(
+        language === 'am' ? 'ክፍያ መላክ አልተሳካም።' : 'Payment submission failed.'
+      );
     } finally {
       setSubmitting(false);
     }
@@ -175,21 +201,35 @@ const CheckoutModal = ({
   const modalTitle = language === 'am' ? modalConfig.titleAm : modalConfig.title;
 
   return (
-    <div className="checkout-modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+    <div
+      className="checkout-modal-overlay"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
       <div className="checkout-modal-container">
-        <button className="checkout-modal-close" onClick={onClose}><X size={20} /></button>
+        <button className="checkout-modal-close" onClick={onClose}>
+          <X size={20} />
+        </button>
         <div className="checkout-modal-header">
           <h2 className="checkout-modal-title">{modalTitle}</h2>
           {timer.isEnabled && (
-            <div className="checkout-modal-timer" style={{ borderColor: timer.currentColor, color: timer.currentColor }}>
+            <div
+              className="checkout-modal-timer"
+              style={{ borderColor: timer.currentColor, color: timer.currentColor }}
+            >
               <Clock size={14} />
-              <span>{timer.isExpired ? 'Expired' : timer.formattedTime.total}</span>
+              <span>
+                {timer.isExpired ? 'Expired' : timer.formattedTime.total}
+              </span>
             </div>
           )}
         </div>
 
         {paymentSubmitted ? (
-          <div className="checkout-modal-body"><PaymentStatus status="pending" /></div>
+          <div className="checkout-modal-body">
+            <PaymentStatus status="pending" />
+          </div>
         ) : (
           <div className="checkout-modal-body">
             <div className="checkout-modal-summary">
@@ -201,19 +241,25 @@ const CheckoutModal = ({
                   discountCode={discountCode}
                 />
               )}
-              <h3 className="checkout-modal-summary-title">{t.checkoutModal?.purchaseSummaryTitle || 'Purchase Summary'}</h3>
+              <h3 className="checkout-modal-summary-title">
+                {t.checkoutModal?.purchaseSummaryTitle || 'Purchase Summary'}
+              </h3>
               {purchaseMode === 'full-course' ? (
                 <div className="checkout-modal-summary-item">
                   <Sparkles size={16} />
                   <span>{t.pricing?.masterclass || 'Full Course'}</span>
-                  <span>{baseAmount.toLocaleString()} {currency}</span>
+                  <span>
+                    {baseAmount.toLocaleString()} {currency}
+                  </span>
                 </div>
               ) : (
                 selectedPhaseNames.map((name, i) => (
                   <div key={i} className="checkout-modal-summary-item">
                     <Sparkles size={16} />
                     <span>{name}</span>
-                    <span>{pricing?.perPhase?.amountETB?.toLocaleString()} {currency}</span>
+                    <span>
+                      {pricing?.perPhase?.amountETB?.toLocaleString()} {currency}
+                    </span>
                   </div>
                 ))
               )}
@@ -231,15 +277,25 @@ const CheckoutModal = ({
 
             <div className="checkout-modal-section">
               <DiscountCodeInput
-                purchaseInfo={{ amount: baseAmount, courseType: purchaseMode, selectedPhases }}
+                purchaseInfo={{
+                  amount: baseAmount,
+                  courseType: purchaseMode,
+                  selectedPhases,
+                }}
                 onDiscountApplied={handleDiscountApplied}
                 onDiscountRemoved={handleDiscountRemoved}
               />
             </div>
 
             <div className="checkout-modal-section">
-              <label className="checkout-modal-section-label">{t.checkout?.paymentMethod || 'Payment Method'}</label>
-              <PaymentMethodSelector methods={paymentMethods} selected={selectedMethod} onSelect={setSelectedMethod} />
+              <label className="checkout-modal-section-label">
+                {t.checkout?.paymentMethod || 'Payment Method'}
+              </label>
+              <PaymentMethodSelector
+                methods={paymentMethods}
+                selected={selectedMethod}
+                onSelect={setSelectedMethod}
+              />
             </div>
 
             <CheckoutForm

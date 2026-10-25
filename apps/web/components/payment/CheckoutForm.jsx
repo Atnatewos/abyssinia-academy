@@ -1,9 +1,15 @@
 /**
  * @fileoverview Checkout Form Component
+ *
  * Payment submission form with transaction reference, screenshot upload,
- * and discount breakdown display with percentages.
- * Discount code input is handled by the parent (CheckoutModal) — not duplicated here.
- * ALL display text from i18n → t.checkout.* — zero hardcoded strings.
+ * agent code input, and discount breakdown display with percentages.
+ *
+ * Discount code input is handled by the parent (CheckoutModal) — not
+ * duplicated here. Agent code input IS rendered here because it applies
+ * to both the standalone /checkout page and the CheckoutModal flow.
+ *
+ * ALL display text from i18n → t.checkout.* / t.agents.* — zero hardcoded strings.
+ *
  * Path: apps/web/components/payment/CheckoutForm.jsx
  */
 
@@ -13,6 +19,7 @@ import { useLanguage } from '../../context/LanguageContext';
 import { useToast } from '../../context/ToastContext';
 import { getScreenshotUploadConfig } from '../../lib/config';
 import DiscountBreakdown from '../discount/DiscountBreakdown';
+import AgentCodeInput from '../agents/AgentCodeInput';
 
 /**
  * CopyButton — Inline copy-to-clipboard button with success feedback
@@ -33,7 +40,13 @@ const CopyButton = ({ text, label = 'Copy to clipboard' }) => {
       textArea.style.opacity = '0';
       document.body.appendChild(textArea);
       textArea.select();
-      try { document.execCommand('copy'); setCopied(true); setTimeout(() => setCopied(false), 2000); } catch { /* silent */ }
+      try {
+        document.execCommand('copy');
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      } catch {
+        /* silent */
+      }
       document.body.removeChild(textArea);
     }
   }, [text]);
@@ -53,9 +66,11 @@ const CopyButton = ({ text, label = 'Copy to clipboard' }) => {
 
 /**
  * CheckoutForm — Payment submission form.
+ *
  * The discount code input is rendered by the parent (CheckoutModal).
- * This form only displays the discount breakdown and total.
- * 
+ * The agent code input is rendered HERE because it appears in both the
+ * standalone checkout page and the modal flow.
+ *
  * @param {object} props
  * @param {string} props.selectedMethod - Selected payment method ID
  * @param {object} props.selectedMethodData - Full payment method config object
@@ -66,6 +81,8 @@ const CopyButton = ({ text, label = 'Copy to clipboard' }) => {
  * @param {string} props.discountCode - Currently applied discount code
  * @param {number} props.discountCodePercent - Discount code percentage value
  * @param {object} props.discountBreakdown - Combined discount breakdown object
+ * @param {function} props.onAgentApplied - Callback when agent code applied
+ * @param {function} props.onAgentRemoved - Callback when agent code removed
  */
 const CheckoutForm = ({
   selectedMethod = '',
@@ -77,13 +94,19 @@ const CheckoutForm = ({
   discountCode = '',
   discountCodePercent = 0,
   discountBreakdown = null,
+  onAgentApplied,
+  onAgentRemoved,
 }) => {
   const { t, language } = useLanguage();
   const toast = useToast();
 
   const uploadConfig = useMemo(() => getScreenshotUploadConfig(), []);
   const maxFileSize = uploadConfig.maxSize || 5 * 1024 * 1024;
-  const allowedTypes = uploadConfig.allowedTypes || ['image/jpeg', 'image/png', 'image/webp'];
+  const allowedTypes = uploadConfig.allowedTypes || [
+    'image/jpeg',
+    'image/png',
+    'image/webp',
+  ];
   const maxSizeMB = Math.round(maxFileSize / (1024 * 1024));
 
   const [formData, setFormData] = useState({
@@ -91,12 +114,13 @@ const CheckoutForm = ({
     phone: '',
     transactionRef: '',
     screenshot: null,
+    agentId: null,
   });
   const [screenshotPreview, setScreenshotPreview] = useState(null);
   const [errors, setErrors] = useState({});
 
   /**
-   * Handle file selection for screenshot upload
+   * Handle file selection for screenshot upload.
    */
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -106,13 +130,18 @@ const CheckoutForm = ({
       return;
     }
     if (!allowedTypes.includes(file.type)) {
-      toast.error(t.checkout?.invalidFileType || 'Please upload a JPEG, PNG, or WebP image.');
+      toast.error(
+        t.checkout?.invalidFileType || 'Please upload a JPEG, PNG, or WebP image.'
+      );
       e.target.value = '';
       return;
     }
     if (file.size > maxFileSize) {
       toast.error(
-        (t.checkout?.fileTooLarge || 'File size must be under {size}MB.').replace('{size}', maxSizeMB)
+        (t.checkout?.fileTooLarge || 'File size must be under {size}MB.').replace(
+          '{size}',
+          maxSizeMB
+        )
       );
       e.target.value = '';
       return;
@@ -122,7 +151,7 @@ const CheckoutForm = ({
   };
 
   /**
-   * Remove the uploaded screenshot
+   * Remove the uploaded screenshot.
    */
   const handleRemoveScreenshot = () => {
     setFormData((p) => ({ ...p, screenshot: null }));
@@ -130,7 +159,7 @@ const CheckoutForm = ({
   };
 
   /**
-   * Validate all required form fields
+   * Validate all required form fields.
    */
   const validateForm = () => {
     const newErrors = {};
@@ -144,11 +173,13 @@ const CheckoutForm = ({
     }
 
     if (!formData.transactionRef.trim()) {
-      newErrors.transactionRef = t.checkout?.transactionRefRequired || 'Transaction reference is required.';
+      newErrors.transactionRef =
+        t.checkout?.transactionRefRequired || 'Transaction reference is required.';
     }
 
     if (!selectedMethod) {
-      newErrors.method = t.checkout?.paymentMethodRequired || 'Please select a payment method.';
+      newErrors.method =
+        t.checkout?.paymentMethodRequired || 'Please select a payment method.';
     }
 
     setErrors(newErrors);
@@ -156,7 +187,7 @@ const CheckoutForm = ({
   };
 
   /**
-   * Handle form submission
+   * Handle form submission.
    */
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -168,11 +199,12 @@ const CheckoutForm = ({
       paymentMethod: selectedMethod,
       transactionRef: formData.transactionRef.trim(),
       screenshot: formData.screenshot,
+      agentId: formData.agentId,
     });
   };
 
   /**
-   * Handle input field changes with error clearing
+   * Handle input field changes with error clearing.
    */
   const handleChange = (field, value) => {
     setFormData((p) => ({ ...p, [field]: value }));
@@ -181,8 +213,38 @@ const CheckoutForm = ({
     }
   };
 
+  /**
+   * Store the applied agent's UUID on the form state so submit includes it.
+   * The agent validation API does NOT return the UUID directly (it hides
+   * the internal user ID), so we extract it from the response if present,
+   * or fetch it separately — but for Phase 4 the API returns agentName +
+   * commission config only. We pass the CODE to the parent, and the parent
+   * (checkout page / modal) resolves the code to an agent UUID via a
+   * follow-up lookup. For Phase 4 we keep it simple: the agent data
+   * already includes a machine-readable `code`, and submit sends the code
+   * as the attribution — the server resolves it back to the agent user ID.
+   */
+  const handleAgentApplied = useCallback(
+    (agentData) => {
+      /*
+       * We store the agent code as the "agentId" for submission.
+       * The submit API accepts the code and resolves it server-side.
+       * If the API later evolves to accept a direct UUID, this branch
+       * is where to switch.
+       */
+      setFormData((p) => ({ ...p, agentId: agentData.code || null }));
+      if (onAgentApplied) onAgentApplied(agentData);
+    },
+    [onAgentApplied]
+  );
+
+  const handleAgentRemoved = useCallback(() => {
+    setFormData((p) => ({ ...p, agentId: null }));
+    if (onAgentRemoved) onAgentRemoved();
+  }, [onAgentRemoved]);
+
   /*
-   * Resolve display strings from config with bilingual fallback
+   * Resolve display strings from config with bilingual fallback.
    */
   const methodDisplayName =
     language === 'am'
@@ -195,12 +257,14 @@ const CheckoutForm = ({
       : selectedMethodData?.instructions || '';
 
   const accountLabel = selectedMethodData?.bankName
-    ? (t.checkout?.bankLabel || 'Bank: {bankName}').replace('{bankName}', selectedMethodData.bankName)
+    ? (t.checkout?.bankLabel || 'Bank: {bankName}').replace(
+        '{bankName}',
+        selectedMethodData.bankName
+      )
     : t.checkout?.accountLabel || 'Account';
 
   return (
     <form onSubmit={handleSubmit} className="checkout-form">
-
       {/* ── Full Name ── */}
       <div className="checkout-field">
         <label htmlFor="checkout-fullname">
@@ -248,7 +312,9 @@ const CheckoutForm = ({
           placeholder="Enter the transaction ID"
           className={`checkout-input ${errors.transactionRef ? 'error' : ''}`}
         />
-        {errors.transactionRef && <p className="checkout-error">{errors.transactionRef}</p>}
+        {errors.transactionRef && (
+          <p className="checkout-error">{errors.transactionRef}</p>
+        )}
       </div>
 
       {/* ── Payment Method Info ── */}
@@ -256,7 +322,10 @@ const CheckoutForm = ({
         <div className="checkout-payment-info">
           <p className="checkout-payment-method-name">
             <span className="label">
-              {(t.checkout?.payVia || 'Pay via {method}').replace('{method}', methodDisplayName)}
+              {(t.checkout?.payVia || 'Pay via {method}').replace(
+                '{method}',
+                methodDisplayName
+              )}
             </span>
           </p>
           <div className="checkout-payment-account-row">
@@ -266,7 +335,9 @@ const CheckoutForm = ({
             </span>
             <CopyButton
               text={selectedMethodData.accountNumber}
-              label={`${t.checkout?.copy || 'Copy'} ${selectedMethodData.name} ${t.checkout?.accountLabel || 'account'}`}
+              label={`${t.checkout?.copy || 'Copy'} ${
+                selectedMethodData.name
+              } ${t.checkout?.accountLabel || 'account'}`}
             />
           </div>
           {selectedMethodData.accountName && (
@@ -280,6 +351,14 @@ const CheckoutForm = ({
           )}
         </div>
       )}
+
+      {/* ── Agent Code Input ── */}
+      <div className="checkout-field">
+        <AgentCodeInput
+          onAgentApplied={handleAgentApplied}
+          onAgentRemoved={handleAgentRemoved}
+        />
+      </div>
 
       {/* ── Screenshot Upload ── */}
       <div className="checkout-field">
@@ -306,7 +385,9 @@ const CheckoutForm = ({
               {t.checkout?.clickToUpload || 'Click to upload screenshot'}
             </span>
             <span className="checkout-upload-hint">
-              {(t.checkout?.uploadHint || 'JPEG, PNG, or WebP (max {size}MB)').replace('{size}', maxSizeMB)}
+              {(
+                t.checkout?.uploadHint || 'JPEG, PNG, or WebP (max {size}MB)'
+              ).replace('{size}', maxSizeMB)}
             </span>
             <input
               type="file"
@@ -352,7 +433,10 @@ const CheckoutForm = ({
         ) : (
           <>
             <ShieldCheck size={16} />
-            <span>{t.checkout?.completeEnrollment || 'Complete Enrollment & Unlock Portal'}</span>
+            <span>
+              {t.checkout?.completeEnrollment ||
+                'Complete Enrollment & Unlock Portal'}
+            </span>
           </>
         )}
       </button>

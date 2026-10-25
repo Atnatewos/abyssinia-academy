@@ -72,7 +72,12 @@ const CheckoutPage = () => {
       if (purchaseMode === 'individual-phases') {
         formData.append('selectedPhases', JSON.stringify(selectedPhasesFromUrl));
       }
-      if (paymentData.screenshot) formData.append('screenshot', paymentData.screenshot);
+      if (paymentData.screenshot) {
+        formData.append('screenshot', paymentData.screenshot);
+      }
+      if (paymentData.agentId) {
+        formData.append('agentId', paymentData.agentId);
+      }
 
       const response = await apiClient.post('/payments/submit', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
@@ -80,7 +85,11 @@ const CheckoutPage = () => {
 
       if (response && response.success) {
         setPaymentSubmitted(true);
-        toast.success(language === 'am' ? approvalConfig.pendingMessageAm : approvalConfig.pendingMessage);
+        toast.success(
+          language === 'am'
+            ? approvalConfig.pendingMessageAm
+            : approvalConfig.pendingMessage
+        );
       }
     } catch {
       toast.error('Payment submission failed.');
@@ -94,7 +103,10 @@ const CheckoutPage = () => {
       <PageLayout>
         <div className="empty-state" style={{ padding: '5rem 1rem' }}>
           <p className="empty-state-desc">Please log in to access checkout.</p>
-          <Link href={`/auth/login?redirect=${encodeURIComponent(router.asPath)}`} className="pricing-btn">
+          <Link
+            href={`/auth/login?redirect=${encodeURIComponent(router.asPath)}`}
+            className="pricing-btn"
+          >
             Go to Login
           </Link>
         </div>
@@ -105,7 +117,9 @@ const CheckoutPage = () => {
   if (pricingLoading || !pricing) {
     return (
       <PageLayout>
-        <div className="spinner" style={{ padding: '5rem 0' }}><div className="spinner-circle" /></div>
+        <div className="spinner" style={{ padding: '5rem 0' }}>
+          <div className="spinner-circle" />
+        </div>
       </PageLayout>
     );
   }
@@ -114,23 +128,30 @@ const CheckoutPage = () => {
     return (
       <PageLayout>
         <div className="checkout-page">
-          <Link href="/pricing" className="auth-back-link"><ArrowLeft />Back to Pricing</Link>
+          <Link href="/pricing" className="auth-back-link">
+            <ArrowLeft />
+            Back to Pricing
+          </Link>
           <PaymentStatus status="pending" />
         </div>
       </PageLayout>
     );
   }
 
-  const purchaseSummary = purchaseMode === 'individual-phases'
-    ? `${selectedPhasesFromUrl.length} phase(s) selected`
-    : 'Full Course — All 5 Phases';
+  const purchaseSummary =
+    purchaseMode === 'individual-phases'
+      ? `${selectedPhasesFromUrl.length} phase(s) selected`
+      : 'Full Course — All 5 Phases';
 
   return (
     <>
       <SEOHead title={t.checkout?.title || 'Enroll'} />
       <PageLayout>
         <div className="checkout-page">
-          <Link href="/pricing" className="auth-back-link"><ArrowLeft />Back to Pricing</Link>
+          <Link href="/pricing" className="auth-back-link">
+            <ArrowLeft />
+            Back to Pricing
+          </Link>
           <div className="auth-card" style={{ maxWidth: '32rem', margin: '0 auto' }}>
             <div style={{ marginBottom: '1.5rem' }}>
               <span className="section-tag">Checkout</span>
@@ -141,8 +162,14 @@ const CheckoutPage = () => {
               <span>{purchaseSummary}</span>
             </div>
             <div style={{ marginBottom: '1.5rem' }}>
-              <label style={{ marginBottom: '0.5rem', display: 'block' }}>{t.checkout?.paymentMethod || 'Payment Method'}</label>
-              <PaymentMethodSelector methods={paymentMethods} selected={selectedMethod} onSelect={setSelectedMethod} />
+              <label style={{ marginBottom: '0.5rem', display: 'block' }}>
+                {t.checkout?.paymentMethod || 'Payment Method'}
+              </label>
+              <PaymentMethodSelector
+                methods={paymentMethods}
+                selected={selectedMethod}
+                onSelect={setSelectedMethod}
+              />
             </div>
             <CheckoutForm
               selectedMethod={selectedMethod}
