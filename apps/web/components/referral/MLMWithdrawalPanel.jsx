@@ -13,11 +13,18 @@
  * - Account name (holder)
  * - Bank name (only when method === bank_transfer)
  *
+ * UX enhancement: "Withdraw All" button fills in the full available
+ * balance to make full-wallet withdrawals a one-click action.
+ *
+ * After ANY submission (success OR failure), the parent hook's
+ * refresh callback is invoked to sync the UI with the true wallet
+ * balance. This prevents stale "available" cards.
+ *
  * Path: apps/web/components/referral/MLMWithdrawalPanel.jsx
  */
 
 import React, { useState } from 'react';
-import { Wallet, Lock, AlertCircle } from 'lucide-react';
+import { Wallet, Lock, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 
 const formatETB = (value) => {
@@ -42,6 +49,7 @@ const MLMWithdrawalPanel = ({
   withdrawalsLoading,
   withdrawalSubmitting,
   onRequestWithdrawal,
+  onRefresh,
 }) => {
   const { t } = useLanguage();
 
@@ -51,6 +59,7 @@ const MLMWithdrawalPanel = ({
   const [accountName, setAccountName] = useState('');
   const [bankName, setBankName] = useState('');
   const [validationError, setValidationError] = useState(null);
+  const [successMessage, setSuccessMessage] = useState(null);
 
   const availableBalance = wallet?.availableNow || 0;
   const lockedBalance = wallet?.lockedTotal || 0;
@@ -71,11 +80,18 @@ const MLMWithdrawalPanel = ({
     accountName.trim().length >= 2 &&
     (!requiresBank || bankName.trim().length >= 2);
 
+  const handleWithdrawAll = () => {
+    if (availableBalance >= minWithdrawal) {
+      setAmount(String(availableBalance));
+      setValidationError(null);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setValidationError(null);
+    setSuccessMessage(null);
 
-    /* Client-side validation */
     if (!amount || Number(amount) < minWithdrawal) {
       setValidationError(`Minimum withdrawal is ${minWithdrawal} ETB.`);
       return;
@@ -97,7 +113,6 @@ const MLMWithdrawalPanel = ({
       return;
     }
 
-    /* Build the full payload matching the backend contract */
     const payload = {
       amount: Number(amount),
       method,
@@ -108,8 +123,10 @@ const MLMWithdrawalPanel = ({
 
     const result = await onRequestWithdrawal(payload);
 
-    /* Only clear the form on success */
     if (result && result.success) {
+      setSuccessMessage(
+        `Withdrawal request for ${formatETB(Number(amount))} ETB submitted successfully.`
+      );
       setAmount('');
       setAccountNumber('');
       setAccountName('');
@@ -117,11 +134,19 @@ const MLMWithdrawalPanel = ({
     } else {
       setValidationError(result?.message || 'Failed to submit withdrawal.');
     }
+
+    /*
+     * Always refresh the wallet after ANY submission so the
+     * "Available to Withdraw" card reflects the true state
+     * (either the new reduced balance, or the same balance if rejected).
+     */
+    if (typeof onRefresh === 'function') {
+      await onRefresh();
+    }
   };
 
   return (
     <div className="mlm-withdrawal-panel">
-      {/* ── Request Form ── */}
       <div className="glass-card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column' }}>
         <h3 className="mlm-section-title">
           {t.referrals?.mlm?.withdrawal?.title || 'Request Withdrawal'}
@@ -130,7 +155,6 @@ const MLMWithdrawalPanel = ({
           Cash out your combined earnings from network referrals and direct agent sales.
         </p>
 
-        {/* Balance Breakdown */}
         <div style={{
           background: 'rgba(15,23,42,0.6)',
           border: '1px solid var(--border-medium)',
@@ -141,19 +165,9 @@ const MLMWithdrawalPanel = ({
           flexDirection: 'column',
           gap: '0.75rem',
         }}>
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            borderBottom: '1px solid var(--border-light)',
-            paddingBottom: '0.75rem',
-          }}>
-            <span style={{ fontSize: '0.875rem', color: 'var(--text-muted)', fontWeight: 600 }}>
-              Total Earnings
-            </span>
-            <span style={{ fontSize: '1.125rem', fontWeight: 700, color: '#fff' }}>
-              {formatETB(totalBalance)} ETB
-            </span>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-light)', paddingBottom: '0.75rem' }}>
+            <span style={{ fontSize: '0.875rem', color: 'var(--text-muted)', fontWeight: 600 }}>Total Earnings</span>
+            <span style={{ fontSize: '1.125rem', fontWeight: 700, color: '#fff' }}>{formatETB(totalBalance)} ETB</span>
           </div>
 
           {lockedBalance > 0 && (
@@ -161,49 +175,40 @@ const MLMWithdrawalPanel = ({
               <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}>
                 <Lock size={16} style={{ color: '#f59e0b', marginTop: '2px' }} />
                 <div>
-                  <span style={{ fontSize: '0.875rem', color: '#f59e0b', fontWeight: 600, display: 'block' }}>
-                    Locked Balance
-                  </span>
-                  <span style={{ fontSize: '0.7rem', color: 'var(--text-dim)' }}>
-                    Referral commissions unlock after 7 days.
-                  </span>
+                  <span style={{ fontSize: '0.875rem', color: '#f59e0b', fontWeight: 600, display: 'block' }}>Locked Balance</span>
+                  <span style={{ fontSize: '0.7rem', color: 'var(--text-dim)' }}>Referral commissions unlock after 7 days.</span>
                 </div>
               </div>
-              <span style={{ fontSize: '1rem', fontWeight: 700, color: '#f59e0b' }}>
-                {formatETB(lockedBalance)} ETB
-              </span>
+              <span style={{ fontSize: '1rem', fontWeight: 700, color: '#f59e0b' }}>{formatETB(lockedBalance)} ETB</span>
             </div>
           )}
 
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            background: 'rgba(16,185,129,0.1)',
-            padding: '0.75rem',
-            borderRadius: '0.5rem',
-            border: '1px solid rgba(16,185,129,0.2)',
-            marginTop: '0.25rem',
-          }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(16,185,129,0.1)', padding: '0.75rem', borderRadius: '0.5rem', border: '1px solid rgba(16,185,129,0.2)', marginTop: '0.25rem' }}>
             <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
               <Wallet size={18} style={{ color: '#10b981' }} />
-              <span style={{ fontSize: '0.875rem', color: '#10b981', fontWeight: 700 }}>
-                Available to Withdraw
-              </span>
+              <span style={{ fontSize: '0.875rem', color: '#10b981', fontWeight: 700 }}>Available to Withdraw</span>
             </div>
-            <span style={{ fontSize: '1.25rem', fontWeight: 800, color: '#10b981' }}>
-              {formatETB(availableBalance)} ETB
-            </span>
+            <span style={{ fontSize: '1.25rem', fontWeight: 800, color: '#10b981' }}>{formatETB(availableBalance)} ETB</span>
           </div>
         </div>
 
-        {/* Withdrawal Form */}
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: 'auto' }}>
-          {/* Amount */}
           <div>
-            <label style={{ display: 'block', fontSize: '0.8125rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
-              {t.referrals?.mlm?.withdrawal?.amountLabel || 'Amount (ETB)'}
-            </label>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+              <label style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
+                {t.referrals?.mlm?.withdrawal?.amountLabel || 'Amount (ETB)'}
+              </label>
+              {availableBalance >= minWithdrawal && (
+                <button
+                  type="button"
+                  onClick={handleWithdrawAll}
+                  disabled={withdrawalSubmitting}
+                  style={{ background: 'transparent', border: 'none', color: 'var(--accent-gold)', fontSize: '0.75rem', fontWeight: 600, cursor: withdrawalSubmitting ? 'not-allowed' : 'pointer', textDecoration: 'underline', padding: 0 }}
+                >
+                  Withdraw All ({formatETB(availableBalance)} ETB)
+                </button>
+              )}
+            </div>
             <input
               type="number"
               value={amount}
@@ -216,11 +221,8 @@ const MLMWithdrawalPanel = ({
             />
           </div>
 
-          {/* Payment Method */}
           <div>
-            <label style={{ display: 'block', fontSize: '0.8125rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
-              Payment Method
-            </label>
+            <label style={{ display: 'block', fontSize: '0.8125rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Payment Method</label>
             <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
               {PAYMENT_METHODS.map((m) => (
                 <button
@@ -229,13 +231,8 @@ const MLMWithdrawalPanel = ({
                   onClick={() => setMethod(m.id)}
                   disabled={withdrawalSubmitting}
                   style={{
-                    flex: 1,
-                    minWidth: '6rem',
-                    padding: '0.5rem 0.75rem',
-                    borderRadius: '0.5rem',
-                    fontSize: '0.8125rem',
-                    fontWeight: 600,
-                    cursor: withdrawalSubmitting ? 'not-allowed' : 'pointer',
+                    flex: 1, minWidth: '6rem', padding: '0.5rem 0.75rem', borderRadius: '0.5rem',
+                    fontSize: '0.8125rem', fontWeight: 600, cursor: withdrawalSubmitting ? 'not-allowed' : 'pointer',
                     border: method === m.id ? '1px solid var(--accent-gold)' : '1px solid var(--border-medium)',
                     background: method === m.id ? 'rgba(245,158,11,0.12)' : 'var(--bg-input)',
                     color: method === m.id ? 'var(--accent-gold)' : 'var(--text-dim)',
@@ -248,11 +245,8 @@ const MLMWithdrawalPanel = ({
             </div>
           </div>
 
-          {/* Account Number */}
           <div>
-            <label style={{ display: 'block', fontSize: '0.8125rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
-              Account Number
-            </label>
+            <label style={{ display: 'block', fontSize: '0.8125rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Account Number</label>
             <input
               type="text"
               value={accountNumber}
@@ -263,11 +257,8 @@ const MLMWithdrawalPanel = ({
             />
           </div>
 
-          {/* Account Name */}
           <div>
-            <label style={{ display: 'block', fontSize: '0.8125rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
-              Account Holder Name
-            </label>
+            <label style={{ display: 'block', fontSize: '0.8125rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Account Holder Name</label>
             <input
               type="text"
               value={accountName}
@@ -278,12 +269,9 @@ const MLMWithdrawalPanel = ({
             />
           </div>
 
-          {/* Bank Name (conditional) */}
           {requiresBank && (
             <div>
-              <label style={{ display: 'block', fontSize: '0.8125rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
-                Bank Name
-              </label>
+              <label style={{ display: 'block', fontSize: '0.8125rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Bank Name</label>
               <input
                 type="text"
                 value={bankName}
@@ -295,48 +283,28 @@ const MLMWithdrawalPanel = ({
             </div>
           )}
 
-          {/* Validation error */}
           {validationError && (
-            <div style={{
-              display: 'flex',
-              gap: '0.5rem',
-              alignItems: 'flex-start',
-              padding: '0.625rem 0.75rem',
-              background: 'rgba(239,68,68,0.08)',
-              border: '1px solid rgba(239,68,68,0.2)',
-              borderRadius: '0.5rem',
-              fontSize: '0.75rem',
-              color: '#ef4444',
-            }}>
+            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start', padding: '0.625rem 0.75rem', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '0.5rem', fontSize: '0.75rem', color: '#ef4444' }}>
               <AlertCircle size={14} style={{ flexShrink: 0, marginTop: '1px' }} />
               <span>{validationError}</span>
             </div>
           )}
 
-          {/* Submit */}
-          <button
-            type="submit"
-            className="checkout-submit-btn"
-            disabled={!canSubmit}
-            style={{
-              opacity: canSubmit ? 1 : 0.5,
-              cursor: canSubmit ? 'pointer' : 'not-allowed',
-            }}
-          >
-            {withdrawalSubmitting
-              ? 'Submitting...'
-              : availableBalance < minWithdrawal
-                ? `Minimum ${minWithdrawal} ETB Required`
-                : t.referrals?.mlm?.withdrawal?.submitBtn || 'Request Withdrawal'}
+          {successMessage && (
+            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start', padding: '0.625rem 0.75rem', background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: '0.5rem', fontSize: '0.75rem', color: '#10b981' }}>
+              <CheckCircle2 size={14} style={{ flexShrink: 0, marginTop: '1px' }} />
+              <span>{successMessage}</span>
+            </div>
+          )}
+
+          <button type="submit" className="checkout-submit-btn" disabled={!canSubmit} style={{ opacity: canSubmit ? 1 : 0.5, cursor: canSubmit ? 'pointer' : 'not-allowed' }}>
+            {withdrawalSubmitting ? 'Submitting...' : availableBalance < minWithdrawal ? `Minimum ${minWithdrawal} ETB Required` : t.referrals?.mlm?.withdrawal?.submitBtn || 'Request Withdrawal'}
           </button>
         </form>
       </div>
 
-      {/* ── Withdrawal History ── */}
       <div className="glass-card" style={{ padding: '1.5rem' }}>
-        <h3 className="mlm-section-title">
-          {t.referrals?.mlm?.withdrawal?.historyTitle || 'Withdrawal History'}
-        </h3>
+        <h3 className="mlm-section-title">{t.referrals?.mlm?.withdrawal?.historyTitle || 'Withdrawal History'}</h3>
 
         {withdrawalsLoading ? (
           <div className="spinner spinner-sm" />
@@ -347,27 +315,15 @@ const MLMWithdrawalPanel = ({
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '1rem' }}>
             {withdrawals.map((w) => (
-              <div key={w.id} style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                paddingBottom: '0.75rem',
-                borderBottom: '1px solid var(--border-light)',
-              }}>
+              <div key={w.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '0.75rem', borderBottom: '1px solid var(--border-light)' }}>
                 <div>
-                  <span style={{ fontSize: '0.875rem', fontWeight: 600, color: '#fff', display: 'block' }}>
-                    {formatETB(w.amount)} ETB
-                  </span>
-                  <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
-                    {new Date(w.createdAt).toLocaleDateString()}
-                  </span>
+                  <span style={{ fontSize: '0.875rem', fontWeight: 600, color: '#fff', display: 'block' }}>{formatETB(w.amount)} ETB</span>
+                  <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{new Date(w.createdAt).toLocaleDateString()}</span>
                 </div>
                 <div style={{
-                  fontSize: '0.75rem',
-                  fontWeight: 600,
+                  fontSize: '0.75rem', fontWeight: 600,
                   color: w.status === 'paid' ? '#10b981' : w.status === 'rejected' ? '#ef4444' : '#f59e0b',
-                  padding: '0.2rem 0.5rem',
-                  borderRadius: '0.25rem',
+                  padding: '0.2rem 0.5rem', borderRadius: '0.25rem',
                   background: w.status === 'paid' ? 'rgba(16,185,129,0.1)' : w.status === 'rejected' ? 'rgba(239,68,68,0.1)' : 'rgba(245,158,11,0.1)',
                 }}>
                   {w.status.toUpperCase()}

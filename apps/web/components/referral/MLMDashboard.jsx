@@ -1,8 +1,14 @@
 /**
  * @fileoverview MLM + Agent Dashboard — Main Container
  *
- * Tab-based container. Withdrawals now receive the combined
- * wallet data (MLM + Agent) so the balance breakdown is accurate.
+ * Tab-based container. The Overview tab is a unified hub
+ * displaying combined earnings, merged stats, and a unified activity feed.
+ *
+ * IMPORTANT: Agent earnings are ALREADY included in the MLM wallet's
+ * current_balance (they're credited to affiliate_wallets on approval).
+ * We do NOT add agent earnings again when passing the wallet to
+ * withdrawal — that would double-count and let the user attempt
+ * withdrawals larger than the backend actually allows.
  *
  * Path: apps/web/components/referral/MLMDashboard.jsx
  */
@@ -66,9 +72,9 @@ const MLMDashboard = () => {
       return (
         <div className="mlm-dashboard-error">
           <p>{mlm.dashboardError}</p>
-          <button 
-            type="button" 
-            className="btn btn-primary" 
+          <button
+            type="button"
+            className="btn btn-primary"
             onClick={() => { mlm.refreshAll(); agent.refresh(); }}
           >
             {t.referrals?.mlm?.dashboard?.retry || 'Retry'}
@@ -80,24 +86,12 @@ const MLMDashboard = () => {
     const wallet = mlm.dashboard?.wallet || {};
     const team = mlm.dashboard?.team || {};
 
-    /* 
-     * Build a COMBINED wallet for the withdrawal panel.
-     * Agent earnings are added to the total available.
-     */
-    const agentEarnings = isAgentsEnabled() ? (agent.dashboard?.totals?.totalEarned ?? 0) : 0;
-    const combinedWallet = {
-      ...wallet,
-      availableNow: (wallet.availableNow || 0) + agentEarnings,
-      lockedTotal: wallet.lockedTotal || 0,
-      totalEarned: (wallet.totalEarned || 0) + agentEarnings,
-    };
-
     switch (activeTab) {
       case 'overview':
         return (
-          <UnifiedOverview 
-            mlmData={mlm.dashboard} 
-            agentData={isAgentsEnabled() ? agent.dashboard : null} 
+          <UnifiedOverview
+            mlmData={mlm.dashboard}
+            agentData={isAgentsEnabled() ? agent.dashboard : null}
             onGoToTab={setActiveTab}
           />
         );
@@ -133,11 +127,18 @@ const MLMDashboard = () => {
       case 'withdrawals':
         return (
           <MLMWithdrawalPanel
-            wallet={combinedWallet}    /* ← NOW INCLUDES AGENT EARNINGS */
+            /*
+             * IMPORTANT: The wallet already includes agent earnings
+             * (they're in current_balance). We do NOT add them again.
+             * Doing so causes the form to show "Available: 1000 ETB"
+             * while the backend correctly allows only 500.
+             */
+            wallet={wallet}
             withdrawals={mlm.withdrawals}
             withdrawalsLoading={mlm.withdrawalsLoading}
             withdrawalSubmitting={mlm.withdrawalSubmitting}
             onRequestWithdrawal={mlm.requestWithdrawal}
+            onRefresh={() => { mlm.fetchDashboard(); mlm.fetchWithdrawals(); }}
           />
         );
 
