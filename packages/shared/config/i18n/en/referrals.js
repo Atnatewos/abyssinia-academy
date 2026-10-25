@@ -101,6 +101,7 @@ module.exports = {
         commissions: 'Commissions',
         bonuses: 'Bonuses',
         withdrawals: 'Withdrawals',
+        agent: 'Agent',
       },
       stats: {
         commissionBalance: 'Commission Balance',

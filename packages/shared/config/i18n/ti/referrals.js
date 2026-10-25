@@ -101,6 +101,7 @@ module.exports = {
         commissions: 'ኮሚሽናት',
         bonuses: 'ሽልማታት',
         withdrawals: 'ምውጻኣት',
+        agent: 'ኤጀንት',
       },
       stats: {
         commissionBalance: 'ቀሪ ኮሚሽን',

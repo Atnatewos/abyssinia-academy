@@ -95,6 +95,7 @@ module.exports = {
         commissions: 'ኮሚሽኖች',
         bonuses: 'ቦነሶች',
         withdrawals: 'ወጪዎች',
+        agent: 'ኤጀንት',
       },
       stats: {
         commissionBalance: 'የኮሚሽን ቀሪ ሒሳብ',

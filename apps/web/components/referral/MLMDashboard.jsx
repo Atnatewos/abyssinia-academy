@@ -1,14 +1,8 @@
 /**
- * @fileoverview MLM Dashboard — Main Container
+ * @fileoverview MLM + Agent Dashboard — Main Container
  *
- * Tab-based container for the entire MLM referral experience.
- * Orchestrates data fetching via useMLMReferrals and renders
- * the appropriate sub-component per active tab.
- *
- * The "How it works" explanation is rendered as a modal popup
- * triggered from the overview tab, keeping the main layout clean.
- *
- * Tabs: Overview | My Team | Commissions | Bonuses | Withdrawals
+ * Tab-based container. Withdrawals now receive the combined
+ * wallet data (MLM + Agent) so the balance breakdown is accurate.
  *
  * Path: apps/web/components/referral/MLMDashboard.jsx
  */
@@ -20,114 +14,110 @@ import {
   Receipt,
   Trophy,
   Banknote,
-  HelpCircle,
+  Briefcase,
 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import useMLMReferrals from '../../hooks/useMLMReferrals';
-import MLMStatsCards from './MLMStatsCards';
-import MLMShareSection from './MLMShareSection';
+import useAgentDashboard from '../../hooks/useAgentDashboard';
 import MLMLevelExplanation from './MLMLevelExplanation';
 import MLMTreeView from './MLMTreeView';
 import MLMCommissionTable from './MLMCommissionTable';
 import MLMBonusTracker from './MLMBonusTracker';
 import MLMWithdrawalPanel from './MLMWithdrawalPanel';
-
-const TABS = [
-  { id: 'overview', icon: LayoutDashboard },
-  { id: 'tree', icon: Network },
-  { id: 'commissions', icon: Receipt },
-  { id: 'bonuses', icon: Trophy },
-  { id: 'withdrawals', icon: Banknote },
-];
+import AgentDashboardTab from '../agents/AgentDashboardTab';
+import UnifiedOverview from './UnifiedOverview';
+import { isAgentsEnabled } from '../../lib/config';
 
 const MLMDashboard = () => {
   const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState('overview');
   const [isExplanationOpen, setIsExplanationOpen] = useState(false);
 
-  const {
-    dashboard,
-    dashboardLoading,
-    dashboardError,
-    commissions,
-    commissionsPagination,
-    commissionsLoading,
-    fetchCommissions,
-    tree,
-    treeTotal,
-    treeLoading,
-    bonusSummary,
-    bonusesLoading,
-    withdrawals,
-    withdrawalsLoading,
-    withdrawalSubmitting,
-    requestWithdrawal,
-    refreshAll,
-  } = useMLMReferrals();
+  const mlm = useMLMReferrals();
+  const agent = useAgentDashboard();
 
-  /**
-   * Renders the content for the currently active tab.
-   * @returns {React.ReactNode}
-   */
+  const tabs = [
+    { id: 'overview', icon: LayoutDashboard },
+    { id: 'tree', icon: Network },
+    { id: 'commissions', icon: Receipt },
+    { id: 'bonuses', icon: Trophy },
+    { id: 'withdrawals', icon: Banknote },
+  ];
+
+  if (isAgentsEnabled()) {
+    tabs.push({ id: 'agent', icon: Briefcase });
+  }
+
   const renderTabContent = () => {
-    if (dashboardLoading) {
+    if (activeTab === 'agent') {
+      return <AgentDashboardTab />;
+    }
+
+    if (mlm.dashboardLoading) {
       return (
         <div className="mlm-dashboard-loading">
           <div className="spinner" />
-          <p>{t.referrals?.mlm?.dashboard?.loading || 'Loading your MLM dashboard...'}</p>
+          <p>{t.referrals?.mlm?.dashboard?.loading || 'Loading dashboard...'}</p>
         </div>
       );
     }
 
-    if (dashboardError) {
+    if (mlm.dashboardError) {
       return (
         <div className="mlm-dashboard-error">
-          <p>{dashboardError}</p>
-          <button type="button" className="btn btn-primary" onClick={refreshAll}>
+          <p>{mlm.dashboardError}</p>
+          <button 
+            type="button" 
+            className="btn btn-primary" 
+            onClick={() => { mlm.refreshAll(); agent.refresh(); }}
+          >
             {t.referrals?.mlm?.dashboard?.retry || 'Retry'}
           </button>
         </div>
       );
     }
 
-    const wallet = dashboard?.wallet || {};
-    const team = dashboard?.team || {};
+    const wallet = mlm.dashboard?.wallet || {};
+    const team = mlm.dashboard?.team || {};
+
+    /* 
+     * Build a COMBINED wallet for the withdrawal panel.
+     * Agent earnings are added to the total available.
+     */
+    const agentEarnings = isAgentsEnabled() ? (agent.dashboard?.totals?.totalEarned ?? 0) : 0;
+    const combinedWallet = {
+      ...wallet,
+      availableNow: (wallet.availableNow || 0) + agentEarnings,
+      lockedTotal: wallet.lockedTotal || 0,
+      totalEarned: (wallet.totalEarned || 0) + agentEarnings,
+    };
 
     switch (activeTab) {
       case 'overview':
         return (
-          <div className="mlm-tab-overview">
-            <MLMStatsCards wallet={wallet} team={team} />
-            <div className="mlm-overview-actions">
-              <MLMShareSection code={dashboard?.code} link={dashboard?.link} />
-              <button
-                type="button"
-                className="mlm-how-it-works-btn"
-                onClick={() => setIsExplanationOpen(true)}
-              >
-                <HelpCircle size={18} />
-                <span>{t.referrals?.mlm?.howItWorks?.title || 'How the 4-Level System Works'}</span>
-              </button>
-            </div>
-          </div>
+          <UnifiedOverview 
+            mlmData={mlm.dashboard} 
+            agentData={isAgentsEnabled() ? agent.dashboard : null} 
+            onGoToTab={setActiveTab}
+          />
         );
 
       case 'tree':
         return (
           <MLMTreeView
-            tree={tree}
-            totalDescendants={treeTotal}
-            loading={treeLoading}
+            tree={mlm.tree}
+            totalDescendants={mlm.treeTotal}
+            loading={mlm.treeLoading}
           />
         );
 
       case 'commissions':
         return (
           <MLMCommissionTable
-            commissions={commissions}
-            pagination={commissionsPagination}
-            loading={commissionsLoading}
-            onPageChange={fetchCommissions}
+            commissions={mlm.commissions}
+            pagination={mlm.commissionsPagination}
+            loading={mlm.commissionsLoading}
+            onPageChange={mlm.fetchCommissions}
           />
         );
 
@@ -135,19 +125,19 @@ const MLMDashboard = () => {
         return (
           <MLMBonusTracker
             team={team}
-            bonusSummary={bonusSummary}
-            loading={bonusesLoading}
+            bonusSummary={mlm.bonusSummary}
+            loading={mlm.bonusesLoading}
           />
         );
 
       case 'withdrawals':
         return (
           <MLMWithdrawalPanel
-            wallet={wallet}
-            withdrawals={withdrawals}
-            withdrawalsLoading={withdrawalsLoading}
-            withdrawalSubmitting={withdrawalSubmitting}
-            onRequestWithdrawal={requestWithdrawal}
+            wallet={combinedWallet}    /* ← NOW INCLUDES AGENT EARNINGS */
+            withdrawals={mlm.withdrawals}
+            withdrawalsLoading={mlm.withdrawalsLoading}
+            withdrawalSubmitting={mlm.withdrawalSubmitting}
+            onRequestWithdrawal={mlm.requestWithdrawal}
           />
         );
 
@@ -158,11 +148,10 @@ const MLMDashboard = () => {
 
   return (
     <div className="mlm-dashboard">
-      {/* Tab Navigation */}
       <nav className="mlm-tab-nav">
-        {TABS.map((tab) => {
+        {tabs.map((tab) => {
           const IconComponent = tab.icon;
-          const label = t.referrals?.mlm?.tabs?.[tab.id] || tab.id;
+          const label = t.referrals?.mlm?.tabs?.[tab.id] || t.agents?.[tab.id] || tab.id;
           return (
             <button
               key={tab.id}
@@ -177,12 +166,10 @@ const MLMDashboard = () => {
         })}
       </nav>
 
-      {/* Tab Content */}
       <div className="mlm-tab-content">
         {renderTabContent()}
       </div>
 
-      {/* Level Explanation Modal */}
       <MLMLevelExplanation
         isOpen={isExplanationOpen}
         onClose={() => setIsExplanationOpen(false)}

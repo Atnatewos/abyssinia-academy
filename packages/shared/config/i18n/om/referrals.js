@@ -94,6 +94,7 @@ module.exports = {
         commissions: 'Komiishiniiwwan',
         bonuses: 'Boonasiiwwan',
         withdrawals: 'Ba\'iinsawwan',
+        agent: 'Bakka buaa',
       },
       stats: {
         commissionBalance: 'Hafteewwan Komiishinii',
