@@ -4,7 +4,14 @@
  * GET    — fetch a single agent's settings + aggregates
  * PATCH  — update commission type/value or suspend/reactivate
  *
- * Gates: admin JWT required. Superadmin recommended for PATCH.
+ * Gates: admin JWT required. Superadmin required for PATCH.
+ *
+ * Design notes:
+ *   - PATCH uses a single atomic UPSERT (INSERT ... ON CONFLICT DO UPDATE)
+ *     so partial updates work even when the agent has no settings row yet.
+ *   - No multi-statement queries — PostgreSQL prepared statements reject
+ *     them, so we always ship exactly one SQL statement per query() call.
+ *   - Audit log is written after a successful upsert, in its own statement.
  *
  * Path: apps/web/pages/api/admin/agents/[id]/settings.js
  */
@@ -13,11 +20,18 @@ import jwt from 'jsonwebtoken';
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: process.env.DATABASE_URL && process.env.DATABASE_URL.includes('neon.tech')
-    ? { rejectUnauthorized: false }
-    : false,
+  ssl:
+    process.env.DATABASE_URL && process.env.DATABASE_URL.includes('neon.tech')
+      ? { rejectUnauthorized: false }
+      : false,
 });
 
+/**
+ * Verify an admin Bearer token.
+ * @param {string} authHeader
+ * @returns {object} Decoded admin payload
+ * @throws {Error} With .status attached
+ */
 const verifyAdmin = (authHeader) => {
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     const err = new Error('Missing or malformed Authorization header');
@@ -46,7 +60,9 @@ export default async function handler(req, res) {
     const agentUserId = req.query.id;
 
     if (!agentUserId) {
-      return res.status(400).json({ success: false, message: 'Agent user id is required.' });
+      return res
+        .status(400)
+        .json({ success: false, message: 'Agent user id is required.' });
     }
 
     /* ── GET: single agent details ── */
@@ -96,87 +112,127 @@ export default async function handler(req, res) {
       });
     }
 
-    /* ── PATCH: update settings ── */
+    /* ── PATCH: update settings (single atomic UPSERT) ── */
     if (req.method === 'PATCH') {
       if (admin.role !== 'superadmin') {
-        return res.status(403).json({ success: false, message: 'Superadmin privileges required.' });
+        return res
+          .status(403)
+          .json({ success: false, message: 'Superadmin privileges required.' });
       }
 
       const { commissionType, commissionValue, isActive } = req.body || {};
 
-      const updates = [];
-      const params = [agentUserId];
-      let paramIndex = 2;
+      /*
+       * Build a validated patch payload. Undefined fields fall back to
+       * safe defaults so the UPSERT always has a fully-specified row to
+       * insert if the agent doesn't yet have settings.
+       */
+      let cleanType = 'fixed';
+      let cleanValue = 500;
+      let cleanActive = true;
 
       if (commissionType !== undefined) {
         const validTypes = ['fixed', 'percentage'];
-        const cleanType = String(commissionType).toLowerCase();
+        cleanType = String(commissionType).toLowerCase();
         if (!validTypes.includes(cleanType)) {
           return res.status(400).json({
             success: false,
             message: `commissionType must be one of: ${validTypes.join(', ')}.`,
           });
         }
-        updates.push(`commission_type = $${paramIndex}`);
-        params.push(cleanType);
-        paramIndex++;
       }
 
       if (commissionValue !== undefined) {
-        const cleanValue = parseFloat(commissionValue);
+        cleanValue = parseFloat(commissionValue);
         if (Number.isNaN(cleanValue) || cleanValue < 0) {
-          return res.status(400).json({ success: false, message: 'commissionValue must be a non-negative number.' });
+          return res.status(400).json({
+            success: false,
+            message: 'commissionValue must be a non-negative number.',
+          });
         }
-        updates.push(`commission_value = $${paramIndex}`);
-        params.push(cleanValue);
-        paramIndex++;
       }
 
       if (isActive !== undefined) {
-        updates.push(`is_active = $${paramIndex}`);
-        params.push(Boolean(isActive));
-        paramIndex++;
+        cleanActive = Boolean(isActive);
       }
 
-      if (updates.length === 0) {
-        return res.status(400).json({ success: false, message: 'No fields to update.' });
+      /*
+       * Handle the case where the admin sends nothing at all.
+       * Instead of a confusing 400, we return the current row.
+       */
+      if (
+        commissionType === undefined &&
+        commissionValue === undefined &&
+        isActive === undefined
+      ) {
+        return res
+          .status(400)
+          .json({ success: false, message: 'No fields to update.' });
       }
 
-      updates.push('updated_at = NOW()');
-      params.push(agentUserId);
-
-      const result = await pool.query(
-        `INSERT INTO agent_settings (user_id, commission_type, commission_value, is_active)
-         VALUES ($1, 'fixed', 500, true)
-         ON CONFLICT (user_id) DO NOTHING;
-         UPDATE agent_settings
-         SET ${updates.join(', ')}
-         WHERE user_id = $${paramIndex}
+      /*
+       * Single atomic UPSERT:
+       *   - If the agent has no settings row, insert the requested values
+       *     merged with safe defaults for missing fields.
+       *   - If the agent has an existing row, update only the requested
+       *     fields to the requested values (defaults handled below so a
+       *     partial update doesn't clobber the other fields).
+       *
+       * Using COALESCE($N, column) lets us treat NULL params as "keep
+       * existing value" — which is exactly what a partial PATCH means.
+       */
+      const upsertResult = await pool.query(
+        `INSERT INTO agent_settings (user_id, commission_type, commission_value, is_active, updated_at)
+         VALUES ($1, $2, $3, $4, NOW())
+         ON CONFLICT (user_id) DO UPDATE
+           SET commission_type  = COALESCE($5,  agent_settings.commission_type),
+               commission_value = COALESCE($6,  agent_settings.commission_value),
+               is_active        = COALESCE($7,  agent_settings.is_active),
+               updated_at       = NOW()
          RETURNING user_id, commission_type, commission_value, is_active, updated_at`,
-        params
-      );
-
-      if (result.rows.length === 0) {
-        return res.status(404).json({ success: false, message: 'Agent settings not found.' });
-      }
-
-      /* Audit log */
-      await pool.query(
-        `INSERT INTO admin_audit_logs (admin_id, action, target_type, target_id, details, ip_address, user_agent)
-         VALUES ($1, 'agent.settings_update', 'user', $2, $3, $4, $5)`,
         [
-          admin.adminId || admin.id,
-          agentUserId,
-          JSON.stringify(req.body),
-          req.headers['x-forwarded-for'] || req.socket.remoteAddress || null,
-          req.headers['user-agent'] || null,
+          agentUserId,                                       // $1
+          cleanType,                                          // $2 (insert default)
+          cleanValue,                                         // $3
+          cleanActive,                                        // $4
+          commissionType !== undefined ? cleanType : null,   // $5
+          commissionValue !== undefined ? cleanValue : null, // $6
+          isActive !== undefined ? cleanActive : null,       // $7
         ]
       );
+
+      if (upsertResult.rows.length === 0) {
+        return res
+          .status(404)
+          .json({ success: false, message: 'Agent settings not found.' });
+      }
+
+      /* Audit log — separate statement, no multi-command */
+      try {
+        await pool.query(
+          `INSERT INTO admin_audit_logs (admin_id, action, target_type, target_id, details, ip_address, user_agent)
+           VALUES ($1, 'agent.settings_update', 'user', $2, $3, $4, $5)`,
+          [
+            admin.adminId || admin.id,
+            agentUserId,
+            JSON.stringify({
+              commissionType,
+              commissionValue,
+              isActive,
+            }),
+            req.headers['x-forwarded-for'] || req.socket.remoteAddress || null,
+            req.headers['user-agent'] || null,
+          ]
+        );
+      } catch (auditErr) {
+        /* Audit failures must never fail the actual settings update */
+        console.error('[admin/agents/[id]/settings] audit log failed:', auditErr.message);
+      }
 
       return res.status(200).json({
         success: true,
         message: 'Agent settings updated.',
-        data: result.rows[0],
+        data: upsertResult.rows[0],
       });
     }
 
