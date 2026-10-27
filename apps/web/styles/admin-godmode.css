@@ -1,0 +1,301 @@
+/* ============================================================================
+   GOD MODE STYLING — Wallet, Agent, God Mode tabs on the user detail page
+   
+   These classes are used by the God Mode UI in
+   apps/web/pages/admin/users/[id]/index.jsx. They extend the existing
+   admin design tokens rather than redefine them, so they automatically
+   inherit dark/light theme support.
+   
+   Classes provided:
+     .admin-btn-primary    — Primary action (gold background)
+     .admin-btn-secondary  — Secondary action (muted background)
+     .admin-btn-warning    — Caution action (amber)
+     .admin-btn-danger     — Destructive action (red)
+     .admin-input          — Text/number/select inputs in God Mode forms
+   ============================================================================ */
+
+/* ── Primary Action Button ── */
+.admin-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  border-radius: 0.625rem;
+  background: linear-gradient(135deg, var(--accent-gold), var(--accent-gold-dark));
+  color: #0f172a;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.admin-btn-primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, var(--accent-gold-light), var(--accent-gold));
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px -4px rgba(245, 158, 11, 0.5);
+}
+
+.admin-btn-primary:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.admin-btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── Secondary Action Button ── */
+.admin-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  border-radius: 0.625rem;
+  background: var(--surface-secondary);
+  color: var(--text-main);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  border: 1px solid var(--border-medium);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.admin-btn-secondary:hover:not(:disabled) {
+  background: var(--bg-icon-btn-hover);
+  border-color: var(--border-hover);
+  color: var(--accent-gold);
+}
+
+.admin-btn-secondary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── Warning Action Button (amber, non-destructive caution) ── */
+.admin-btn-warning {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  border-radius: 0.625rem;
+  background: rgba(245, 158, 11, 0.12);
+  color: var(--accent-gold);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.admin-btn-warning:hover:not(:disabled) {
+  background: rgba(245, 158, 11, 0.2);
+  border-color: rgba(245, 158, 11, 0.5);
+}
+
+.admin-btn-warning:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── Danger Action Button (red, destructive) ── */
+.admin-btn-danger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  border-radius: 0.625rem;
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.admin-btn-danger:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.22);
+  border-color: rgba(239, 68, 68, 0.5);
+}
+
+.admin-btn-danger:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── God Mode Form Inputs ── */
+.admin-input {
+  width: 100%;
+  padding: 0.625rem 0.875rem;
+  border-radius: 0.5rem;
+  background: var(--bg-input);
+  border: 1px solid var(--border-medium);
+  color: var(--text-main);
+  font-size: 0.8125rem;
+  font-family: var(--font-primary);
+  outline: none;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.admin-input::placeholder {
+  color: var(--text-dim);
+}
+
+.admin-input:focus {
+  border-color: var(--accent-gold);
+  background: var(--bg-card-solid);
+}
+
+.admin-input:hover:not(:focus) {
+  border-color: var(--border-hover);
+}
+
+.admin-input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Select variant — matches input styling */
+select.admin-input {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%2364748b'%3e%3cpath d='M4.427 5.427a.75.75 0 0 1 1.06 0L8 7.94l2.513-2.513a.75.75 0 1 1 1.06 1.06l-3.043 3.043a.75.75 0 0 1-1.06 0L4.427 6.487a.75.75 0 0 1 0-1.06Z'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 1rem;
+  padding-right: 2.5rem;
+}
+
+/* Number input variant — hide spinners for cleaner look */
+input[type="number"].admin-input::-webkit-inner-spin-button,
+input[type="number"].admin-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"].admin-input {
+  -moz-appearance: textfield;
+}
+
+/* ── God Mode Section Headers ── */
+/* The h3 elements in God Mode tabs have icons inline; ensure consistent
+   spacing and weight that matches your other admin section titles. */
+.user-detail-section h3 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--text-main);
+  margin: 0 0 0.75rem;
+}
+
+.user-detail-section h4 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--text-main);
+  margin: 0;
+}
+
+/* ── God Mode Form Blocks ── */
+/* The inline-styled forms in God Mode tabs render as bordered cards.
+   These rules override the inline styles to be cleaner and consistent. */
+.user-detail-section form {
+  border: 1px solid var(--border-light);
+  border-radius: 0.75rem;
+}
+
+/* Danger Zone form keeps its red tint */
+.user-detail-section form:has(input[placeholder*="Ban"]) {
+  background: rgba(239, 68, 68, 0.04) !important;
+  border-color: rgba(239, 68, 68, 0.25) !important;
+}
+
+/* ── Tabs (Wallet & Agent / God Mode) ── */
+/* Ensures the tab bar on the user detail page uses the existing .admin-tabs
+   styling and that the active tab shows its gold accent correctly. */
+.user-detail-section + .admin-tabs,
+.admin-tabs {
+  display: flex;
+  gap: 0.5rem;
+  border-bottom: 1px solid var(--border-light);
+  padding-bottom: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.admin-tab svg {
+  flex-shrink: 0;
+}
+
+/* ── God Mode Stat Cards (Wallet section) ── */
+/* The 4 stat cards in the Wallet tab should look like the header stats
+   but with the same color accent. */
+.user-detail-section .user-detail-stats {
+  margin-top: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+/* ── Danger Zone Custom Styling ── */
+/* The danger zone form has inline red-tinted background — reinforce it */
+.user-detail-section form[style*="rgba(239, 68, 68"] {
+  border-radius: 0.75rem !important;
+}
+
+/* ── Light Theme Parity ── */
+.light-theme .admin-btn-secondary {
+  background: #f1f5f9;
+  border-color: rgba(15, 23, 42, 0.15);
+  color: #0f172a;
+}
+
+.light-theme .admin-btn-secondary:hover:not(:disabled) {
+  background: #e2e8f0;
+}
+
+.light-theme .admin-input {
+  background: #ffffff;
+  border-color: rgba(15, 23, 42, 0.15);
+  color: #0f172a;
+}
+
+.light-theme .admin-input:focus {
+  border-color: #d97706;
+}
+
+.light-theme select.admin-input {
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%230f172a'%3e%3cpath d='M4.427 5.427a.75.75 0 0 1 1.06 0L8 7.94l2.513-2.513a.75.75 0 1 1 1.06 1.06l-3.043 3.043a.75.75 0 0 1-1.06 0L4.427 6.487a.75.75 0 0 1 0-1.06Z'/%3e%3c/svg%3e");
+}
+
+/* ── Reduced Motion ── */
+@media (prefers-reduced-motion: reduce) {
+  .admin-btn-primary:hover:not(:disabled) {
+    transform: none;
+  }
+}
+
+/* ── Responsive: stack buttons on mobile ── */
+@media (max-width: 640px) {
+  .user-detail-section form {
+    padding: 0.875rem !important;
+  }
+  
+  .admin-btn-primary,
+  .admin-btn-secondary,
+  .admin-btn-warning,
+  .admin-btn-danger {
+    width: 100%;
+    justify-content: center;
+  }
+}

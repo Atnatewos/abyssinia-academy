@@ -142,5 +142,18 @@ module.exports = {
     commissionType: 'Commission Type',
     commissionValue: 'Commission Value',
     agentStatus: 'Status',
+
+    // God mode
+    godMode: {
+    title: 'God Mode Controls',
+    impersonate: 'Impersonate User',
+    passwordReset: 'Force Password Reset',
+    orphan: 'Orphan from MLM',
+    adjustWallet: 'Adjust Wallet Balance',
+    amountLabel: 'Amount (ETB)',
+    reasonLabel: 'Reason',
+    save: 'Apply',
+    ban: 'Ban User',
+    },
   },
 };

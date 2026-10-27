@@ -140,8 +140,8 @@ const AgentCodeInput = ({
               type="button"
               onClick={handleRemove}
               className="agent-code-remove-btn"
-              title={t.agents?.removeAgentCode || 'Remove agent code'}
-              aria-label="Remove agent code"
+              title={t.agents?.removeAgentCode || ''}
+              aria-label=""
             >
               <X size={14} />
             </button>

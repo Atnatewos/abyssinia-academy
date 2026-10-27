@@ -41,71 +41,110 @@ import StatsCounter from '../components/landing/StatsCounter';
 const SectionSkeleton = () => (
   <div className="landing-section">
     <div className="section-container">
-      <div className="earn-calc-skeleton" style={{ minHeight: '300px', borderRadius: '1.25rem' }} />
+      <div
+        className="earn-calc-skeleton"
+        style={{ minHeight: '300px', borderRadius: '1.25rem' }}
+      />
     </div>
   </div>
 );
 
 /* Below-the-fold components — dynamically imported for route splitting */
-const PricingShowcase = dynamic(() => import('../components/landing/PricingShowcase'), {
-  ssr: false,
-  loading: () => <SectionSkeleton />,
-});
+const PricingShowcase = dynamic(
+  () => import('../components/landing/PricingShowcase'),
+  {
+    ssr: false,
+    loading: () => <SectionSkeleton />,
+  }
+);
 
-const PhaseTimeline3D = dynamic(() => import('../components/landing/PhaseTimeline3D'), {
-  ssr: false,
-  loading: () => <SectionSkeleton />,
-});
+const PhaseTimeline3D = dynamic(
+  () => import('../components/landing/PhaseTimeline3D'),
+  {
+    ssr: false,
+    loading: () => <SectionSkeleton />,
+  }
+);
 
-const CourseVideos = dynamic(() => import('../components/landing/CourseVideos'), {
-  ssr: false,
-  loading: () => <SectionSkeleton />,
-});
+const CourseVideos = dynamic(
+  () => import('../components/landing/CourseVideos'),
+  {
+    ssr: false,
+    loading: () => <SectionSkeleton />,
+  }
+);
 
-const DiscussionVideos = dynamic(() => import('../components/landing/DiscussionVideos'), {
-  ssr: false,
-  loading: () => <SectionSkeleton />,
-});
+const DiscussionVideos = dynamic(
+  () => import('../components/landing/DiscussionVideos'),
+  {
+    ssr: false,
+    loading: () => <SectionSkeleton />,
+  }
+);
 
-const RewardsShowcase = dynamic(() => import('../components/landing/RewardsShowcase'), {
-  ssr: false,
-  loading: () => <SectionSkeleton />,
-});
+const RewardsShowcase = dynamic(
+  () => import('../components/landing/RewardsShowcase'),
+  {
+    ssr: false,
+    loading: () => <SectionSkeleton />,
+  }
+);
 
-const FeaturesGrid = dynamic(() => import('../components/landing/FeaturesGrid'), {
-  ssr: false,
-  loading: () => <SectionSkeleton />,
-});
+const FeaturesGrid = dynamic(
+  () => import('../components/landing/FeaturesGrid'),
+  {
+    ssr: false,
+    loading: () => <SectionSkeleton />,
+  }
+);
 
-const IncomeBand = dynamic(() => import('../components/landing/IncomeBand'), {
-  ssr: false,
-  loading: () => <SectionSkeleton />,
-});
+const IncomeBand = dynamic(
+  () => import('../components/landing/IncomeBand'),
+  {
+    ssr: false,
+    loading: () => <SectionSkeleton />,
+  }
+);
 
-const EarnEngineSection = dynamic(() => import('../components/landing/EarnEngineSection'), {
-  ssr: false,
-  loading: () => <SectionSkeleton />,
-});
+const EarnEngineSection = dynamic(
+  () => import('../components/landing/EarnEngineSection'),
+  {
+    ssr: false,
+    loading: () => <SectionSkeleton />,
+  }
+);
 
-const SocialProofStrip = dynamic(() => import('../components/landing/SocialProofStrip'), {
-  ssr: false,
-  loading: () => null, /* renders nothing while loading; self-hides when weak */
-});
+const SocialProofStrip = dynamic(
+  () => import('../components/landing/SocialProofStrip'),
+  {
+    ssr: false,
+    loading: () => null, /* renders nothing while loading; self-hides when weak */
+  }
+);
 
-const HowItWorks = dynamic(() => import('../components/landing/HowItWorks'), {
-  ssr: false,
-  loading: () => <SectionSkeleton />,
-});
+const HowItWorks = dynamic(
+  () => import('../components/landing/HowItWorks'),
+  {
+    ssr: false,
+    loading: () => <SectionSkeleton />,
+  }
+);
 
-const FAQAccordion = dynamic(() => import('../components/landing/FAQAccordion'), {
-  ssr: false,
-  loading: () => <SectionSkeleton />,
-});
+const FAQAccordion = dynamic(
+  () => import('../components/landing/FAQAccordion'),
+  {
+    ssr: false,
+    loading: () => <SectionSkeleton />,
+  }
+);
 
-const CTABanner = dynamic(() => import('../components/landing/CTABanner'), {
-  ssr: false,
-  loading: () => <SectionSkeleton />,
-});
+const CTABanner = dynamic(
+  () => import('../components/landing/CTABanner'),
+  {
+    ssr: false,
+    loading: () => <SectionSkeleton />,
+  }
+);
 
 /**
  * HomePage — complete landing narrative.

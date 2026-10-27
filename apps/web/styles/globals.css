@@ -18,6 +18,7 @@
 @import './landing-3d.css';
 @import './admin.css';
 @import './admin-mobile.css';
+@import '../styles/admin-godmode.css';
 @import './referral.css';
 @import './admin-mlm.css';
 @import './skeleton.css';
