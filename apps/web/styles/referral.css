@@ -1,0 +1,1541 @@
+/**
+ * @fileoverview MLM Referral Dashboard Styles
+ *
+ * Complete styling for the 4-level MLM referral system dashboard.
+ * Covers all MLM components: stats cards, share section, commission table,
+ * bonus tracker, tree view, withdrawal panel, and level explanation.
+ *
+ * Design system alignment:
+ *   - Glassmorphism cards (backdrop-blur + subtle borders)
+ *   - Abyssinia Gold accent (--color-accent)
+ *   - Dark theme primary, light theme override via [data-theme="light"]
+ *   - CSS custom properties for all colors and spacing
+ *
+ * Import this file from globals.css:
+ *   @import './referral.css';
+ *
+ * Path: apps/web/styles/referral.css
+ */
+
+/* ═══════════════════════════════════════════════════════════════
+   MLM DESIGN TOKENS
+   Theme-aware custom properties specific to the referral system.
+   ═══════════════════════════════════════════════════════════════ */
+
+:root {
+  /* MLM status colors */
+  --mlm-available: #10b981;
+  --mlm-locked: #f59e0b;
+  --mlm-pending: #3b82f6;
+  --mlm-reversed: #ef4444;
+
+  /* MLM level colors for tree visualization */
+  --mlm-level-1: #f59e0b;
+  --mlm-level-2: #3b82f6;
+  --mlm-level-3: #8b5cf6;
+  --mlm-level-4: #6b7280;
+
+  /* MLM bonus category colors */
+  --mlm-bonus-direct: #f59e0b;
+  --mlm-bonus-milestone: #3b82f6;
+  --mlm-bonus-rank: #eab308;
+  --mlm-bonus-team: #10b981;
+  --mlm-bonus-speed: #8b5cf6;
+
+  /* MLM spacing scale */
+  --mlm-space-xs: 0.25rem;
+  --mlm-space-sm: 0.5rem;
+  --mlm-space-md: 1rem;
+  --mlm-space-lg: 1.5rem;
+  --mlm-space-xl: 2rem;
+  --mlm-space-2xl: 3rem;
+
+  /* MLM border radius */
+  --mlm-radius-sm: 6px;
+  --mlm-radius-md: 10px;
+  --mlm-radius-lg: 14px;
+  --mlm-radius-full: 999px;
+
+  /* MLM transition speeds */
+  --mlm-transition-fast: 0.15s ease;
+  --mlm-transition-base: 0.25s ease;
+  --mlm-transition-slow: 0.4s ease;
+
+  /* MLM glass surfaces */
+  --mlm-glass-bg: rgba(255, 255, 255, 0.03);
+  --mlm-glass-border: rgba(255, 255, 255, 0.06);
+  --mlm-glass-hover: rgba(255, 255, 255, 0.06);
+}
+
+/* Light theme overrides */
+[data-theme="light"] {
+  --mlm-glass-bg: rgba(0, 0, 0, 0.02);
+  --mlm-glass-border: rgba(0, 0, 0, 0.08);
+  --mlm-glass-hover: rgba(0, 0, 0, 0.04);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   REFERRAL PAGE SHELL
+   Page-level layout for /profile/referrals
+   ═══════════════════════════════════════════════════════════════ */
+
+.mlm-referrals-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--mlm-space-lg) var(--mlm-space-md);
+}
+
+.referral-page-header {
+  margin-bottom: var(--mlm-space-xl);
+}
+
+.referral-page-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--color-text, #f5f5f5);
+  margin: 0 0 var(--mlm-space-xs);
+  letter-spacing: -0.02em;
+}
+
+.referral-page-subtitle {
+  font-size: 0.9rem;
+  color: var(--color-text-muted, #a0a0a0);
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Back link above the page header */
+.profile-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mlm-space-sm);
+  color: var(--color-text-muted, #a0a0a0);
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-weight: 500;
+  margin-bottom: var(--mlm-space-lg);
+  transition: color var(--mlm-transition-fast);
+}
+
+.profile-back-link:hover {
+  color: var(--color-accent, #f59e0b);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   MLM DASHBOARD — TAB CONTAINER
+   Main wrapper with tab navigation and content area.
+   ═══════════════════════════════════════════════════════════════ */
+
+.mlm-dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mlm-space-lg);
+}
+
+.mlm-dashboard-loading,
+.mlm-dashboard-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--mlm-space-md);
+  padding: var(--mlm-space-2xl) var(--mlm-space-md);
+  color: var(--color-text-muted, #a0a0a0);
+  min-height: 300px;
+}
+
+.mlm-dashboard-error button {
+  margin-top: var(--mlm-space-sm);
+}
+
+/* ── Tab Navigation ── */
+.mlm-tab-nav {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  background: var(--mlm-glass-bg);
+  border: 1px solid var(--mlm-glass-border);
+  border-radius: var(--mlm-radius-lg);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.mlm-tab-nav::-webkit-scrollbar {
+  display: none;
+}
+
+.mlm-tab-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--mlm-space-sm);
+  padding: 10px 16px;
+  border: none;
+  background: transparent;
+  color: var(--color-text-muted, #a0a0a0);
+  font-size: 0.85rem;
+  font-weight: 500;
+  border-radius: var(--mlm-radius-md);
+  cursor: pointer;
+  transition: all var(--mlm-transition-fast);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.mlm-tab-btn:hover {
+  color: var(--color-text, #f5f5f5);
+  background: var(--mlm-glass-hover);
+}
+
+.mlm-tab-btn.active {
+  color: var(--color-accent, #f59e0b);
+  background: rgba(245, 158, 11, 0.1);
+  font-weight: 600;
+}
+
+.mlm-tab-content {
+  min-height: 400px;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   MLM STATS CARDS
+   Top-level metric cards: balance, credit, team, direct refs.
+   ═══════════════════════════════════════════════════════════════ */
+
+.mlm-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--mlm-space-md);
+}
+
+.mlm-stat-card {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--mlm-space-md);
+  padding: var(--mlm-space-lg);
+  background: var(--mlm-glass-bg);
+  border: 1px solid var(--mlm-glass-border);
+  border-radius: var(--mlm-radius-lg);
+  transition: all var(--mlm-transition-base);
+}
+
+.mlm-stat-card:hover {
+  background: var(--mlm-glass-hover);
+  border-color: rgba(245, 158, 11, 0.15);
+  transform: translateY(-2px);
+}
+
+.mlm-stat-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--mlm-radius-md);
+  flex-shrink: 0;
+}
+
+.mlm-stat-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.mlm-stat-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--color-text-muted, #a0a0a0);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.mlm-stat-value {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--color-text, #f5f5f5);
+  line-height: 1.2;
+}
+
+.mlm-stat-sublabel {
+  font-size: 0.72rem;
+  color: var(--color-text-dim, #707070);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SECTION TITLES & SUBTITLES
+   Shared heading styles used across all MLM components.
+   ═══════════════════════════════════════════════════════════════ */
+
+.mlm-section-title {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--color-text, #f5f5f5);
+  margin: 0 0 var(--mlm-space-sm);
+  letter-spacing: -0.01em;
+}
+
+.mlm-section-subtitle {
+  font-size: 0.82rem;
+  color: var(--color-text-muted, #a0a0a0);
+  margin: 0 0 var(--mlm-space-lg);
+  line-height: 1.5;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   MLM OVERVIEW COLUMNS
+   Two-column layout for share section + level explanation.
+   ═══════════════════════════════════════════════════════════════ */
+
+.mlm-tab-overview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mlm-space-lg);
+}
+
+.mlm-overview-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--mlm-space-lg);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   EARNINGS BREAKDOWN SECTION
+   Wallet summary grid shown on the overview tab.
+   ═══════════════════════════════════════════════════════════════ */
+
+.referral-earnings-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--mlm-space-md);
+}
+
+.referral-earnings-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mlm-space-xs);
+  padding: var(--mlm-space-md);
+  background: var(--mlm-glass-bg);
+  border: 1px solid var(--mlm-glass-border);
+  border-radius: var(--mlm-radius-md);
+}
+
+.referral-earnings-item.highlight {
+  border-color: rgba(245, 158, 11, 0.3);
+  background: rgba(245, 158, 11, 0.05);
+}
+
+.referral-earnings-label {
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: var(--color-text-muted, #a0a0a0);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.referral-earnings-value {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--color-text, #f5f5f5);
+}
+
+.referral-earnings-item.highlight .referral-earnings-value {
+  color: var(--color-accent, #f59e0b);
+}
+
+.mlm-monthly-summary {
+  padding-top: var(--mlm-space-md);
+  border-top: 1px solid var(--mlm-glass-border);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   MLM SHARE SECTION
+   Referral code display, link copy, and social share buttons.
+   ═══════════════════════════════════════════════════════════════ */
+
+.mlm-share-section {
+  padding: var(--mlm-space-lg);
+  background: var(--mlm-glass-bg);
+  border: 1px solid var(--mlm-glass-border);
+  border-radius: var(--mlm-radius-lg);
+}
+
+.mlm-share-field {
+  margin-bottom: var(--mlm-space-md);
+}
+
+.mlm-share-label {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--color-text-muted, #a0a0a0);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: var(--mlm-space-sm);
+}
+
+.mlm-share-input-row {
+  display: flex;
+  align-items: center;
+  gap: var(--mlm-space-sm);
+  padding: 10px 14px;
+  background: rgba(0, 0, 0, 0.15);
+  border: 1px solid var(--mlm-glass-border);
+  border-radius: var(--mlm-radius-md);
+}
+
+[data-theme="light"] .mlm-share-input-row {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.mlm-share-code {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--color-accent, #f59e0b);
+  letter-spacing: 0.15em;
+  flex: 1;
+}
+
+.mlm-share-link {
+  flex: 1;
+  font-size: 0.78rem;
+  color: var(--color-text-muted, #a0a0a0);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mlm-copy-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: none;
+  background: rgba(245, 158, 11, 0.12);
+  color: var(--color-accent, #f59e0b);
+  border-radius: var(--mlm-radius-sm);
+  cursor: pointer;
+  transition: all var(--mlm-transition-fast);
+  flex-shrink: 0;
+}
+
+.mlm-copy-btn:hover {
+  background: var(--color-accent, #f59e0b);
+  color: #000;
+  transform: scale(1.05);
+}
+
+.mlm-share-buttons {
+  display: flex;
+  gap: var(--mlm-space-sm);
+  margin-top: var(--mlm-space-md);
+  flex-wrap: wrap;
+}
+
+.mlm-share-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--mlm-space-sm);
+  padding: 10px 16px;
+  border-radius: var(--mlm-radius-md);
+  color: #fff;
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all var(--mlm-transition-fast);
+}
+
+.mlm-share-btn:hover {
+  opacity: 0.85;
+  transform: translateY(-1px);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   MLM LEVEL EXPLANATION
+   Visual diagram showing how the 4-level system works.
+   ═══════════════════════════════════════════════════════════════ */
+
+.mlm-level-explanation {
+  padding: var(--mlm-space-lg);
+  background: var(--mlm-glass-bg);
+  border: 1px solid var(--mlm-glass-border);
+  border-radius: var(--mlm-radius-lg);
+}
+
+.mlm-level-chain {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--mlm-space-xs);
+  padding: var(--mlm-space-md) 0;
+}
+
+.mlm-level-node {
+  display: flex;
+  align-items: center;
+  gap: var(--mlm-space-md);
+  width: 100%;
+  max-width: 440px;
+  padding: 12px 16px;
+  background: rgba(0, 0, 0, 0.12);
+  border: 1px solid var(--mlm-glass-border);
+  border-radius: var(--mlm-radius-md);
+  transition: all var(--mlm-transition-fast);
+}
+
+[data-theme="light"] .mlm-level-node {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.mlm-level-node:hover {
+  background: var(--mlm-glass-hover);
+}
+
+.mlm-level-you {
+  border-color: rgba(245, 158, 11, 0.4);
+  background: rgba(245, 158, 11, 0.06);
+}
+
+.mlm-level-disabled {
+  opacity: 0.45;
+  border-style: dashed;
+}
+
+.mlm-level-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.mlm-avatar-primary {
+  background: rgba(245, 158, 11, 0.15);
+  color: var(--color-accent, #f59e0b);
+}
+
+.mlm-avatar-level-1 { background: rgba(245, 158, 11, 0.15); color: var(--mlm-level-1); }
+.mlm-avatar-level-2 { background: rgba(59, 130, 246, 0.15); color: var(--mlm-level-2); }
+.mlm-avatar-level-3 { background: rgba(139, 92, 246, 0.15); color: var(--mlm-level-3); }
+.mlm-avatar-level-4 { background: rgba(107, 114, 128, 0.15); color: var(--mlm-level-4); }
+.mlm-avatar-disabled { background: var(--mlm-glass-bg); color: var(--color-text-dim, #707070); }
+
+.mlm-level-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.mlm-level-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-text, #f5f5f5);
+}
+
+.mlm-level-role,
+.mlm-level-tag {
+  font-size: 0.72rem;
+  color: var(--color-text-muted, #a0a0a0);
+}
+
+.mlm-tag-disabled {
+  color: var(--mlm-reversed);
+  font-weight: 500;
+}
+
+.mlm-level-amount {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+  flex-shrink: 0;
+}
+
+.mlm-amount-value {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--color-accent, #f59e0b);
+}
+
+.mlm-amount-label {
+  font-size: 0.65rem;
+  color: var(--color-text-dim, #707070);
+}
+
+.mlm-level-connector {
+  display: flex;
+  justify-content: center;
+  color: var(--color-text-dim, #707070);
+  padding: 2px 0;
+}
+
+.mlm-level-summary {
+  display: flex;
+  gap: var(--mlm-space-xl);
+  margin-top: var(--mlm-space-lg);
+  padding-top: var(--mlm-space-md);
+  border-top: 1px solid var(--mlm-glass-border);
+  flex-wrap: wrap;
+}
+
+.mlm-summary-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.mlm-summary-label {
+  font-size: 0.72rem;
+  color: var(--color-text-muted, #a0a0a0);
+}
+
+.mlm-summary-value {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-text, #f5f5f5);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   MLM COMMISSION TABLE
+   Paginated history with level filtering and status badges.
+   ═══════════════════════════════════════════════════════════════ */
+
+.mlm-commission-table {
+  padding: var(--mlm-space-lg);
+  background: var(--mlm-glass-bg);
+  border: 1px solid var(--mlm-glass-border);
+  border-radius: var(--mlm-radius-lg);
+}
+
+.mlm-table-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--mlm-space-md);
+  margin-bottom: var(--mlm-space-md);
+}
+
+.mlm-level-filter {
+  display: flex;
+  gap: 4px;
+}
+
+.mlm-filter-btn {
+  padding: 6px 12px;
+  border: 1px solid var(--mlm-glass-border);
+  background: transparent;
+  color: var(--color-text-muted, #a0a0a0);
+  font-size: 0.72rem;
+  font-weight: 600;
+  border-radius: var(--mlm-radius-sm);
+  cursor: pointer;
+  transition: all var(--mlm-transition-fast);
+}
+
+.mlm-filter-btn:hover {
+  border-color: var(--color-accent, #f59e0b);
+  color: var(--color-accent, #f59e0b);
+}
+
+.mlm-filter-btn.active {
+  background: var(--color-accent, #f59e0b);
+  border-color: var(--color-accent, #f59e0b);
+  color: #000;
+}
+
+.mlm-table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.mlm-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+
+.mlm-table th {
+  text-align: left;
+  padding: 10px 12px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--color-text-muted, #a0a0a0);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border-bottom: 1px solid var(--mlm-glass-border);
+  white-space: nowrap;
+}
+
+.mlm-table td {
+  padding: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  color: var(--color-text, #f5f5f5);
+  vertical-align: middle;
+}
+
+[data-theme="light"] .mlm-table td {
+  border-bottom-color: rgba(0, 0, 0, 0.05);
+}
+
+.mlm-table tbody tr:hover {
+  background: var(--mlm-glass-hover);
+}
+
+.mlm-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.mlm-cell-date {
+  color: var(--color-text-muted, #a0a0a0);
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+.mlm-cell-source {
+  font-weight: 500;
+}
+
+.mlm-cell-amount {
+  font-weight: 700;
+  color: var(--color-accent, #f59e0b);
+  white-space: nowrap;
+}
+
+.mlm-level-badge {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: var(--mlm-radius-sm);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.mlm-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: var(--mlm-radius-full);
+  font-size: 0.68rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.mlm-status-badge.unlocked {
+  background: rgba(16, 185, 129, 0.12);
+  color: var(--mlm-available);
+}
+
+.mlm-status-badge.locked {
+  background: rgba(245, 158, 11, 0.12);
+  color: var(--mlm-locked);
+}
+
+/* ── Pagination ── */
+.mlm-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--mlm-space-md);
+  padding-top: var(--mlm-space-lg);
+}
+
+.mlm-pagination-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--mlm-glass-border);
+  background: transparent;
+  color: var(--color-text, #f5f5f5);
+  border-radius: var(--mlm-radius-sm);
+  cursor: pointer;
+  transition: all var(--mlm-transition-fast);
+}
+
+.mlm-pagination-btn:hover:not(:disabled) {
+  background: var(--mlm-glass-hover);
+  border-color: var(--color-accent, #f59e0b);
+}
+
+.mlm-pagination-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.mlm-pagination-info {
+  font-size: 0.78rem;
+  color: var(--color-text-muted, #a0a0a0);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   MLM BONUS TRACKER
+   Progress bars per bonus category with delta approach.
+   ═══════════════════════════════════════════════════════════════ */
+
+.mlm-bonus-tracker {
+  padding: var(--mlm-space-lg);
+  background: var(--mlm-glass-bg);
+  border: 1px solid var(--mlm-glass-border);
+  border-radius: var(--mlm-radius-lg);
+}
+
+.mlm-bonus-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mlm-space-lg);
+}
+
+.mlm-bonus-item-header {
+  display: flex;
+  align-items: center;
+  gap: var(--mlm-space-sm);
+  margin-bottom: var(--mlm-space-sm);
+}
+
+.mlm-bonus-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--mlm-radius-sm);
+  flex-shrink: 0;
+}
+
+.mlm-bonus-label {
+  flex: 1;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-text, #f5f5f5);
+}
+
+.mlm-bonus-earned {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--mlm-available);
+}
+
+.mlm-bonus-progress-row {
+  display: flex;
+  align-items: center;
+  gap: var(--mlm-space-md);
+}
+
+.mlm-bonus-progress-bar {
+  flex: 1;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: var(--mlm-radius-full);
+  overflow: hidden;
+}
+
+[data-theme="light"] .mlm-bonus-progress-bar {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.mlm-bonus-progress-fill {
+  height: 100%;
+  border-radius: var(--mlm-radius-full);
+  transition: width var(--mlm-transition-slow);
+}
+
+.mlm-bonus-progress-text {
+  font-size: 0.72rem;
+  color: var(--color-text-muted, #a0a0a0);
+  white-space: nowrap;
+  min-width: 60px;
+  text-align: right;
+}
+
+.mlm-bonus-next-info {
+  margin-top: var(--mlm-space-sm);
+  font-size: 0.75rem;
+  color: var(--color-text-muted, #a0a0a0);
+}
+
+.mlm-bonus-next-info strong {
+  color: var(--color-accent, #f59e0b);
+  font-weight: 700;
+}
+
+.mlm-bonus-maxed {
+  color: var(--mlm-available);
+  font-weight: 600;
+}
+
+.mlm-bonus-note {
+  margin-top: var(--mlm-space-lg);
+  padding: 12px 14px;
+  background: rgba(59, 130, 246, 0.06);
+  border-left: 3px solid var(--mlm-bonus-milestone);
+  border-radius: 0 var(--mlm-radius-sm) var(--mlm-radius-sm) 0;
+}
+
+.mlm-bonus-note p {
+  font-size: 0.72rem;
+  color: var(--color-text-muted, #a0a0a0);
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   MLM TREE VIEW
+   Expandable downline tree with per-level color coding.
+   ═══════════════════════════════════════════════════════════════ */
+
+.mlm-tree-view {
+  padding: var(--mlm-space-lg);
+  background: var(--mlm-glass-bg);
+  border: 1px solid var(--mlm-glass-border);
+  border-radius: var(--mlm-radius-lg);
+}
+
+.mlm-tree-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--mlm-space-md);
+  flex-wrap: wrap;
+  gap: var(--mlm-space-sm);
+}
+
+.mlm-tree-count {
+  display: flex;
+  align-items: center;
+  gap: var(--mlm-space-sm);
+  font-size: 0.78rem;
+  color: var(--color-text-muted, #a0a0a0);
+}
+
+.mlm-tree-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.mlm-tree-node-row {
+  display: flex;
+  align-items: center;
+  gap: var(--mlm-space-sm);
+  padding: 8px 10px;
+  border-radius: var(--mlm-radius-md);
+  transition: background var(--mlm-transition-fast);
+}
+
+.mlm-tree-node-row:hover {
+  background: var(--mlm-glass-hover);
+}
+
+.mlm-tree-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: none;
+  background: transparent;
+  color: var(--color-text-muted, #a0a0a0);
+  cursor: pointer;
+  flex-shrink: 0;
+  border-radius: var(--mlm-radius-sm);
+  transition: all var(--mlm-transition-fast);
+}
+
+.mlm-tree-toggle:hover {
+  background: var(--mlm-glass-hover);
+  color: var(--color-accent, #f59e0b);
+}
+
+.mlm-tree-toggle.invisible {
+  visibility: hidden;
+}
+
+.mlm-tree-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.mlm-tree-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.mlm-tree-name {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-text, #f5f5f5);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mlm-tree-meta {
+  font-size: 0.68rem;
+  color: var(--color-text-dim, #707070);
+}
+
+.mlm-tree-level {
+  font-size: 0.62rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: var(--mlm-radius-sm);
+  flex-shrink: 0;
+  letter-spacing: 0.02em;
+}
+
+.mlm-tree-earnings {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--color-accent, #f59e0b);
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.mlm-tree-children {
+  margin-left: 8px;
+  border-left: 1px solid var(--mlm-glass-border);
+  padding-left: 8px;
+}
+
+.mlm-tree-loading {
+  display: flex;
+  justify-content: center;
+  padding: var(--mlm-space-xl);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   MLM WITHDRAWAL PANEL
+   Request form + history list in a two-column layout.
+   ═══════════════════════════════════════════════════════════════ */
+
+.mlm-withdrawal-panel {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--mlm-space-lg);
+}
+
+.mlm-withdrawal-form-card,
+.mlm-withdrawal-history-card {
+  padding: var(--mlm-space-lg);
+  background: var(--mlm-glass-bg);
+  border: 1px solid var(--mlm-glass-border);
+  border-radius: var(--mlm-radius-lg);
+}
+
+.mlm-withdrawal-balance {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--mlm-space-md);
+  background: rgba(16, 185, 129, 0.06);
+  border: 1px solid rgba(16, 185, 129, 0.15);
+  border-radius: var(--mlm-radius-md);
+  margin-bottom: var(--mlm-space-lg);
+}
+
+.mlm-withdrawal-balance-label {
+  font-size: 0.78rem;
+  color: var(--color-text-muted, #a0a0a0);
+}
+
+.mlm-withdrawal-balance-value {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--mlm-available);
+}
+
+.mlm-withdrawal-pending-notice {
+  display: flex;
+  align-items: center;
+  gap: var(--mlm-space-md);
+  padding: var(--mlm-space-md);
+  background: rgba(245, 158, 11, 0.06);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  border-radius: var(--mlm-radius-md);
+  color: var(--mlm-locked);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.mlm-withdrawal-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mlm-space-md);
+}
+
+.mlm-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mlm-space-xs);
+}
+
+.mlm-form-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--color-text, #f5f5f5);
+}
+
+.mlm-form-input {
+  padding: 10px 14px;
+  background: rgba(0, 0, 0, 0.12);
+  border: 1px solid var(--mlm-glass-border);
+  border-radius: var(--mlm-radius-md);
+  color: var(--color-text, #f5f5f5);
+  font-size: 0.85rem;
+  transition: border-color var(--mlm-transition-fast);
+  outline: none;
+  width: 100%;
+}
+
+[data-theme="light"] .mlm-form-input {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.mlm-form-input:focus {
+  border-color: var(--color-accent, #f59e0b);
+}
+
+.mlm-form-input.error {
+  border-color: var(--mlm-reversed);
+}
+
+.mlm-form-error {
+  font-size: 0.68rem;
+  color: var(--mlm-reversed);
+}
+
+/* ── Payment Method Selector ── */
+.mlm-method-selector {
+  display: flex;
+  gap: var(--mlm-space-sm);
+}
+
+.mlm-method-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--mlm-space-sm);
+  padding: 12px 8px;
+  border: 1px solid var(--mlm-glass-border);
+  background: transparent;
+  color: var(--color-text-muted, #a0a0a0);
+  font-size: 0.72rem;
+  font-weight: 500;
+  border-radius: var(--mlm-radius-md);
+  cursor: pointer;
+  transition: all var(--mlm-transition-fast);
+}
+
+.mlm-method-btn:hover {
+  border-color: var(--color-accent, #f59e0b);
+  color: var(--color-text, #f5f5f5);
+}
+
+.mlm-method-btn.active {
+  border-color: var(--color-accent, #f59e0b);
+  background: rgba(245, 158, 11, 0.08);
+  color: var(--color-accent, #f59e0b);
+  font-weight: 600;
+}
+
+.mlm-withdrawal-submit {
+  width: 100%;
+  margin-top: var(--mlm-space-sm);
+  padding: 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+/* ── Withdrawal History ── */
+.mlm-withdrawal-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mlm-space-sm);
+}
+
+.mlm-withdrawal-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  background: rgba(0, 0, 0, 0.08);
+  border-radius: var(--mlm-radius-md);
+  transition: background var(--mlm-transition-fast);
+}
+
+[data-theme="light"] .mlm-withdrawal-item {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.mlm-withdrawal-item:hover {
+  background: var(--mlm-glass-hover);
+}
+
+.mlm-withdrawal-item-left {
+  display: flex;
+  align-items: center;
+  gap: var(--mlm-space-md);
+  min-width: 0;
+}
+
+.mlm-withdrawal-method-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: var(--mlm-glass-hover);
+  border-radius: var(--mlm-radius-sm);
+  color: var(--color-text-muted, #a0a0a0);
+  flex-shrink: 0;
+}
+
+.mlm-withdrawal-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.mlm-withdrawal-amount {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--color-text, #f5f5f5);
+}
+
+.mlm-withdrawal-date {
+  font-size: 0.68rem;
+  color: var(--color-text-dim, #707070);
+}
+
+.mlm-withdrawal-note {
+  font-size: 0.68rem;
+  color: var(--color-text-muted, #a0a0a0);
+  font-style: italic;
+}
+
+.mlm-withdrawal-status {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SHARED EMPTY & LOADING STATES
+   ═══════════════════════════════════════════════════════════════ */
+
+.mlm-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--mlm-space-md);
+  padding: var(--mlm-space-2xl) var(--mlm-space-md);
+  text-align: center;
+  color: var(--color-text-muted, #a0a0a0);
+  font-size: 0.85rem;
+  line-height: 1.6;
+}
+
+.mlm-empty-icon {
+  opacity: 0.25;
+}
+
+.mlm-table-loading,
+.mlm-tree-loading {
+  display: flex;
+  justify-content: center;
+  padding: var(--mlm-space-xl);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SPINNER UTILITIES
+   ═══════════════════════════════════════════════════════════════ */
+
+.mlm-dashboard-loading .spinner,
+.mlm-table-loading .spinner,
+.mlm-tree-loading .spinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid var(--mlm-glass-border);
+  border-top-color: var(--color-accent, #f59e0b);
+  border-radius: 50%;
+  animation: mlmSpin 0.8s linear infinite;
+}
+
+.spinner-sm {
+  width: 20px !important;
+  height: 20px !important;
+  border-width: 2px !important;
+}
+
+@keyframes mlmSpin {
+  to { transform: rotate(360deg); }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   RESPONSIVE BREAKPOINTS
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Tablet: 768px and below */
+@media (max-width: 768px) {
+  .mlm-overview-columns {
+    grid-template-columns: 1fr;
+  }
+
+  .mlm-withdrawal-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .mlm-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .mlm-tab-btn span {
+    display: none;
+  }
+
+  .mlm-tab-btn {
+    justify-content: center;
+    padding: 10px 14px;
+  }
+
+  .mlm-share-buttons {
+    flex-direction: column;
+  }
+
+  .mlm-method-selector {
+    flex-direction: column;
+  }
+
+  .mlm-level-summary {
+    flex-direction: column;
+    gap: var(--mlm-space-md);
+  }
+}
+
+/* Mobile: 480px and below */
+@media (max-width: 480px) {
+  .mlm-referrals-page {
+    padding: var(--mlm-space-md) var(--mlm-space-sm);
+  }
+
+  .mlm-stats-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: var(--mlm-space-sm);
+  }
+
+  .mlm-stat-card {
+    padding: var(--mlm-space-md);
+  }
+
+  .mlm-stat-value {
+    font-size: 1.1rem;
+  }
+
+  .mlm-referrals-page .referral-page-title {
+    font-size: 1.35rem;
+  }
+
+  .mlm-referrals-page .referral-page-subtitle {
+    font-size: 0.8rem;
+  }
+
+  .mlm-table th,
+  .mlm-table td {
+    padding: 8px 6px;
+    font-size: 0.75rem;
+  }
+
+  .mlm-share-code {
+    font-size: 0.9rem;
+  }
+
+  .mlm-level-node {
+    max-width: 100%;
+    padding: 10px 12px;
+  }
+
+  .mlm-withdrawal-balance {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--mlm-space-xs);
+  }
+}
+
+/* Large desktop: 1400px and above */
+@media (min-width: 1400px) {
+  .mlm-referrals-page {
+    max-width: 1300px;
+  }
+
+  .mlm-stats-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   LEVEL EXPLANATION MODAL
+   Popup version of the 4-level system explanation.
+   ═══════════════════════════════════════════════════════════════ */
+
+.mlm-explanation-modal {
+  position: relative;
+  padding: var(--mlm-space-lg);
+}
+
+.mlm-explanation-modal-header {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--mlm-space-md);
+  margin-bottom: var(--mlm-space-lg);
+  padding-bottom: var(--mlm-space-md);
+  border-bottom: 1px solid var(--mlm-glass-border);
+}
+
+.mlm-explanation-modal-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  background: rgba(245, 158, 11, 0.12);
+  color: var(--color-accent, #f59e0b);
+  border-radius: var(--mlm-radius-md);
+  flex-shrink: 0;
+}
+
+.mlm-explanation-modal-title-group {
+  flex: 1;
+  min-width: 0;
+}
+
+.mlm-explanation-modal-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--color-text, #f5f5f5);
+  margin: 0 0 4px;
+}
+
+.mlm-explanation-modal-subtitle {
+  font-size: 0.82rem;
+  color: var(--color-text-muted, #a0a0a0);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.mlm-explanation-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: none;
+  background: var(--mlm-glass-hover);
+  color: var(--color-text-muted, #a0a0a0);
+  border-radius: var(--mlm-radius-sm);
+  cursor: pointer;
+  transition: all var(--mlm-transition-fast);
+  flex-shrink: 0;
+}
+
+.mlm-explanation-close:hover {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--mlm-reversed);
+}
+
+/* ── How It Works Trigger Button ── */
+.mlm-overview-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mlm-space-md);
+}
+
+.mlm-how-it-works-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--mlm-space-sm);
+  padding: 12px 18px;
+  background: var(--mlm-glass-bg);
+  border: 1px dashed var(--mlm-glass-border);
+  color: var(--color-text-muted, #a0a0a0);
+  font-size: 0.85rem;
+  font-weight: 500;
+  border-radius: var(--mlm-radius-md);
+  cursor: pointer;
+  transition: all var(--mlm-transition-fast);
+  width: 100%;
+  justify-content: center;
+}
+
+.mlm-how-it-works-btn:hover {
+  border-color: var(--color-accent, #f59e0b);
+  color: var(--color-accent, #f59e0b);
+  background: rgba(245, 158, 11, 0.05);
+}
+
+/* ── Hero Stat Card Emphasis ── */
+.mlm-stat-hero {
+  border-color: rgba(16, 185, 129, 0.25);
+  background: rgba(16, 185, 129, 0.04);
+}
+
+.mlm-stat-hero .mlm-stat-value {
+  color: var(--mlm-available);
+  font-size: 1.6rem;
+}
+
+/* ── Compact table improvements ── */
+.mlm-table tbody tr {
+  transition: background var(--mlm-transition-fast);
+}
+
+.mlm-table tbody tr:hover {
+  background: var(--mlm-glass-hover);
+}
+
+/* ── Responsive: explanation modal on mobile ── */
+@media (max-width: 480px) {
+  .mlm-explanation-modal {
+    padding: var(--mlm-space-md);
+  }
+
+  .mlm-explanation-modal-header {
+    flex-wrap: wrap;
+  }
+
+  .mlm-level-node {
+    padding: 8px 10px;
+    gap: var(--mlm-space-sm);
+  }
+
+  .mlm-level-avatar {
+    width: 32px;
+    height: 32px;
+  }
+
+  .mlm-amount-value {
+    font-size: 0.78rem;
+  }
+}

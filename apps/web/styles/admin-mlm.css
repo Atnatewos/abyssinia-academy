@@ -1,0 +1,675 @@
+/**
+ * @fileoverview Admin MLM Module Styles
+ *
+ * Styles for the Money Model v2 admin surfaces: withdrawal approval
+ * queue, platform health stats, and the tree inspector. Loaded after
+ * admin.css so these rules win on shared selectors.
+ *
+ * Path: apps/web/styles/admin-mlm.css
+ */
+
+/* ============================================================================
+   PAGE SHELL
+   ============================================================================ */
+
+.admin-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.admin-page-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.admin-back-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.5rem;
+  background: var(--surface-secondary);
+  border: 1px solid var(--border-light);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.admin-back-btn:hover {
+  color: var(--accent-gold);
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+.admin-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+}
+
+.admin-badge-warning {
+  background: rgba(245, 158, 11, 0.12);
+  color: var(--accent-gold);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+/* ============================================================================
+   FILTERS & SEARCH
+   ============================================================================ */
+
+.admin-filters {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.admin-filter-tabs {
+  display: flex;
+  gap: 0.375rem;
+  flex-wrap: wrap;
+}
+
+.admin-filter-tab {
+  padding: 0.4rem 0.9rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--border-light);
+  background: var(--surface-secondary);
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.admin-filter-tab:hover {
+  color: var(--text-main);
+  border-color: var(--border-medium);
+}
+
+.admin-filter-tab.active {
+  background: rgba(245, 158, 11, 0.12);
+  border-color: rgba(245, 158, 11, 0.4);
+  color: var(--accent-gold);
+}
+
+.admin-search-box {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.875rem;
+  background: var(--bg-input);
+  border: 1px solid var(--border-medium);
+  border-radius: 0.625rem;
+  color: var(--text-dim);
+  min-width: 240px;
+  flex: 1;
+  max-width: 360px;
+}
+
+.admin-search-box:focus-within {
+  border-color: var(--accent-gold);
+}
+
+.admin-search-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text-main);
+  font-size: 0.8125rem;
+}
+
+/* ============================================================================
+   STATES: LOADING / ERROR / EMPTY
+   ============================================================================ */
+
+.admin-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 1rem;
+  color: var(--accent-gold);
+}
+
+.admin-error-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.875rem 1rem;
+  border-radius: 0.625rem;
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  color: #ef4444;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.admin-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.875rem;
+  padding: 4rem 1rem;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  background: var(--glass-bg);
+  border: 1px solid var(--border-light);
+  border-radius: 1rem;
+}
+
+.admin-empty-icon {
+  color: var(--text-dim);
+  opacity: 0.5;
+}
+
+/* ============================================================================
+   DATA TABLE
+   ============================================================================ */
+
+.admin-table-container {
+  overflow-x: auto;
+  background: var(--glass-bg);
+  border: 1px solid var(--border-light);
+  border-radius: 1rem;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+}
+
+.admin-table th {
+  text-align: left;
+  padding: 0.875rem 1rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-dim);
+  border-bottom: 1px solid var(--border-light);
+  white-space: nowrap;
+}
+
+.admin-table td {
+  padding: 0.875rem 1rem;
+  border-bottom: 1px solid var(--border-light);
+  color: var(--text-main);
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.admin-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.admin-table-row-clickable {
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.admin-table-row-clickable:hover {
+  background: var(--bg-ghost-hover);
+}
+
+.admin-user-name {
+  font-weight: 600;
+}
+
+.admin-amount {
+  font-weight: 700;
+  color: var(--accent-gold);
+}
+
+.admin-method-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 9999px;
+  background: var(--surface-secondary);
+  border: 1px solid var(--border-light);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: capitalize;
+}
+
+.admin-cell-muted {
+  color: var(--text-dim);
+  font-size: 0.75rem;
+}
+
+.admin-status-badge {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  border-radius: 9999px;
+  font-size: 0.625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border: 1px solid;
+}
+
+.admin-status-pending {
+  background: rgba(245, 158, 11, 0.1);
+  color: #f59e0b;
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+.admin-status-approved {
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+  border-color: rgba(59, 130, 246, 0.3);
+}
+
+.admin-status-paid {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+.admin-status-rejected {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.admin-row-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.admin-action-approve {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+}
+
+.admin-action-approve:hover {
+  background: rgba(16, 185, 129, 0.2);
+}
+
+.admin-action-reject {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+.admin-action-reject:hover {
+  background: rgba(239, 68, 68, 0.2);
+}
+
+/* ============================================================================
+   WITHDRAWAL DETAIL MODAL
+   ============================================================================ */
+
+.admin-withdrawal-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.admin-withdrawal-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 0.875rem;
+}
+
+.admin-withdrawal-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-light);
+}
+
+.admin-form-input,
+.admin-form-textarea {
+  width: 100%;
+  padding: 0.625rem 0.875rem;
+  border-radius: 0.625rem;
+  background: var(--bg-input);
+  border: 1px solid var(--border-medium);
+  color: var(--text-main);
+  font-size: 0.8125rem;
+  outline: none;
+  transition: border-color 0.2s ease;
+  font-family: inherit;
+}
+
+.admin-form-input:focus,
+.admin-form-textarea:focus {
+  border-color: var(--accent-gold);
+}
+
+.admin-form-textarea {
+  resize: vertical;
+  min-height: 64px;
+}
+
+.admin-withdrawal-action-buttons {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+/* ============================================================================
+   PLATFORM CAP SECTION (Stats page)
+   ============================================================================ */
+
+.admin-cap-section {
+  background: var(--glass-bg);
+  border: 1px solid var(--border-light);
+  border-radius: 1rem;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+}
+
+.admin-cap-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.admin-cap-title {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--text-main);
+  margin: 0;
+}
+
+.admin-cap-percent {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #10b981;
+}
+
+.admin-cap-percent.warning {
+  color: #f59e0b;
+}
+
+.admin-cap-percent.danger {
+  color: #ef4444;
+}
+
+.admin-cap-progress-bar {
+  width: 100%;
+  height: 0.625rem;
+  border-radius: 9999px;
+  background: var(--border-light);
+  overflow: hidden;
+}
+
+.admin-cap-progress-fill {
+  height: 100%;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, #10b981, #34d399);
+  transition: width 0.5s ease;
+}
+
+.admin-cap-progress-fill.warning {
+  background: linear-gradient(90deg, #f59e0b, #fbbf24);
+}
+
+.admin-cap-progress-fill.danger {
+  background: linear-gradient(90deg, #ef4444, #f87171);
+}
+
+.admin-cap-details {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.admin-cap-warning,
+.admin-cap-danger {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 0.875rem;
+  border-radius: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.admin-cap-warning {
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  color: #f59e0b;
+}
+
+.admin-cap-danger {
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  color: #ef4444;
+}
+
+.admin-quick-links {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+/* ============================================================================
+   TREE INSPECTOR
+   ============================================================================ */
+
+.admin-tree-search {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.admin-search-results {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  background: var(--glass-bg);
+  border: 1px solid var(--border-light);
+  border-radius: 1rem;
+  padding: 0.5rem;
+}
+
+.admin-search-result-item {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  width: 100%;
+  padding: 0.625rem 0.75rem;
+  border: none;
+  border-radius: 0.625rem;
+  background: transparent;
+  color: var(--text-main);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s ease;
+}
+
+.admin-search-result-item:hover {
+  background: var(--bg-ghost-hover);
+}
+
+.admin-tree-container {
+  background: var(--glass-bg);
+  border: 1px solid var(--border-light);
+  border-radius: 1rem;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.admin-tree-user-header {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.admin-tree-user-avatar {
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent-gold), var(--accent-gold-dark));
+  color: #0f172a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.admin-tree-user-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.admin-tree-user-name {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.admin-tree-user-meta {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+}
+
+.admin-tree-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.admin-tree-node-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.625rem;
+  border-radius: 0.625rem;
+  transition: background 0.15s ease;
+}
+
+.admin-tree-node-row:hover {
+  background: var(--bg-ghost-hover);
+}
+
+.admin-tree-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: none;
+  background: transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+  border-radius: 0.375rem;
+  flex-shrink: 0;
+}
+
+.admin-tree-toggle:hover {
+  background: var(--surface-secondary);
+  color: var(--accent-gold);
+}
+
+.admin-tree-toggle.invisible {
+  visibility: hidden;
+}
+
+.admin-tree-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.admin-tree-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.admin-tree-name {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.admin-tree-meta {
+  font-size: 0.6875rem;
+  color: var(--text-dim);
+}
+
+.admin-tree-level {
+  font-size: 0.625rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 0.375rem;
+  flex-shrink: 0;
+}
+
+.admin-tree-earnings {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--accent-gold);
+  flex-shrink: 0;
+}
+
+.admin-tree-children {
+  margin-left: 8px;
+  border-left: 1px solid var(--border-light);
+  padding-left: 8px;
+}
+
+/* ============================================================================
+   RESPONSIVE
+   ============================================================================ */
+
+@media (max-width: 768px) {
+  .admin-filters {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .admin-search-box {
+    max-width: none;
+  }
+
+  .admin-withdrawal-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-table td,
+  .admin-table th {
+    padding: 0.625rem 0.75rem;
+  }
+}

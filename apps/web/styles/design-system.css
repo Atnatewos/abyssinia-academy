@@ -1,0 +1,250 @@
+/**
+ * Abyssinia Academy - Design System
+ * Glassmorphism, gradients, typography, and component primitives
+ * Path: apps/web/styles/design-system.css
+ */
+
+/* ============================================================================
+   GLASSMORPHISM
+   ============================================================================ */
+
+.glass-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-lg);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-card-hover:hover {
+  transform: translateY(-4px);
+  border-color: var(--border-hover);
+  box-shadow: var(--shadow-xl);
+}
+
+.glass-card-strong {
+  background: rgba(15, 23, 42, 0.9);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid var(--border-medium);
+  box-shadow: var(--shadow-xl);
+}
+
+.light-theme .glass-card-strong {
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.glass-input {
+  background: var(--bg-input);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--border-medium);
+  border-radius: 0.75rem;
+  padding: 0.625rem 1rem;
+  font-size: 0.75rem;
+  color: var(--text-main);
+  transition: all 0.15s ease;
+  width: 100%;
+  outline: none;
+}
+
+.glass-input:focus {
+  border-color: var(--gold-500);
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.15);
+}
+
+.glass-input::placeholder {
+  color: var(--text-dim);
+}
+
+/* ============================================================================
+   GOLD GRADIENTS
+   ============================================================================ */
+
+.text-gradient-gold {
+  background: linear-gradient(135deg, #FFE259 0%, #FFA751 50%, #f59e0b 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.light-theme .text-gradient-gold {
+  background: linear-gradient(135deg, #b45309 0%, #d97706 50%, #f59e0b 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.bg-gradient-gold {
+  background: linear-gradient(135deg, #FFE259 0%, #FFA751 50%, #f59e0b 100%);
+}
+
+.bg-gradient-gold-horizontal {
+  background: linear-gradient(90deg, #f59e0b 0%, #fbbf24 50%, #fde68a 100%);
+}
+
+.bg-gradient-amber {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #b45309 100%);
+}
+
+/* ============================================================================
+   TYPOGRAPHY
+   ============================================================================ */
+
+.text-display {
+  font-size: clamp(2.5rem, 5vw, 4.5rem);
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.text-heading {
+  font-size: clamp(1.875rem, 4vw, 3rem);
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+.text-subheading {
+  font-size: 1.125rem;
+  line-height: 1.6;
+  color: var(--text-muted);
+}
+
+.text-caption {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--gold-500);
+}
+
+.text-mono {
+  font-family: var(--font-mono);
+}
+
+/* ============================================================================
+   BUTTONS
+   ============================================================================ */
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.875rem 2rem;
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #d97706 100%);
+  color: #0f172a;
+  font-weight: 700;
+  font-size: 0.875rem;
+  border-radius: 0.75rem;
+  box-shadow: 0 10px 25px -5px rgba(245, 158, 11, 0.3);
+  transition: all 0.2s ease;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 15px 30px -5px rgba(245, 158, 11, 0.4);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+.btn-glass {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.875rem 2rem;
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border-main);
+  color: var(--text-main);
+  font-weight: 600;
+  font-size: 0.875rem;
+  border-radius: 0.75rem;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.btn-glass:hover {
+  border-color: var(--border-hover);
+  background: var(--bg-card-hover);
+}
+
+/* ============================================================================
+   BADGES
+   ============================================================================ */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.875rem;
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  color: var(--gold-500);
+  font-size: 0.75rem;
+  font-weight: 700;
+  border-radius: 9999px;
+}
+
+.badge-success {
+  background: var(--color-success-bg);
+  border-color: rgba(16, 185, 129, 0.3);
+  color: var(--color-success);
+}
+
+.badge-error {
+  background: var(--color-error-bg);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: var(--color-error);
+}
+
+/* ============================================================================
+   DIVIDERS
+   ============================================================================ */
+
+.divider {
+  height: 1px;
+  background: var(--border-light);
+  border: none;
+  margin: 2rem 0;
+}
+
+.divider-gradient {
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, var(--border-main) 50%, transparent 100%);
+  border: none;
+  margin: 2rem 0;
+}
+
+/* ============================================================================
+   SCROLLBAR
+   ============================================================================ */
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.1);
+  border-radius: 9999px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(245, 158, 11, 0.35);
+  border-radius: 9999px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(245, 158, 11, 0.6);
+}

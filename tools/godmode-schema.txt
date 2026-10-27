@@ -1,0 +1,75 @@
+== users ==
+id | uuid | NOT NULL | default: uuid_generate_v4()
+full_name | character varying | NOT NULL | default: none
+phone | character varying | NOT NULL | default: none
+email | character varying | nullable | default: none
+password | character varying | NOT NULL | default: none
+is_enrolled | boolean | nullable | default: false
+enrolled_at | timestamp without time zone | nullable | default: none
+payment_method | character varying | nullable | default: none
+payment_status | character varying | nullable | default: 'none'::character varying
+payment_amount | numeric | nullable | default: none
+payment_ref | character varying | nullable | default: none
+avatar_url | text | nullable | default: none
+created_at | timestamp without time zone | nullable | default: CURRENT_TIMESTAMP
+updated_at | timestamp without time zone | nullable | default: CURRENT_TIMESTAMP
+email_notifications | boolean | nullable | default: true
+sms_notifications | boolean | nullable | default: false
+last_active | timestamp without time zone | nullable | default: none
+profile_completed | boolean | nullable | default: false
+referred_by_code | character varying | nullable | default: none
+referral_discount_percent | numeric | nullable | default: 0
+referred_by_user_id | uuid | nullable | default: none
+affiliate_tier | integer | NOT NULL | default: 1
+direct_referral_count | integer | NOT NULL | default: 0
+total_team_size | integer | NOT NULL | default: 0
+lifetime_referral_earnings | numeric | NOT NULL | default: 0
+paying_direct_count | integer | NOT NULL | default: 0
+paying_team_size | integer | NOT NULL | default: 0
+
+== admins ==
+id | uuid | NOT NULL | default: uuid_generate_v4()
+username | character varying | NOT NULL | default: none
+email | character varying | NOT NULL | default: none
+password | character varying | NOT NULL | default: none
+role | character varying | nullable | default: 'admin'::character varying
+last_login | timestamp without time zone | nullable | default: none
+created_at | timestamp without time zone | nullable | default: CURRENT_TIMESTAMP
+updated_at | timestamp without time zone | nullable | default: CURRENT_TIMESTAMP
+is_active | boolean | nullable | default: true
+last_ip | character varying | nullable | default: none
+permissions | jsonb | nullable | default: '{}'::jsonb
+
+== sessions ==
+id | uuid | NOT NULL | default: uuid_generate_v4()
+lesson_id | uuid | nullable | default: none
+name | character varying | NOT NULL | default: none
+time | character varying | NOT NULL | default: none
+order_index | integer | nullable | default: 0
+
+== affiliate_wallets ==
+id | uuid | NOT NULL | default: uuid_generate_v4()
+user_id | uuid | NOT NULL | default: none
+total_earned | numeric | NOT NULL | default: 0
+total_withdrawn | numeric | NOT NULL | default: 0
+current_balance | numeric | NOT NULL | default: 0
+pending_withdrawal | numeric | NOT NULL | default: 0
+debt_balance | numeric | NOT NULL | default: 0
+created_at | timestamp without time zone | NOT NULL | default: CURRENT_TIMESTAMP
+updated_at | timestamp without time zone | NOT NULL | default: CURRENT_TIMESTAMP
+
+== withdrawal_requests ==
+id | uuid | NOT NULL | default: uuid_generate_v4()
+user_id | uuid | NOT NULL | default: none
+amount | numeric | NOT NULL | default: none
+method | character varying | NOT NULL | default: none
+account_number | character varying | NOT NULL | default: none
+account_name | character varying | NOT NULL | default: none
+bank_name | character varying | nullable | default: none
+status | character varying | NOT NULL | default: 'pending'::character varying
+processed_by_admin | uuid | nullable | default: none
+processed_at | timestamp without time zone | nullable | default: none
+admin_note | text | nullable | default: none
+transaction_ref | character varying | nullable | default: none
+created_at | timestamp without time zone | NOT NULL | default: CURRENT_TIMESTAMP
+

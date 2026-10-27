@@ -1,0 +1,46 @@
+/**
+ * @fileoverview Amharic — Pricing Page Namespace
+ * Path: packages/shared/config/i18n/am/pricing.js
+ */
+
+module.exports = {
+  pricing: {
+    heading: 'ግልጽ እና ተመጣጣኝ የትምህርት ክፍያ',
+    subheading: 'ለእርስዎ ግብ የሚስማማውን የትምህርት መንገድ ይምረጡ።',
+    fullPass: 'ሙሉ የአካዳሚ መዳረሻ',
+    masterclass: 'የፉል-ስታክ ሶፍትዌር ማስተርክላስ',
+    instantAccess: 'የ5ቱም ደረጃዎች እና ሳምንታዊ ክፍሎች ፈጣን መዳረሻ',
+    hdPlaylists: 'የተቀረፁ HD ቪዲዮዎች ፕሌይሊስት',
+    timestampsNotes: 'የሰዓት ማብራሪያዎች እና ማስታወሻዎች',
+    githubAssets: 'የጊትሃብ ኮድ ፋይሎች እና መልመጃዎች',
+    telegramCommunity: 'የቴሌግራም የተማሪዎች ማህበረሰብ ደጋፊ ግሩፕ',
+    enrollToday: 'ዛሬውኑ ይመዝገቡ',
+    goToPortal: 'ወደ መማሪያ ክፍል ይሂዱ',
+    selectPhasesToContinue: 'ለመቀጠል ደረጃዎችን ይምረጡ',
+    selectAtLeastOne: 'ለመቀጠል ቢያንስ አንድ ደረጃ ይምረጡ',
+    tuitionEyebrow: 'ክፍያ',
+    allPhasesValue: 'ሁሉም 5ቱ ደረጃዎች',
+    completeCurriculum: 'ሙሉ ሥርዓተ ትምህርት',
+    valueLabel: 'ዋጋ',
+    bestValue: 'ምርጥ ዋጋ',
+    selected: 'ተመርጧል',
+    selectFullCourse: 'ሙሉ ኮርስ ይምረጡ',
+    savePercent: '{percent}% ይቆጥቡ',
+    objectives: 'የትምህርት ግቦች',
+    weeksUnit: 'ሳምንታት',
+    phaseLabel: 'ምዕራፍ',
+    orBuildYourOwn: 'ወይም የራስዎን መንገድ ይገንቡ',
+    selectIndividualPhases: 'በየደረጃው በ{price} {currency} ይምረጡ። የብዙ ቅናሽ በራስ-ሰር ይተገበራል።',
+    customModeActive: 'በተናጠል እየከፈሉ ነው',
+    switchToCustom: 'በተናጠል ይክፈሉ',
+    addToCart: 'ወደ ጋሪ ያክሉ — {price} {currency}',
+    removeFromCart: 'ከጋሪ ያስወግዱ',
+    prerequisitesRequired: 'ቅድመ-ሁኔታዎች ያስፈልጋሉ',
+    lockedPrerequisiteMsg: 'ይህን ምዕራፍ ለመክፈት መጀመሪያ {prerequisites} ያጠናቅቁ።',
+    andLabel: ' እና ምዕራፍ ',
+    phaseUnit: 'ምዕራፍ',
+    phasesUnit: 'ምዕራፎች',
+    offLabel: 'ቅናሽ',
+    totalLabel: 'ጠቅላላ',
+  },
+};

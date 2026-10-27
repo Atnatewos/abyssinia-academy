@@ -1,0 +1,45 @@
+{
+  "name": "abyssinia-academy",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Abyssinia Tech Academy - Full-Stack LMS Platform",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev:api\" \"npm run dev:web\"",
+    "dev:web": "npm run dev --workspace=apps/web",
+    "dev:api": "npm run dev --workspace=apps/api",
+    "build": "cd apps/web && npx next build",
+    "start": "cd apps/web && npx next start",
+    "db:migrate": "node tools/migrate.js",
+    "db:seed": "node tools/seed.js"
+  },
+  "dependencies": {
+    "cloudinary": "^2.10.0",
+    "next": "^14.2.35",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.64.1",
+    "concurrently": "^8.2.2"
+  },
+  "main": "fix-imports.js",
+  "directories": {
+    "test": "tests"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Atnatewos/abyssinia-academy.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Atnatewos/abyssinia-academy/issues"
+  },
+  "homepage": "https://github.com/Atnatewos/abyssinia-academy#readme"
+}

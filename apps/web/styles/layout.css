@@ -1,0 +1,116 @@
+/**
+ * Abyssinia Academy - Layout System
+ * Container, grid, flex utilities
+ * Path: apps/web/styles/layout.css
+ */
+
+/* ============================================================================
+   CONTAINER
+   ============================================================================ */
+
+.container-xl {
+  max-width: 1280px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+@media (min-width: 640px) {
+  .container-xl {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .container-xl {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+}
+
+/* ============================================================================
+   SECTION SPACING
+   ============================================================================ */
+
+.section {
+  padding-top: 5rem;
+  padding-bottom: 5rem;
+}
+
+.section-sm {
+  padding-top: 3rem;
+  padding-bottom: 3rem;
+}
+
+.section-lg {
+  padding-top: 8rem;
+  padding-bottom: 8rem;
+}
+
+/* ============================================================================
+   GRID SYSTEM
+   ============================================================================ */
+
+.grid-cols-auto {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.grid-cols-auto-sm {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+}
+
+/* ============================================================================
+   FLEX UTILITIES
+   ============================================================================ */
+
+.flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.flex-col-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ============================================================================
+   GAP UTILITIES
+   ============================================================================ */
+
+.gap-xs { gap: 0.25rem; }
+.gap-sm { gap: 0.5rem; }
+.gap-md { gap: 1rem; }
+.gap-lg { gap: 1.5rem; }
+.gap-xl { gap: 2rem; }
+.gap-2xl { gap: 3rem; }
+
+/* ============================================================================
+   RESPONSIVE VISIBILITY
+   ============================================================================ */
+
+@media (max-width: 639px) {
+  .hidden-mobile { display: none !important; }
+}
+
+@media (min-width: 640px) and (max-width: 1023px) {
+  .hidden-tablet { display: none !important; }
+}
+
+@media (min-width: 1024px) {
+  .hidden-desktop { display: none !important; }
+}

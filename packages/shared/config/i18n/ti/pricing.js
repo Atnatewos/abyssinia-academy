@@ -1,0 +1,46 @@
+/**
+ * @fileoverview Tigrinya — Pricing Page Namespace
+ * Path: packages/shared/config/i18n/ti/pricing.js
+ */
+
+module.exports = {
+  pricing: {
+    heading: 'ቀሊልን ግሉጽን ክፍሊት ትምህርቲ',
+    subheading: 'ንዕላማታትካ ዝሰማማዕ መንገዲ ትምህርቲ ምረጽ።',
+    fullPass: 'ምሉእ ፓስ ኣክሰስ ኣካዳሚ',
+    masterclass: 'ማስተርክላስ ምሉእ-ስታክ ሶፍትዌር',
+    instantAccess: 'ፈጣን ኣክሰስ ናብ ኩሎም 5 ምዕራፋትን ሞጁላት ትምህርትን',
+    hdPlaylists: 'HD ቀዲሙ ዝተቐረጸ ማስተርክላስ ቪድዮ',
+    timestampsNotes: 'ብግዜ ዝተኸፍለ ዝርዝር ክፍለ-ግዜን መዘኻኸሪ ስምዒትን',
+    githubAssets: 'ሪፖዚቶሪታት ኮድ ምንጪ GitHubን ናይ መጀመርታ ኪታትን',
+    telegramCommunity: 'ብሕታዊ ማሕበር ምምራሕ ዴቨሎፐር ቴለግራም',
+    enrollToday: 'ሎሚ ተመዝገብ እሞ ትምህርቲ ጀምር',
+    goToPortal: 'ናብ ፖርታል ክላስሩም ኪድ',
+    selectPhasesToContinue: 'ንምቕጻል ምዕራፋት ምረጽ',
+    selectAtLeastOne: 'ንምቕጻል ብውሕዱ ሓደ ምዕራፍ ምረጽ',
+    tuitionEyebrow: 'ክፍሊት ትምህርቲ',
+    allPhasesValue: 'ኩሎም 5 ምዕራፋት',
+    completeCurriculum: 'ምሉእ ስርዓተ ትምህርቲ',
+    valueLabel: 'ዋጋ',
+    bestValue: 'ዝበለጸ ዋጋ',
+    selected: 'ተመሪጹ',
+    selectFullCourse: 'ምሉእ ትምህርቲ ምረጽ',
+    savePercent: '{percent}% ብቐጥታ',
+    objectives: 'ዕላማታት',
+    weeksUnit: 'ሰሙናት',
+    phaseLabel: 'ምዕራፍ',
+    orBuildYourOwn: 'ወይ መንገድኻ ስራሕ',
+    selectIndividualPhases: 'ተናጸልቲ ምዕራፋት ብ {price} {currency} ንነፍሲ ወከፍ ምረጽ። ብዙሕ ቅናሻት ብራስኦም ይተግብሩ።',
+    customModeActive: 'ናይ ሕዝባዊ ኣገባብ ንጡፍ',
+    switchToCustom: 'ናብ ሕዝባዊ ቀይር',
+    addToCart: 'ናብ ዓረብኛ ወስኽ — {price} {currency}',
+    removeFromCart: 'ካብ ዓረብኛ ኣውጽእ',
+    prerequisitesRequired: 'ቅድመ-ገደባት የድሊ',
+    lockedPrerequisiteMsg: 'እዚ ምዕራፍ ንምኽፋት መጀመርታ {prerequisites} ኣጠናቕ።',
+    andLabel: ' & ምዕራፍ ',
+    phaseUnit: 'ምዕራፍ',
+    phasesUnit: 'ምዕራፋት',
+    offLabel: 'ቅናሽ',
+    totalLabel: 'ጠቕላላ',
+  },
+};

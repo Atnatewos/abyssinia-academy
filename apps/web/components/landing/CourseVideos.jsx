@@ -1,0 +1,101 @@
+/**
+ * @fileoverview Course Videos — Equal Card Grid (Blue Accent)
+ * Same card grid layout as pricing cards. Click opens YouTube embed modal.
+ * Fetches videos from /api/course-videos/list (database-driven).
+ * All videos are PUBLIC (marketing content, no auth required).
+ * 
+ * Path: apps/web/components/landing/CourseVideos.jsx
+ */
+
+import { useState, useEffect } from 'react';
+import { Play, X, Clock, ExternalLink } from 'lucide-react';
+import { useLanguage } from '../../context/LanguageContext';
+
+const extractYouTubeId = (input) => {
+  if (!input) return '';
+  if (/^[a-zA-Z0-9_-]{11}$/.test(input)) return input;
+  const patterns = [
+    /(?:youtube\.com\/watch\?v=)([a-zA-Z0-9_-]{11})/,
+    /(?:youtu\.be\/)([a-zA-Z0-9_-]{11})/,
+    /(?:youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/,
+    /(?:youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/,
+  ];
+  for (const pattern of patterns) {
+    const match = input.match(pattern);
+    if (match) return match[1];
+  }
+  return input;
+};
+
+const getThumbnailUrl = (videoId) => videoId ? `https://img.youtube.com/vi/${videoId}/hqdefault.jpg` : '';
+const getYouTubeUrl = (videoId) => videoId ? `https://www.youtube.com/watch?v=${videoId}` : '#';
+
+const CourseVideos = () => {
+  const { t } = useLanguage();
+  const [videos, setVideos] = useState([]);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalVideoId, setModalVideoId] = useState(null);
+
+  useEffect(() => {
+    const fetchVideos = async () => {
+      try {
+        const response = await fetch('/api/course-videos/list');
+        const data = await response.json();
+        if (data.success) {
+          setVideos((data.data || []).map((v) => {
+            const youtubeId = extractYouTubeId(v.youtube_id);
+            return { ...v, youtubeId, thumbnail: v.thumbnail || getThumbnailUrl(youtubeId) };
+          }));
+        }
+      } catch { setVideos([]); }
+    };
+    fetchVideos();
+  }, []);
+
+  if (videos.length === 0) return null;
+
+  const handleOpenModal = (youtubeId, e) => { e.stopPropagation(); setModalVideoId(youtubeId); setModalOpen(true); document.body.style.overflow = 'hidden'; };
+  const handleOpenNewTab = (youtubeId, e) => { e.stopPropagation(); window.open(getYouTubeUrl(youtubeId), '_blank', 'noopener,noreferrer'); };
+  const handleCloseModal = () => { setModalOpen(false); setModalVideoId(null); document.body.style.overflow = ''; };
+
+  return (
+    <>
+      <section className="landing-pricing-3d">
+        <div className="landing-pricing-header">
+          <span className="landing-pricing-eyebrow">{t.landing?.courseVideos?.eyebrow || 'About the Course'}</span>
+          <h2 className="landing-pricing-title">{t.landing?.courseVideos?.title || 'About the Course'}</h2>
+          <p className="landing-pricing-subtitle">{t.landing?.courseVideos?.subtitle || 'Watch our instructor explain what you will learn.'}</p>
+        </div>
+        <div className="landing-pricing-equal-grid">
+          {videos.map((video, index) => (
+            <div key={video.id || index} className="landing-pricing-equal-card" style={{ '--card-accent-border': 'rgba(59, 130, 246, 0.3)', '--card-accent-color': '#3b82f6', '--card-accent-bg': 'rgba(59, 130, 246, 0.06)', cursor: 'pointer' }}>
+              <div onClick={(e) => handleOpenModal(video.youtubeId, e)} style={{ position: 'relative', aspectRatio: '16 / 9', borderRadius: '0.75rem', overflow: 'hidden', marginBottom: '1rem', background: '#000' }}>
+                <img src={video.thumbnail} alt={video.title} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.7 }} onError={(e) => { const vidId = extractYouTubeId(video.youtubeId || video.youtube_id); if (vidId && !e.target.src.includes('mqdefault')) e.target.src = `https://img.youtube.com/vi/${vidId}/mqdefault.jpg`; }} />
+                <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.2)' }}>
+                  <div className="landing-discussion-play"><Play size={20} fill="#0f172a" /></div>
+                </div>
+              </div>
+              <h3 className="landing-pricing-equal-title" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{video.title}</h3>
+              {video.duration && <p className="landing-pricing-equal-subtitle" style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}><Clock size={12} />{video.duration}</p>}
+              <div style={{ flex: 1 }} />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                <button className="landing-pricing-equal-cta" style={{ borderColor: 'rgba(59, 130, 246, 0.25)', color: '#3b82f6' }} onClick={(e) => handleOpenModal(video.youtubeId, e)}><Play size={14} /><span>{t.landing?.courseVideos?.watchNow || 'Watch Now'}</span></button>
+                <button className="landing-pricing-equal-cta" style={{ borderColor: 'rgba(148, 163, 184, 0.2)', color: 'var(--text-muted)', fontSize: '0.75rem', padding: '0.5rem 1rem' }} onClick={(e) => handleOpenNewTab(video.youtubeId, e)}><ExternalLink size={13} /><span>{t.landing?.courseVideos?.openInYouTube || 'Open in YouTube'}</span></button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+      {modalOpen && modalVideoId && (
+        <div className="discussion-modal-overlay" onClick={handleCloseModal}>
+          <div className="discussion-modal-content" onClick={(e) => e.stopPropagation()}>
+            <button className="discussion-modal-close" onClick={handleCloseModal} aria-label="Close video"><X size={18} /></button>
+            <iframe src={`https://www.youtube.com/embed/${modalVideoId}?autoplay=1&rel=0&modestbranding=1`} title="Course Video" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
+          </div>
+        </div>
+      )}
+    </>
+  );
+};
+
+export default CourseVideos;
