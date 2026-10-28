@@ -3,14 +3,11 @@
  *
  * Single user profile with enrollment stats, wallet balance, agent
  * attribution, and God Mode controls (impersonate, wallet adjust, ban,
- * orphan, manual enrollment).
+ * unban, orphan, manual enrollment).
  *
- * Data contract (verified schema + wallet + agent joins):
- *   user: full_name, email, phone, is_enrolled, enrolled_at,
- *         direct_referral_count, total_team_size, paying_direct_count,
- *         lifetime_referral_earnings, created_at, is_agent, banned_at,
- *         current_balance, total_earned, total_withdrawn,
- *         agent_code, commission_type, commission_value, status
+ * All UI strings are sourced from the shared i18n `admin.godMode.*`
+ * namespace. All destructive actions are gated by the shared
+ * confirmation system (useConfirm).
  *
  * Path: apps/web/pages/admin/users/[id]/index.jsx
  */
@@ -28,6 +25,7 @@ import {
   Wallet,
   Briefcase,
   ShieldAlert,
+  ShieldCheck,
   Link as LinkIcon,
   Key,
 } from 'lucide-react';
@@ -35,15 +33,13 @@ import SEOHead from '../../../../components/shared/SEOHead';
 import AdminLayout from '../../../../components/admin/AdminLayout';
 import { useLanguage } from '../../../../context/LanguageContext';
 import { useToast } from '../../../../context/ToastContext';
+import { useConfirm } from '../../../../components/shared/ConfirmProvider';
 import apiClient from '../../../../lib/api';
 import { getItem } from '../../../../lib/storage';
 
 /**
- * Normalize a detail payload that may arrive as an object, a single-row
- * array, nested under a `user` key, OR wrapped in an outer `{ data }`
- * envelope (Axios style). Guarantees a plain user object or null.
- *
- * @param {*} payload - Raw API data
+ * Normalize a detail payload.
+ * @param {*} payload
  * @returns {object|null}
  */
 const normalizeUser = (payload) => {
@@ -51,34 +47,32 @@ const normalizeUser = (payload) => {
   if (Array.isArray(payload)) return normalizeUser(payload[0]);
   if (typeof payload !== 'object') return null;
 
-  /* Common nesting patterns from different API client shapes */
-  if (payload.user && typeof payload.user === 'object') {
+  if (payload.user && typeof payload.user === 'object')
     return normalizeUser(payload.user);
-  }
-  if (payload.data && typeof payload.data === 'object' && !Array.isArray(payload.data)) {
+  if (
+    payload.data &&
+    typeof payload.data === 'object' &&
+    !Array.isArray(payload.data)
+  )
     return normalizeUser(payload.data);
-  }
-  if (payload.rows && Array.isArray(payload.rows)) {
+  if (payload.rows && Array.isArray(payload.rows))
     return normalizeUser(payload.rows[0]);
-  }
 
-  /* Looks like an actual user row — return as-is */
-  if (payload.id && (payload.full_name || payload.name)) {
-    return payload;
-  }
+  if (payload.id && (payload.full_name || payload.name)) return payload;
 
   return null;
 };
 
 /**
- * Normalize a list payload that may arrive as an array or nested rows.
- * @param {*} payload - Raw API data
+ * Normalize a list payload.
+ * @param {*} payload
  * @returns {Array}
  */
 const normalizeList = (payload) => {
   if (Array.isArray(payload)) return payload;
   if (payload && Array.isArray(payload.rows)) return payload.rows;
-  if (payload && payload.data && Array.isArray(payload.data)) return payload.data;
+  if (payload && payload.data && Array.isArray(payload.data))
+    return payload.data;
   return [];
 };
 
@@ -87,29 +81,43 @@ const AdminUserDetailPage = () => {
   const { id } = router.query;
   const { t } = useLanguage();
   const toast = useToast();
+  const confirm = useConfirm();
 
   const [user, setUser] = useState(null);
   const [enrollments, setEnrollments] = useState([]);
   const [referrals, setReferrals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
-  const [confirmState, setConfirmState] = useState(null);
 
   /* God Mode UI state */
   const [activeTab, setActiveTab] = useState('overview');
   const [walletAmount, setWalletAmount] = useState('');
   const [walletReason, setWalletReason] = useState('');
   const [banReason, setBanReason] = useState('');
+  const [unbanNote, setUnbanNote] = useState('');
   const [manualEnrollReason, setManualEnrollReason] = useState('');
   const [agentType, setAgentType] = useState('fixed');
   const [agentValue, setAgentValue] = useState('');
+
+  /* Shorthand helpers */
+  const g = t.admin?.godMode || {};
+  const gs = g.stats || {};
+  const gw = g.wallet || {};
+  const ga = g.agent || {};
+  const gi = g.impersonation || {};
+  const gm = g.manualEnroll || {};
+  const gn = g.network || {};
+  const gb = g.ban || {};
+  const gu = g.unban || {};
+  const gt = g.toasts || {};
+  const gOv = g.overview || {};
+  const gTabs = g.tabs || {};
 
   const fetchUserDetail = useCallback(async () => {
     if (!id) return;
 
     const token = getItem('admin_token');
     if (!token) {
-      console.warn('[admin/user-detail] No admin token — redirecting to login');
       router.push('/admin/login');
       return;
     }
@@ -122,220 +130,265 @@ const AdminUserDetailPage = () => {
         apiClient.get(`/admin/users/${id}/referrals`),
       ]);
 
-      /*
-       * Comprehensive diagnostic — makes the shape of every response
-       * visible in the browser console so we can debug "User Not Found"
-       * issues immediately.
-       */
-      if (process.env.NODE_ENV === 'development') {
-        console.group('[admin/user-detail] Fetch results');
-        console.log('User response:', userRes);
-        console.log('Enrollments response:', enrollRes);
-        console.log('Referrals response:', refRes);
-        console.groupEnd();
-      }
-
-      /* User — try every common response shape */
       if (userRes.status === 'fulfilled') {
         const raw = userRes.value;
-        const candidate =
-          raw?.data?.user ||
-          raw?.data ||
-          raw?.user ||
-          raw;
+        const candidate = raw?.data?.user || raw?.data || raw?.user || raw;
         const normalized = normalizeUser(candidate);
-        console.log('[admin/user-detail] Normalized user:', normalized);
         if (normalized) setUser(normalized);
-        else console.warn('[admin/user-detail] Could not normalize user. Raw:', raw);
+      } else if (userRes.reason?.response?.status === 401) {
+        router.push('/admin/login');
+        return;
       } else {
-        console.error('[admin/user-detail] User fetch rejected:', userRes.reason);
-        /* 401 → redirect; other errors → show toast */
-        if (userRes.reason?.response?.status === 401) {
-          router.push('/admin/login');
-          return;
-        }
         toast.error(
           userRes.reason?.response?.data?.message ||
+            gt.loadError ||
             'Failed to load user details.'
         );
       }
 
-      /* Enrollments */
       if (enrollRes.status === 'fulfilled') {
-        const raw = enrollRes.value;
-        setEnrollments(normalizeList(raw?.data ?? raw));
+        setEnrollments(normalizeList(enrollRes.value?.data ?? enrollRes.value));
       }
-
-      /* Referrals */
       if (refRes.status === 'fulfilled') {
-        const raw = refRes.value;
-        setReferrals(normalizeList(raw?.data ?? raw));
+        setReferrals(normalizeList(refRes.value?.data ?? refRes.value));
       }
     } catch (err) {
-      console.error('[admin/user-detail] Unexpected error:', err);
-      if (err?.response?.status === 401) {
-        router.push('/admin/login');
-      } else {
-        toast.error(t.admin?.loadError || 'Failed to load user details');
-      }
+      if (err?.response?.status === 401) router.push('/admin/login');
+      else toast.error(gt.loadError || 'Failed to load user details');
     } finally {
       setLoading(false);
     }
-  }, [id, router, toast, t]);
+  }, [id, router, toast, gt]);
 
   useEffect(() => {
     fetchUserDetail();
   }, [fetchUserDetail]);
 
-  const handleConfirmedAction = async () => {
-    if (!confirmState) return;
+  /* ── Enrollment toggle ── */
+  const handleStatusChange = async (nextStatus) => {
+    const isEnroll = nextStatus === 'enrolled';
+    const ok = await confirm({
+      title: isEnroll
+        ? t.confirmations?.actions?.godmodeEnroll?.title || 'Mark user as enrolled?'
+        : t.confirmations?.actions?.godmodeUnenroll?.title || 'Unenroll this user?',
+      message: isEnroll
+        ? t.confirmations?.actions?.godmodeEnroll?.message
+        : t.confirmations?.actions?.godmodeUnenroll?.message,
+      variant: isEnroll ? 'warning' : 'danger',
+      confirmText: isEnroll
+        ? t.confirmations?.actions?.godmodeEnroll?.confirmText
+        : t.confirmations?.actions?.godmodeUnenroll?.confirmText,
+    });
+    if (!ok) return;
 
     setActionLoading(true);
     try {
       const response = await apiClient.post(`/admin/users/${id}/status`, {
-        status: confirmState.action === 'enroll' ? 'enrolled' : 'registered',
+        status: nextStatus,
       });
       if (response.success) {
-        toast.success(
-          response.message ||
-            t.admin?.statusUpdated ||
-            'User status updated'
-        );
-        setConfirmState(null);
+        toast.success(response.message || gt.statusUpdated);
         fetchUserDetail();
       } else {
-        toast.error(
-          response.message ||
-            t.admin?.statusFailed ||
-            'Failed to update status'
-        );
+        toast.error(response.message || gt.statusFailed);
       }
     } catch (err) {
-      toast.error(t.admin?.statusFailed || 'Failed to update status');
+      toast.error(gt.statusFailed);
     } finally {
       setActionLoading(false);
     }
   };
 
-  /* ── God Mode Handlers ── */
-
+  /* ── Impersonate ── */
   const handleImpersonate = async () => {
+    const ok = await confirm({
+      title: t.confirmations?.actions?.godmodeImpersonate?.title,
+      message: t.confirmations?.actions?.godmodeImpersonate?.message,
+      variant: 'warning',
+      confirmText: t.confirmations?.actions?.godmodeImpersonate?.confirmText,
+    });
+    if (!ok) return;
+
     try {
       setActionLoading(true);
       const res = await apiClient.post(`/admin/users/${id}/impersonate`);
       if (res.success && res.data?.magicUrl) {
-        toast.success('Magic link generated — opening in new tab');
+        toast.success(gt.impersonationSuccess);
         window.open(res.data.magicUrl, '_blank', 'noopener,noreferrer');
       } else {
-        toast.error(res.message || 'Failed to generate impersonation link');
+        toast.error(res.message || gt.impersonationFailed);
       }
     } catch (err) {
-      toast.error(
-        err?.response?.data?.message || 'Failed to generate impersonation link'
-      );
+      toast.error(err?.response?.data?.message || gt.impersonationFailed);
     } finally {
       setActionLoading(false);
     }
   };
 
+  /* ── Force password reset ── */
   const handleForcePasswordReset = async () => {
+    const ok = await confirm({
+      title: t.confirmations?.actions?.godmodePasswordReset?.title,
+      message: t.confirmations?.actions?.godmodePasswordReset?.message,
+      variant: 'warning',
+      confirmText: t.confirmations?.actions?.godmodePasswordReset?.confirmText,
+    });
+    if (!ok) return;
+
     try {
       setActionLoading(true);
       const res = await apiClient.post(`/admin/users/${id}/reset-password`);
       if (res.success && res.data?.resetUrl) {
-        toast.success('Reset link generated — opening in new tab');
+        toast.success(gt.resetSuccess);
         window.open(res.data.resetUrl, '_blank', 'noopener,noreferrer');
       } else {
-        toast.error(res.message || 'Failed to generate reset link');
+        toast.error(res.message || gt.resetFailed);
       }
     } catch (err) {
-      toast.error(
-        err?.response?.data?.message || 'Failed to generate reset link'
-      );
+      toast.error(err?.response?.data?.message || gt.resetFailed);
     } finally {
       setActionLoading(false);
     }
   };
 
+  /* ── Wallet adjustment ── */
   const handleWalletAdjust = async (e) => {
     e.preventDefault();
     if (!walletAmount || !walletReason.trim()) return;
 
+    const numeric = parseFloat(walletAmount);
+    const isLarge = Math.abs(numeric) >= 10000;
+
+    const direction = numeric > 0 ? 'credit' : 'debit';
+    const amount = Math.abs(numeric).toLocaleString();
+    const reason = walletReason.trim();
+
+    const confirmKey = isLarge
+      ? 'godmodeWalletAdjustLarge'
+      : 'godmodeWalletAdjust';
+    const copy = t.confirmations?.actions?.[confirmKey] || {};
+
+    const message = (copy.messageTemplate || '')
+      .replace('{direction}', direction)
+      .replace('{amount}', amount)
+      .replace('{reason}', reason);
+
+    const ok = await confirm({
+      title: copy.title,
+      message,
+      variant: isLarge ? 'danger' : 'warning',
+      confirmText: copy.confirmText,
+      requireInput: isLarge ? copy.requireInput : null,
+    });
+    if (!ok) return;
+
     try {
       setActionLoading(true);
       const res = await apiClient.post(`/admin/users/${id}/wallet`, {
-        amount: parseFloat(walletAmount),
-        reason: walletReason.trim(),
+        amount: numeric,
+        reason,
       });
       if (res.success) {
         toast.success(
-          `Wallet adjusted. New balance: ${res.data?.newBalance ?? '—'} ETB`
+          (gt.walletSuccessTemplate || 'Wallet adjusted. New balance: {balance} ETB')
+            .replace('{balance}', res.data?.newBalance ?? '—')
         );
         setWalletAmount('');
         setWalletReason('');
         fetchUserDetail();
       } else {
-        toast.error(res.message || 'Failed to adjust wallet');
+        toast.error(res.message || gt.walletFailed);
       }
     } catch (err) {
-      toast.error(err?.response?.data?.message || 'Failed to adjust wallet');
+      toast.error(err?.response?.data?.message || gt.walletFailed);
     } finally {
       setActionLoading(false);
     }
   };
 
+  /* ── Agent override ── */
   const handleAgentOverride = async (e) => {
     e.preventDefault();
     if (!agentValue) return;
+
+    const numeric = parseFloat(agentValue);
+    const unit = agentType === 'percentage' ? '%' : 'ETB';
+
+    const copy = t.confirmations?.actions?.godmodeAgentOverride || {};
+    const message = (copy.messageTemplate || '')
+      .replace('{value}', String(numeric))
+      .replace('{unit}', unit);
+
+    const ok = await confirm({
+      title: copy.title,
+      message,
+      variant: 'warning',
+      confirmText: copy.confirmText,
+    });
+    if (!ok) return;
 
     try {
       setActionLoading(true);
       const res = await apiClient.patch(`/admin/users/${id}/agent-override`, {
         commissionType: agentType,
-        commissionValue: parseFloat(agentValue),
+        commissionValue: numeric,
       });
       if (res.success) {
-        toast.success('Agent rate overridden successfully');
+        toast.success(gt.agentOverrideSuccess);
         setAgentValue('');
         fetchUserDetail();
       } else {
-        toast.error(res.message || 'Failed to override agent rate');
+        toast.error(res.message || gt.agentOverrideFailed);
       }
     } catch (err) {
-      toast.error(
-        err?.response?.data?.message || 'Failed to override agent rate'
-      );
+      toast.error(err?.response?.data?.message || gt.agentOverrideFailed);
     } finally {
       setActionLoading(false);
     }
   };
 
+  /* ── Orphan ── */
   const handleOrphan = async () => {
-    if (!window.confirm('Orphan this user from the MLM tree? This cannot be undone.')) {
-      return;
-    }
+    const copy = t.confirmations?.actions?.godmodeOrphan || {};
+    const ok = await confirm({
+      title: copy.title,
+      message: copy.message,
+      variant: 'danger',
+      confirmText: copy.confirmText,
+      requireInput: copy.requireInput,
+    });
+    if (!ok) return;
+
     try {
       setActionLoading(true);
       const res = await apiClient.post(`/admin/users/${id}/orphan`);
       if (res.success) {
-        toast.success('User orphaned from MLM tree');
+        toast.success(gt.orphanSuccess);
         fetchUserDetail();
       } else {
-        toast.error(res.message || 'Failed to orphan user');
+        toast.error(res.message || gt.orphanFailed);
       }
     } catch (err) {
-      toast.error(err?.response?.data?.message || 'Failed to orphan user');
+      toast.error(err?.response?.data?.message || gt.orphanFailed);
     } finally {
       setActionLoading(false);
     }
   };
 
+  /* ── Ban ── */
   const handleBan = async (e) => {
     e.preventDefault();
     if (!banReason.trim()) return;
-    if (!window.confirm('Ban this user? They will lose access immediately.')) {
-      return;
-    }
+
+    const copy = t.confirmations?.actions?.godmodeBan || {};
+    const ok = await confirm({
+      title: copy.title,
+      message: copy.message,
+      variant: 'danger',
+      confirmText: copy.confirmText,
+      requireInput: copy.requireInput,
+    });
+    if (!ok) return;
 
     try {
       setActionLoading(true);
@@ -344,25 +397,70 @@ const AdminUserDetailPage = () => {
         revokeCodes: true,
       });
       if (res.success) {
-        toast.success('User banned successfully');
+        toast.success(gt.banSuccess);
         setBanReason('');
         fetchUserDetail();
       } else {
-        toast.error(res.message || 'Failed to ban user');
+        toast.error(res.message || gt.banFailed);
       }
     } catch (err) {
-      toast.error(err?.response?.data?.message || 'Failed to ban user');
+      toast.error(err?.response?.data?.message || gt.banFailed);
     } finally {
       setActionLoading(false);
     }
   };
 
+  /* ── Unban ── */
+  const handleUnban = async (e) => {
+    e.preventDefault();
+
+    const copy = t.confirmations?.actions?.godmodeUnban || {};
+    const ok = await confirm({
+      title: copy.title,
+      message: copy.message,
+      variant: 'warning',
+      confirmText: copy.confirmText,
+      requireInput: copy.requireInput,
+    });
+    if (!ok) return;
+
+    try {
+      setActionLoading(true);
+      const res = await apiClient.post(`/admin/users/${id}/unban`, {
+        note: unbanNote.trim() || null,
+      });
+      if (res.success) {
+        toast.success(gt.unbanSuccess);
+        setUnbanNote('');
+        fetchUserDetail();
+      } else {
+        toast.error(res.message || gt.unbanFailed);
+      }
+    } catch (err) {
+      toast.error(err?.response?.data?.message || gt.unbanFailed);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  /* ── Manual enroll ── */
   const handleManualEnroll = async (e) => {
     e.preventDefault();
     if (!manualEnrollReason.trim()) return;
-    if (!window.confirm('Grant full course access without a payment record?')) {
-      return;
-    }
+
+    const copy = t.confirmations?.actions?.godmodeManualEnroll || {};
+    const message = (copy.messageTemplate || '').replace(
+      '{reason}',
+      manualEnrollReason.trim()
+    );
+
+    const ok = await confirm({
+      title: copy.title,
+      message,
+      variant: 'warning',
+      confirmText: copy.confirmText,
+    });
+    if (!ok) return;
 
     try {
       setActionLoading(true);
@@ -371,21 +469,21 @@ const AdminUserDetailPage = () => {
         reason: manualEnrollReason.trim(),
       });
       if (res.success) {
-        toast.success('User manually enrolled');
+        toast.success(gt.enrollSuccess);
         setManualEnrollReason('');
         fetchUserDetail();
       } else {
-        toast.error(res.message || 'Failed to enroll user');
+        toast.error(res.message || gt.enrollFailed);
       }
     } catch (err) {
-      toast.error(err?.response?.data?.message || 'Failed to enroll user');
+      toast.error(err?.response?.data?.message || gt.enrollFailed);
     } finally {
       setActionLoading(false);
     }
   };
 
   const formatDate = (dateString) => {
-    if (!dateString) return '—';
+    if (!dateString) return g.emDash || '—';
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'long',
@@ -393,15 +491,17 @@ const AdminUserDetailPage = () => {
     });
   };
 
-  const formatAmount = (value) =>
-    Number(value || 0).toLocaleString('en-US');
+  const formatAmount = (value) => Number(value || 0).toLocaleString('en-US');
 
-  /* ── Loading state ── */
+  /* ── Loading ── */
   if (loading) {
     return (
       <>
-        <SEOHead title="User Details" />
-        <AdminLayout title="User Details" subtitle="Loading user information...">
+        <SEOHead title={g.userDetailsTitle || 'User Details'} />
+        <AdminLayout
+          title={g.userDetailsTitle || 'User Details'}
+          subtitle={g.loadingUser || 'Loading user information...'}
+        >
           <div className="user-detail-loading">
             <div className="spinner" style={{ padding: '5rem 0' }}>
               <div className="spinner-circle" />
@@ -412,49 +512,44 @@ const AdminUserDetailPage = () => {
     );
   }
 
-  /* ── Not found state (only reached if fetch succeeded but user is null) ── */
+  /* ── Not found ── */
   if (!user) {
     return (
       <>
-        <SEOHead title="User Not Found" />
+        <SEOHead title={g.userNotFoundTitle || 'User Not Found'} />
         <AdminLayout
-          title="User Not Found"
-          subtitle="The requested user does not exist."
+          title={g.userNotFoundTitle || 'User Not Found'}
+          subtitle={g.userNotFoundSubtitle || 'The requested user does not exist.'}
         >
           <button
             className="admin-back-btn"
             onClick={() => router.push('/admin/users')}
           >
             <ArrowLeft size={16} />
-            <span>{t.admin?.backToUsers || 'Back to Users'}</span>
+            <span>{g.backToUsers || 'Back to Users'}</span>
           </button>
-          <p style={{ marginTop: '1rem', color: 'var(--text-dim)', fontSize: '0.875rem' }}>
-            Open the browser DevTools Console to see the diagnostic logs —
-            the raw API response will help identify why the user could not
-            be loaded.
-          </p>
         </AdminLayout>
       </>
     );
   }
 
-  const displayName = user.full_name || user.name || 'Unknown';
+  const displayName = user.full_name || user.name || g.unknownUser || 'Unknown';
   const isEnrolled = user.is_enrolled === true;
   const isBanned = Boolean(user.banned_at);
 
   return (
     <>
-      <SEOHead title={`${displayName} — User Details`} />
+      <SEOHead title={`${displayName} — ${g.userDetailsTitle || 'User Details'}`} />
       <AdminLayout title={displayName} subtitle={user.email || ''}>
         <button
           className="admin-back-btn"
           onClick={() => router.push('/admin/users')}
         >
           <ArrowLeft size={16} />
-          <span>{t.admin?.backToUsers || 'Back to Users'}</span>
+          <span>{g.backToUsers || 'Back to Users'}</span>
         </button>
 
-        {/* ── Header ── */}
+        {/* Header */}
         <div className="user-detail-header">
           <div className="user-detail-avatar">
             {displayName.charAt(0).toUpperCase()}
@@ -463,17 +558,24 @@ const AdminUserDetailPage = () => {
             <h2>{displayName}</h2>
             <div className="user-detail-meta">
               <span>
-                <Mail size={14} /> {user.email || '—'}
+                <Mail size={14} /> {user.email || g.emDash}
               </span>
               <span>
-                <Phone size={14} /> {user.phone || 'N/A'}
+                <Phone size={14} /> {user.phone || g.notAvailable}
               </span>
               <span>
-                <Calendar size={14} /> {t.admin?.joined || 'Joined'}{' '}
+                <Calendar size={14} /> {g.joined}{' '}
                 {formatDate(user.created_at)}
               </span>
-              <span className={`status-badge ${isBanned ? 'rejected' : isEnrolled ? 'approved' : 'pending'}`}>
-                {isBanned ? 'banned' : user.status || (isEnrolled ? 'enrolled' : 'registered')}
+              <span
+                className={`status-badge ${
+                  isBanned ? 'rejected' : isEnrolled ? 'approved' : 'pending'
+                }`}
+              >
+                {isBanned
+                  ? g.statusBanned
+                  : user.status ||
+                    (isEnrolled ? g.statusEnrolled : g.statusRegistered)}
               </span>
             </div>
           </div>
@@ -481,92 +583,87 @@ const AdminUserDetailPage = () => {
             {isEnrolled ? (
               <button
                 className="admin-action-btn reject"
-                onClick={() => setConfirmState({ action: 'unenroll' })}
+                onClick={() => handleStatusChange('registered')}
                 disabled={actionLoading}
               >
                 <UserX size={16} />
-                {t.admin?.unenroll || 'Unenroll'}
+                {g.unenroll}
               </button>
             ) : (
               <button
                 className="admin-action-btn approve"
-                onClick={() => setConfirmState({ action: 'enroll' })}
+                onClick={() => handleStatusChange('enrolled')}
                 disabled={actionLoading}
               >
                 <UserCheck size={16} />
-                {t.admin?.markEnrolled || 'Mark Enrolled'}
+                {g.markEnrolled}
               </button>
             )}
           </div>
         </div>
 
-        {/* ── Stats ── */}
+        {/* Stats */}
         <div className="user-detail-stats">
           <div className="stat-card">
-            <span className="stat-label">
-              {t.admin?.directReferrals || 'Direct Referrals'}
-            </span>
+            <span className="stat-label">{gs.directReferrals}</span>
             <span className="stat-value">
               {formatAmount(user.direct_referral_count)}
             </span>
           </div>
           <div className="stat-card">
-            <span className="stat-label">{t.admin?.teamSize || 'Team Size'}</span>
+            <span className="stat-label">{gs.teamSize}</span>
             <span className="stat-value">
               {formatAmount(user.total_team_size)}
             </span>
           </div>
           <div className="stat-card">
-            <span className="stat-label">
-              {t.admin?.payingDirect || 'Paying Direct'}
-            </span>
+            <span className="stat-label">{gs.payingDirect}</span>
             <span className="stat-value">
               {formatAmount(user.paying_direct_count)}
             </span>
           </div>
           <div className="stat-card">
-            <span className="stat-label">
-              {t.admin?.lifetimeEarned || 'Lifetime Earned'}
-            </span>
+            <span className="stat-label">{gs.lifetimeEarned}</span>
             <span className="stat-value">
               {formatAmount(user.lifetime_referral_earnings)} ETB
             </span>
           </div>
         </div>
 
-        {/* ── Tabs ── */}
-        <div className="admin-tabs" style={{ marginTop: '1.5rem', marginBottom: '1rem' }}>
+        {/* Tabs */}
+        <div
+          className="admin-tabs"
+          style={{ marginTop: '1.5rem', marginBottom: '1rem' }}
+        >
           <button
             className={`admin-tab ${activeTab === 'overview' ? 'active' : ''}`}
             onClick={() => setActiveTab('overview')}
           >
-            Overview
+            {gTabs.overview}
           </button>
           <button
             className={`admin-tab ${activeTab === 'wallet' ? 'active' : ''}`}
             onClick={() => setActiveTab('wallet')}
           >
             <Wallet size={14} style={{ marginRight: 6 }} />
-            Wallet & Agent
+            {gTabs.walletAndAgent}
           </button>
           <button
             className={`admin-tab ${activeTab === 'godmode' ? 'active' : ''}`}
             onClick={() => setActiveTab('godmode')}
           >
             <ShieldAlert size={14} style={{ marginRight: 6 }} />
-            God Mode
+            {gTabs.godMode}
           </button>
         </div>
 
-        {/* ── Tab: Overview ── */}
+        {/* Overview tab */}
         {activeTab === 'overview' && (
           <>
             <div className="user-detail-section">
-              <h3>{t.admin?.enrollmentHistory || 'Enrollment History'}</h3>
+              <h3>{gOv.enrollmentHistory}</h3>
               {enrollments.length === 0 ? (
-                <p className="empty-state-desc">
-                  {t.admin?.noEnrollments || 'No enrollments yet.'}
-                </p>
+                <p className="empty-state-desc">{gOv.noEnrollments}</p>
               ) : (
                 <div className="admin-table-wrapper compact">
                   {enrollments.map((enrollment) => (
@@ -578,12 +675,12 @@ const AdminUserDetailPage = () => {
                         <div className="admin-table-name-block">
                           <span className="admin-table-name">
                             {enrollment.purchase_mode === 'full-course'
-                              ? t.admin?.fullCoursePass || 'Full Course Pass'
-                              : t.admin?.phaseBundle || 'Phase Bundle'}
+                              ? gOv.fullCoursePass
+                              : gOv.phaseBundle}
                           </span>
                           <span className="admin-table-sub">
                             {formatAmount(enrollment.amount)} ETB ·{' '}
-                            {enrollment.method || '—'} ·{' '}
+                            {enrollment.method || g.emDash} ·{' '}
                             {formatDate(
                               enrollment.paid_at || enrollment.created_at
                             )}
@@ -610,11 +707,9 @@ const AdminUserDetailPage = () => {
             </div>
 
             <div className="user-detail-section">
-              <h3>{t.admin?.referralHistory || 'Referral History'}</h3>
+              <h3>{gOv.referralHistory}</h3>
               {referrals.length === 0 ? (
-                <p className="empty-state-desc">
-                  {t.admin?.noReferrals || 'No referrals yet.'}
-                </p>
+                <p className="empty-state-desc">{gOv.noReferrals}</p>
               ) : (
                 <div className="admin-table-wrapper compact">
                   {referrals.map((referral) => (
@@ -627,10 +722,10 @@ const AdminUserDetailPage = () => {
                         </div>
                         <div className="admin-table-name-block">
                           <span className="admin-table-name">
-                            {referral.referred_name || 'Unknown'}
+                            {referral.referred_name || g.unknownUser}
                           </span>
                           <span className="admin-table-sub">
-                            {referral.referred_email || '—'}
+                            {referral.referred_email || g.emDash}
                           </span>
                         </div>
                       </div>
@@ -646,8 +741,8 @@ const AdminUserDetailPage = () => {
                           }`}
                         >
                           {referral.referred_is_enrolled
-                            ? 'enrolled'
-                            : 'registered'}
+                            ? g.statusEnrolled
+                            : g.statusRegistered}
                         </span>
                       </div>
                     </div>
@@ -658,37 +753,37 @@ const AdminUserDetailPage = () => {
           </>
         )}
 
-        {/* ── Tab: Wallet & Agent ── */}
+        {/* Wallet & Agent tab */}
         {activeTab === 'wallet' && (
           <>
             <div className="user-detail-section">
               <h3>
                 <Wallet size={16} style={{ marginRight: 8 }} />
-                Wallet
+                {gw.heading}
               </h3>
               <div className="user-detail-stats">
                 <div className="stat-card">
-                  <span className="stat-label">Current Balance</span>
+                  <span className="stat-label">{gw.currentBalance}</span>
                   <span className="stat-value">
-                    {formatAmount(user.current_balance)} ETB
+                    {formatAmount(user.current_balance)} {gw.currency}
                   </span>
                 </div>
                 <div className="stat-card">
-                  <span className="stat-label">Total Earned</span>
+                  <span className="stat-label">{gw.totalEarned}</span>
                   <span className="stat-value">
-                    {formatAmount(user.total_earned)} ETB
+                    {formatAmount(user.total_earned)} {gw.currency}
                   </span>
                 </div>
                 <div className="stat-card">
-                  <span className="stat-label">Total Withdrawn</span>
+                  <span className="stat-label">{gw.totalWithdrawn}</span>
                   <span className="stat-value">
-                    {formatAmount(user.total_withdrawn)} ETB
+                    {formatAmount(user.total_withdrawn)} {gw.currency}
                   </span>
                 </div>
                 <div className="stat-card">
-                  <span className="stat-label">Pending Withdrawal</span>
+                  <span className="stat-label">{gw.pendingWithdrawal}</span>
                   <span className="stat-value">
-                    {formatAmount(user.pending_withdrawal)} ETB
+                    {formatAmount(user.pending_withdrawal)} {gw.currency}
                   </span>
                 </div>
               </div>
@@ -705,14 +800,20 @@ const AdminUserDetailPage = () => {
                   gap: '0.75rem',
                 }}
               >
-                <h4 style={{ margin: 0 }}>Manual Wallet Adjustment</h4>
-                <p style={{ fontSize: '0.75rem', color: 'var(--text-dim)', margin: 0 }}>
-                  Positive numbers credit the wallet. Negative numbers claw back.
+                <h4 style={{ margin: 0 }}>{gw.manualAdjustment}</h4>
+                <p
+                  style={{
+                    fontSize: '0.75rem',
+                    color: 'var(--text-dim)',
+                    margin: 0,
+                  }}
+                >
+                  {gw.adjustmentHint}
                 </p>
                 <input
                   type="number"
                   step="0.01"
-                  placeholder="Amount in ETB (e.g., 500 or -500)"
+                  placeholder={gw.amountPlaceholder}
                   value={walletAmount}
                   onChange={(e) => setWalletAmount(e.target.value)}
                   className="admin-input"
@@ -720,7 +821,7 @@ const AdminUserDetailPage = () => {
                 />
                 <input
                   type="text"
-                  placeholder="Reason (min 5 chars — logged in audit)"
+                  placeholder={gw.reasonPlaceholder}
                   value={walletReason}
                   onChange={(e) => setWalletReason(e.target.value)}
                   className="admin-input"
@@ -732,7 +833,7 @@ const AdminUserDetailPage = () => {
                   className="admin-btn-primary"
                   disabled={actionLoading}
                 >
-                  {actionLoading ? 'Applying...' : 'Apply Adjustment'}
+                  {actionLoading ? gw.applying : gw.applyAdjustment}
                 </button>
               </form>
             </div>
@@ -740,32 +841,35 @@ const AdminUserDetailPage = () => {
             <div className="user-detail-section">
               <h3>
                 <Briefcase size={16} style={{ marginRight: 8 }} />
-                Agent Status
+                {ga.heading}
               </h3>
               <div className="user-detail-stats">
                 <div className="stat-card">
-                  <span className="stat-label">Agent Code</span>
-                  <span className="stat-value" style={{ fontFamily: 'var(--font-mono)' }}>
-                    {user.agent_code || '—'}
+                  <span className="stat-label">{ga.agentCode}</span>
+                  <span
+                    className="stat-value"
+                    style={{ fontFamily: 'var(--font-mono)' }}
+                  >
+                    {user.agent_code || g.emDash}
                   </span>
                 </div>
                 <div className="stat-card">
-                  <span className="stat-label">Commission Type</span>
+                  <span className="stat-label">{ga.commissionType}</span>
                   <span className="stat-value">
-                    {user.commission_type || 'fixed'}
+                    {user.commission_type || ga.fixedType}
                   </span>
                 </div>
                 <div className="stat-card">
-                  <span className="stat-label">Commission Value</span>
+                  <span className="stat-label">{ga.commissionValue}</span>
                   <span className="stat-value">
                     {formatAmount(user.commission_value)}{' '}
                     {user.commission_type === 'percentage' ? '%' : 'ETB'}
                   </span>
                 </div>
                 <div className="stat-card">
-                  <span className="stat-label">Agent Active</span>
+                  <span className="stat-label">{ga.agentActive}</span>
                   <span className="stat-value">
-                    {user.agent_settings_active === false ? 'No' : 'Yes'}
+                    {user.agent_settings_active === false ? ga.no : ga.yes}
                   </span>
                 </div>
               </div>
@@ -782,20 +886,22 @@ const AdminUserDetailPage = () => {
                   gap: '0.75rem',
                 }}
               >
-                <h4 style={{ margin: 0 }}>Override Commission Rate</h4>
+                <h4 style={{ margin: 0 }}>{ga.overrideHeading}</h4>
                 <select
                   value={agentType}
                   onChange={(e) => setAgentType(e.target.value)}
                   className="admin-input"
                 >
-                  <option value="fixed">Fixed (ETB per sale)</option>
-                  <option value="percentage">Percentage (%)</option>
+                  <option value="fixed">{ga.fixedOption}</option>
+                  <option value="percentage">{ga.percentageOption}</option>
                 </select>
                 <input
                   type="number"
                   step="0.01"
                   placeholder={
-                    agentType === 'fixed' ? 'e.g., 500' : 'e.g., 15'
+                    agentType === 'fixed'
+                      ? ga.overridePlaceholderFixed
+                      : ga.overridePlaceholderPercentage
                   }
                   value={agentValue}
                   onChange={(e) => setAgentValue(e.target.value)}
@@ -807,33 +913,34 @@ const AdminUserDetailPage = () => {
                   className="admin-btn-primary"
                   disabled={actionLoading}
                 >
-                  {actionLoading ? 'Applying...' : 'Override Rate'}
+                  {actionLoading ? ga.applying : ga.overrideRate}
                 </button>
               </form>
             </div>
           </>
         )}
 
-        {/* ── Tab: God Mode ── */}
+        {/* God Mode tab */}
         {activeTab === 'godmode' && (
           <>
             <div className="user-detail-section">
               <h3>
                 <ShieldAlert size={16} style={{ marginRight: 8 }} />
-                Impersonation & Access
+                {gi.heading}
               </h3>
               <p style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>
-                Generates a 5-minute magic link. Opens in a new tab — your
-                admin session stays logged in.
+                {gi.hint}
               </p>
-              <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+              <div
+                style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}
+              >
                 <button
                   className="admin-btn-primary"
                   onClick={handleImpersonate}
                   disabled={actionLoading}
                 >
                   <LinkIcon size={14} style={{ marginRight: 6 }} />
-                  Generate Impersonation Link
+                  {gi.generateLink}
                 </button>
                 <button
                   className="admin-btn-secondary"
@@ -841,16 +948,15 @@ const AdminUserDetailPage = () => {
                   disabled={actionLoading}
                 >
                   <Key size={14} style={{ marginRight: 6 }} />
-                  Generate Password Reset Link
+                  {gi.generateReset}
                 </button>
               </div>
             </div>
 
             <div className="user-detail-section">
-              <h3>Manual Enrollment</h3>
+              <h3>{gm.heading}</h3>
               <p style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>
-                Grants full course access without a payment record. Use for
-                cash enrollments or scholarships.
+                {gm.hint}
               </p>
               <form
                 onSubmit={handleManualEnroll}
@@ -865,7 +971,7 @@ const AdminUserDetailPage = () => {
               >
                 <input
                   type="text"
-                  placeholder="Reason (min 5 chars — logged in audit)"
+                  placeholder={gm.reasonPlaceholder}
                   value={manualEnrollReason}
                   onChange={(e) => setManualEnrollReason(e.target.value)}
                   className="admin-input"
@@ -877,112 +983,143 @@ const AdminUserDetailPage = () => {
                   className="admin-btn-primary"
                   disabled={actionLoading}
                 >
-                  {actionLoading ? 'Enrolling...' : 'Grant Full Course Access'}
+                  {actionLoading ? gm.enrolling : gm.button}
                 </button>
               </form>
             </div>
 
             <div className="user-detail-section">
-              <h3>Network & Account</h3>
-              <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+              <h3>{gn.heading}</h3>
+              <div
+                style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}
+              >
                 <button
                   className="admin-btn-warning"
                   onClick={handleOrphan}
                   disabled={actionLoading}
                 >
-                  Orphan from MLM Tree
+                  {gn.orphanButton}
                 </button>
               </div>
 
-              <form
-                onSubmit={handleBan}
-                style={{
-                  marginTop: '1.5rem',
-                  padding: '1rem',
-                  background: 'rgba(239, 68, 68, 0.06)',
-                  border: '1px solid rgba(239, 68, 68, 0.2)',
-                  borderRadius: '0.75rem',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '0.75rem',
-                }}
-              >
-                <h4 style={{ margin: 0, color: '#ef4444' }}>Danger Zone</h4>
-                <p style={{ fontSize: '0.75rem', color: 'var(--text-dim)', margin: 0 }}>
-                  Bans the user and revokes their agent + referral codes.
-                  This action is logged but reversible from the database.
-                </p>
-                <input
-                  type="text"
-                  placeholder="Ban reason (min 5 chars)"
-                  value={banReason}
-                  onChange={(e) => setBanReason(e.target.value)}
-                  className="admin-input"
-                  required
-                  minLength={5}
-                  disabled={isBanned}
-                />
-                <button
-                  type="submit"
-                  className="admin-btn-danger"
-                  disabled={actionLoading || isBanned}
+              {/* Danger Zone — Ban */}
+              {!isBanned && (
+                <form
+                  onSubmit={handleBan}
+                  style={{
+                    marginTop: '1.5rem',
+                    padding: '1rem',
+                    background: 'rgba(239, 68, 68, 0.06)',
+                    border: '1px solid rgba(239, 68, 68, 0.2)',
+                    borderRadius: '0.75rem',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.75rem',
+                  }}
                 >
-                  {isBanned ? 'Already Banned' : 'Ban User'}
-                </button>
-                {isBanned && (
-                  <p style={{ fontSize: '0.75rem', color: '#ef4444', margin: 0 }}>
-                    Banned on {formatDate(user.banned_at)} — reason:{' '}
-                    {user.banned_reason || '—'}
+                  <h4 style={{ margin: 0, color: '#ef4444' }}>
+                    {gb.heading}
+                  </h4>
+                  <p
+                    style={{
+                      fontSize: '0.75rem',
+                      color: 'var(--text-dim)',
+                      margin: 0,
+                    }}
+                  >
+                    {gb.hint}
                   </p>
-                )}
-              </form>
+                  <input
+                    type="text"
+                    placeholder={gb.reasonPlaceholder}
+                    value={banReason}
+                    onChange={(e) => setBanReason(e.target.value)}
+                    className="admin-input"
+                    required
+                    minLength={5}
+                  />
+                  <button
+                    type="submit"
+                    className="admin-btn-danger"
+                    disabled={actionLoading}
+                  >
+                    {gb.button}
+                  </button>
+                </form>
+              )}
+
+              {/* Danger Zone — Unban */}
+              {isBanned && (
+                <form
+                  onSubmit={handleUnban}
+                  style={{
+                    marginTop: '1.5rem',
+                    padding: '1rem',
+                    background: 'rgba(245, 158, 11, 0.06)',
+                    border: '1px solid rgba(245, 158, 11, 0.25)',
+                    borderRadius: '0.75rem',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.75rem',
+                  }}
+                >
+                  <h4
+                    style={{
+                      margin: 0,
+                      color: 'var(--accent-gold)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                    }}
+                  >
+                    <ShieldCheck size={16} />
+                    {gu.heading}
+                  </h4>
+                  <p
+                    style={{
+                      fontSize: '0.75rem',
+                      color: 'var(--text-dim)',
+                      margin: 0,
+                    }}
+                  >
+                    {(gu.bannedOnTemplate || '')
+                      .replace('{date}', formatDate(user.banned_at))
+                      .replace('{reason}', user.banned_reason || gu.noReason)}
+                  </p>
+                  <p
+                    style={{
+                      fontSize: '0.75rem',
+                      color: 'var(--text-dim)',
+                      margin: 0,
+                    }}
+                  >
+                    {gu.hint}
+                  </p>
+                  <input
+                    type="text"
+                    placeholder={gu.notePlaceholder}
+                    value={unbanNote}
+                    onChange={(e) => setUnbanNote(e.target.value)}
+                    className="admin-input"
+                  />
+                  <button
+                    type="submit"
+                    className="admin-btn-warning"
+                    disabled={actionLoading}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <ShieldCheck size={14} />
+                    {actionLoading ? gu.unbanning : gu.button}
+                  </button>
+                </form>
+              )}
             </div>
           </>
-        )}
-
-        {/* ── Confirmation modal for enroll/unenroll ── */}
-        {confirmState && (
-          <div className="modal-overlay" onClick={() => setConfirmState(null)}>
-            <div
-              className="modal-content"
-              onClick={(event) => event.stopPropagation()}
-            >
-              <h3>
-                {confirmState.action === 'enroll'
-                  ? t.admin?.confirmEnrollTitle || 'Mark User as Enrolled?'
-                  : t.admin?.confirmUnenrollTitle || 'Unenroll User?'}
-              </h3>
-              <p>
-                {confirmState.action === 'enroll'
-                  ? t.admin?.confirmEnrollDesc ||
-                    'The user will gain full course access immediately.'
-                  : t.admin?.confirmUnenrollDesc ||
-                    'The user will lose course access. Referral earnings stay intact.'}
-              </p>
-              <div className="modal-actions">
-                <button
-                  className="btn-secondary"
-                  onClick={() => setConfirmState(null)}
-                  disabled={actionLoading}
-                >
-                  {t.admin?.cancel || 'Cancel'}
-                </button>
-                <button
-                  className={
-                    confirmState.action === 'enroll'
-                      ? 'btn-primary'
-                      : 'btn-danger'
-                  }
-                  onClick={handleConfirmedAction}
-                  disabled={actionLoading}
-                >
-                  {actionLoading
-                    ? t.admin?.processing || 'Processing...'
-                    : t.admin?.confirm || 'Confirm'}
-                </button>
-              </div>
-            </div>
-          </div>
         )}
       </AdminLayout>
     </>

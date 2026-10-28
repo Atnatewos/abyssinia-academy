@@ -1,6 +1,10 @@
 /**
  * @fileoverview Reusable Modal Component
- * Glassmorphism modal with backdrop blur for overlays
+ *
+ * Renders an accessible dialog overlay using the platform's existing
+ * design tokens. Zero Tailwind dependencies — all styling goes through
+ * the shared `.modal-*` classes defined in admin.css and components.css.
+ *
  * Path: apps/web/components/shared/Modal.jsx
  */
 
@@ -8,19 +12,25 @@ import { useEffect } from 'react';
 import { X } from 'lucide-react';
 
 /**
- * Modal - Accessible modal dialog with glassmorphism styling
+ * Modal — Accessible dialog with backdrop blur.
+ *
  * @param {object} props
- * @param {boolean} props.isOpen - Whether modal is visible
- * @param {Function} props.onClose - Close handler
- * @param {React.ReactNode} props.children - Modal content
- * @param {string} [props.title] - Modal title
- * @param {string} [props.className] - Additional classes for content wrapper
- * @param {boolean} [props.showClose=true] - Show close button
+ * @param {boolean} props.isOpen         - Whether the modal is visible
+ * @param {Function} props.onClose       - Called on backdrop click, X, Escape
+ * @param {React.ReactNode} props.children - Modal body content
+ * @param {string}  [props.title]        - Optional aria-label fallback
+ * @param {string}  [props.className]    - Extra classes for the card
+ * @param {boolean} [props.showClose=true] - Show the X close button
  */
-const Modal = ({ isOpen, onClose, children, title, className = '', showClose = true }) => {
-  /**
-   * Close modal on Escape key press
-   */
+const Modal = ({
+  isOpen,
+  onClose,
+  children,
+  title,
+  className = '',
+  showClose = true,
+}) => {
+  /* Escape-to-close + body scroll lock while the modal is mounted */
   useEffect(() => {
     const handleEscape = (e) => {
       if (e.key === 'Escape') onClose();
@@ -40,28 +50,26 @@ const Modal = ({ isOpen, onClose, children, title, className = '', showClose = t
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* Backdrop */}
+    <div
+      className="modal-overlay"
+      onClick={onClose}
+      role="presentation"
+    >
       <div
-        className="absolute inset-0 bg-slate-950/80 backdrop-blur-md"
-        onClick={onClose}
-      />
-
-      {/* Modal Content */}
-      <div
-        className={`glass-card rounded-3xl max-w-lg w-full border-amber-500/40 relative shadow-2xl z-10 max-h-[90vh] overflow-y-auto custom-scrollbar ${className}`}
-        style={{ padding: '1.5rem' }}
+        className={`modal-content ${className}`.trim()}
+        onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
         aria-label={title || 'Dialog'}
       >
         {showClose && (
           <button
+            type="button"
             onClick={onClose}
-            className="absolute top-4 right-4 text-slate-400 hover:text-white font-bold text-sm transition-colors"
+            className="modal-close-btn"
             aria-label="Close"
           >
-            <X className="w-5 h-5" />
+            <X size={20} />
           </button>
         )}
 

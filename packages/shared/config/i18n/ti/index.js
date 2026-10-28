@@ -10,40 +10,46 @@
  *   2. require it below
  *   3. Spread it into the exported object
  *
- * Path: packages/shared/config/i18n/ti/index.js
+/**
+ * @fileoverview Amharic — i18n Aggregator
+ *
+ * Path: packages/shared/config/i18n/am/index.js
  */
+
 const common = require('./common');
 const landing = require('./landing');
 const courses = require('./courses');
-const portal = require('./portal');
 const pricing = require('./pricing');
 const checkout = require('./checkout');
 const checkoutModal = require('./checkoutModal');
-const auth = require('./auth');
-const admin = require('./admin');
-const phasePurchase = require('./phasePurchase');
+const portal = require('./portal');
 const profile = require('./profile');
 const referrals = require('./referrals');
 const discounts = require('./discounts');
+const admin = require('./admin');
+const agents = require('./agents');
+const auth = require('./auth');
 const contact = require('./contact');
 const notifications = require('./notifications');
-const agents = require('./agents');
+const phasePurchase = require('./phasePurchase');
+const confirmations = require('./confirmations');
 
 module.exports = {
   ...common,
   ...landing,
   ...courses,
-  ...portal,
   ...pricing,
   ...checkout,
   ...checkoutModal,
-  ...auth,
-  ...admin,
-  ...phasePurchase,
+  ...portal,
   ...profile,
   ...referrals,
   ...discounts,
+  ...admin,
+  ...agents,
+  ...auth,
   ...contact,
   ...notifications,
-  ...agents,
+  ...phasePurchase,
+  ...confirmations,
 };

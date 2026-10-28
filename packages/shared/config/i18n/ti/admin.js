@@ -1,12 +1,11 @@
 /**
- * @fileoverview Tigrinya — Admin Namespace
+ * @fileoverview ትግርኛ — Admin Namespace
  *
  * Contains admin-specific UI copy including:
  *   - Coming Soon stub labels (one per unfinished CRUD route)
- *   - Announcements composer labels (audience, severity, preview, modals)
- *   - Targeted user picker labels (search, chips, empty states)
- *   - History tab labels (columns, pagination, empty state)
- *   - Shared stub copy (eyebrow, heading, description, CTAs)
+ *   - Announcements composer labels
+ *   - Agent management labels
+ *   - God Mode UI (user detail page: wallet, agent, ban/unban, impersonation)
  *
  * All copy is config-driven — no hardcoded strings in JSX components.
  *
@@ -16,119 +15,277 @@
 module.exports = {
   admin: {
     comingSoon: {
-      eyebrow: 'ስራሕ ኣብ ምስራሕ',
-      heading: 'እዚ ተግባር ይስራሕ ኣሎ',
+      eyebrow: 'ኣብ ስራሕ ይገበር ኣሎ',
+      heading: 'እዚ ባህሪ ይስራሕ ኣሎ',
       description:
-        'ጋንታና ንዚ ገጽ ዝተመርቐ ተመክሮ ይሰርሕ ኣሎ። ብዝቕረበ ግዜ ምስ ምሉእ ምፍጣር፣ ምሕዳስን ምውጋድን ይርከብ።',
-      subtitle: 'እዚ ተግባር ብዝቕረበ ግዜ ይመጽእ',
-      contactSupport: 'ሕጂ ትደልዮ? ምስ ደገፍ ተራኸብ',
-      supportEmail: 'support@abyssinia-academy.com',
-      footerNote: 'ጋንታ ስነ-መሕንዚ ኣብ ልዕሊኡ ይሰርሕ ኣሎ — እዚ ገጽ ኣብ ዝመጽእ ምሕዳስ ክኸፈት እዩ።',
-      defaultTitle: 'ተግባር ብዝቕረበ ግዜ ይመጽእ',
+        'ጋንታና ንዚ ገጽ ዝተጣርየ ተመክሮ ንምስራሕ ይጽዕር ኣሎ። ብቕሩብ ግዜ ምሉእ ምፍጣር፣ ምሕዳስን ምስራዝን ሒደታት ጋር ክርከብ እዩ።',
+      subtitle: 'እዚ ባህሪ ብቕሩብ ግዜ ይመጽእ',
+      contactSupport: 'ሕጂ እዚ የድልየካ? ደገፍ ተራኸብ',
+      supportEmail: process.env.SUPPORT_EMAIL || 'support@abyssinia-academy.com',
+      footerNote: 'ጋንታ ምህንድስና ኣብኡ ኣሎ — እዚ ገጽ ኣብ ዝመጽእ ምሕዳስ ክነቅሕ እዩ።',
+      defaultTitle: 'ባህሪ ብቕሩብ ግዜ ይመጽእ',
       defaultBack: 'ተመለስ',
 
-      /* Per-route titles */
-      editCourse: 'ትምህርቲ ኣስተዳድር',
+      editCourse: 'ኮርስ ኣርትዕ',
       addVideo: 'ቪድዮ ወስኽ',
-      editVideo: 'ቪድዮ ኣስተዳድር',
-      addDiscussion: 'ዝርርብ ወስኽ',
-      editDiscussion: 'ዝርርብ ኣስተዳድር',
+      editVideo: 'ቪድዮ ኣርትዕ',
+      addDiscussion: 'ምይይጥ ወስኽ',
+      editDiscussion: 'ምይይጥ ኣርትዕ',
       addDiscount: 'ሓድሽ ኮድ ቅናሽ',
       viewDiscount: 'ዝርዝር ቅናሽ',
-      editDiscount: 'ኮድ ቅናሽ ኣስተዳድር',
+      editDiscount: 'ኮድ ቅናሽ ኣርትዕ',
       viewAdmin: 'ዝርዝር ኣማሓዳሪ',
 
-      /* Per-route back button labels */
-      backToCourses: 'ናብ ትምህርትታት ተመለስ',
+      backToCourses: 'ናብ ኮርሳት ተመለስ',
       backToVideos: 'ናብ ቪድዮታት ተመለስ',
-      backToDiscussions: 'ናብ ዝርርብ ተመለስ',
+      backToDiscussions: 'ናብ ምይይጣት ተመለስ',
       backToDiscounts: 'ናብ ቅናሻት ተመለስ',
       backToAdmins: 'ናብ ኣማሓደርቲ ተመለስ',
     },
 
     announcements: {
-      /* Nav + page chrome */
       navLabel: 'ምልክታት',
       pageTitle: 'ምልክታት',
-      pageSubtitle: 'ንኩሎም ተጠቀምቲ፣ ንዝተመዘገቡ ተጠቀምቲ፣ ወይ ንተመረጹ ተጠቀምቲ መልእኽቲ ኣስፋሕ',
+      pageSubtitle: 'ናብ ኩሎም ተጠቀምቲ፣ ናብ ዝተመዝገቡ ተጠቀምቲ ወይ ናብ ዝተወሰኑ ተጠቀምቲ መልእኽትታት ኣመሓላልፍ',
       backToDashboard: 'ናብ ዳሽቦርድ ተመለስ',
 
-      /* Tabs */
-      tabCompose: 'ኣዘጋጅ',
+      tabCompose: 'ጽሓፍ',
       tabHistory: 'ታሪኽ',
 
-      /* Composer labels */
-      audienceLabel: 'ናብ',
+      audienceLabel: 'ላእኽ ናብ',
       audienceAll: 'ኩሎም ተጠቀምቲ',
-      audienceEnrolled: 'ዝተመዘገቡ ጥራይ',
-      audienceTargeted: 'ተመረጹ ተጠቀምቲ',
+      audienceEnrolled: 'ዝተመዝገቡ ጥራይ',
+      audienceTargeted: 'ዝተወሰኑ ተጠቀምቲ',
       audienceSingle: 'ሓደ ተጠቃሚ',
 
-      /* Targeted user picker */
       targetedLabel: 'ተጠቀምቲ ምረጽ',
-      targetedCountSuffix: 'ተመሪጹ',
-      targetedPlaceholder: 'ብስም፣ ተሌፎን፣ ወይ ኢመይል ድለ...',
-      targetedHint: 'ብውሕዱ 2 ፊደላት ኣእቱ። ንምውሳኽ ዝኾነ ውጽኢት ጠውቕ። ክንደይ ተጠቀምቲ ከም እትደልዮ ክትመርጽ ትኽእል።',
+      targetedCountSuffix: 'ተመሪጾም',
+      targetedPlaceholder: 'ብስም፣ ብተሌፎን ወይ ብኢመይል ድለ…',
+      targetedHint: 'እንተወሓደ 2 ፊደላት ኣእቱ። ንምውሳኽ ዝኾነ ውጽኢት ጠውቕ። ክንደይ ተጠቀምቲ ከም ትደሊ ክትመርጽ ትኽእል።',
       removeUser: 'ተጠቃሚ ኣውጽእ',
-      noResults: 'ምስ ድሌትካ ዝሰማማዕ ተጠቃሚ የለን',
+      noResults: 'ምስ ምድላይካ ዝሰማማዕ ተጠቃሚ የለን',
       noEmail: 'ኢመይል የለን',
 
       singlePlaceholder: 'ተሌፎን ወይ ኢመይል ኣእቱ',
-      singleHint: 'ምስ ቑጽሪ ተሌፎን ወይ ኣድራሻ ኢመይል ይሰማማዕ',
+      singleHint: 'ምስ ቁጽሪ ተሌፎን ወይ ኣድራሻ ኢመይል ይሰማማዕ',
 
       titleLabel: 'ኣርእስቲ',
-      titlePlaceholder: 'ኣብነት፦ ምልክታ ምጅማር ሓድሽ ትምህርቲ',
+      titlePlaceholder: 'ኣብነት፣ ሓድሽ መጀመርታ ኮርስ ምልክት',
       bodyLabel: 'መልእኽቲ',
-      bodyPlaceholder: 'መልእኽቲ ምልክታኻ ጽሓፍ...',
+      bodyPlaceholder: 'መልእኽቲ ምልክትካ ጽሓፍ…',
 
-      severityLabel: 'ጽንኩርነት',
+      severityLabel: 'ህጹጽነት',
       severityInfo: 'ሓበሬታ',
       severitySuccess: 'ዓወት',
       severityWarning: 'መጠንቀቕታ',
-      severityCritical: 'ኣደዳዊ',
+      severityCritical: 'ህጹጽ',
 
-      /* Actions */
-      sendBtn: 'ምልክታ ስደድ',
-      sending: 'ይልእኽ ኣሎ...',
+      sendBtn: 'ምልክት ላእኽ',
+      sending: 'ይለእኽ ኣሎ…',
       cancel: 'ሰርዝ',
 
-      /* Preview panel */
-      previewLabel: 'ቀጥታ ቅድመ-ርእይቶ',
-      previewTitlePlaceholder: 'ኣርእስትኻ ኣብዚ ይርአ',
-      previewBodyPlaceholder: 'መልእኽትኻ ኣብዚ ይርአ',
+      previewLabel: 'ቀጥታ ቅድመ ትርኢት',
+      previewTitlePlaceholder: 'ኣርእስትኻ ኣብዚ ክረአ እዩ',
+      previewBodyPlaceholder: 'መልእኽትኻ ኣብዚ ክረአ እዩ',
       previewTimeJustNow: 'ሕጂ',
-      previewAudienceLabel: 'ተዓዘብቲ',
-      previewSeverityLabel: 'ጽንኩርነት',
-      previewWarning: 'ኩሎም ተቐበልቲ ነዚ ምልክታ ኣብ ሳጹን መልእኽቶም ክቕበሉ እዮም።',
+      previewAudienceLabel: 'ተመልከትቲ',
+      previewSeverityLabel: 'ህጹጽነት',
+      previewWarning: 'ኩሎም ተቐበልቲ ነዚ ምልክት ኣብ ሳጹን መልእኽቶም ከም ምልክት ክቕበልዎ እዮም።',
 
-      /* Confirm modal */
       confirmTitle: 'ስርጭት ኣረጋግጽ',
       confirmBody:
-        'እዚ ምልክታ ክትሰድድ ትኸውን። እዚ ተግባር ክመለስ ኣይኽእልን እሞ ምስ ተላእከ ክስረዝ ኣይኽእልን።',
+        'ነዚ ምልክት ክትልእኽ ኢኻ። እዚ ተግባር ክምለስ ኣይኽእልን እሞ ሓንሳብ ምስ ተላእከ ክምለስ ኣይኽእልን።',
       confirmInputLabel: 'ንምርግጋጽ SEND ጽሓፍ',
-      confirmBtn: 'ስርጭት ስደድ',
+      confirmBtn: 'ስርጭት ላእኽ',
 
-      /* History tab */
       historyTitle: 'ታሪኽ ስርጭት',
       refreshHistory: 'ኣሓድስ',
-      historyEmpty: 'ክሳብ ሕጂ ምልክታ ኣይተላእከን።',
+      historyEmpty: 'ክሳብ ሕጂ ዝኾነ ምልክት ኣይተላእከን።',
       historyLoadFailed: 'ታሪኽ ስርጭት ምጽዓን ኣይተኻእለን።',
       historyColWhen: 'መዓስ',
       historyColTitle: 'ኣርእስቲ',
-      historyColAudience: 'ተዓዘብቲ',
+      historyColAudience: 'ተመልከትቲ',
       historyColRecipients: 'ተቐበልቲ',
-      historyColSentBy: 'ተላኢኹ ብ',
+      historyColSentBy: 'ዝተላእከ ብ',
 
-      /* Relative time formatting for history */
       timeJustNow: 'ሕጂ',
-      timeMinutesAgo: 'ቅድሚ {count} ደቒቕ',
+      timeMinutesAgo: 'ቅድሚ {count} ደቓይቕ',
       timeHoursAgo: 'ቅድሚ {count} ሰዓት',
       timeDaysAgo: 'ቅድሚ {count} መዓልቲ',
 
-      /* Toasts + errors */
-      successToast: 'ምልክታ ናብ {count} ተቐባሊ(ት) ተላኢኹ',
-      validationFailed: 'በጃኻ ኩሎም ኣስፈላጊ መስኮታት ምልኡ',
-      sendFailed: 'ምልክታ ምስዳድ ኣይተኻእለን። በጃኻ እንደገና ፈትን።',
+      successToast: 'ምልክት ናብ {count} ተቐበልቲ ተላእከ',
+      validationFailed: 'በጃኻ ኩሎም ኣስፈላጊ መስኮታት ምላእ',
+      sendFailed: 'ምልክት ምልኣኽ ኣይተኻእለን። በጃኻ እንደገና ፈትን።',
+    },
+
+    /* ── Agent Management ── */
+    agentsTitle: 'ምሕደራ ወኪል',
+    agentsSubtitle: 'መጠን ኮሚሽን ወኪል ኣዋቕር እሞ ኣፈጻጽማ ተመልከት።',
+    agentName: 'ስም ወኪል',
+    agentCode: 'ኮድ ወኪል',
+    agentSales: 'ጠቕላላ ሽያጭ',
+    agentEarned: 'ጠቕላላ ኣታዊ',
+    commissionType: 'ዓይነት ኮሚሽን',
+    commissionValue: 'ዋጋ ኮሚሽን',
+    agentStatus: 'ኩነታት',
+
+    /* ═══════════════════════════════════════════════════════════════════════
+       GOD MODE — User Detail Page
+       Every string rendered by apps/web/pages/admin/users/[id]/index.jsx
+       ═══════════════════════════════════════════════════════════════════════ */
+    godMode: {
+      /* Page chrome */
+      backToUsers: 'ናብ ተጠቀምቲ ተመለስ',
+      userDetailsTitle: 'ዝርዝር ተጠቃሚ',
+      loadingUser: 'ሓበሬታ ተጠቃሚ ይጽዕን ኣሎ...',
+      userNotFoundTitle: 'ተጠቃሚ ኣይተረኸበን',
+      userNotFoundSubtitle: 'ዝተሓተተ ተጠቃሚ የለን።',
+      unknownUser: 'ዘይተፈልጠ',
+
+      /* Header meta */
+      joined: 'ዝተጸምበረሉ',
+      notAvailable: 'የለን',
+      emDash: '—',
+
+      /* Status badges */
+      statusBanned: 'ዝተኸልከለ',
+      statusEnrolled: 'ዝተመዝገበ',
+      statusRegistered: 'ዝተመዝገበ ጥራይ',
+
+      /* Header actions */
+      unenroll: 'ካብ ምዝገባ ኣውጽእ',
+      markEnrolled: 'ከም ዝተመዝገበ ምልክት ግበር',
+
+      /* Stats row */
+      stats: {
+        directReferrals: 'ቀጥታ ሪፈራላት',
+        teamSize: 'ዓቐን ጋንታ',
+        payingDirect: 'ዝኸፍሉ ቀጥታ',
+        lifetimeEarned: 'ኣታዊ ዕድሚ ህይወት',
+      },
+
+      /* Tabs */
+      tabs: {
+        overview: 'ጠቕላላ ትርኢት',
+        walletAndAgent: 'ዋሌትን ወኪልን',
+        godMode: 'God Mode',
+      },
+
+      /* Overview tab */
+      overview: {
+        enrollmentHistory: 'ታሪኽ ምዝገባ',
+        noEnrollments: 'ክሳብ ሕጂ ምዝገባ የለን።',
+        referralHistory: 'ታሪኽ ሪፈራል',
+        noReferrals: 'ክሳብ ሕጂ ሪፈራል የለን።',
+        fullCoursePass: 'ምሉእ ፓስ ኮርስ',
+        phaseBundle: 'ጥርዓት ደረጃ',
+      },
+
+      /* Wallet tab */
+      wallet: {
+        heading: 'ዋሌት',
+        currentBalance: 'ህሉው ተረፍ ሂሳብ',
+        totalEarned: 'ጠቕላላ ኣታዊ',
+        totalWithdrawn: 'ጠቕላላ ወጻኢ',
+        pendingWithdrawal: 'ኣብ ትጽቢት ዘሎ ወጻኢ',
+        manualAdjustment: 'ብኢድ ምትዕርራይ ዋሌት',
+        adjustmentHint:
+          'ኣወንታዊ ቁጽርታት ነቲ ዋሌት ይውስኹ። ኣሉታዊ ቁጽርታት ይመልሱ። ≥ 10,000 ብር ምትዕርራያት ንምርግጋጽ ADJUST ምጽሓፍ ይሓትታሉ።',
+        amountPlaceholder: 'መጠን ብብር (ኣብነት፣ 500 ወይ -500)',
+        reasonPlaceholder: 'ምኽንያት (እንተወሓደ 5 ፊደላት — ኣብ ኦዲት ይመዝገብ)',
+        applyAdjustment: 'ምትዕርራይ ተግብር',
+        applying: 'ይትግበር ኣሎ...',
+        currency: 'ብር',
+      },
+
+      /* Agent tab */
+      agent: {
+        heading: 'ኩነታት ወኪል',
+        agentCode: 'ኮድ ወኪል',
+        commissionType: 'ዓይነት ኮሚሽን',
+        commissionValue: 'ዋጋ ኮሚሽን',
+        agentActive: 'ወኪል ንጡፍ',
+        yes: 'እወ',
+        no: 'ኣይኮነን',
+        fixedType: 'ቀዋሚ',
+        percentageType: 'ብመቶኛ',
+        overrideHeading: 'መጠን ኮሚሽን ቅይር',
+        fixedOption: 'ቀዋሚ (ብሽያጭ ብር)',
+        percentageOption: 'መቶኛ (%)',
+        overridePlaceholderFixed: 'ኣብነት፣ 500',
+        overridePlaceholderPercentage: 'ኣብነት፣ 15',
+        overrideRate: 'መጠን ቅይር',
+        applying: 'ይትግበር ኣሎ...',
+      },
+
+      /* God Mode tab — impersonation */
+      impersonation: {
+        heading: 'ምስላን መእተውን',
+        hint:
+          'ናይ 5 ደቓይቕ ሊንክ ስሒር ይፈጥር። ኣብ ሓድሽ ታብ ይኽፈት — ክፍለ ግዜ ኣማሓዳሪኻ ከም ዘሎ ይጸንሕ።',
+        generateLink: 'ሊንክ ምስላ ፍጠር',
+        generateReset: 'ሊንክ ምቅይራ መሕለፊ ቃል ፍጠር',
+      },
+
+      /* God Mode tab — manual enrollment */
+      manualEnroll: {
+        heading: 'ብኢድ ምዝገባ',
+        hint:
+          'ብዘይ መዝገብ ክፍሊት ምሉእ መእተዊ ኮርስ ይህብ። ንጥሬ ገንዘብ ምዝገባታት ወይ ንናጻ ትምህርቲ ተጠቐመሉ።',
+        reasonPlaceholder: 'ምኽንያት (እንተወሓደ 5 ፊደላት — ኣብ ኦዲት ይመዝገብ)',
+        button: 'ምሉእ መእተዊ ኮርስ ሃብ',
+        enrolling: 'ይምዝገብ ኣሎ...',
+      },
+
+      /* God Mode tab — network & account */
+      network: {
+        heading: 'ኔትወርክን ኣካውንትን',
+        orphanButton: 'ካብ ዛፍ MLM ጥር',
+      },
+
+      /* Danger zone — ban form */
+      ban: {
+        heading: 'ኣደገኛ ክፍሊ — ምኽልካል',
+        hint:
+          'ነቲ ተጠቃሚ ይኽልክል እሞ ኮድታት ወኪልን ሪፈራልን ይስርዝ። እዚ ተግባር ይመዝገብ እሞ ካብ ታሕቲ ካብ ዘሎ ተግባር ምእላይ ክምለስ ይኽእል።',
+        reasonPlaceholder: 'ምኽንያት ምኽልካል (እንተወሓደ 5 ፊደላት)',
+        button: 'ተጠቃሚ ኣኽልክል',
+      },
+
+      /* Danger zone — unban form */
+      unban: {
+        heading: 'ተጠቃሚ ሕጂ ተኸልኪሉ ኣሎ',
+        bannedOnTemplate: 'ብ{date} ተኸልኪሉ — ምኽንያት: {reason}',
+        noReason: '—',
+        hint:
+          'ምእላይ መእተዊ ይመልስ እሞ ኮድታት ወኪልን ሪፈራልን እንደገና የንቀሳቕስ። እዚ ኣብ መዝገብ ኦዲት ይመዝገብ።',
+        notePlaceholder: 'ንመዝገብ ኦዲት ኣማራጺ መዘኻኸሪ',
+        button: 'ተጠቃሚ ካብ ምኽልካል ኣልይ',
+        unbanning: 'ካብ ምኽልካል ይኣልይ ኣሎ...',
+      },
+
+      /* Toasts */
+      toasts: {
+        statusUpdated: 'ኩነታት ተጠቃሚ ተሓዲሱ',
+        statusFailed: 'ኩነታት ምሕዳስ ኣይተኻእለን',
+        impersonationSuccess: 'ሊንክ ስሒር ተፈጢሩ — ኣብ ሓድሽ ታብ ይኽፈት ኣሎ',
+        impersonationFailed: 'ሊንክ ምስላ ምፍጣር ኣይተኻእለን',
+        resetSuccess: 'ሊንክ ምቅይራ ተፈጢሩ — ኣብ ሓድሽ ታብ ይኽፈት ኣሎ',
+        resetFailed: 'ሊንክ ምቅይራ ምፍጣር ኣይተኻእለን',
+        walletSuccessTemplate: 'ዋሌት ተስተኻኺሉ። ሓድሽ ተረፍ ሂሳብ: {balance} ብር',
+        walletFailed: 'ዋሌት ምስትኽኻል ኣይተኻእለን',
+        agentOverrideSuccess: 'መጠን ወኪል ብዓወት ተቐይሩ',
+        agentOverrideFailed: 'መጠን ወኪል ምቕያር ኣይተኻእለን',
+        orphanSuccess: 'ተጠቃሚ ካብ ዛፍ MLM ተጠሪሩ',
+        orphanFailed: 'ተጠቃሚ ምጥራር ኣይተኻእለን',
+        banSuccess: 'ተጠቃሚ ብዓወት ተኸልኪሉ',
+        banFailed: 'ተጠቃሚ ምኽልካል ኣይተኻእለን',
+        unbanSuccess: 'ተጠቃሚ ካብ ምኽልካል ብዓወት ተኣልዩ',
+        unbanFailed: 'ተጠቃሚ ካብ ምኽልካል ምእላይ ኣይተኻእለን',
+        enrollSuccess: 'ተጠቃሚ ብኢድ ተመዝጊቡ',
+        enrollFailed: 'ተጠቃሚ ምምዝጋብ ኣይተኻእለን',
+        loadError: 'ዝርዝር ተጠቃሚ ምጽዓን ኣይተኻእለን',
+      },
     },
   },
 };

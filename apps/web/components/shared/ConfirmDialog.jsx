@@ -1,69 +1,103 @@
 /**
  * @fileoverview Confirmation Dialog Component
- * Custom confirm dialog replacing browser's confirm()
+ *
+ * Default button labels come from the shared i18n confirmations
+ * namespace. Parent can override any label per-use.
+ *
  * Path: apps/web/components/shared/ConfirmDialog.jsx
  */
 
+import { useState, useEffect } from 'react';
+import { AlertTriangle, AlertCircle, CheckCircle2, Info } from 'lucide-react';
 import Modal from './Modal';
-import { AlertTriangle } from 'lucide-react';
+import { useLanguage } from '../../context/LanguageContext';
 
-/**
- * ConfirmDialog - Custom confirmation dialog (replaces browser confirm())
- * @param {object} props
- * @param {boolean} props.isOpen - Whether dialog is visible
- * @param {Function} props.onClose - Close handler
- * @param {Function} props.onConfirm - Confirm action handler
- * @param {string} props.title - Dialog title
- * @param {string} props.message - Dialog message
- * @param {string} [props.confirmText='Confirm'] - Confirm button text
- * @param {string} [props.cancelText='Cancel'] - Cancel button text
- * @param {string} [props.variant='warning'] - 'warning' | 'danger'
- * @param {boolean} [props.loading=false] - Show loading on confirm button
- */
+const VARIANT_CONFIG = {
+  default: { Icon: Info, tone: 'default' },
+  warning: { Icon: AlertTriangle, tone: 'warning' },
+  danger: { Icon: AlertCircle, tone: 'danger' },
+  success: { Icon: CheckCircle2, tone: 'success' },
+};
+
 const ConfirmDialog = ({
   isOpen,
   onClose,
   onConfirm,
   title,
   message,
-  confirmText = 'Confirm',
-  cancelText = 'Cancel',
+  confirmText,
+  cancelText,
   variant = 'warning',
   loading = false,
+  requireInput = null,
 }) => {
-  const variantStyles = {
-    warning: 'bg-amber-500 hover:bg-amber-400',
-    danger: 'bg-red-500 hover:bg-red-400',
-  };
+  const { t } = useLanguage();
+  const [inputValue, setInputValue] = useState('');
+
+  useEffect(() => {
+    if (isOpen) setInputValue('');
+  }, [isOpen]);
+
+  const config = VARIANT_CONFIG[variant] || VARIANT_CONFIG.warning;
+  const IconComponent = config.Icon;
+
+  const inputRequired =
+    typeof requireInput === 'string' && requireInput.length > 0;
+  const inputMatches = !inputRequired || inputValue === requireInput;
+  const confirmDisabled = loading || !inputMatches;
+
+  const resolvedConfirmText =
+    confirmText || t.confirmations?.defaults?.confirmText || 'Confirm';
+  const resolvedCancelText =
+    cancelText || t.confirmations?.defaults?.cancelText || 'Cancel';
+  const resolvedProcessing =
+    t.confirmations?.defaults?.processingText || 'Processing...';
+  const prefix = t.confirmations?.defaults?.requireInputPrefix || 'Type';
+  const suffix = t.confirmations?.defaults?.requireInputSuffix || 'to confirm:';
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} showClose={false}>
-      <div className="text-center space-y-4">
-        <div className="mx-auto w-12 h-12 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center">
-          <AlertTriangle className="w-6 h-6 text-amber-500" />
+      <div className={`confirm-dialog confirm-dialog-${config.tone}`}>
+        <div className={`confirm-dialog-icon confirm-dialog-icon-${config.tone}`}>
+          <IconComponent size={24} />
         </div>
 
-        <h3 className="text-lg font-extrabold text-slate-900 dark:text-white">
-          {title}
-        </h3>
+        <h3 className="confirm-dialog-title">{title}</h3>
+        {message && <p className="confirm-dialog-message">{message}</p>}
 
-        <p className="text-sm text-slate-600 dark:text-slate-400">
-          {message}
-        </p>
+        {inputRequired && (
+          <div className="confirm-dialog-input-block">
+            <label className="confirm-dialog-input-label">
+              {prefix} <strong>{requireInput}</strong> {suffix}
+            </label>
+            <input
+              type="text"
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              className="confirm-dialog-input"
+              autoComplete="off"
+              autoFocus
+              disabled={loading}
+            />
+          </div>
+        )}
 
-        <div className="flex items-center justify-center gap-3 pt-2">
+        <div className="confirm-dialog-actions">
           <button
+            type="button"
             onClick={onClose}
-            className="px-5 py-2 rounded-xl bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-sm font-bold hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors"
+            disabled={loading}
+            className="confirm-dialog-btn confirm-dialog-btn-cancel"
           >
-            {cancelText}
+            {resolvedCancelText}
           </button>
           <button
+            type="button"
             onClick={onConfirm}
-            disabled={loading}
-            className={`px-5 py-2 rounded-xl text-slate-950 text-sm font-bold transition-colors disabled:opacity-50 ${variantStyles[variant] || variantStyles.warning}`}
+            disabled={confirmDisabled}
+            className={`confirm-dialog-btn confirm-dialog-btn-${config.tone}`}
           >
-            {loading ? 'Processing...' : confirmText}
+            {loading ? resolvedProcessing : resolvedConfirmText}
           </button>
         </div>
       </div>

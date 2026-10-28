@@ -23,6 +23,7 @@
 @import './admin-mlm.css';
 @import './skeleton.css';
 @import './notifications.css';
+@import '../styles/confirm.css';
 
 /* ============================================================================
    CSS RESET
