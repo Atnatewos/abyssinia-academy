@@ -235,6 +235,19 @@ export const getConfig = () => loadConfig() || loadDefaults();
 export const getPlatform = () => getValue('platform', {});
 export const getPaymentConfig = () => getValue('payments', {});
 
+/**
+ * Theme configuration — single source of truth for the platform's
+ * default theme, storage key, and HTML signaling conventions.
+ * All values resolve from packages/shared/config/theme.config.js via
+ * the standard fallback chain.
+ *
+ * @returns {object} Theme config with defaultTheme, storageKey, etc.
+ */
+export const getThemeConfig = () => {
+  const defaults = loadDefaults();
+  return getValue('theme', defaults.theme);
+};
+
 /* ─────────────────────────────────────────────────────────────
  * LANDING PAGE ACCESSORS
  * ───────────────────────────────────────────────────────────── */

@@ -285,8 +285,24 @@ const defaultsConfig = {
     trustRules: { payoutIcon: 'Banknote' },
   },
 
+  /*
+   * i18n defaults
+   */
   i18n: {
-    defaultLanguage: process.env.DEFAULT_LANGUAGE || 'en',
+    defaultLanguage: 'en',
+  },
+
+  /*
+   * Theme defaults — used when theme.config.js is unavailable.
+   * Mirrors the shape of packages/shared/config/theme.config.js so the
+   * getThemeConfig() accessor always has a valid contract.
+   */
+  theme: {
+    defaultTheme: 'dark',
+    supportedThemes: ['dark', 'light'],
+    storageKey: 'theme',
+    lightClassName: 'light-theme',
+    dataAttribute: 'data-theme',
   },
 
   referrals: {

@@ -9,6 +9,7 @@ const platformConfig = require('./platform.config');
 const paymentsConfig = require('./payments.config');
 const coursesConfig = require('./courses.config');
 const themesConfig = require('./themes.config');
+const themeConfig = require('./theme.config');
 const i18nConfig = require('./i18n/index');
 const landingConfig = require('./landing.config');
 const phasesConfig = require('./phases.config');
@@ -22,6 +23,7 @@ module.exports = {
   payments: paymentsConfig,
   courses: coursesConfig,
   themes: themesConfig,
+  theme: themeConfig,
   i18n: i18nConfig,
   landing: landingConfig,
   phases: phasesConfig,
