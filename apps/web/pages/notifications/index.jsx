@@ -4,22 +4,14 @@
  * /notifications route — dedicated page for viewing all notifications
  * with advanced filtering, grouping, and management.
  *
- * Features:
- *   - Filter chips: All, Unread, Payments, Referrals, Enrollment, Security
- *   - Date grouping: Today, Yesterday, This Week, Older
- *   - Mark individual or all as read
- *   - Clear read (bulk cleanup) + manual refresh
- *   - Per-item dismiss (×) on every row
- *   - Empty state with illustration + loading skeletons
- *
- * Uses useNotifications hook for state + visibility-based polling.
- * All copy from i18n; icons from config.
+ * All styling uses Tailwind utilities mapped to the unified design tokens
+ * in themes.css. No dedicated stylesheet is required.
  *
  * Path: apps/web/pages/notifications/index.jsx
  */
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, RefreshCw, CheckCheck, Trash2, Inbox } from 'lucide-react';
+import { ArrowLeft, RefreshCw, CheckCheck, Trash2, Inbox, X } from 'lucide-react';
 import SEOHead from '../../components/shared/SEOHead';
 import PageLayout from '../../components/shared/PageLayout';
 import useNotifications from '../../hooks/useNotifications';
@@ -38,7 +30,6 @@ import {
   GraduationCap,
   BookOpen,
   ShieldOff,
-  X,
 } from 'lucide-react';
 
 /* Icon map from config type.icon → Lucide component */
@@ -59,9 +50,6 @@ const ICON_MAP = {
 
 /**
  * Group notifications by date bucket (today, yesterday, thisWeek, older).
- * @param {Array} notifications - Notification objects with created_at
- * @param {object} labels - i18n labels for group headers
- * @returns {Array<{label: string, items: Array}>}
  */
 const groupByDate = (notifications, labels) => {
   const now = new Date();
@@ -96,9 +84,6 @@ const groupByDate = (notifications, labels) => {
 
 /**
  * Format relative time string (e.g., "2m ago", "1h ago", "Yesterday").
- * @param {string} dateString - ISO timestamp
- * @param {object} labels - i18n timeAgo labels
- * @returns {string} Formatted time string
  */
 const formatTimeAgo = (dateString, labels) => {
   const now = new Date();
@@ -118,9 +103,6 @@ const formatTimeAgo = (dateString, labels) => {
 
 /**
  * Resolve i18n title/body from keys + tokens.
- * @param {object} notification - Notification object
- * @param {object} t - Full i18n translation object
- * @returns {{title: string, body: string}}
  */
 const resolveI18n = (notification, t) => {
   const resolve = (key, tokens) => {
@@ -165,9 +147,6 @@ const NotificationsPage = () => {
     { id: 'unread', labelKey: 'notification.filter.unread' },
   ];
 
-  /**
-   * Resolve i18n label from dot-notation key.
-   */
   const resolveLabel = (key) => {
     const parts = key.split('.');
     let value = t;
@@ -178,7 +157,6 @@ const NotificationsPage = () => {
     return value || key;
   };
 
-  /* Filter notifications by active category */
   const filteredNotifications = useMemo(() => {
     if (activeFilter === 'all') return notifications;
     if (activeFilter === 'unread') return notifications.filter((n) => !n.is_read);
@@ -201,60 +179,82 @@ const NotificationsPage = () => {
     }
   };
 
+  const severityBorder = {
+    success: 'border-l-success',
+    warning: 'border-l-warning',
+    critical: 'border-l-error',
+    info: 'border-l-info',
+  };
+
+  const severityIconBg = {
+    success: 'bg-success/15 text-success',
+    warning: 'bg-warning/15 text-warning',
+    critical: 'bg-error/15 text-error',
+    info: 'bg-info/15 text-info',
+  };
+
   return (
     <>
       <SEOHead title={labels.bell || 'Notifications'} />
       <PageLayout>
-        <div className="notifications-page">
-          <div className="notifications-header">
-            <Link href="/profile" className="auth-back-link">
+        <div className="w-full max-w-3xl mx-auto px-4 py-8 md:px-6 md:py-10">
+          
+          <div className="flex flex-col gap-5 mb-8">
+            <Link href="/profile" className="inline-flex items-center gap-1.5 text-sm font-semibold text-text-muted hover:text-accent transition-colors w-fit">
               <ArrowLeft size={16} />
               <span>{labels.backToProfile || 'Back to Profile'}</span>
             </Link>
 
-            <div className="notifications-title-row">
-              <h1>{labels.bell || 'Notifications'}</h1>
-              <div className="notifications-actions">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <h1 className="m-0 text-2xl md:text-3xl font-extrabold text-text-main">
+                {labels.bell || 'Notifications'}
+              </h1>
+              
+              <div className="flex flex-wrap items-center gap-2">
                 <button
                   type="button"
-                  className="btn-secondary"
                   onClick={clearRead}
                   disabled={readCount === 0 || loading}
                   aria-label={labels.clearRead || 'Clear read'}
+                  className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg bg-surface-secondary border border-border-light text-xs font-bold text-text-main transition-colors hover:bg-surface-hover disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <Trash2 size={16} />
+                  <Trash2 size={14} />
                   <span>{labels.clearRead || 'Clear read'}</span>
                 </button>
                 <button
                   type="button"
-                  className="btn-secondary"
                   onClick={markAllRead}
                   disabled={unreadCount === 0 || loading}
                   aria-label={labels.markAllRead || 'Mark all as read'}
+                  className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg bg-surface-secondary border border-border-light text-xs font-bold text-text-main transition-colors hover:bg-surface-hover disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <CheckCheck size={16} />
+                  <CheckCheck size={14} />
                   <span>{labels.markAllRead || 'Mark all as read'}</span>
                 </button>
                 <button
                   type="button"
-                  className="btn-secondary"
                   onClick={refresh}
                   disabled={loading}
                   aria-label={labels.refresh || 'Refresh'}
+                  className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg bg-surface-secondary border border-border-light text-xs font-bold text-text-main transition-colors hover:bg-surface-hover disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <RefreshCw size={16} className={loading ? 'spin' : ''} />
+                  <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
                   <span>{labels.refresh || 'Refresh'}</span>
                 </button>
               </div>
             </div>
 
-            <div className="notifications-filters">
+            <div className="flex flex-wrap items-center gap-2">
               {categories.map((cat) => (
                 <button
                   key={cat.id}
                   type="button"
-                  className={`notification-filter-chip ${activeFilter === cat.id ? 'active' : ''}`}
                   onClick={() => setActiveFilter(cat.id)}
+                  className={`px-4 py-2 rounded-full text-[0.8125rem] font-bold transition-all duration-200 cursor-pointer border ${
+                    activeFilter === cat.id
+                      ? 'bg-accent border-accent text-text-inverse'
+                      : 'bg-surface-secondary border-border-light text-text-muted hover:bg-surface-hover hover:border-border-hover hover:text-text-main'
+                  }`}
                 >
                   {resolveLabel(cat.labelKey)}
                 </button>
@@ -262,70 +262,88 @@ const NotificationsPage = () => {
             </div>
           </div>
 
-          <div className="notifications-content">
+          <div className="flex flex-col">
             {loading && notifications.length === 0 ? (
-              <div className="notifications-loading">
+              <div className="flex flex-col gap-2">
                 {Array.from({ length: 5 }).map((_, i) => (
-                  <div key={`notif-shimmer-${i}`} className="notification-item-shimmer">
-                    <div className="shimmer" style={{ width: '2.5rem', height: '2.5rem', borderRadius: '50%' }} />
-                    <div style={{ flex: 1 }}>
-                      <span className="shimmer" style={{ width: '60%', height: '1rem', display: 'block', marginBottom: '0.5rem' }} />
-                      <span className="shimmer" style={{ width: '80%', height: '0.875rem', display: 'block' }} />
+                  <div key={`notif-shimmer-${i}`} className="flex items-start gap-3.5 p-4 rounded-xl bg-surface-secondary border border-border-light animate-pulse">
+                    <div className="w-10 h-10 rounded-full bg-bg-skeleton shrink-0" />
+                    <div className="flex-1 pt-1">
+                      <div className="w-2/5 h-3.5 bg-bg-skeleton rounded mb-2.5" />
+                      <div className="w-4/5 h-3 bg-bg-skeleton rounded" />
                     </div>
                   </div>
                 ))}
               </div>
             ) : filteredNotifications.length === 0 ? (
-              <div className="notifications-empty">
-                <Inbox size={64} />
-                <h2>{labels.empty || "You're all caught up!"}</h2>
-                <p>{labels.emptySubtitle || 'New notifications will appear here'}</p>
+              <div className="flex flex-col items-center justify-center p-12 md:p-20 gap-4 text-center">
+                <Inbox size={64} className="text-text-dim opacity-40" />
+                <h2 className="m-0 text-xl font-extrabold text-text-main">
+                  {labels.empty || "You're all caught up!"}
+                </h2>
+                <p className="m-0 text-sm text-text-muted">
+                  {labels.emptySubtitle || 'New notifications will appear here'}
+                </p>
               </div>
             ) : (
               groups.map((group) => (
-                <div key={group.label} className="notification-group">
-                  <h3 className="notification-group-label">{group.label}</h3>
-                  {group.items.map((notification) => {
-                    const Icon = ICON_MAP[notification.icon] || CheckCircle;
-                    const { title, body } = resolveI18n(notification, t);
-                    const timeAgo = formatTimeAgo(notification.created_at, labels.timeAgo || {});
+                <div key={group.label} className="mb-6 last:mb-0">
+                  <h3 className="m-0 px-1 py-2 text-[0.6875rem] font-extrabold tracking-[0.08em] uppercase text-text-dim">
+                    {group.label}
+                  </h3>
+                  <div className="flex flex-col gap-2">
+                    {group.items.map((notification) => {
+                      const Icon = ICON_MAP[notification.icon] || CheckCircle;
+                      const { title, body } = resolveI18n(notification, t);
+                      const timeAgo = formatTimeAgo(notification.created_at, labels.timeAgo || {});
 
-                    return (
-                      <div
-                        key={notification.id}
-                        className={`notification-item ${!notification.is_read ? 'unread' : ''} severity-${notification.severity}`}
-                      >
-                        <Link
-                          href={notification.link || '#'}
-                          className="notification-item-link"
-                          onClick={() => handleNotificationClick(notification)}
+                      return (
+                        <div
+                          key={notification.id}
+                          className={`relative flex items-start border border-border-light border-l-[3px] rounded-xl bg-surface-primary transition-colors duration-200 group ${
+                            !notification.is_read ? 'bg-surface-secondary' : ''
+                          } ${severityBorder[notification.severity] || 'border-l-transparent'} hover:bg-surface-hover`}
                         >
-                          <div className={`notification-icon ${notification.severity}`}>
-                            <Icon size={24} />
-                          </div>
-                          <div className="notification-content">
-                            <p className="notification-title">{title}</p>
-                            <p className="notification-body">{body}</p>
-                            <span className="notification-time">{timeAgo}</span>
-                          </div>
-                        </Link>
-                        <button
-                          type="button"
-                          className="notification-dismiss"
-                          onClick={(event) => {
-                            event.preventDefault();
-                            event.stopPropagation();
-                            dismiss(notification.id);
-                          }}
-                          aria-label={labels.dismiss || 'Dismiss'}
-                          title={labels.dismiss || 'Dismiss'}
-                        >
-                          <X size={14} />
-                        </button>
-                        {!notification.is_read && <span className="notification-unread-dot" />}
-                      </div>
-                    );
-                  })}
+                          <Link
+                            href={notification.link || '#'}
+                            className="flex items-start gap-4 flex-1 min-w-0 px-5 py-4 text-inherit"
+                            onClick={() => handleNotificationClick(notification)}
+                          >
+                            <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${severityIconBg[notification.severity] || severityIconBg.info}`}>
+                              <Icon size={20} />
+                            </div>
+                            <div className="flex-1 min-w-0 flex flex-col gap-1">
+                              <p className={`m-0 text-sm text-text-main truncate ${!notification.is_read ? 'font-extrabold' : 'font-semibold'}`}>
+                                {title}
+                              </p>
+                              <p className="m-0 text-[0.8125rem] text-text-muted leading-relaxed line-clamp-2">
+                                {body}
+                              </p>
+                              <span className="text-xs text-text-dim mt-1">
+                                {timeAgo}
+                              </span>
+                            </div>
+                          </Link>
+                          <button
+                            type="button"
+                            className="absolute top-3 right-3 w-7 h-7 rounded-md bg-transparent border-none text-text-dim inline-flex items-center justify-center cursor-pointer opacity-0 transition-all duration-150 z-10 group-hover:opacity-100 hover:text-error hover:bg-error/10 focus-visible:opacity-100 md:opacity-0 opacity-100"
+                            onClick={(event) => {
+                              event.preventDefault();
+                              event.stopPropagation();
+                              dismiss(notification.id);
+                            }}
+                            aria-label={labels.dismiss || 'Dismiss'}
+                            title={labels.dismiss || 'Dismiss'}
+                          >
+                            <X size={16} />
+                          </button>
+                          {!notification.is_read && (
+                            <span className="absolute top-4 right-4 w-2.5 h-2.5 rounded-full bg-accent transition-opacity duration-150 group-hover:opacity-0 md:right-4 right-11" />
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               ))
             )}

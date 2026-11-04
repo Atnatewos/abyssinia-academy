@@ -1,62 +1,54 @@
 /**
- * @fileoverview Next.js Application Root
+ * @fileoverview Custom App Component
  *
- * Wires every global provider in the correct order so that:
- *   - Theme preferences apply before first paint
- *   - Language is available to all consumers
- *   - Toast notifications work from any component
- *   - Auth state is loaded once and shared
- *   - Confirmation dialogs can be opened from any component
+ * Wraps every page with the platform's context providers (theme, language,
+ * toast, authentication) and loads the global stylesheet plus the shared
+ * admin styles. Anonymous page views are tracked through the usePageView
+ * hook so analytics stay passive and privacy-preserving.
+ *
+ * Import order matters:
+ *   1. globals.css              — base reset + all feature stylesheets
+ *   2. admin.css                — admin shell styles
+ *   3. Tailwind utilities       — loaded by globals.css as the final layer
  *
  * Path: apps/web/pages/_app.jsx
  */
-
-import '../styles/globals.css';
-import '../styles/themes.css';
-import '../styles/layout.css';
-import '../styles/components.css';
-import '../styles/animations.css';
-import '../styles/design-system.css';
-import '../styles/admin.css';
-import '../styles/admin-mlm.css';
-import '../styles/admin-mobile.css';
-import '../styles/admin-godmode.css';
-import '../styles/landing-3d.css';
-import '../styles/referral.css';
-import '../styles/notifications.css';
-import '../styles/responsive.css';
-import '../styles/skeleton.css';
 
 import { ThemeProvider } from '../context/ThemeContext';
 import { LanguageProvider } from '../context/LanguageContext';
 import { AuthProvider } from '../context/AuthContext';
 import { ToastProvider } from '../context/ToastContext';
-import { ConfirmProvider } from '../components/shared/ConfirmProvider';
+import usePageView from '../hooks/usePageView';
+
+import '../styles/globals.css';
+import '../styles/admin.css';
 
 /**
- * MyApp — Top-level component for every page.
+ * Root App component — every route renders inside this wrapper.
  *
- * Provider order matters:
- *   Theme    → outermost, drives CSS variables
- *   Language → strings, callbacks
- *   Toast    → feedback layer
- *   Confirm  → confirmation dialogs
- *   Auth     → consumes everything above
+ * Provider order is significant: ThemeProvider must wrap LanguageProvider
+ * because both rely on localStorage but Theme also affects the document
+ * element. AuthProvider comes last so it can consume the language context
+ * for future localized error messages.
  */
-function MyApp({ Component, pageProps }) {
+const App = ({ Component, pageProps }) => {
+  /*
+   * Anonymous page view tracking. Fires once per route change and records
+   * only the request path — no cookies, no personal identifiers.
+   */
+  usePageView();
+
   return (
     <ThemeProvider>
       <LanguageProvider>
         <ToastProvider>
-          <ConfirmProvider>
-            <AuthProvider>
-              <Component {...pageProps} />
-            </AuthProvider>
-          </ConfirmProvider>
+          <AuthProvider>
+            <Component {...pageProps} />
+          </AuthProvider>
         </ToastProvider>
       </LanguageProvider>
     </ThemeProvider>
   );
-}
+};
 
-export default MyApp;
+export default App;

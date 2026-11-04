@@ -1,14 +1,34 @@
 /**
- * Abyssinia Academy - Global Styles Entry Point
+ * @fileoverview Global Styles Entry Point
+ *
  * Imports all modular CSS files in the correct cascade order and defines
  * base resets, theme-aware chrome (scrollbar, selection), anchor offsets,
  * and page-level layout primitives.
  *
+ * Import order is significant:
+ *   1. External fonts (Satoshi, Inter, JetBrains Mono)
+ *   2. Design tokens (themes.css) — must load before anything that
+ *      consumes CSS variables
+ *   3. Animation keyframes — must load before components that reference them
+ *   4. Design system primitives (design-system.css)
+ *   5. Layout, components, responsive overrides
+ *   6. Feature-specific stylesheets (landing 3D, admin, referral, MLM, etc.)
+ *   7. Tailwind utilities — MUST be last so atomic utilities win the
+ *      cascade when a developer explicitly writes a class
+ *
  * Path: apps/web/styles/globals.css
  */
+
+/* ============================================================================
+   EXTERNAL FONTS
+   ============================================================================ */
 @import url('https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,600,700,800,900&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300,400,500,600,700,800,900&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+/* ============================================================================
+   DESIGN TOKENS + PRIMITIVES
+   ============================================================================ */
 @import './themes.css';
 @import './animations.css';
 @import './design-system.css';
@@ -22,8 +42,16 @@
 @import './referral.css';
 @import './admin-mlm.css';
 @import './skeleton.css';
-@import './notifications.css';
+@import './admin-announcements.css';
 @import '../styles/confirm.css';
+
+/* ============================================================================
+   TAILWIND UTILITIES — MUST LOAD LAST
+   Atomic utilities intentionally override semantic component classes when a
+   developer explicitly applies them. Placing this import at the end of the
+   cascade is what makes that guarantee hold.
+   ============================================================================ */
+@import './tailwind.css';
 
 /* ============================================================================
    CSS RESET

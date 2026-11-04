@@ -8,8 +8,8 @@
  *   - Mark all read + clear read actions
  *   - Per-item dismiss (×) inside the panel
  *
- * Uses useNotifications hook for state + visibility-based polling.
- * All copy from i18n; icons from config.
+ * All styling uses Tailwind utilities mapped to the unified design tokens
+ * in themes.css. No dedicated stylesheet is required.
  *
  * Path: apps/web/components/notifications/NotificationBell.jsx
  */
@@ -69,18 +69,21 @@ const NotificationBell = () => {
   };
 
   return (
-    <div className="notification-bell-wrapper" ref={dropdownRef}>
+    <div className="relative inline-flex items-center md:mr-2" ref={dropdownRef}>
       <button
         type="button"
-        className="notification-bell-btn"
         onClick={handleToggle}
         aria-label={labels.bell || 'Notifications'}
         aria-expanded={isOpen}
         aria-haspopup="dialog"
+        className="relative w-10 h-10 rounded-full bg-surface-secondary border border-border-light text-text-main inline-flex items-center justify-center cursor-pointer transition-all duration-200 hover:bg-surface-hover hover:border-border-hover hover:text-accent"
       >
         <Bell size={20} />
         {unreadCount > 0 && (
-          <span className="notification-badge" aria-label={`${unreadCount} unread`}>
+          <span
+            className="absolute -top-1 -right-1 min-w-[1.125rem] h-[1.125rem] px-1.5 rounded-full bg-error text-text-inverse text-[0.625rem] font-extrabold inline-flex items-center justify-center border-2 border-bg-main animate-[badgePulse_2s_ease-in-out_infinite]"
+            aria-label={`${unreadCount} unread`}
+          >
             {badgeText}
           </span>
         )}
