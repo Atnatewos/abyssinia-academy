@@ -277,3 +277,29 @@ Delete the file after verification.
 ---
 
 **Files delivered: 4 — 2 new (`tailwind.css`, `TAILWIND.md`), 2 rewritten (`tailwind.config.js`, `globals.css`). Industry-standard. Zero hardcoded values. One unified design system.** 🔥
+
+
+---
+
+## 🛡️ Migration Guardrails
+
+The rest of this document explains *what* the design system is. This section explains *how to migrate to it safely* — the process that prevents the "one bad commit breaks the whole theme" failure mode.
+
+### The Golden Rule
+
+> **Never migrate more than one file per commit.**
+
+A migration commit changes the rendered HTML of every page that imports the migrated file. If it's wrong, you want a single, isolated revert point — not a 20-file PR you have to untangle.
+
+### The 5-Step Workflow
+
+Before each migration:
+
+**Step 0 — Capture the "before" baseline**
+
+```bash
+# In one terminal:
+npm run dev
+
+# In another terminal:
+./tools/snapshot-pages.sh before
