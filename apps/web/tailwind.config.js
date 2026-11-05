@@ -2,20 +2,33 @@
  * @fileoverview Tailwind CSS Configuration — Unified Design System
  *
  * Bridges Tailwind's utility engine to the platform's existing CSS variable
- * design system (styles/themes.css). Every color, radius, shadow, font, and
- * spacing value below resolves to a CSS custom property, which means:
+ * design system (styles/themes.css). Every color, radius, shadow, font,
+ * spacing, and animation value below resolves to a CSS custom property,
+ * which means:
  *
  *   - Dark and light themes stay perfectly in sync across both systems
  *   - A single edit to themes.css updates Tailwind and pure CSS together
  *   - Zero duplicated design tokens, zero drift
+ *   - Full rebranding happens in one place (themes.css)
  *
- * Preflight is disabled because the project already ships its own reset in
- * styles/globals.css. Enabling Preflight would double-reset the document
- * and risk visual regressions.
+ * Alpha-modifier support
+ * ──────────────────────
+ * Semantic colors are declared as `rgb(var(--X-rgb) / <alpha-value>)`.
+ * This is the industry-standard pattern that makes `bg-success/10`,
+ * `border-error/50`, and `text-accent/70` all compile to real rgba()
+ * values at build time. Plain `var(--color-success)` CANNOT do this —
+ * Tailwind's opacity math needs a resolvable color.
+ *
+ * The matching RGB triplets live in themes.css (both :root and
+ * .light-theme). Keep them in sync with their hex counterparts.
+ *
+ * Preflight is disabled because the project already ships its own reset
+ * in styles/globals.css. Enabling Preflight would double-reset the
+ * document and risk visual regressions.
  *
  * Content globs intentionally include every JSX/TSX source file. Tailwind
- * only emits utility classes that are actually referenced, so scanning all
- * files is safe — this is the industry-standard configuration.
+ * only emits utility classes that are actually referenced, so scanning
+ * all files is safe — this is the industry-standard configuration.
  *
  * Path: apps/web/tailwind.config.js
  */
@@ -50,10 +63,9 @@ module.exports = {
     extend: {
       /*
        * COLOR SYSTEM
-       * Every color is a CSS variable sourced from themes.css. Because the
-       * variable names are defined at :root (dark) and overridden inside
-       * .light-theme, both Tailwind utilities and pure CSS classes flip
-       * automatically when the theme toggles.
+       * Every color resolves through a CSS variable sourced from themes.css.
+       * Semantic colors use the RGB-triplet form to enable opacity modifiers
+       * (bg-success/10). Non-alpha colors use the plain `var()` form.
        */
       colors: {
         /* Backgrounds */
@@ -90,7 +102,7 @@ module.exports = {
         'text-nav-icon': 'var(--text-nav-icon)',
         'text-nav-icon-hover': 'var(--text-nav-icon-hover)',
 
-        /* Gold scale */
+        /* Gold scale — non-alpha, direct palette access */
         'gold-50': 'var(--gold-50)',
         'gold-100': 'var(--gold-100)',
         'gold-200': 'var(--gold-200)',
@@ -102,20 +114,20 @@ module.exports = {
         'gold-800': 'var(--gold-800)',
         'gold-900': 'var(--gold-900)',
 
-        /* Accent */
-        accent: 'var(--accent-gold)',
-        'accent-light': 'var(--accent-gold-light)',
-        'accent-dark': 'var(--accent-gold-dark)',
+        /* Accent — ALPHA-ENABLED (bg-accent/10, border-accent/30, etc.) */
+        accent: 'rgb(var(--accent-gold-rgb) / <alpha-value>)',
+        'accent-light': 'rgb(var(--accent-gold-light-rgb) / <alpha-value>)',
+        'accent-dark': 'rgb(var(--accent-gold-dark-rgb) / <alpha-value>)',
         'accent-glow': 'var(--accent-gold-glow)',
 
-        /* Semantic */
-        success: 'var(--color-success)',
+        /* Semantic — ALPHA-ENABLED (bg-success/10, border-error/50, etc.) */
+        success: 'rgb(var(--color-success-rgb) / <alpha-value>)',
         'success-bg': 'var(--color-success-bg)',
-        error: 'var(--color-error)',
+        error: 'rgb(var(--color-error-rgb) / <alpha-value>)',
         'error-bg': 'var(--color-error-bg)',
-        warning: 'var(--color-warning)',
+        warning: 'rgb(var(--color-warning-rgb) / <alpha-value>)',
         'warning-bg': 'var(--color-warning-bg)',
-        info: 'var(--color-info)',
+        info: 'rgb(var(--color-info-rgb) / <alpha-value>)',
         'info-bg': 'var(--color-info-bg)',
 
         /* Borders */
@@ -132,24 +144,27 @@ module.exports = {
 
       /*
        * BORDER RADIUS
-       * Aligned with the design system's glassmorphism primitives.
+       * Reads from CSS variables so a single edit in themes.css updates
+       * every rounded corner in the app (Tailwind + pure CSS together).
        */
       borderRadius: {
-        sm: '0.25rem',
-        DEFAULT: '0.375rem',
-        md: '0.5rem',
-        lg: '0.625rem',
-        xl: '0.75rem',
-        '2xl': '1rem',
-        '3xl': '1.25rem',
-        '4xl': '1.5rem',
-        full: '9999px',
+        sm: 'var(--radius-sm)',
+        DEFAULT: 'var(--radius-default)',
+        md: 'var(--radius-md)',
+        lg: 'var(--radius-lg)',
+        xl: 'var(--radius-xl)',
+        '2xl': 'var(--radius-2xl)',
+        '3xl': 'var(--radius-3xl)',
+        '4xl': 'var(--radius-4xl)',
+        full: 'var(--radius-full)',
       },
 
       /*
        * BOX SHADOWS
        * Mapped to the same shadow tokens pure CSS uses so component
-       * migrations never produce visual deltas.
+       * migrations never produce visual deltas. The `glow-gold` family
+       * uses `rgb(var(--accent-gold-rgb) / alpha)` so it also rebrands
+       * when the accent color changes.
        */
       boxShadow: {
         sm: 'var(--shadow-sm)',
@@ -159,15 +174,17 @@ module.exports = {
         nav: 'var(--shadow-nav)',
         glow: '0 0 20px var(--glow-color)',
         'glow-strong': '0 0 32px var(--glow-strong)',
-        'glow-gold': '0 8px 24px -4px var(--accent-gold-glow)',
+        'glow-gold': '0 4px 20px rgba(var(--accent-gold-rgb) / 0.25)',
+        'glow-gold-lg': '0 6px 25px rgba(var(--accent-gold-rgb) / 0.4)',
+        'glow-gold-sm': '0 0 20px rgba(var(--accent-gold-rgb) / 0.3)',
         none: 'none',
       },
 
       /*
        * TYPOGRAPHY
-       * Font families and sizes match the platform's scale. Fonts themselves
-       * are preloaded in _document.jsx; Tailwind just exposes the family
-       * utilities to match the CSS variable declarations.
+       * Font families and sizes match the platform's scale, sourced from
+       * themes.css. Change the type scale in one place and both systems
+       * update together.
        */
       fontFamily: {
         sans: ['var(--font-primary)'],
@@ -175,17 +192,17 @@ module.exports = {
       },
 
       fontSize: {
-        '2xs': ['0.625rem', { lineHeight: '0.875rem' }],
-        xs: ['0.75rem', { lineHeight: '1.125rem' }],
-        sm: ['0.8125rem', { lineHeight: '1.25rem' }],
-        base: ['0.875rem', { lineHeight: '1.375rem' }],
-        lg: ['1rem', { lineHeight: '1.5rem' }],
-        xl: ['1.125rem', { lineHeight: '1.75rem' }],
-        '2xl': ['1.25rem', { lineHeight: '1.875rem' }],
-        '3xl': ['1.5rem', { lineHeight: '2rem' }],
-        '4xl': ['1.875rem', { lineHeight: '2.25rem' }],
-        '5xl': ['2.25rem', { lineHeight: '2.5rem' }],
-        '6xl': ['3rem', { lineHeight: '1.1' }],
+        '2xs': ['var(--font-size-2xs)', { lineHeight: 'var(--line-height-2xs)' }],
+        xs: ['var(--font-size-xs)', { lineHeight: 'var(--line-height-xs)' }],
+        sm: ['var(--font-size-sm)', { lineHeight: 'var(--line-height-sm)' }],
+        base: ['var(--font-size-base)', { lineHeight: 'var(--line-height-base)' }],
+        lg: ['var(--font-size-lg)', { lineHeight: 'var(--line-height-lg)' }],
+        xl: ['var(--font-size-xl)', { lineHeight: 'var(--line-height-xl)' }],
+        '2xl': ['var(--font-size-2xl)', { lineHeight: 'var(--line-height-2xl)' }],
+        '3xl': ['var(--font-size-3xl)', { lineHeight: 'var(--line-height-3xl)' }],
+        '4xl': ['var(--font-size-4xl)', { lineHeight: 'var(--line-height-4xl)' }],
+        '5xl': ['var(--font-size-5xl)', { lineHeight: 'var(--line-height-5xl)' }],
+        '6xl': ['var(--font-size-6xl)', { lineHeight: 'var(--line-height-6xl)' }],
       },
 
       /*
@@ -199,45 +216,57 @@ module.exports = {
 
       /*
        * Z-INDEX SCALE
-       * Mirrors the z-index tokens so layering stays synchronized between
-       * Tailwind components and legacy CSS.
+       * Every value reads from themes.css so layering stays synchronized
+       * across Tailwind and pure CSS. Changing `--z-modal` in one place
+       * updates every modal layer in the app.
        */
       zIndex: {
-        base: '0',
-        above: '10',
-        sticky: '40',
-        overlay: '50',
-        modal: '100',
-        toast: '110',
+        base: 'var(--z-base)',
+        above: 'var(--z-above)',
+        sticky: 'var(--z-sticky)',
+        overlay: 'var(--z-overlay)',
+        modal: 'var(--z-modal)',
+        toast: 'var(--z-toast)',
+        cart: 'var(--z-cart)',
+        drawer: 'var(--z-drawer)',
+        notification: 'var(--z-notification)',
       },
 
       /*
        * TRANSITION DURATIONS
-       * Matches the interaction feel used throughout the platform.
+       * Centralized in themes.css. Changing `--duration-fast` updates
+       * every `duration-fast` utility in the app.
        */
       transitionDuration: {
-        fast: '150ms',
-        DEFAULT: '200ms',
-        medium: '250ms',
-        slow: '300ms',
-        slower: '350ms',
+        fast: 'var(--duration-fast)',
+        DEFAULT: 'var(--duration-base)',
+        medium: 'var(--duration-medium)',
+        slow: 'var(--duration-slow)',
+        slower: 'var(--duration-slower)',
       },
 
       /*
        * ANIMATION
        * Map the design system's named animations to Tailwind utilities.
        * Keyframes themselves live in styles/animations.css; here we expose
-       * them as `animate-<name>` classes.
+       * them as `animate-<name>` classes. Colors inside keyframes resolve
+       * through `rgb(var(--accent-gold-rgb) / alpha)` so they rebrand
+       * automatically with the accent color.
        */
       keyframes: {
         float: {
           '0%, 100%': { transform: 'translateY(0px)' },
           '50%': { transform: 'translateY(-10px)' },
         },
-        // Glow for auth background orbs (from HTML reference)
         pulseGlow: {
-          '0%, 100%': { opacity: '0.3', filter: 'drop-shadow(0 0 20px rgba(245, 158, 11, 0.3))' },
-          '50%': { opacity: '0.7', filter: 'drop-shadow(0 0 40px rgba(245, 158, 11, 0.7))' },
+          '0%, 100%': {
+            opacity: '0.3',
+            filter: 'drop-shadow(0 0 20px rgb(var(--accent-gold-rgb) / 0.3))',
+          },
+          '50%': {
+            opacity: '0.7',
+            filter: 'drop-shadow(0 0 40px rgb(var(--accent-gold-rgb) / 0.7))',
+          },
         },
         shimmer: {
           '0%': { backgroundPosition: '-200% 0' },
@@ -263,14 +292,12 @@ module.exports = {
           '0%': { transform: 'scale(0.95)', opacity: '0' },
           '100%': { transform: 'scale(1)', opacity: '1' },
         },
-        // Ambient background shapes
         blob: {
           '0%': { transform: 'translate(0px, 0px) scale(1)' },
           '33%': { transform: 'translate(30px, -50px) scale(1.1)' },
           '66%': { transform: 'translate(-20px, 20px) scale(0.9)' },
           '100%': { transform: 'translate(0px, 0px) scale(1)' },
         },
-        // Staggered entry for auth text
         'fade-in-up': {
           '0%': { opacity: '0', transform: 'translateY(20px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },

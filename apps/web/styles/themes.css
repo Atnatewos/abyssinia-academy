@@ -2,6 +2,42 @@
  * Abyssinia Academy - Theme Variables
  * Dark & Light theme CSS custom properties
  * Consistent, beautiful light mode with warm gold tones
+ *
+ * Architecture
+ * ────────────
+ * This file is the SINGLE SOURCE OF TRUTH for every visual value in the
+ * platform. Both the pure-CSS design system (design-system.css,
+ * components.css) and Tailwind (via tailwind.config.js) read from these
+ * custom properties. Change a value here, and every consumer updates:
+ *
+ *   - Pure CSS: var(--accent-gold) in any stylesheet
+ *   - Tailwind:  text-accent (bridged in tailwind.config.js)
+ *   - Inline JS: any component reading via getThemeConfig()
+ *
+ * Rebranding Cheat Sheet
+ * ──────────────────────
+ * To change the entire platform's look:
+ *   - Accent / primary color:    --accent-gold (+ light / dark / glow / rgb)
+ *   - Page background:           --bg-main (+ secondary / card / card-solid)
+ *   - Text hierarchy:            --text-main / -secondary / -muted / -dim
+ *   - Success / error / warning: --color-success / -error / -warning (+ -rgb)
+ *   - Font family:               --font-primary / --font-mono
+ *   - Type scale:                --font-size-xs through --font-size-6xl
+ *   - Corner rounding:           --radius-sm through --radius-4xl
+ *   - Motion:                    --duration-fast through --duration-slower
+ *   - Shadows:                   --shadow-sm through --shadow-nav
+ *
+ * The `-rgb` variants exist because Tailwind's alpha-modifier system
+ * (bg-success/10, border-accent/30, drop-shadow with rgba) needs to
+ * compose a color with arbitrary alpha at build time. `rgb(var(--X-rgb) / <alpha-value>)`
+ * is the industry-standard pattern for this. The plain `var(--X)` form
+ * cannot be composed with alpha — CSS doesn't allow `var(--hex) / 0.5`.
+ *
+ * Every one of these values is dark-theme-first (defined in :root) and
+ * overridden inside .light-theme. Change both blocks when tweaking a
+ * theme-aware value; change only :root when the value is theme-agnostic
+ * (like font size or border radius, which are the same in both themes).
+ *
  * Path: apps/web/styles/themes.css
  */
 
@@ -19,6 +55,7 @@
   --bg-input: rgba(15, 23, 42, 0.6);
   --bg-overlay: rgba(7, 11, 20, 0.8);
   --bg-skeleton: rgba(30, 41, 59, 0.5);
+  --bg-skeleton-strong: rgba(51, 65, 85, 0.7);
   --bg-skeleton-shimmer: rgba(51, 65, 85, 0.6);
   --skeleton-radius-sm: 0.375rem;
   --skeleton-radius-md: 0.625rem;
@@ -118,6 +155,98 @@
   --z-overlay: 50;
   --z-modal: 100;
   --z-toast: 110;
+
+  /* ==========================================================================
+     RGB TRIPLETS — ALPHA-MODIFIER SUPPORT FOR TAILWIND
+     ==========================================================================
+     Tailwind's `/opacity` modifier (bg-success/10, border-accent/30,
+     drop-shadow with rgba) needs to compose a color with an arbitrary
+     alpha at BUILD time. `var(--accent-gold)` (hex) cannot be composed
+     this way — CSS doesn't allow `var(--hex) / 0.5`.
+
+     The fix: declare each alpha-modifiable color as an `R G B` triplet
+     (space-separated, no commas), then expose it in tailwind.config.js
+     as `rgb(var(--X-rgb) / <alpha-value>)`. Now every one of these works:
+
+       bg-success/10        →  rgb(16 185 129 / 0.1)
+       border-error/50      →  rgb(239 68 68 / 0.5)
+       text-accent/70       →  rgb(245 158 11 / 0.7)
+
+     The triplet values MUST match their hex counterparts above. Keep
+     them in sync when editing either block.
+     ========================================================================== */
+
+  /* Accent gold */
+  --accent-gold-rgb: 245 158 11;
+  --accent-gold-light-rgb: 251 191 36;
+  --accent-gold-dark-rgb: 217 119 6;
+
+  /* Semantic */
+  --color-success-rgb: 16 185 129;
+  --color-error-rgb: 239 68 68;
+  --color-warning-rgb: 245 158 11;
+  --color-info-rgb: 59 130 246;
+
+  /* ==========================================================================
+     CENTRALIZED SCALES — SHARED ACROSS THEMES
+     ==========================================================================
+     These values do NOT differ between dark and light mode. They live in
+     :root only and are inherited by every scope, including .light-theme.
+     Making them CSS variables means tailwind.config.js can bridge to them
+     (Wave 2) so a single edit here updates both systems.
+
+     Type scale, border radius, transition duration, and extended z-index
+     are the four categories that were previously hardcoded in tailwind.config.js.
+     ========================================================================== */
+
+  /* Type scale — line heights bundled so Tailwind utilities compose them
+     automatically. Matching the exact values currently in tailwind.config.js. */
+  --font-size-2xs: 0.625rem;
+  --line-height-2xs: 0.875rem;
+  --font-size-xs: 0.75rem;
+  --line-height-xs: 1.125rem;
+  --font-size-sm: 0.8125rem;
+  --line-height-sm: 1.25rem;
+  --font-size-base: 0.875rem;
+  --line-height-base: 1.375rem;
+  --font-size-lg: 1rem;
+  --line-height-lg: 1.5rem;
+  --font-size-xl: 1.125rem;
+  --line-height-xl: 1.75rem;
+  --font-size-2xl: 1.25rem;
+  --line-height-2xl: 1.875rem;
+  --font-size-3xl: 1.5rem;
+  --line-height-3xl: 2rem;
+  --font-size-4xl: 1.875rem;
+  --line-height-4xl: 2.25rem;
+  --font-size-5xl: 2.25rem;
+  --line-height-5xl: 2.5rem;
+  --font-size-6xl: 3rem;
+  --line-height-6xl: 1.1;
+
+  /* Border radius scale — used by every rounded card, button, input. */
+  --radius-sm: 0.25rem;
+  --radius-default: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.625rem;
+  --radius-xl: 0.75rem;
+  --radius-2xl: 1rem;
+  --radius-3xl: 1.25rem;
+  --radius-4xl: 1.5rem;
+  --radius-full: 9999px;
+
+  /* Transition durations — controls every hover, focus, and state change. */
+  --duration-fast: 150ms;
+  --duration-base: 200ms;
+  --duration-medium: 250ms;
+  --duration-slow: 300ms;
+  --duration-slower: 350ms;
+
+  /* Extended z-index — cart, drawer, and notification overlays used by
+     specific components but not declared in the base z-index block above. */
+  --z-cart: 55;
+  --z-drawer: 60;
+  --z-notification: 1500;
 }
 
 /* ============================================================================
@@ -133,7 +262,6 @@
   --bg-pill: #f1ede7;
   --bg-input: rgba(250, 249, 246, 0.9);
   --bg-overlay: rgba(250, 249, 246, 0.85);
-  --bg-skeleton: rgba(180, 170, 155, 0.3);
   --bg-skeleton: rgba(140, 120, 90, 0.08);
   --bg-skeleton-strong: rgba(140, 120, 90, 0.16);
   --bg-skeleton-shimmer: rgba(140, 120, 90, 0.16);
@@ -206,4 +334,23 @@
   --nav-glass-bg: rgba(255, 255, 255, 0.82);
   --nav-glass-blur: 22px;
   --nav-height: 72px;
+
+  /*
+   * RGB triplets — light theme values. Must match the hex counterparts
+   * above. See the full explanation in :root.
+   */
+  --accent-gold-rgb: 217 119 6;
+  --accent-gold-light-rgb: 245 158 11;
+  --accent-gold-dark-rgb: 180 83 9;
+
+  --color-success-rgb: 5 150 105;
+  --color-error-rgb: 220 38 38;
+  --color-warning-rgb: 217 119 6;
+  --color-info-rgb: 37 99 235;
+
+  /*
+   * The type scale, border radius, duration, and extended z-index blocks
+   * live in :root only because they are theme-agnostic. They cascade into
+   * .light-theme automatically via CSS inheritance — no duplication needed.
+   */
 }
