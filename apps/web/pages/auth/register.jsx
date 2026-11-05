@@ -18,6 +18,8 @@ import apiClient from '../../lib/api';
 import { getReferralConfig, getAgentConfig, getPlatformConfig } from '../../lib/config';
 import { getItem, setItem, removeItem } from '../../lib/storage';
 
+import ScholarshipBanner from '../../components/scholarships/ScholarshipBanner';
+
 const REFERRAL_STORAGE_KEY = 'abyssinia_referral_code';
 const REFERRAL_EXPIRY_KEY = 'abyssinia_referral_expiry';
 
@@ -300,6 +302,9 @@ const RegisterPage = () => {
               <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
               {t.auth?.backToHome || 'Back to Home'}
             </Link>
+
+            {/* Scholarship Banner */}
+            <ScholarshipBanner />
 
             <div className="mb-8">
               <h1 className="text-3xl font-extrabold text-text-main mb-2">

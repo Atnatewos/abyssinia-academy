@@ -19,6 +19,8 @@ import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { getPlatformConfig } from '../../lib/config';
 
+import ScholarshipBanner from '../../components/scholarships/ScholarshipBanner';
+
 const LoginPage = () => {
   const router = useRouter();
   const { t, language } = useLanguage();
@@ -152,6 +154,9 @@ const LoginPage = () => {
               <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
               {t.auth?.backToHome || 'Back to Home'}
             </Link>
+
+            {/* Scholarship Banner */}
+            <ScholarshipBanner />
 
             <div className="mb-8">
               <h1 className="text-3xl font-extrabold text-text-main mb-2">
