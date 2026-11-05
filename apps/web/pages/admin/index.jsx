@@ -1,17 +1,23 @@
 /**
  * @fileoverview Admin Dashboard
  *
- * Main admin overview page. Reads from /admin/dashboard/stats which
+ * Main admin overview page. Reads from `/api/admin/dashboard/stats` which
  * returns top_referrers with fields: name, email, direct_referral_count,
  * total_earned — verified against the real users schema.
  *
- * Recent pending payments come from /admin/payments endpoint which
- * joins users table for user_name/full_name.
+ * Recent pending payments come from `/api/admin/payments` endpoint which
+ * joins the users table for user_name/full_name.
+ *
+ * All internal navigation uses Next.js <Link> so client-side routing,
+ * prefetching, and page transitions work correctly (raw <a> tags cause
+ * full reloads and disable the framework's router).
  *
  * Path: apps/web/pages/admin/index.jsx
  */
+
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
+import Link from 'next/link';
 import {
   Users,
   DollarSign,
@@ -36,6 +42,11 @@ const AdminDashboard = () => {
   const [topReferrers, setTopReferrers] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  /*
+   * Fetches the three dashboard panels in parallel with Promise.allSettled
+   * so a single endpoint failure (e.g. dashboard stats timing out) does
+   * not blank the whole page. Each panel renders its own empty state.
+   */
   useEffect(() => {
     const fetchDashboard = async () => {
       try {
@@ -54,8 +65,8 @@ const AdminDashboard = () => {
         if (referrersRes.status === 'fulfilled' && referrersRes.value?.success) {
           setTopReferrers(referrersRes.value.data || []);
         }
-      } catch (err) {
-        if (err?.response?.status === 401) {
+      } catch (error) {
+        if (error?.response?.status === 401) {
           router.push('/admin/login');
         } else {
           toast.error('Failed to load dashboard data.');
@@ -68,6 +79,12 @@ const AdminDashboard = () => {
     fetchDashboard();
   }, [router, toast]);
 
+  /**
+   * Formats an ISO date string for the recent payments list.
+   *
+   * @param {string} dateString
+   * @returns {string}
+   */
   const formatDate = (dateString) => {
     if (!dateString) return '—';
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -87,28 +104,50 @@ const AdminDashboard = () => {
         >
           <div className="admin-dashboard">
             <div className="admin-stats-grid">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="admin-stat-card">
-                  <div className="admin-stat-icon shimmer" style={{ width: '3rem', height: '3rem', borderRadius: '0.75rem' }} />
-                  <div className="admin-stat-label shimmer" style={{ width: '5rem', height: '0.75rem' }} />
-                  <div className="admin-stat-value shimmer" style={{ width: '4rem', height: '1.5rem' }} />
+              {Array.from({ length: 4 }).map((_, index) => (
+                <div key={index} className="admin-stat-card">
+                  <div
+                    className="admin-stat-icon shimmer"
+                    style={{ width: '3rem', height: '3rem', borderRadius: '0.75rem' }}
+                  />
+                  <div
+                    className="admin-stat-label shimmer"
+                    style={{ width: '5rem', height: '0.75rem' }}
+                  />
+                  <div
+                    className="admin-stat-value shimmer"
+                    style={{ width: '4rem', height: '1.5rem' }}
+                  />
                 </div>
               ))}
             </div>
             <div className="admin-dashboard-bottom">
-              {Array.from({ length: 2 }).map((_, sIdx) => (
-                <div key={sIdx} className="admin-recent-section">
+              {Array.from({ length: 2 }).map((_, sectionIndex) => (
+                <div key={sectionIndex} className="admin-recent-section">
                   <div className="admin-section-header">
                     <span className="shimmer" style={{ width: '10rem', height: '1rem' }} />
                     <span className="shimmer" style={{ width: '4rem', height: '0.75rem' }} />
                   </div>
-                  {Array.from({ length: 4 }).map((_, i) => (
-                    <div key={i} className="admin-recent-item">
+                  {Array.from({ length: 4 }).map((_, index) => (
+                    <div key={index} className="admin-recent-item">
                       <div className="admin-recent-info">
-                        <span className="shimmer" style={{ width: '8rem', height: '0.875rem', marginBottom: '0.25rem' }} />
-                        <span className="shimmer" style={{ width: '6rem', height: '0.625rem' }} />
+                        <span
+                          className="shimmer"
+                          style={{
+                            width: '8rem',
+                            height: '0.875rem',
+                            marginBottom: '0.25rem',
+                          }}
+                        />
+                        <span
+                          className="shimmer"
+                          style={{ width: '6rem', height: '0.625rem' }}
+                        />
                       </div>
-                      <span className="shimmer" style={{ width: '3rem', height: '0.875rem' }} />
+                      <span
+                        className="shimmer"
+                        style={{ width: '3rem', height: '0.875rem' }}
+                      />
                     </div>
                   ))}
                 </div>
@@ -130,37 +169,63 @@ const AdminDashboard = () => {
         <div className="admin-dashboard">
           <div className="admin-stats-grid">
             <div className="admin-stat-card">
-              <div className="admin-stat-icon" style={{ background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6' }}>
+              <div
+                className="admin-stat-icon"
+                style={{ background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6' }}
+              >
                 <Users size={24} />
               </div>
-              <div className="admin-stat-label">{t.admin?.totalStudents || 'Total Students'}</div>
-              <div className="admin-stat-value">{stats?.total_students?.toLocaleString() || '0'}</div>
+              <div className="admin-stat-label">
+                {t.admin?.totalStudents || 'Total Students'}
+              </div>
+              <div className="admin-stat-value">
+                {stats?.total_students?.toLocaleString() || '0'}
+              </div>
             </div>
 
             <div className="admin-stat-card">
-              <div className="admin-stat-icon" style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#10b981' }}>
+              <div
+                className="admin-stat-icon"
+                style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#10b981' }}
+              >
                 <DollarSign size={24} />
               </div>
-              <div className="admin-stat-label">{t.admin?.totalRevenue || 'Total Revenue'}</div>
+              <div className="admin-stat-label">
+                {t.admin?.totalRevenue || 'Total Revenue'}
+              </div>
               <div className="admin-stat-value">
                 {Number(stats?.total_revenue || 0).toLocaleString()} ETB
               </div>
             </div>
 
             <div className="admin-stat-card">
-              <div className="admin-stat-icon" style={{ background: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b' }}>
+              <div
+                className="admin-stat-icon"
+                style={{ background: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b' }}
+              >
                 <BookOpen size={24} />
               </div>
-              <div className="admin-stat-label">{t.admin?.totalCourses || 'Active Courses'}</div>
-              <div className="admin-stat-value">{stats?.total_courses?.toLocaleString() || '0'}</div>
+              <div className="admin-stat-label">
+                {t.admin?.totalCourses || 'Active Courses'}
+              </div>
+              <div className="admin-stat-value">
+                {stats?.total_courses?.toLocaleString() || '0'}
+              </div>
             </div>
 
             <div className="admin-stat-card">
-              <div className="admin-stat-icon" style={{ background: 'rgba(139, 92, 246, 0.1)', color: '#8b5cf6' }}>
+              <div
+                className="admin-stat-icon"
+                style={{ background: 'rgba(139, 92, 246, 0.1)', color: '#8b5cf6' }}
+              >
                 <TrendingUp size={24} />
               </div>
-              <div className="admin-stat-label">{t.admin?.pendingPayments || 'Pending Payments'}</div>
-              <div className="admin-stat-value">{stats?.pending_payments?.toLocaleString() || '0'}</div>
+              <div className="admin-stat-label">
+                {t.admin?.pendingPayments || 'Pending Payments'}
+              </div>
+              <div className="admin-stat-value">
+                {stats?.pending_payments?.toLocaleString() || '0'}
+              </div>
             </div>
           </div>
 
@@ -168,9 +233,9 @@ const AdminDashboard = () => {
             <div className="admin-recent-section">
               <div className="admin-section-header">
                 <h3 className="admin-section-title">Recent Pending Payments</h3>
-                <a href="/admin/payments" className="admin-section-link">
+                <Link href="/admin/payments" className="admin-section-link">
                   View All →
-                </a>
+                </Link>
               </div>
               {recentPayments.length === 0 ? (
                 <p className="admin-section-empty">No pending payments</p>
@@ -190,12 +255,12 @@ const AdminDashboard = () => {
                         <span className="admin-recent-amount">
                           {Number(payment.amount || 0).toLocaleString()} ETB
                         </span>
-                        <a
+                        <Link
                           href={`/admin/payments?id=${payment.id}`}
                           className="admin-recent-view"
                         >
                           <Eye size={14} />
-                        </a>
+                        </Link>
                       </div>
                     </div>
                   ))}
@@ -206,9 +271,9 @@ const AdminDashboard = () => {
             <div className="admin-recent-section">
               <div className="admin-section-header">
                 <h3 className="admin-section-title">Top Referrers</h3>
-                <a href="/admin/referrals" className="admin-section-link">
+                <Link href="/admin/referrals" className="admin-section-link">
                   View All →
-                </a>
+                </Link>
               </div>
               {topReferrers.length === 0 ? (
                 <p className="admin-section-empty">No referrer data yet</p>
@@ -221,14 +286,20 @@ const AdminDashboard = () => {
                           {referrer.name || referrer.full_name || 'Unknown'}
                         </span>
                         <span className="admin-recent-meta">
-                          {referrer.direct_referral_count || referrer.referral_count || 0} referrals
+                          {referrer.direct_referral_count ||
+                            referrer.referral_count ||
+                            0}{' '}
+                          referrals
                         </span>
                       </div>
                       <div className="admin-recent-actions">
                         <span className="admin-recent-amount">
-                          <Award size={14} style={{ color: '#f59e0b' }} />
-                          {' '}
-                          {Number(referrer.total_earned || referrer.lifetime_referral_earnings || 0).toLocaleString()}
+                          <Award size={14} style={{ color: '#f59e0b' }} />{' '}
+                          {Number(
+                            referrer.total_earned ||
+                              referrer.lifetime_referral_earnings ||
+                              0
+                          ).toLocaleString()}
                         </span>
                       </div>
                     </div>

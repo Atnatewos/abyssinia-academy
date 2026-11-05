@@ -7,6 +7,14 @@
  *   2. Applied    — buyer manually entered an agent code (removable)
  *   3. Empty      — no agent code; user can type one
  *
+ * React Rules of Hooks
+ * ────────────────────
+ * Every hook call in this component MUST run unconditionally on every
+ * render. The `isAgentsEnabled()` check that hides this component when
+ * the agent system is disabled therefore runs AFTER all hooks, not
+ * before. Calling hooks below a conditional return would crash React
+ * the moment that condition flipped.
+ *
  * Path: apps/web/components/agents/AgentCodeInput.jsx
  */
 
@@ -24,6 +32,11 @@ const AgentCodeInput = ({
   isLocked = false,
 }) => {
   const { t } = useLanguage();
+
+  /*
+   * Every hook below must execute on every render — see file header
+   * for the React Rules of Hooks rationale.
+   */
   const {
     code,
     agentData,
@@ -42,7 +55,8 @@ const AgentCodeInput = ({
   /*
    * If a locked agent code was passed in (from registration attribution),
    * apply it immediately and notify the parent so the submit payload can
-   * include the correct attribution.
+   * include the correct attribution. Runs exactly once thanks to the
+   * autoApplyDone guard.
    */
   useEffect(() => {
     if (autoApplyDone) return;
@@ -72,8 +86,6 @@ const AgentCodeInput = ({
     onAgentApplied,
   ]);
 
-  if (!isAgentsEnabled()) return null;
-
   /**
    * Handle Apply button click (manual flow).
    */
@@ -97,15 +109,25 @@ const AgentCodeInput = ({
     if (onAgentRemoved) onAgentRemoved();
   }, [isLocked, removeCode, onAgentRemoved]);
 
+  /**
+   * Apply on Enter key inside the input.
+   */
   const handleKeyDown = useCallback(
-    (e) => {
-      if (e.key === 'Enter') {
-        e.preventDefault();
+    (event) => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
         handleApply();
       }
     },
     [handleApply]
   );
+
+  /*
+   * ── Conditional rendering (AFTER all hooks) ──
+   * These early returns are safe because no hook is called below them.
+   */
+
+  if (!isAgentsEnabled()) return null;
 
   /* ── State: Applied / Locked ── */
   if (isApplied && (agentData || code)) {
@@ -141,7 +163,7 @@ const AgentCodeInput = ({
               onClick={handleRemove}
               className="agent-code-remove-btn"
               title={t.agents?.removeAgentCode || ''}
-              aria-label=""
+              aria-label={t.agents?.removeAgentCode || 'Remove agent code'}
             >
               <X size={14} />
             </button>
