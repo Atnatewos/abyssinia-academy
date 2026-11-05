@@ -21,6 +21,17 @@
 # Assumes the app is running at http://localhost:3000 (npm run dev).
 # Uses Playwright, which is already a devDependency in this monorepo.
 #
+# WINDOWS / GIT BASH NOTE
+# ───────────────────────
+# Git Bash silently converts arguments that look like Unix paths into
+# Windows paths. So passing `/` to a script gets rewritten to
+# `C:/Program Files/Git/`. That breaks Playwright's URL construction:
+#
+#   http://localhost:3000C:/Program Files/Git/
+#
+# This script disables that conversion by setting MSYS_NO_PATHCONV=1
+# at the very top. All subsequent path arguments are preserved verbatim.
+#
 # USAGE
 # ─────
 #   # Terminal 1
@@ -34,9 +45,18 @@
 #   # Capture AFTER migration
 #   ./tools/snapshot-pages.sh after
 #
-#   # Diff two folders (Windows: use WinMerge / Beyond Compare; Mac/Linux: diff -r)
+#   # Diff two folders
 #   diff -r test-results/snapshots/<timestamp-before>/ test-results/snapshots/<timestamp-after>/
 # ============================================================================
+
+#
+# CRITICAL: Disable MSYS path conversion BEFORE any argument parsing.
+# Without this, Git Bash rewrites `/` to `C:/Program Files/Git/` and
+# every URL becomes malformed. This setting only affects the current
+# shell session, not the system.
+#
+export MSYS_NO_PATHCONV=1
+export MSYS2_ARG_CONV_EXCL="*"
 
 set -uo pipefail
 
@@ -53,6 +73,22 @@ fi
 
 LABEL="${1:-snapshot}"
 BASE_URL="${2:-http://localhost:3000}"
+
+#
+# Normalize Windows-style base URLs. If the caller passed
+# `http://localhost:3000` we're fine. But if Git Bash already did the
+# path conversion trick before the export took effect (some shells),
+# we might see `http://localhost:3000C:/...`. Strip any Windows path
+# suffix defensively.
+#
+case "$BASE_URL" in
+  *C:/Program\ Files*)
+    BASE_URL="${BASE_URL%%C:/Program*}"
+    ;;
+  *C:/Users/*)
+    BASE_URL="${BASE_URL%%C:/Users/*}"
+    ;;
+esac
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
@@ -75,6 +111,8 @@ if ! curl -s -o /dev/null -w "%{http_code}" "$BASE_URL" | grep -q "^[23]"; then
 fi
 
 # Pages to snapshot. Add to this list as you build new pages.
+# NOTE: keep every entry starting with `/` — MSYS_NO_PATHCONV=1 above
+# guarantees those are preserved verbatim when Playwright receives them.
 PAGES=(
   "/"
   "/courses"
@@ -105,7 +143,6 @@ TMP_SCRIPT="$OUT_DIR/_capture.js"
 
 cat > "$TMP_SCRIPT" <<'JSEOF'
 const { chromium } = require('playwright');
-const fs = require('fs');
 const path = require('path');
 
 (async () => {
@@ -113,6 +150,9 @@ const path = require('path');
   const browser = await chromium.launch();
   const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
   const page = await context.newPage();
+
+  let successCount = 0;
+  let failureCount = 0;
 
   for (const route of pages) {
     const slug = route === '/' ? 'root' : route.replace(/^\//, '').replace(/\//g, '_');
@@ -135,13 +175,22 @@ const path = require('path');
           fullPage: true,
         });
         console.log(`  captured  ${filename}`);
+        successCount++;
       } catch (err) {
         console.error(`  FAILED    ${route} [${theme}]: ${err.message}`);
+        failureCount++;
       }
     }
   }
 
   await browser.close();
+
+  // Exit non-zero if any page failed, so callers can detect partial runs.
+  if (failureCount > 0) {
+    console.error(`\n  ${failureCount} capture(s) failed, ${successCount} succeeded.`);
+    process.exit(1);
+  }
+  console.log(`\n  All ${successCount} captures succeeded.`);
 })();
 JSEOF
 
@@ -151,9 +200,17 @@ echo "${DIM}Capturing $((${#PAGES[@]} * 2)) screenshots (${#PAGES[@]} pages × 2
 echo ""
 
 node "$TMP_SCRIPT" "$BASE_URL" "$OUT_DIR" "${PAGES[@]}"
+CAPTURE_EXIT=$?
 
 # Clean up the temp script — the manifest and screenshots stay.
 rm -f "$TMP_SCRIPT"
+
+if [ "$CAPTURE_EXIT" -ne 0 ]; then
+  echo ""
+  echo "${YELLOW}⚠ Some captures failed. Partial results in:${RESET}"
+  echo "  ${DIM}$OUT_DIR${RESET}"
+  exit 1
+fi
 
 echo ""
 echo "${GREEN}✅ Snapshots saved to:${RESET}"
