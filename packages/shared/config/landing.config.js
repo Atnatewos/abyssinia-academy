@@ -1,15 +1,48 @@
 /**
  * @fileoverview Landing Page Configuration
  *
- * Language-agnostic structural data for the landing page.
- * Display text lives in i18n modules (en/landing.js, am/landing.js).
+ * Language-agnostic structural data for the landing page and the
+ * primary navigation bar. Display text lives in i18n modules and the
+ * nav pill labels resolve through `labelKey` dot-paths at runtime.
  *
- * The earn calculator is a compact cockpit: presets replace per-level
- * chips, the chain strip is opt-in, and the reference rail is tabbed.
+ * Adding a new pill is a one-line config change; zero component edits.
  *
  * Path: packages/shared/config/landing.config.js
  */
 const landingConfig = {
+  /*
+   * Primary navigation — read by Navigation.jsx.
+   *
+   * Each entry:
+   *   href           — route (may be an anchor like '/#earn')
+   *   labelKey       — dot-notation i18n key. Resolution order:
+   *                    1. Exact path (e.g. 'nav.overview')
+   *                    2. Nested namespace (e.g. 'scholarships.nav.scholarships')
+   *                    3. Hardcoded English fallback inside Navigation.jsx
+   *   exact          — true if only an exact match should be "active"
+   *   requiresAuth   — optional; hide for guests
+   *   configGate     — optional; dot-path on config tree; hide if false
+   *   showDot        — optional; 'enrolled' adds the green activity dot
+   */
+  navLinks: [
+    { href: '/', labelKey: 'nav.overview', exact: true },
+    { href: '/courses', labelKey: 'nav.courses' },
+    { href: '/scholarships', labelKey: 'scholarships.nav.scholarships' },
+    {
+      href: '/#earn',
+      labelKey: 'nav.earn',
+      configGate: 'landing.earn.enabled',
+    },
+    { href: '/pricing', labelKey: 'nav.tuition' },
+    { href: '/contact', labelKey: 'nav.contact' },
+    {
+      href: '/portal',
+      labelKey: 'nav.portal',
+      requiresAuth: true,
+      showDot: 'enrolled',
+    },
+  ],
+
   hero: {
     badgeIcon: 'Flame',
     earnBadgeIcon: 'Coins',
@@ -28,7 +61,8 @@ const landingConfig = {
 
   heroVisual: {
     filename: 'Abyssinia_Masterclass.tsx',
-    previewImage: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=800&q=80',
+    previewImage:
+      'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=800&q=80',
     previewDuration: '45:10',
     showIncomeChips: false,
     sessions: [
