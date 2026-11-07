@@ -88,7 +88,6 @@ const ScholarshipIndexPage = () => {
       <SEOHead title={t.scholarships?.browse?.pageTitle || 'Scholarships'} />
       <PageLayout>
         <div className="container-xl py-12 flex flex-col gap-8">
-          {/* Header */}
           <div className="flex flex-col gap-3">
             <Link
               href="/"
@@ -109,7 +108,6 @@ const ScholarshipIndexPage = () => {
             </p>
           </div>
 
-          {/* Content */}
           {loading ? (
             <div className="flex flex-col gap-6">
               <p className="text-xs text-text-dim">

@@ -4,40 +4,45 @@
  * Path: packages/shared/config/i18n/am/index.js
  */
 
-const common = require('./common');
-const landing = require('./landing');
-const courses = require('./courses');
-const pricing = require('./pricing');
-const checkout = require('./checkout');
-const checkoutModal = require('./checkoutModal');
-const portal = require('./portal');
-const profile = require('./profile');
-const referrals = require('./referrals');
-const discounts = require('./discounts');
+
+'use strict';
+
 const admin = require('./admin');
 const agents = require('./agents');
 const auth = require('./auth');
+const checkout = require('./checkout');
+const checkoutModal = require('./checkoutModal');
+const common = require('./common');
+const confirmations = require('./confirmations');
 const contact = require('./contact');
+const courses = require('./courses');
+const discounts = require('./discounts');
+const landing = require('./landing');
 const notifications = require('./notifications');
 const phasePurchase = require('./phasePurchase');
-const confirmations = require('./confirmations');
+const portal = require('./portal');
+const pricing = require('./pricing');
+const profile = require('./profile');
+const referrals = require('./referrals');
+const scholarships = require('./scholarships');
 
 module.exports = {
-  ...common,
-  ...landing,
-  ...courses,
-  ...pricing,
-  ...checkout,
-  ...checkoutModal,
-  ...portal,
-  ...profile,
-  ...referrals,
-  ...discounts,
   ...admin,
   ...agents,
   ...auth,
+  ...checkout,
+  ...checkoutModal,
+  ...common,
+  ...confirmations,
   ...contact,
+  ...courses,
+  ...discounts,
+  ...landing,
   ...notifications,
   ...phasePurchase,
-  ...confirmations,
+  ...portal,
+  ...pricing,
+  ...profile,
+  ...referrals,
+  ...scholarships,
 };

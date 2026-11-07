@@ -33,6 +33,7 @@ import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
 import useProgress from '../../hooks/useProgress';
 import usePortalCourse from '../../hooks/usePortalCourse';
+import ScholarshipBanner from '../../components/scholarships/ScholarshipBanner';
 import useAccessControl from '../../hooks/useAccessControl';
 import {
   Video, X, ChevronRight, CheckCircle, Lock, PlayCircle,
@@ -162,7 +163,12 @@ const PortalPage = () => {
       <>
         <SEOHead title="Classroom Portal" />
         <PageLayout>
-          <div className="portal-senior">
+          <div className="portal-senior" style={{ maxWidth: '56rem', margin: '0 auto' }}>
+            {/* Scholarship banner — visible to all users including non-enrolled */}
+            <div style={{ marginBottom: '2rem', marginTop: '1rem' }}>
+              <ScholarshipBanner />
+            </div>
+
             <div className="senior-phase-view">
               <div className="senior-video-empty" style={{ padding: '4rem 2rem', textAlign: 'center' }}>
                 <Video size={48} style={{ color: 'var(--text-dim)', marginBottom: '1rem' }} />

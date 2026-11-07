@@ -1,15 +1,30 @@
 /**
  * @fileoverview Scholarship System — Amharic Translations
  *
- * Mirror of en/scholarships.js with Amharic copy. Every key MUST exist
- * in both files to prevent missing-translation fallbacks in the UI.
+ * Every user-facing string for the scholarship program lives here.
+ * Zero hardcoded copy in the component tree.
+ *
+ * Namespaces:
+ *   scholarships.page.*        — public + student-facing pages
+ *   scholarships.form.*        — application form
+ *   scholarships.status.*      — status labels
+ *   scholarships.notifications.* — notification titles + bodies
+ *   scholarships.admin.*       — admin panel
+ *   scholarships.documents.*   — document type labels
+ *   scholarships.banner.*      — auth page banner
+ *   scholarships.feePolicy.*   — pay-at-apply explanation
+ *
+ * Path: packages/shared/config/i18n/am/scholarships.js
+ */
+
+/**
+ * @fileoverview Scholarship System — Amharic Translations
  *
  * Path: packages/shared/config/i18n/am/scholarships.js
  */
 
 module.exports = {
   scholarships: {
-    /* ── Public pages ── */
     page: {
       title: 'ስኮላርሺፖች',
       subtitle: 'ለሚመኙ ገንቢዎች የገንዘብ ድጋፍ',
@@ -32,12 +47,11 @@ module.exports = {
       deadlineLabel: 'የማመልከቻ ማለቂያ',
     },
 
-    /* ── Application form ── */
     form: {
       title: 'ለስኮላርሺፕ ያመልክቱ',
       subtitle: 'ይህ ስኮላርሺፕ ለእርስዎ ለምን አስፈለገ ይንገሩን',
       motivationLabel: 'የተነሳሽነት መግለጫ',
-      motivationPlaceholder: 'ይህን ስኮላርሺፕ ለምን እንደሚገባዎት፣ ምን መማር እንደሚፈልጉ እና ለወደፊትዎ እንዴት እንደሚጠቅም ያብራሩ...',
+      motivationPlaceholder: 'ይህን ስኮላርሺፕ ለምን እንደሚገባዎት...',
       motivationHint: '{count} / {max} ፊደሎች (ቢያንስ {min})',
       motivationTooShort: 'የተነሳሽነት መግለጫ ቢያንስ {min} ፊደሎች መሆን አለበት።',
       motivationTooLong: 'የተነሳሽነት መግለጫ ከ {max} ፊደሎች መብለጥ የለበትም።',
@@ -51,14 +65,13 @@ module.exports = {
       submitButton: 'ማመልከቻ ያስገቡ',
       submitting: 'በማስገባት ላይ...',
       cancelButton: 'ይቅር',
-      submitSuccess: 'ማመልከቻው በተሳካ ሁኔታ ገብቷል። ሲገመገም ይነገርዎታል።',
-      submitFailed: 'ማመልከቻውን ማስገባት አልተቻለም። እባክዎ እንደገና ይሞክሩ።',
+      submitSuccess: 'ማመልከቻው በተሳካ ሁኔታ ገብቷል።',
+      submitFailed: 'ማመልከቻውን ማስገባት አልተቻለም።',
       alreadyApplied: 'ለዚህ ስኮላርሺፕ አስቀድመው አመልክተዋል።',
       loginRequired: 'ለማመልከት መግባት አለብዎት።',
       bannedUser: 'መለያዎ ለስኮላርሺፕ ማመልከት ብቁ አይደለም።',
     },
 
-    /* ── Application statuses ── */
     status: {
       pending: 'በግምገማ ላይ',
       pendingPayment: 'ተፈቅዷል — ክፍያ በመጠበቅ ላይ',
@@ -66,7 +79,7 @@ module.exports = {
       rejected: 'ተቀባይነት አላገኘም',
       withdrawn: 'ተመልሷል',
       revoked: 'ተሰርዟል',
-      pendingDescription: 'ማመልከቻዎ በግምገማ ላይ ነው። ውሳኔ ሲደረግ ይነገርዎታል።',
+      pendingDescription: 'ማመልከቻዎ በግምገማ ላይ ነው።',
       pendingPaymentDescription: 'ማመልከቻዎ ተፈቅዷል! ምዝገባዎን ለማስጀመር የምዝገባ ክፍያውን ይክፈሉ።',
       approvedDescription: 'እንኳን ደስ አለዎት! ምዝገባዎ ንቁ ነው።',
       rejectedDescription: 'ማመልከቻዎ ተቀባይነት አላገኘም።',
@@ -75,22 +88,32 @@ module.exports = {
       payFeeButton: 'የምዝገባ ክፍያ ይክፈሉ ({amount} ብር)',
       withdrawButton: 'ማመልከቻ ይመልሱ',
       withdrawConfirmTitle: 'ማመልከቻ ይመለስ?',
-      withdrawConfirmBody: 'ይህ እርምጃ ሊቀለበስ አይችልም። ወደዚህ ዘመቻ እንደገና ማመልከት አይችሉም።',
+      withdrawConfirmBody: 'ይህ እርምጃ ሊቀለበስ አይችልም።',
       withdrawSuccess: 'ማመልከቻው ተመልሷል።',
       withdrawFailed: 'ማመልከቻውን መመለስ አልተቻለም።',
     },
 
-    /* ── Documents ── */
     documents: {
       studentId: 'የተማሪ መታወቂያ',
       transcript: 'የትምህርት ውጤት',
       recommendationLetter: 'የምክር ደብዳቤ',
       incomeProof: 'የገቢ ማረጋገጫ',
+      nationalId: 'ብሔራዊ መታወቂያ',
+      kebeleIdFront: 'የቀበሌ መታወቂያ (ፊት)',
+      kebeleIdBack: 'የቀበሌ መታወቂያ (ጀርባ)',
       other: 'ሌላ ሰነድ',
     },
 
-    /* ── Auth page banner ── */
     banner: {
+      ariaLabel: 'የስኮላርሺፕ ማስታወቂያ',
+      dismissAriaLabel: 'ማስታወቂያውን ዝጋ',
+      headline: 'አዲስ ስኮላርሺፕ አለ',
+      grantFullCourseMessage: 'ለ{campaign} ሙሉ ኮርስ መዳረሻ — ለ{quota} ተማሪዎች ሙሉ በሙሉ ነጻ።',
+      grantPhasesMessage: 'የ{campaign} የተመረጡ ደረጃዎች ነጻ መዳረሻ — ለ{quota} ተማሪዎች ብቻ።',
+      applyNowButton: 'አሁን ያመልክቱ',
+      learnMoreButton: 'ተጨማሪ ይወቁ',
+      spotsLeft: '{remaining} ከ{quota} ቦታዎች ቀርተዋል',
+      loadingLabel: 'የስኮላርሺፕ ማስታወቂያ በመጫን ላይ...',
       title: '🎓 ስኮላርሺፕ አለ',
       message: 'ለ {campaign} ስኮላርሺፕ ያመልክቱ እና ለ{grant} ነጻ መዳረሻ ያግኙ።',
       grantFullCourse: 'ሙሉ ኮርስ',
@@ -100,7 +123,6 @@ module.exports = {
       dismiss: 'ዝጋ',
     },
 
-    /* ── Profile page ── */
     profile: {
       pageTitle: 'የእኔ ስኮላርሺፖች',
       pageSubtitle: 'የስኮላርሺፕ ማመልከቻዎችዎን ይከታተሉ',
@@ -113,23 +135,22 @@ module.exports = {
       viewDetails: 'ዝርዝሮችን ይመልከቱ',
     },
 
-    /* ── Notifications ── */
     notifications: {
       applied: {
         title: 'ማመልከቻ ገብቷል',
-        body: 'ለ {campaign} የስኮላርሺፕ ማመልከቻዎ በተሳካ ሁኔታ ገብቷል። በቅርቡ እንገመግማለን።',
+        body: 'ለ {campaign} የስኮላርሺፕ ማመልከቻዎ በተሳካ ሁኔታ ገብቷል።',
       },
       approved: {
         title: '🎉 ስኮላርሺፕ ተፈቅዷል!',
-        body: 'እንኳን ደስ አለዎት! ለ {campaign} ያቀረቡት ማመልከቻ ተፈቅዷል። ምዝገባዎ አሁን ንቁ ነው።',
+        body: 'እንኳን ደስ አለዎት! ለ {campaign} ያቀረቡት ማመልከቻ ተፈቅዷል።',
       },
       feeDue: {
         title: 'ስኮላርሺፕ ተፈቅዷል — ክፍያ ያስፈልጋል',
-        body: 'ለ {campaign} ያቀረቡት ማመልከቻ ተፈቅዷል። ምዝገባዎን ለማስጀመር የ {amount} ብር ምዝገባ ክፍያ ይክፈሉ።',
+        body: 'ለ {campaign} ያቀረቡት ማመልከቻ ተፈቅዷል። የ {amount} ብር ምዝገባ ክፍያ ይክፈሉ።',
       },
       feePaid: {
         title: '✓ ምዝገባ ነቅቷል',
-        body: 'የምዝገባ ክፍያዎ ተቀብሏል። ወደ {campaign} እንኳን ደህና መጡ! የኮርስ መዳረሻዎ አሁን ንቁ ነው።',
+        body: 'የምዝገባ ክፍያዎ ተቀብሏል። ወደ {campaign} እንኳን ደህና መጡ!',
       },
       rejected: {
         title: 'ማመልከቻ ተቀባይነት አላገኘም',
@@ -145,11 +166,30 @@ module.exports = {
       },
       appReceived: {
         title: 'አዲስ የስኮላርሺፕ ማመልከቻ',
-        body: '{applicant} ለ {campaign} አመልክቷል። በአስተዳዳሪ ፓነል ውስጥ ይገምግሙት።',
+        body: '{applicant} ለ {campaign} አመልክቷል።',
+      },
+      feeDeadline: {
+        title: 'የምዝገባ ክፍያ ማለቂያ',
+        body: 'እባክዎ የ{amount} ብር ምዝገባ ክፍያ ለ{campaign} በ{deadline} ከዚህ በፊት ይክፈሉ።',
+      },
+      paymentUnderReview: {
+        title: 'ክፍያ ተቀብሏል — በግምገማ ላይ',
+        body: 'ለ{campaign} የ{amount} ብር ምዝገባ ክፍያዎን ተቀብለናል።',
+      },
+      paymentVerified: {
+        title: '✓ ክፍያ ተረጋግጧል',
+        body: 'ለ{campaign} የ{amount} ብር ክፍያዎ ተረጋግጧል። ማመልከቻዎ አሁን በግምገማ ወረፋ ውስጥ ነው።',
+      },
+      refundInitiated: {
+        title: 'ክፍያ በመመለስ ላይ',
+        body: 'ለ{campaign} ያቀረቡት ማመልከቻ አልተፈቀደም። የ{amount} ብር ክፍያዎ ለመመለስ ተመዝግቧል።',
+      },
+      refundCompleted: {
+        title: '✓ ክፍያ ተመላሽ ሆኗል',
+        body: 'ለ{campaign} የ{amount} ብር ክፍያዎ ተመላሽ ሆኗል።',
       },
     },
 
-    /* ── Admin panel ── */
     admin: {
       sectionLabel: 'ስኮላርሺፖች',
       campaignsNavLabel: 'የስኮላርሺፕ ዘመቻዎች',
@@ -158,7 +198,7 @@ module.exports = {
       campaignsTitle: 'የስኮላርሺፕ ዘመቻዎች',
       campaignsSubtitle: 'የስኮላርሺፕ አቅርቦቶችን ይፍጠሩ እና ያስተዳድሩ',
 
-      campaignsEmpty: 'እስካሁን ዘመቻዎች የሉም። የመጀመሪያውን ይፍጠሩ!',
+      campaignsEmpty: 'እስካሁን ዘመቻዎች የሉም።',
       createCampaign: 'ዘመቻ ፍጠሩ',
       searchPlaceholder: 'ዘመቻዎችን በስም ወይም በስለግ ይፈልጉ...',
       filterAll: 'ሁሉም',
@@ -171,7 +211,7 @@ module.exports = {
       formName: 'የዘመቻ ስም',
       formNameAm: 'የዘመቻ ስም (አማርኛ)',
       formSlug: 'የURL ስለግ',
-      formSlugHint: 'በዓለም አቀፍ URL ውስጥ ይጠቀማል: /scholarships/<slug>',
+      formSlugHint: 'በ URL ውስጥ ይጠቀማል: /scholarships/<slug>',
       formDescription: 'መግለጫ',
       formDescriptionAm: 'መግለጫ (አማርኛ)',
       formGrantType: 'ይህ ስኮላርሺፕ ምን ይሰጣል?',
@@ -192,15 +232,22 @@ module.exports = {
       formCancel: 'ይቅር',
       formSuccessCreated: 'ዘመቻው ተፈጥሯል።',
       formSuccessUpdated: 'ዘመቻው ተስተካክሏል።',
-      formError: 'ማስቀመጥ አልተቻለም። እባክዎ እንደገና ይሞክሩ።',
+      formError: 'ማስቀመጥ አልተቻለም።',
       formSlugError: 'በዚህ ስለግ ሌላ ዘመቻ አስቀድሞ አለ።',
-      formInvalidPhase: 'ከተመረጡት ደረጃዎች ውስጥ አንዱ ወይም ከዚያ በላይ ልክ አይደሉም።',
+      formInvalidPhase: 'ከተመረጡት ደረጃዎች ውስጥ አንዱ ልክ አይደለም።',
+
+      formDocumentsHint: 'ለዚህ ዘመቻ የሚያስፈልጉ ሰነዶችን ይምረጡ።',
+      formDocumentsCount: '{count} ተመርጠዋል',
+      formDocumentsUnknown: '(ያልታወቀ ዓይነት)',
+      formDocumentsSearchPlaceholder: 'ሰነዶችን ያጣሩ...',
+      formDocumentsEmpty: 'ምንም የሰነድ ዓይነቶች አልተመዘገቡም።',
 
       applicationsTitle: 'የስኮላርሺፕ ማመልከቻዎች',
-      applicationsSubtitle: 'ለ {campaign} ማመልከቻዎችን ይገምግሙ እና ያስተናግዱ',
+      applicationsSubtitle: 'ለ {campaign} ማመልከቻዎችን ይገምግሙ',
       applicationsEmpty: 'ከማጣሪያዎ ጋር የሚዛመድ ማመልከቻ የለም።',
       applicationSearchPlaceholder: 'በአመልካች ስም፣ ስልክ ወይም ኢሜይል ይፈልጉ...',
       filterPending: 'በግምገማ ላይ',
+      filterPendingPayment: 'ክፍያ በመጠበቅ ላይ',
       filterApproved: 'ተፈቅዷል',
       filterRejected: 'ተቀባይነት አላገኘም',
       filterAll: 'ሁሉም',
@@ -219,6 +266,8 @@ module.exports = {
       detailDocuments: 'ደጋፊ ሰነዶች',
       detailAdminNotes: 'የአስተዳዳሪ ማስታወሻዎች (የውስጥ)',
       detailRejectionReason: 'የመቀበል ምክንያት (ለአመልካች ይታያል)',
+      detailRevocationReason: 'የመሰረዝ ምክንያት (ለአመልካች ይታያል)',
+      detailEventHistory: 'የክስተት ታሪክ',
       detailReviewButton: 'ማመልከቻውን ፍቀድ',
       detailRejectButton: 'ማመልከቻውን ውድቅ አድርግ',
       detailRevokeButton: 'ስኮላርሺፕ ሰርዝ',
@@ -229,7 +278,7 @@ module.exports = {
       detailConfirmRejectTitle: 'ማመልከቻው ውድቅ ይደረግ?',
       detailConfirmRejectBody: 'ምክንያት መስጠት አለብዎት። አመልካቹ ይነገራል።',
       detailConfirmRevokeTitle: 'ስኮላርሺፕ ይሰረዝ?',
-      detailConfirmRevokeBody: 'ይህ የአመልካቹን መዳረሻ ያስወግዳል። ለኦዲት ሂደቱ ተጠብቆ ይቆያል።',
+      detailConfirmRevokeBody: 'ይህ የአመልካቹን መዳረሻ ያስወግዳል።',
       approveSuccess: 'ማመልከቻው ተፈቅዷል።',
       rejectSuccess: 'ማመልከቻው ውድቅ ተደርጓል።',
       revokeSuccess: 'ስኮላርሺፑ ተሰርዟል።',
@@ -242,9 +291,28 @@ module.exports = {
       statsActiveCampaigns: 'ንቁ ዘመቻዎች',
       statsPendingApplications: 'በግምገማ ላይ ያሉ ማመልከቻዎች',
       statsApprovedRecipients: 'የተፈቀዱ ተቀባዮች',
+
+      verifyPaymentButton: 'ክፍያ አረጋግጥ',
+      verifyPaymentConfirmTitle: 'ክፍያውን ያረጋግጡ?',
+      verifyPaymentConfirmBody: 'ለዚህ ማመልከቻ የ{amount} ብር ክፍያ መቀበሉን ያረጋግጡ።',
+      paymentVerifiedSuccess: 'ክፍያ ተረጋግጧል። ማመልከቻው አሁን ለግምገማ ዝግጁ ነው።',
+      paymentAlreadyVerified: 'ክፍያው አስቀድሞ ተረጋግጧል።',
+      noPaymentOnFile: 'ምንም ክፍያ አልተመዘገበም።',
+      waitingForPaymentHint: 'መጀመሪያ ክፍያውን ያረጋግጡ፣ ከዚያ ማመልከቻውን ማፅደቅ ይችላሉ።',
+
+      refundsPendingLabel: 'በመጠባበቅ ላይ ያሉ ተመላሾች',
+      refundsPendingHint: '{count} ተመላሾች በእጅ ማስተላለፍ ይጠብቃሉ',
+      refundsMarkRefunded: 'ተመላሽ ሆኗል ብለው ምልክት ያድርጉ',
+      refundsProcessingTime: 'በ{days} ቀናት ውስጥ ያስተናግዱ',
+      refundsOverdueWarning: '{count} ተመላሾች ጊዜያቸው አልፏል',
+      refundsRefundNote: 'የተመላሽ ማስታወሻ',
+      refundsConfirmTitle: 'ተመላሽ መላኩን ያረጋግጡ?',
+      refundsConfirmBody: 'ይህ የ{amount} ብር ተመላሽ ለ{applicant} እንደተጠናቀቀ ይመዘግባል።',
+      refundsSuccess: 'ተመላሹ እንደተጠናቀቀ ተመዝግቧል።',
+      refundsFailed: 'ተመላሹን ማስተናገድ አልተቻለም።',
+      refundsFilterPending: 'በመጠባበቅ ላይ ያሉ ተመላሾች',
     },
 
-        /* ── Shared card labels ── */
     card: {
       spotsRemaining: '{remaining} ከ {total} ቦታዎች ቀርተዋል',
       spotsFilled: 'ሁሉም ቦታዎች ተሞልተዋል',
@@ -261,7 +329,6 @@ module.exports = {
       noDeadline: 'እስኪሞላ ክፍት ነው',
     },
 
-    /* ── Browse page ── */
     browse: {
       pageTitle: 'ስኮላርሺፖች',
       pageSubtitle: 'ለሚመኙ ገንቢዎች የገንዘብ ድጋፍ',
@@ -275,13 +342,12 @@ module.exports = {
       retryButton: 'እንደገና ሞክር',
     },
 
-    /* ── Detail page ── */
     detail: {
       backLink: 'ወደ ስኮላርሺፖች ተመለስ',
       aboutTitle: 'ስለዚህ ስኮላርሺፕ',
       grantTitle: 'ምን ያገኛሉ',
       grantFullCourse: 'ለሁሉም 5 ደረጃዎች ሙሉ መዳረሻ',
-      grantFullCourseDesc: 'እያንዳንዱ ቪዲዮ፣ እያንዳንዱ ፕሮጀክት፣ እያንዳንዱ የአማካሪ ክፍለ ጊዜ — ከመጀመሪያው ቀን እስከ መዝጊያ።',
+      grantFullCourseDesc: 'እያንዳንዱ ቪዲዮ፣ እያንዳንዱ ፕሮጀክት።',
       grantPhases: 'የተወሰኑ ደረጃዎች መዳረሻ',
       grantPhasesDesc: 'ለዚህ ዘመቻ የተዘረዘሩትን ትክክለኛ ደረጃዎች ይከፍታሉ።',
       eligibilityTitle: 'ማን ማመልከት ይችላል',
@@ -304,14 +370,23 @@ module.exports = {
       notFoundTitle: 'ስኮላርሺፕ አልተገኘም',
       notFoundDescription: 'ይህ ስኮላርሺፕ ተዘግቶ ወይም ተሰይሞ ሊሆን ይችላል።',
       backToBrowse: 'ሌሎች ስኮላርሺፖችን ያስሱ',
+
+      feePolicyTitle: 'የምዝገባ ክፍያ መመሪያ',
+      feePolicyFreeMessage: 'ይህ ስኮላርሺፕ ሙሉ በሙሉ ነጻ ነው።',
+      feePolicyPaidTitle: 'በማመልከቻ ጊዜ ይክፈሉ፣ ካልተቀበሉ ይመለስልዎታል',
+      feePolicyPaidMessage: 'የ{amount} ብር ምዝገባ ክፍያ ማመልከቻዎን ሲያስገቡ ይሰበሰባል። ማመልከቻዎ ካልተፈቀደ ሙሉ ክፍያዎ ይመለስልዎታል።',
+      feePolicyRefundMessage: 'ማመልከቻዎ ካልተፈቀደ ሙሉ ክፍያዎ በራስ-ሰር ለመመለስ ተመዝግቧል።',
+      feePolicySecureMessage: 'እስከ ውሳኔ ድረስ ክፍያዎ በደህንነት ተይዟል።',
+      feePolicyDeferredTitle: 'ሲከፍሉ መቼ ነው',
+      feePolicyDeferredMessage: 'የ{amount} ብር ምዝገባ ክፍያ የሚከፈለው ማመልከቻዎ ከተፈቀደ በኋላ ብቻ ነው።',
+      feePolicyDeadlineMessage: 'ከተፈቀደ በኋላ ክፍያውን በመድረኩ ለመክፈል {days} ቀናት ይኖሩዎታል።',
     },
 
-    /* ── Application form (modal) ── */
     formModal: {
       title: 'ለስኮላርሺፕ ያመልክቱ',
       subtitle: 'ይህ ስኮላርሺፕ ለእርስዎ ለምን አስፈለገ ይንገሩን',
       motivationLabel: 'የተነሳሽነት መግለጫ',
-      motivationPlaceholder: 'ታሪክዎን ያካፍሉ። ምን አመጣዎት፣ ምን ይገነባሉ፣ እና ይህ ስኮላርሺፕ መንገድዎን እንዴት ይለውጣል?',
+      motivationPlaceholder: 'ታሪክዎን ያካፍሉ።',
       motivationCounter: '{count} / {max} ፊደሎች (ቢያንስ {min})',
       documentsLabel: 'ደጋፊ ሰነዶች',
       documentsHint: 'JPEG፣ PNG፣ WebP ወይም PDF ይስቀሉ። እያንዳንዱ ከ{size} MB ያልበለጠ።',
@@ -328,14 +403,28 @@ module.exports = {
       validationRequiredDocMissing: 'የሚያስፈልገው ሰነድ "{type}" ጎድሏል።',
       validationUploadInProgress: 'እባክዎ ሁሉም ስቀሎች እስኪጠናቀቁ ይጠብቁ።',
       submitConfirmTitle: 'ማመልከቻ ይገባ?',
-      submitConfirmBody: 'ከተገባ በኋላ ማርትዕ ወይም እንደገና ማመልከት አይችሉም። የተነሳሽነት መግለጫዎ የመጨረሻ መሆኑን ያረጋግጡ።',
+      submitConfirmBody: 'ከተገባ በኋላ ማርትዕ ወይም እንደገና ማመልከት አይችሉም።',
       submitConfirmButton: 'አዎ፣ አስገባ',
       submitSuccessTitle: 'ማመልከቻ ገብቷል',
-      submitSuccessBody: 'ማመልከቻዎን ተቀብለናል። ሲገመገም ይነገርዎታል።',
+      submitSuccessBody: 'ማመልከቻዎን ተቀብለናል።',
       submitErrorTitle: 'ማስገባት አልተሳካም',
+
+      paymentStepTitle: 'የምዝገባ ክፍያ ይክፈሉ',
+      paymentStepSubtitle: 'ማመልከቻዎን ለማስገባት ክፍያውን ያጠናቅቁ።',
+      paymentMethodLabel: 'የክፍያ ዘዴ',
+      transactionRefLabel: 'የግብይት ማጣቀሻ',
+      transactionRefPlaceholder: 'ለምሳሌ TB1234567890',
+      screenshotLabel: 'የክፍያ ስክሪንሾት',
+      uploadScreenshotButton: 'ስክሪንሾት ይስቀሉ',
+      amountDueLabel: 'የሚከፈል መጠን',
+
+      feeNoteFree: 'ይህ ስኮላርሺፕ ነጻ ነው — ምንም ክፍያ አያስፈልግም።',
+      feeNotePayAtApply: 'ማመልከቻዎን ለማስገባት የ{amount} ብር ምዝገባ ክፍያ ያስፈልጋል። ማመልከቻዎ ካልተፈቀደ ይህ ክፍያ ሙሉ በሙሉ ይመለስልዎታል።',
+      feeNoteRefundGuarantee: 'ካልተቀበሉ የ{amount} ብር ክፍያዎ በ{days} ቀናት ውስጥ ይመለስልዎታል።',
+      feeNoteDeferred: 'የ{amount} ብር ምዝገባ ክፍያ የሚከፈለው ማመልከቻዎ ከተፈቀደ በኋላ ብቻ ነው።',
+      feeNoteRefundable: 'ማመልከቻዎ ካልተፈቀደ ምንም ክፍያ አይከፈልም።',
     },
 
-    /* ── My applications page ── */
     myApplications: {
       pageTitle: 'የእኔ ስኮላርሺፖች',
       pageSubtitle: 'ማመልከቻዎችዎን እና የምዝገባ ሁኔታዎን ይከታተሉ',
@@ -351,7 +440,7 @@ module.exports = {
       viewCampaignLabel: 'ዘመቻውን ይመልከቱ',
       withdrawButton: 'ማመልከቻ ይመልሱ',
       withdrawConfirmTitle: 'ማመልከቻ ይመለስ?',
-      withdrawConfirmBody: 'ይህ ሊቀለበስ አይችልም። ወደዚህ ዘመቻ እንደገና ማመልከት አይችሉም።',
+      withdrawConfirmBody: 'ይህ ሊቀለበስ አይችልም።',
       withdrawConfirmButton: 'አዎ፣ መልስ',
       withdrawSuccessTitle: 'ማመልከቻ ተመልሷል',
       withdrawSuccessBody: 'ማመልከቻዎ ተመልሷል።',
@@ -359,20 +448,6 @@ module.exports = {
       payFeeButton: 'ክፍያ ይክፈሉ',
     },
 
-    /* ── Scholarship banner (auth pages) ── */
-    banner: {
-      ariaLabel: 'የስኮላርሺፕ ማስታወቂያ',
-      dismissAriaLabel: 'ማስታወቂያውን ዝጋ',
-      headline: 'አዲስ ስኮላርሺፕ አለ',
-      grantFullCourseMessage: 'ለ{campaign} ሙሉ ኮርስ መዳረሻ — ለ{quota} ተማሪዎች ሙሉ በሙሉ ነጻ።',
-      grantPhasesMessage: 'የ{campaign} የተመረጡ ደረጃዎች ነጻ መዳረሻ — ለ{quota} ተማሪዎች ብቻ።',
-      applyNowButton: 'አሁን ያመልክቱ',
-      learnMoreButton: 'ተጨማሪ ይወቁ',
-      spotsLeft: '{remaining} ከ{quota} ቦታዎች ቀርተዋል',
-      loadingLabel: 'የስኮላርሺፕ ማስታወቂያ በመጫን ላይ...',
-    },
-
-    /* ── Status labels (extended) ── */
     statusLabel: {
       pending: 'በግምገማ ላይ',
       pendingPayment: 'ክፍያ በመጠበቅ ላይ',
@@ -380,6 +455,48 @@ module.exports = {
       rejected: 'ተቀባይነት አላገኘም',
       withdrawn: 'ተመልሷል',
       revoked: 'ተሰርዟል',
+      pendingPaymentVerification: 'ክፍያ በግምገማ ላይ',
+      refundPending: 'ክፍያ በመመለስ ላይ',
+      refunded: 'ተመላሽ ሆኗል',
+      filterPendingPayment: 'ክፍያ በመጠበቅ ላይ',
+    },
+
+    learnMore: {
+      title: 'ስለዚህ ስኮላርሺፕ',
+      externalLinkLabel: 'ሙሉ ዝርዝሮችን ያንብቡ',
+      empty: 'ተጨማሪ ዝርዝሮች አልቀረቡም።',
+    },
+
+    nav: {
+      scholarships: 'ስኮላርሺፖች',
+    },
+
+    feePage: {
+      pageTitle: 'የምዝገባ ክፍያ ይክፈሉ',
+      pageSubtitle: 'ለ{campaign} ምዝገባዎን ያጠናቅቁ',
+      backLink: 'ወደ ስኮላርሺፕ ተመለስ',
+      summaryTitle: 'የክፍያ ማጠቃለያ',
+      campaignLabel: 'ዘመቻ',
+      feeLabel: 'የምዝገባ ክፍያ',
+      deadlineLabel: 'ማለቂያ',
+      deadlineExpired: 'ማለቂያው አልፏል',
+      statusApproved: 'ተፈቅዷል — ክፍያ በመጠበቅ ላይ',
+      statusPending: 'ማመልከቻ በግምገማ ላይ',
+      statusRejected: 'ማመልከቻ ተቀባይነት አላገኘም',
+      statusWithdrawn: 'ማመልከቻ ተመልሷል',
+      statusApprovedMessage: 'ምዝገባዎን ለማስጀመር የምዝገባ ክፍያውን ይክፈሉ።',
+      statusPendingMessage: 'ማመልከቻዎ አሁንም በግምገማ ላይ ነው።',
+      statusRejectedMessage: 'ይህ ማመልከቻ ተቀባይነት አላገኘም።',
+      statusWithdrawnMessage: 'ይህን ማመልከቻ መልሰዋል።',
+      notFoundTitle: 'ማመልከቻ አልተገኘም',
+      notFoundDescription: 'ይህን ማመልከቻ ማግኘት አልቻልንም።',
+      loadingLabel: 'የክፍያ ዝርዝሮችን በመጫን ላይ...',
+      alreadyPaidTitle: 'ክፍያ አስቀድሞ ገብቷል',
+      alreadyPaidDescription: 'ክፍያዎ በግምገማ ላይ ነው።',
+      submitButton: 'የክፍያ ማረጋገጫ ያስገቡ',
+      submitSuccessTitle: 'ክፍያ ገብቷል',
+      submitSuccessBody: 'ክፍያዎ በግምገማ ላይ ነው።',
+      submitErrorTitle: 'ማስገባት አልተሳካም',
     },
   },
 };

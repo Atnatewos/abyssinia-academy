@@ -9,6 +9,17 @@
  * the lib/ directory). If it cannot be resolved, the defaults module is
  * used; if that also fails, minimal inline fallbacks keep the UI functional.
  *
+ * Commission chain invariant (mirrors packages/shared/config/referrals.config.js):
+ *   levelAmounts: [300, 150, 100, 50]  →  sum = 600 ETB
+ *   totalPerSale:                      600 ETB
+ *   maxTotalPerSaleETB:                600 ETB
+ *   caps.maxTotalPerSaleETB:           600 ETB
+ *
+ * All four values MUST stay in sync across this file, defaults.config.js,
+ * and referrals.config.js. If the sum of levelAmounts exceeds the caps,
+ * the distributor short-changes the deeper levels once the running total
+ * hits the cap.
+ *
  * Path: apps/web/lib/config.js
  */
 
@@ -510,6 +521,17 @@ export const getReferralCodeGenConfig = () => {
   return referralConfig?.codeGeneration || loadDefaults().referrals.codeGeneration;
 };
 
+/**
+ * Commission structure — 4-level MLM chain.
+ *
+ * INVARIANT (see file header): the sum of `levelAmounts` MUST equal
+ * `totalPerSale` AND `maxTotalPerSaleETB`. This fallback mirrors the
+ * canonical values in referrals.config.js; if it drifts, consumers
+ * that hit this fallback (config unreachable) will silently shortchange
+ * the deeper levels.
+ *
+ * @returns {{ maxLevels: number, levelAmounts: number[], totalPerSale: number, maxTotalPerSaleETB: number, currency: string, unlockDelayDays: number }}
+ */
 export const getCommissionStructure = () => {
   const referralConfig = getReferralConfig();
   const defaults = loadDefaults();
@@ -518,8 +540,9 @@ export const getCommissionStructure = () => {
     defaults.referrals?.commissionStructure ||
     {
       maxLevels: 4,
-      levelAmounts: [200, 150, 100, 50],
-      totalPerSale: 500,
+      levelAmounts: [300, 150, 100, 50],
+      totalPerSale: 600,
+      maxTotalPerSaleETB: 600,
       currency: 'ETB',
       unlockDelayDays: 7,
     }
@@ -532,13 +555,21 @@ export const getBonusConfig = () => {
   return referralConfig?.bonuses || defaults.referrals?.bonuses || {};
 };
 
+/**
+ * MLM payout caps.
+ *
+ * `maxTotalPerSaleETB` mirrors commissionStructure.maxTotalPerSaleETB —
+ * see getCommissionStructure() header for the invariant.
+ *
+ * @returns {{ maxTotalPerSaleETB: number, maxBonusPerUserPerMonthETB: number, maxTotalPayoutPerUserPerMonthETB: number, maxTotalPayoutPlatformPerMonthETB: number }}
+ */
 export const getMLMCaps = () => {
   const referralConfig = getReferralConfig();
   const defaults = loadDefaults();
   return (
     referralConfig?.caps ||
     defaults.referrals?.caps || {
-      maxTotalPerSaleETB: 500,
+      maxTotalPerSaleETB: 600,
       maxBonusPerUserPerMonthETB: 10000,
       maxTotalPayoutPerUserPerMonthETB: 25000,
       maxTotalPayoutPlatformPerMonthETB: 500000,
@@ -948,6 +979,179 @@ export const calculateCombinedDiscount = ({
 
   return breakdown;
 };
+
+
+/* ─────────────────────────────────────────────────────────────
+ * SCHOLARSHIP SYSTEM ACCESSORS
+ * ───────────────────────────────────────────────────────────── */
+
+/**
+ * Full scholarship-system configuration.
+ * Mirrors packages/shared/config/scholarships.config.js shape.
+ *
+ * @returns {object} Scholarship config
+ */
+export const getScholarshipsConfig = () => {
+  const defaults = loadDefaults();
+  const fallback = {
+    enabled: false,
+    defaults: {},
+    allowedPhaseIds: ['phase-1', 'phase-2', 'phase-3', 'phase-4', 'phase-5'],
+    rules: {},
+    notifications: {},
+    publicListing: {},
+    admin: {},
+    registrationFee: {},
+    documentTypes: {},
+    analytics: {},
+  };
+  return getValue('scholarships', defaults.scholarships || fallback) || fallback;
+};
+
+/**
+ * Whether the scholarship system is enabled platform-wide.
+ * Set SCHOLARSHIPS_ENABLED=false in the environment to disable instantly.
+ *
+ * @returns {boolean}
+ */
+export const isScholarshipsEnabled = () => {
+  const raw =
+    typeof process !== 'undefined' ? process.env.SCHOLARSHIPS_ENABLED : undefined;
+  if (raw === undefined || raw === null || raw === '') {
+    return getScholarshipsConfig().enabled !== false;
+  }
+  return String(raw).toLowerCase() !== 'false';
+};
+
+/**
+ * Default values applied when a campaign omits an explicit value.
+ * Reads from scholarshipsConfig.defaults.
+ *
+ * @returns {object}
+ */
+export const getScholarshipDefaults = () => {
+  const config = getScholarshipsConfig();
+  return config.defaults || {
+    quota: 100,
+    registrationFeeETB: 0,
+    requiresPhoneVerification: false,
+    motivationMinChars: 100,
+    motivationMaxChars: 2000,
+    allowedDocumentTypes: ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'],
+    maxDocumentSizeBytes: 5 * 1024 * 1024,
+    maxDocumentsPerApplication: 3,
+  };
+};
+
+/**
+ * Valid phase identifiers for scholarship grants.
+ * Must match the platform-wide phase IDs used in accessControl.js.
+ *
+ * @returns {string[]}
+ */
+export const getScholarshipAllowedPhaseIds = () => {
+  const config = getScholarshipsConfig();
+  return (
+    config.allowedPhaseIds || [
+      'phase-1',
+      'phase-2',
+      'phase-3',
+      'phase-4',
+      'phase-5',
+    ]
+  );
+};
+
+/**
+ * Business rules for the scholarship system.
+ *
+ * @returns {object}
+ */
+export const getScholarshipRules = () => {
+  const config = getScholarshipsConfig();
+  return config.rules || {
+    oneApplicationPerUserPerCampaign: true,
+    requireRegistrationBeforeApply: true,
+    allowReapplyDifferentCampaign: true,
+    bannedUsersCannotApply: true,
+    scholarshipRecipientsExcludedFromMlm: false,
+    commissionDistributionOnScholarshipFee: false,
+    mergeWithExistingEnrollments: true,
+    revokePreservesProgress: true,
+  };
+};
+
+/**
+ * Public listing behavior — banner, caching, visibility.
+ *
+ * @returns {object}
+ */
+export const getScholarshipPublicListingConfig = () => {
+  const config = getScholarshipsConfig();
+  return config.publicListing || {
+    cacheSeconds: 300,
+    bannerDismissStorageDays: 7,
+    maxBannerCampaigns: 1,
+    showQuotaProgress: true,
+  };
+};
+
+/**
+ * Registration fee payment flow configuration.
+ *
+ * @returns {object}
+ */
+export const getScholarshipRegistrationFeeConfig = () => {
+  const config = getScholarshipsConfig();
+  return config.registrationFee || {
+    paymentPurpose: 'scholarship_registration',
+    paymentDeadlineDays: 7,
+    checkoutUrlTemplate: '/checkout?scholarship={applicationId}',
+    allowPaymentRetry: true,
+  };
+};
+
+/**
+ * Admin UX defaults.
+ *
+ * @returns {object}
+ */
+export const getScholarshipAdminConfig = () => {
+  const config = getScholarshipsConfig();
+  return config.admin || {
+    applicationsPerPage: 25,
+    allowApprovalBeyondQuota: false,
+    requireRejectionReason: true,
+    allowRevocation: true,
+    maskApplicantPhone: false,
+  };
+};
+
+/**
+ * Document type registry.
+ *
+ * @returns {object}
+ */
+export const getScholarshipDocumentTypes = () => {
+  const config = getScholarshipsConfig();
+  return config.documentTypes || {};
+};
+
+/**
+ * Analytics configuration for the admin stats surface.
+ * Reads from scholarshipsConfig.analytics.
+ *
+ * @returns {{ recentWindowDays: number, minApplicationsForLeaderboard: number }}
+ */
+export const getScholarshipAnalyticsConfig = () => {
+  const config = getScholarshipsConfig();
+  return config.analytics || {
+    recentWindowDays: 30,
+    minApplicationsForLeaderboard: 5,
+  };
+};
+
+
 
 /* ─────────────────────────────────────────────────────────────
  * BACKWARD COMPATIBILITY ALIASES

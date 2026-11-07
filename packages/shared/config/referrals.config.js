@@ -5,6 +5,19 @@
  * commission chain, paying-gated bonuses, caps, withdrawal rules,
  * sharing platforms, and the public earn-stats listing gate.
  *
+ * Commission math:
+ *   Level 1  → 300 ETB
+ *   Level 2  → 150 ETB
+ *   Level 3  → 100 ETB
+ *   Level 4  →  50 ETB
+ *   ─────────────────
+ *   TOTAL   → 600 ETB per approved sale
+ *
+ * The per-sale cap (totalPerSale / maxTotalPerSaleETB / caps.maxTotalPerSaleETB)
+ * MUST equal the sum of levelAmounts. If it doesn't, the distributor
+ * (packages/shared/mlm/commissions.js) short-changes the deeper levels
+ * because it stops distributing once the cap is hit.
+ *
  * Payout SLA: withdrawal.processingTimeHours is consumed by every
  * landing + dashboard + referral surface that promises a payout time.
  * Change this one value to update the entire platform.
@@ -22,8 +35,9 @@ const referralsConfig = {
   commissionStructure: {
     maxLevels: 4,
     levelAmounts: [300, 150, 100, 50],
-    totalPerSale: 500,
-    maxTotalPerSaleETB: 500,
+    /* Sum of levelAmounts — see header comment for the invariant. */
+    totalPerSale: 600,
+    maxTotalPerSaleETB: 600,
     currency: 'ETB',
     unlockDelayDays: 7,
   },
@@ -78,7 +92,8 @@ const referralsConfig = {
     },
   },
   caps: {
-    maxTotalPerSaleETB: 500,
+    /* Mirrors commissionStructure.maxTotalPerSaleETB — see header. */
+    maxTotalPerSaleETB: 600,
     maxBonusPerUserPerMonthETB: 10000,
     maxTotalPayoutPerUserPerMonthETB: 25000,
     maxTotalPayoutPlatformPerMonthETB: 500000,

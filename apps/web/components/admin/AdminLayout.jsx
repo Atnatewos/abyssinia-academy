@@ -1,8 +1,14 @@
 /**
  * @fileoverview Admin Layout Component
- * Consistent wrapper for all admin pages with responsive sidebar and header.
- * Mobile: slide-in sidebar with overlay + hamburger toggle.
- * Desktop: fixed sidebar with expandable sections.
+ *
+ * Consistent wrapper for all admin pages with a responsive sidebar
+ * and header. Navigation sections are data-driven so a new admin
+ * surface is a one-line array entry — no component edits required.
+ *
+ * Sidebar behavior:
+ *   - md+ : fixed sidebar, always visible
+ *   - < md: slide-in drawer with overlay, closes on route change
+ *
  * Path: apps/web/components/admin/AdminLayout.jsx
  */
 
@@ -21,7 +27,6 @@ import {
   Tag,
   Share2,
   TrendingUp,
-  Shield,
   UserCog,
   FileText,
   ChevronDown,
@@ -33,17 +38,13 @@ import {
   Network,
   BarChart3,
   Megaphone,
+  GraduationCap,
 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { getItem } from '../../lib/storage';
 
 /**
  * AdminLayout — Provides the sidebar + header shell for all admin pages.
- *
- * Mobile behavior:
- * - Sidebar hidden by default, slides in from left with hamburger toggle
- * - Dark overlay behind sidebar, tap to close
- * - Auto-closes on route change
  *
  * @param {object} props
  * @param {React.ReactNode} props.children - Page content to render
@@ -57,9 +58,7 @@ const AdminLayout = ({ children, title = 'Dashboard', subtitle = '' }) => {
   const [expandedSections, setExpandedSections] = useState({});
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
-  /*
-   * Check authentication on mount
-   */
+  /* Authentication gate */
   useEffect(() => {
     const token = getItem('admin_token');
     const user = getItem('admin_user');
@@ -74,16 +73,11 @@ const AdminLayout = ({ children, title = 'Dashboard', subtitle = '' }) => {
     }
   }, [router]);
 
-  /*
-   * Close mobile sidebar on route change
-   */
+  /* Close mobile drawer on route change */
   useEffect(() => {
     setMobileSidebarOpen(false);
   }, [router.pathname]);
 
-  /**
-   * Handle admin logout
-   */
   const handleLogout = () => {
     localStorage.removeItem('admin_token');
     localStorage.removeItem('admin_user');
@@ -91,9 +85,6 @@ const AdminLayout = ({ children, title = 'Dashboard', subtitle = '' }) => {
     router.push('/admin/login');
   };
 
-  /**
-   * Toggle a sidebar section expand/collapse
-   */
   const toggleSection = (sectionId) => {
     setExpandedSections((prev) => ({
       ...prev,
@@ -101,16 +92,15 @@ const AdminLayout = ({ children, title = 'Dashboard', subtitle = '' }) => {
     }));
   };
 
-  /**
-   * Check if a route is currently active
-   */
   const isActive = (path, exact = false) => {
     if (exact) return router.pathname === path;
     return router.pathname.startsWith(path);
   };
 
   /*
-   * Navigation items grouped by section
+   * Navigation sections. Each entry is pure data so a new admin surface
+   * is a one-line config edit. `superadminOnly` gates an item behind
+   * adminUser.role === 'superadmin'.
    */
   const navSections = [
     {
@@ -153,6 +143,17 @@ const AdminLayout = ({ children, title = 'Dashboard', subtitle = '' }) => {
           path: '/admin/referrals/mlm/withdrawals',
           label: t.referrals?.mlm?.adminWithdrawalsTitle || 'MLM Withdrawals',
           icon: Banknote,
+        },
+      ],
+    },
+    {
+      id: 'programs',
+      label: 'Programs',
+      items: [
+        {
+          path: '/admin/scholarships',
+          label: t.scholarships?.admin?.sectionLabel || 'Scholarships',
+          icon: GraduationCap,
         },
       ],
     },
@@ -234,19 +235,20 @@ const AdminLayout = ({ children, title = 'Dashboard', subtitle = '' }) => {
 
   return (
     <div className="admin-layout">
-
-      {/* ── Mobile Sidebar Overlay ── */}
+      {/* Mobile sidebar overlay */}
       <div
-        className={`admin-sidebar-overlay ${mobileSidebarOpen ? 'active': ''}`}
+        className={`admin-sidebar-overlay ${mobileSidebarOpen ? 'active' : ''}`}
         onClick={() => setMobileSidebarOpen(false)}
         aria-hidden="true"
       />
 
-      {/* ── Sidebar ── */}
+      {/* Sidebar */}
       <aside className={`admin-sidebar ${mobileSidebarOpen ? 'mobile-open' : ''}`}>
-
-        {/* Brand */}
-        <Link href="/admin" className="admin-sidebar-brand" onClick={() => setMobileSidebarOpen(false)}>
+        <Link
+          href="/admin"
+          className="admin-sidebar-brand"
+          onClick={() => setMobileSidebarOpen(false)}
+        >
           <div className="admin-sidebar-logo">
             <Code2 />
           </div>
@@ -258,14 +260,12 @@ const AdminLayout = ({ children, title = 'Dashboard', subtitle = '' }) => {
           </div>
         </Link>
 
-        {/* Navigation Sections */}
         <nav className="admin-nav">
           {navSections.map((section) => {
             const isExpanded = expandedSections[section.id] !== false;
 
             return (
               <div key={section.id} className="admin-nav-section">
-                {/* Section Header */}
                 <button
                   onClick={() => toggleSection(section.id)}
                   className="admin-nav-section-header"
@@ -274,16 +274,12 @@ const AdminLayout = ({ children, title = 'Dashboard', subtitle = '' }) => {
                   {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                 </button>
 
-                {/* Section Items */}
                 {isExpanded && (
                   <div className="admin-nav-section-items">
                     {section.items.map((item) => {
                       const IconComponent = item.icon;
                       const active = isActive(item.path, item.exact);
 
-                      /*
-                       * Hide superadmin-only items for non-superadmin users
-                       */
                       if (item.superadminOnly && adminUser?.role !== 'superadmin') {
                         return null;
                       }
@@ -292,7 +288,7 @@ const AdminLayout = ({ children, title = 'Dashboard', subtitle = '' }) => {
                         <Link
                           key={item.path}
                           href={item.path}
-                          className={`admin-nav-link ${active ? 'active': ''}`}
+                          className={`admin-nav-link ${active ? 'active' : ''}`}
                           onClick={() => setMobileSidebarOpen(false)}
                         >
                           <IconComponent size={18} />
@@ -307,7 +303,6 @@ const AdminLayout = ({ children, title = 'Dashboard', subtitle = '' }) => {
           })}
         </nav>
 
-        {/* Bottom Actions */}
         <div className="admin-nav-bottom">
           <Link
             href="/"
@@ -326,12 +321,10 @@ const AdminLayout = ({ children, title = 'Dashboard', subtitle = '' }) => {
         </div>
       </aside>
 
-      {/* ── Main Content Area ── */}
+      {/* Main content */}
       <div className="admin-main">
-        {/* Header */}
         <header className="admin-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            {/* Mobile Sidebar Toggle */}
             <button
               className="admin-mobile-toggle"
               onClick={() => setMobileSidebarOpen(!mobileSidebarOpen)}
@@ -348,7 +341,6 @@ const AdminLayout = ({ children, title = 'Dashboard', subtitle = '' }) => {
           </div>
 
           <div className="admin-header-actions">
-            {/* Language Toggle */}
             <button
               onClick={toggleLanguage}
               className="admin-header-lang-btn"
@@ -357,7 +349,6 @@ const AdminLayout = ({ children, title = 'Dashboard', subtitle = '' }) => {
               {language === 'en' ? 'EN' : 'አማ'}
             </button>
 
-            {/* Admin Avatar */}
             <div className="admin-header-user">
               <div className="admin-header-avatar">
                 {(adminUser?.username || 'A').charAt(0).toUpperCase()}
@@ -369,10 +360,7 @@ const AdminLayout = ({ children, title = 'Dashboard', subtitle = '' }) => {
           </div>
         </header>
 
-        {/* Page Content */}
-        <main className="admin-content">
-          {children}
-        </main>
+        <main className="admin-content">{children}</main>
       </div>
     </div>
   );

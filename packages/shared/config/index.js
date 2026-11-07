@@ -2,6 +2,7 @@
  * @fileoverview Config Aggregator
  * Central export point for all configurations.
  * Add new config files here and they become available through the config bridge.
+ *
  * Path: packages/shared/config/index.js
  */
 
@@ -17,6 +18,7 @@ const referralsConfig = require('./referrals.config');
 const discountsConfig = require('./discounts.config');
 const notificationsConfig = require('./notifications.config');
 const agentsConfig = require('./agents.config');
+const scholarshipsConfig = require('./scholarships.config');
 
 module.exports = {
   platform: platformConfig,
@@ -31,4 +33,5 @@ module.exports = {
   discounts: discountsConfig,
   notifications: notificationsConfig,
   agents: agentsConfig,
+  scholarships: scholarshipsConfig,
 };

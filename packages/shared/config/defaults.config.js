@@ -5,6 +5,16 @@
  * the shape of its corresponding live config file so the config bridge
  * never encounters a missing key.
  *
+ * Commission chain invariant:
+ *   levelAmounts: [300, 150, 100, 50]  →  sum = 600 ETB
+ *   totalPerSale:                      600 ETB
+ *   maxTotalPerSaleETB:                600 ETB
+ *   caps.maxTotalPerSaleETB:           600 ETB
+ *
+ * All four values MUST stay in sync. If the sum of levelAmounts exceeds
+ * the caps, packages/shared/mlm/commissions.js short-changes the deeper
+ * levels once the running total hits the cap.
+ *
  * SLA mirrors:
  *   - withdrawal.processingTimeHours: 24 (payout SLA)
  *   - approval.slaMinutes: 15 (approval SLA)
@@ -186,16 +196,16 @@ const defaultsConfig = {
         accountSettings: process.env.PROFILE_SHOW_SETTINGS !== 'false',
       },
       quickActions: [
-        { id: 'portal', label: 'Go to Classroom Portal', labelAm: 'ደ መማሪያ ክል ይሂዱ', href: '/portal', icon: 'BookOpen' },
-        { id: 'courses', label: 'Browse Courses', labelAm: 'ርሶችን ይመልከቱ', href: '/courses', icon: 'Grid' },
-        { id: 'telegram', label: 'Join Telegram Community', labelAm: 'ሌግራም ይቀላቀሉ', href: process.env.TELEGRAM_COMMUNITY_URL || 'https://t.me/AbyssiniaAcademy', icon: 'MessageCircle', external: true },
-        { id: 'support', label: 'Contact Support', labelAm: 'ድጋ ያግኙ', href: '/contact', icon: 'HelpCircle' },
+        { id: 'portal', label: 'Go to Classroom Portal', labelAm: 'ወደ መማሪያ ክፍል ይሂዱ', href: '/portal', icon: 'BookOpen' },
+        { id: 'courses', label: 'Browse Courses', labelAm: 'ርእሶችን ይመልከቱ', href: '/courses', icon: 'Grid' },
+        { id: 'telegram', label: 'Join Telegram Community', labelAm: 'ቴሌግራም ይቀላቀሉ', href: process.env.TELEGRAM_COMMUNITY_URL || 'https://t.me/https://t.me/theronasius', icon: 'MessageCircle', external: true },
+        { id: 'support', label: 'Contact Support', labelAm: 'ድጋፍ ያግኙ', href: '/contact', icon: 'HelpCircle' },
       ],
       accessControl: {
         lockedPhaseTitle: 'Phase {phase} is Locked',
-        lockedPhaseTitleAm: 'ደረ {phase} ተቆልፏል',
+        lockedPhaseTitleAm: 'ደረጃ {phase} ተቆልፏል',
         lockedPhaseDescription: 'Purchase Phase {phase}{title} to unlock this content and continue your learning journey.',
-        lockedPhaseDescriptionAm: 'ይህን ይዘት መክፈት እና የትምህርት ጉዞዎን ለመቀጠል ደጃ {phase}{title} ይዙ።',
+        lockedPhaseDescriptionAm: 'ይህን ይዘት መክፈት እና የትምህርት ጉዞዎን ለመቀጠል ደረጃ {phase}{title} ይዘዙ።',
         unlockPhase: 'Unlock Phase {phase}',
         unlockPhaseAm: 'ደረጃ {phase} ይክፈቱ',
       },
@@ -204,7 +214,7 @@ const defaultsConfig = {
       /* Approval SLA mirror: 15 minutes */
       slaMinutes: parseInt(process.env.APPROVAL_SLA_MINUTES, 10) || 15,
       pendingMessage: 'Your payment is being verified. You will get access within {minutes} minutes.',
-      pendingMessageAm: 'ክፍያዎ እየተረጋገጠ ው። በ{minutes} ቂቃዎች ውስጥ መዳረሻ ገኛሉ።',
+      pendingMessageAm: 'ክፍያዎ እየተረጋገጠ ው። በ{minutes} ደቂቃዎች ውስጥ መዳረሻ ያገኛሉ።',
     },
     screenshotUpload: {
       maxSize: parseInt(process.env.SCREENSHOT_MAX_SIZE, 10) || 5 * 1024 * 1024,
@@ -315,9 +325,9 @@ const defaultsConfig = {
     },
     commissionStructure: {
       maxLevels: parseInt(process.env.MLM_MAX_LEVELS, 10) || 4,
-      levelAmounts: (process.env.MLM_LEVEL_AMOUNTS || '200,150,100,50').split(',').map(Number),
-      totalPerSale: parseInt(process.env.MLM_TOTAL_PER_SALE, 10) || 500,
-      maxTotalPerSaleETB: parseInt(process.env.MLM_MAX_TOTAL_PER_SALE, 10) || 500,
+      levelAmounts: (process.env.MLM_LEVEL_AMOUNTS || '300,150,100,50').split(',').map(Number),
+      totalPerSale: parseInt(process.env.MLM_TOTAL_PER_SALE, 10) || 600,
+      maxTotalPerSaleETB: parseInt(process.env.MLM_MAX_TOTAL_PER_SALE, 10) || 600,
       currency: process.env.CURRENCY_CODE || 'ETB',
       unlockDelayDays: parseInt(process.env.MLM_UNLOCK_DELAY_DAYS, 10) || 7,
     },
@@ -372,7 +382,7 @@ const defaultsConfig = {
       },
     },
     caps: {
-      maxTotalPerSaleETB: parseInt(process.env.MLM_CAP_PER_SALE, 10) || 500,
+      maxTotalPerSaleETB: parseInt(process.env.MLM_CAP_PER_SALE, 10) || 600,
       maxBonusPerUserPerMonthETB: parseInt(process.env.MLM_CAP_BONUS_MONTHLY, 10) || 10000,
       maxTotalPayoutPerUserPerMonthETB: parseInt(process.env.MLM_CAP_PAYOUT_USER_MONTHLY, 10) || 25000,
       maxTotalPayoutPlatformPerMonthETB: parseInt(process.env.MLM_CAP_PAYOUT_PLATFORM_MONTHLY, 10) || 500000,

@@ -25,3 +25,4 @@ project-structure.txt
 *.env
 apps/api/.env
 apps/web/.env.local
+project-structure0.txt

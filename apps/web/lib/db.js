@@ -70,7 +70,7 @@ const isRetryableError = (error) => {
     message.includes('Connection terminated unexpectedly') ||
     code === 'ECONNREFUSED' ||
     code === 'ETIMEDOUT' ||
-    code === '57P01' // Postgres: admin_shutdown
+    code === '57P01'
   );
 };
 
@@ -79,15 +79,11 @@ const isRetryableError = (error) => {
  * connection errors.
  *
  * Retry policy: up to 3 attempts, exponential backoff (500ms, 1000ms,
- * 2000ms). Total worst case ≈ 3.5 seconds. This is short enough to fit
- * inside Vercel's default function timeout and long enough for Neon to
- * warm a connection back up.
+ * 2000ms). Total worst case ≈ 3.5 seconds.
  *
  * @param {string} text - SQL with $1, $2 placeholders
  * @param {Array} [params] - Query parameters
  * @returns {Promise<import('pg').QueryResult>}
- * @throws {Error} The final error if all retries fail, or the original
- *   error immediately if it's not retryable (e.g. constraint violation).
  */
 const query = async (text, params) => {
   const maxRetries = 3;
@@ -100,17 +96,9 @@ const query = async (text, params) => {
       lastError = error;
 
       if (!isRetryableError(error) || attempt === maxRetries - 1) {
-        /*
-         * Either the error is not retryable (query bug, constraint
-         * violation, etc.), or we've exhausted retries. Surface it.
-         */
         throw error;
       }
 
-      /*
-       * Transient error with retries remaining. Wait and try again.
-       * Backoff: 500ms, 1000ms (attempt 0 and 1 respectively).
-       */
       const delayMs = 500 * Math.pow(2, attempt);
       console.warn(
         `DB query failed (attempt ${attempt + 1}/${maxRetries}), retrying in ${delayMs}ms: ${error.message}`
