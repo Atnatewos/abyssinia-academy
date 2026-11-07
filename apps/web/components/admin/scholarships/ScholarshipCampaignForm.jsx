@@ -1,28 +1,31 @@
 /**
  * @fileoverview Scholarship Campaign Form — Tabbed Modal with Live Preview
  *
- * Self-rendered modal overlay (not the shared <Modal>) so this form can
- * use a wide two-column layout that the shared modal's `max-w-[26rem]`
- * cap blocks. The overlay is:
- *   - Full-screen on mobile (no wasted margins)
- *   - Centered, max-w-6xl card on md+ screens
- *   - Body locked on open, restored on close
- *   - Escape closes, backdrop click closes (saving disables both)
+ * Four tabs (Basics / Grants / Schedule / Documents) mirror the mental
+ * model admins have for a campaign. The right-side live preview shows
+ * the campaign exactly as it will render on /scholarships in real time.
  *
- * DateTime fields get a custom <DateTimeInput /> primitive that:
- *   - Renders the native `datetime-local` picker
- *   - Shows a "Now" button to jump to the current moment
- *   - Sets `min` to the current time so past dates can't be picked
- *   - Formats the display nicely while preserving the ISO value
+ * TIMEZONE HANDLING (critical):
+ *   The <input type="datetime-local"> shows and accepts browser-local
+ *   time. The backend stores everything as UTC. This file converts
+ *   between the two:
+ *     - On hydrate: UTC ISO → local `YYYY-MM-DDTHH:MM` string
+ *     - On submit:  local `YYYY-MM-DDTHH:MM` → UTC ISO string
  *
- * All field toggles use the shared <Switch /> primitive — a single
- * <label> wraps both the hidden input and the visible track, so
- * clicking anywhere (or hitting space) toggles it.
+ *   Without this conversion, a campaign created at local 12:39 (UTC+3)
+ *   would be stored as 12:39 UTC — three hours in the future, hidden
+ *   from the public listing until the clock caught up.
+ *
+ * DEFAULT OPEN TIME:
+ *   New campaigns default `applicationsOpenAt` to "60 seconds ago" in
+ *   the user's local timezone. Combined with the backend's
+ *   openingGraceSeconds (60s), a freshly created campaign is instantly
+ *   visible on the public listing.
  *
  * Path: apps/web/components/admin/scholarships/ScholarshipCampaignForm.jsx
  */
 
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Save,
   Loader2,
@@ -43,6 +46,7 @@ import {
   Globe,
   Clock,
 } from 'lucide-react';
+import Modal from '../../shared/Modal';
 import { useLanguage } from '../../../context/LanguageContext';
 import { useToast } from '../../../context/ToastContext';
 import apiClient from '../../../lib/api';
@@ -51,6 +55,36 @@ import {
   getScholarshipDocumentTypes,
   getScholarshipsConfig,
 } from '../../../lib/config';
+
+/* ============================================================================
+ * TIMEZONE HELPERS
+ * ========================================================================== */
+
+/**
+ * Convert a Date to a `datetime-local` string in the browser's LOCAL
+ * timezone. This is what <input type="datetime-local"> expects.
+ *
+ * @param {Date} date
+ * @returns {string} e.g. "2026-11-07T12:39"
+ */
+const dateToLocalInput = (date) => {
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+};
+
+/**
+ * Convert a `datetime-local` string (interpreted as browser local time)
+ * into an ISO 8601 UTC string for the backend.
+ *
+ * @param {string|null} localString
+ * @returns {string|null}
+ */
+const localInputToIsoUtc = (localString) => {
+  if (!localString) return null;
+  const date = new Date(localString);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toISOString();
+};
 
 /* ============================================================================
  * DOC TYPE BRIDGE
@@ -68,34 +102,18 @@ const resolveDocLabel = (t, type) => {
 };
 
 /* ============================================================================
- * DATETIME HELPERS
- * ==========================================================================
- * The native `datetime-local` input uses `YYYY-MM-DDTHH:MM` in local time.
- * These helpers keep the form state in that shape so the value can be
- * passed straight to the backend (which accepts ISO 8601).
- * ========================================================================== */
-
-/** Current time as a `datetime-local` string. */
-const nowLocal = () => {
-  const d = new Date();
-  const pad = (n) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-};
-
-/** Parse a `datetime-local` string into a Date. Returns null when invalid. */
-const parseLocal = (s) => {
-  if (!s) return null;
-  const d = new Date(s);
-  return Number.isNaN(d.getTime()) ? null : d;
-};
-
-/* ============================================================================
- * FORM STATE
+ * DEFAULTS + HYDRATION
  * ========================================================================== */
 
 const buildEmpty = () => {
   const config = getScholarshipsConfig();
   const defaults = config?.defaults || {};
+
+  /* Default open time = 60 seconds ago (local browser time). Combined
+     with the backend's openingGraceSeconds (60s), the campaign is
+     immediately visible on the public listing. */
+  const openAt = new Date(Date.now() - 60 * 1000);
+
   return {
     slug: '',
     name: '',
@@ -106,7 +124,7 @@ const buildEmpty = () => {
     grantsPhases: [],
     registrationFeeETB: Number(defaults.registrationFeeETB) || 0,
     quota: Number(defaults.quota) || 100,
-    applicationsOpenAt: nowLocal(),
+    applicationsOpenAt: dateToLocalInput(openAt),
     applicationsCloseAt: '',
     isActive: true,
     coverImageUrl: '',
@@ -118,6 +136,16 @@ const buildEmpty = () => {
 
 const hydrate = (campaign) => {
   if (!campaign) return buildEmpty();
+
+  const toLocalInput = (isoString) => {
+    if (!isoString) return '';
+    try {
+      return dateToLocalInput(new Date(isoString));
+    } catch {
+      return '';
+    }
+  };
+
   return {
     slug: campaign.slug || '',
     name: campaign.name || '',
@@ -128,12 +156,8 @@ const hydrate = (campaign) => {
     grantsPhases: Array.isArray(campaign.grants_phases) ? campaign.grants_phases : [],
     registrationFeeETB: Number(campaign.registration_fee_etb) || 0,
     quota: Number(campaign.quota) || 100,
-    applicationsOpenAt: campaign.applications_open_at
-      ? new Date(campaign.applications_open_at).toISOString().slice(0, 16)
-      : nowLocal(),
-    applicationsCloseAt: campaign.applications_close_at
-      ? new Date(campaign.applications_close_at).toISOString().slice(0, 16)
-      : '',
+    applicationsOpenAt: toLocalInput(campaign.applications_open_at),
+    applicationsCloseAt: toLocalInput(campaign.applications_close_at),
     isActive: campaign.is_active !== false,
     coverImageUrl: campaign.cover_image_url || '',
     requiredDocuments: Array.isArray(campaign.required_documents)
@@ -144,13 +168,9 @@ const hydrate = (campaign) => {
   };
 };
 
-const slugify = (input) =>
-  String(input || '')
-    .toLowerCase()
-    .trim()
-    .replace(/[^\w\s-]/g, '')
-    .replace(/[\s_-]+/g, '-')
-    .replace(/^-+|-+$/g, '');
+/* ============================================================================
+ * VALIDATION
+ * ========================================================================== */
 
 const validate = (form, registeredTypes) => {
   const errors = {};
@@ -182,10 +202,8 @@ const validate = (form, registeredTypes) => {
     errors.quota = 'Quota must be a whole number of 1 or more.';
   }
 
-  if (form.applicationsCloseAt) {
-    const open = parseLocal(form.applicationsOpenAt);
-    const close = parseLocal(form.applicationsCloseAt);
-    if (open && close && close <= open) {
+  if (form.applicationsCloseAt && form.applicationsOpenAt) {
+    if (new Date(form.applicationsCloseAt) <= new Date(form.applicationsOpenAt)) {
       errors.applicationsCloseAt = 'Close date must be after open date.';
     }
   }
@@ -229,8 +247,7 @@ const Field = ({ label, required, hint, error, children }) => (
 
 /**
  * Switch — accessible toggle. Single <label> wraps the hidden input and
- * the visual track, so clicking anywhere on the label (or pressing Space
- * while focused) toggles the value.
+ * the visual track, so clicking anywhere toggles the value.
  */
 const Switch = ({ checked, onChange, disabled }) => (
   <label
@@ -258,11 +275,9 @@ const Switch = ({ checked, onChange, disabled }) => (
 );
 
 /**
- * DateTimeInput — native datetime-local with a "Now" shortcut button
- * and a `min` of the current moment so past dates are unselectable.
- *
- * The visible value stays in the native picker for full keyboard support,
- * but the field itself is styled with the rest of the admin surface.
+ * DateTimeInput — native datetime-local with a "Now" shortcut button.
+ * Value is always a `datetime-local` string (browser-local time); the
+ * parent form handles conversion to UTC on submit.
  */
 const DateTimeInput = ({ value, onChange, min, allowNow = true, disabled }) => (
   <div className="relative">
@@ -281,7 +296,7 @@ const DateTimeInput = ({ value, onChange, min, allowNow = true, disabled }) => (
     {allowNow && (
       <button
         type="button"
-        onClick={() => onChange(nowLocal())}
+        onClick={() => onChange(dateToLocalInput(new Date()))}
         disabled={disabled}
         className="absolute right-1.5 top-1/2 -translate-y-1/2 inline-flex items-center gap-1
                    px-2 py-1 rounded-md text-2xs font-bold
@@ -521,9 +536,7 @@ const ScholarshipCampaignForm = ({ isOpen, onClose, onSaved, campaign = null }) 
   const [saving, setSaving] = useState(false);
   const [docSearch, setDocSearch] = useState('');
   const [showPreview, setShowPreview] = useState(true);
-  const scrollRef = useRef(null);
 
-  /* Re-hydrate on open */
   useEffect(() => {
     if (!isOpen) return;
     setForm(hydrate(campaign));
@@ -532,21 +545,6 @@ const ScholarshipCampaignForm = ({ isOpen, onClose, onSaved, campaign = null }) 
     setDocSearch('');
     setActiveTab('basics');
   }, [isOpen, campaign]);
-
-  /* Body scroll lock + Escape key */
-  useEffect(() => {
-    if (!isOpen) return undefined;
-    const handleKey = (e) => {
-      if (e.key === 'Escape' && !saving) onClose();
-    };
-    document.addEventListener('keydown', handleKey);
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.removeEventListener('keydown', handleKey);
-      document.body.style.overflow = prevOverflow;
-    };
-  }, [isOpen, saving, onClose]);
 
   const setField = (field, value) => {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -610,8 +608,10 @@ const ScholarshipCampaignForm = ({ isOpen, onClose, onSaved, campaign = null }) 
         grantsPhases: form.grantsPhases.length > 0 ? form.grantsPhases : null,
         registrationFeeETB: Number(form.registrationFeeETB),
         quota: Number(form.quota),
-        applicationsOpenAt: form.applicationsOpenAt || null,
-        applicationsCloseAt: form.applicationsCloseAt || null,
+        /* Convert form's `datetime-local` (browser local time) into UTC
+           ISO strings for the backend. */
+        applicationsOpenAt: localInputToIsoUtc(form.applicationsOpenAt),
+        applicationsCloseAt: localInputToIsoUtc(form.applicationsCloseAt),
         isActive: form.isActive === true,
         coverImageUrl: form.coverImageUrl?.trim() || null,
         requiredDocuments: form.requiredDocuments,
@@ -659,7 +659,6 @@ const ScholarshipCampaignForm = ({ isOpen, onClose, onSaved, campaign = null }) 
   const maxLearnChars = learnMoreConfig.maxContentChars || 5000;
   const maxLearnUrl = learnMoreConfig.maxUrlChars || 500;
   const learnMoreEnabled = learnMoreConfig.enabled !== false;
-  const nowString = nowLocal();
 
   return (
     <div
@@ -690,7 +689,6 @@ const ScholarshipCampaignForm = ({ isOpen, onClose, onSaved, campaign = null }) 
               </p>
             </div>
           </div>
-
           <div className="flex items-center gap-1.5">
             <button
               type="button"
@@ -724,7 +722,6 @@ const ScholarshipCampaignForm = ({ isOpen, onClose, onSaved, campaign = null }) 
         >
           {/* LEFT — tabbed form */}
           <div className="flex-1 flex flex-col min-h-0 min-w-0">
-            {/* Tabs */}
             <div className="flex items-center gap-0.5 px-3 border-b border-border-light bg-bg-secondary/30 overflow-x-auto shrink-0">
               {TABS.map(({ id, labelKey, fallback, Icon }) => {
                 const active = activeTab === id;
@@ -762,9 +759,7 @@ const ScholarshipCampaignForm = ({ isOpen, onClose, onSaved, campaign = null }) 
               </div>
             )}
 
-            {/* Scrollable tab content */}
-            <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 md:p-5 space-y-4">
-              {/* BASICS */}
+            <div className="flex-1 overflow-y-auto p-4 md:p-5 space-y-4">
               {activeTab === 'basics' && (
                 <div className="space-y-4 animate-fade-in-up">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -778,7 +773,15 @@ const ScholarshipCampaignForm = ({ isOpen, onClose, onSaved, campaign = null }) 
                         value={form.name}
                         onChange={(e) => {
                           setField('name', e.target.value);
-                          if (!form.slug) setField('slug', slugify(e.target.value));
+                          if (!form.slug) {
+                            const slug = e.target.value
+                              .toLowerCase()
+                              .trim()
+                              .replace(/[^\w\s-]/g, '')
+                              .replace(/[\s_-]+/g, '-')
+                              .replace(/^-+|-+$/g, '');
+                            setField('slug', slug);
+                          }
                         }}
                         placeholder="Tech Leaders Scholarship 2026"
                         maxLength={200}
@@ -803,13 +806,6 @@ const ScholarshipCampaignForm = ({ isOpen, onClose, onSaved, campaign = null }) 
                         {t.scholarships?.admin?.formSlug || 'URL Slug'}{' '}
                         <span className="text-error">*</span>
                       </label>
-                      <button
-                        type="button"
-                        onClick={() => setField('slug', slugify(form.name))}
-                        className="text-2xs font-semibold text-accent hover:underline"
-                      >
-                        Generate from title
-                      </button>
                     </div>
                     <div className="relative flex items-center">
                       <span className="absolute left-3.5 text-2xs font-mono text-text-dim select-none">
@@ -861,7 +857,6 @@ const ScholarshipCampaignForm = ({ isOpen, onClose, onSaved, campaign = null }) 
                 </div>
               )}
 
-              {/* GRANTS */}
               {activeTab === 'grants' && (
                 <div className="space-y-4 animate-fade-in-up">
                   <div className="p-4 rounded-2xl border border-border-light bg-bg-input">
@@ -949,13 +944,12 @@ const ScholarshipCampaignForm = ({ isOpen, onClose, onSaved, campaign = null }) 
                 </div>
               )}
 
-              {/* SCHEDULE */}
               {activeTab === 'schedule' && (
                 <div className="space-y-4 animate-fade-in-up">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <Field
                       label={t.scholarships?.admin?.formOpenAt || 'Opens'}
-                      hint="Defaults to the current moment."
+                      hint="Defaults to just now — campaign is instantly public."
                     >
                       <DateTimeInput
                         value={form.applicationsOpenAt}
@@ -971,7 +965,7 @@ const ScholarshipCampaignForm = ({ isOpen, onClose, onSaved, campaign = null }) 
                       <DateTimeInput
                         value={form.applicationsCloseAt}
                         onChange={(v) => setField('applicationsCloseAt', v)}
-                        min={nowString}
+                        min={form.applicationsOpenAt || undefined}
                       />
                     </Field>
                   </div>
@@ -1010,7 +1004,6 @@ const ScholarshipCampaignForm = ({ isOpen, onClose, onSaved, campaign = null }) 
                 </div>
               )}
 
-              {/* DOCUMENTS */}
               {activeTab === 'documents' && (
                 <div className="space-y-4 animate-fade-in-up">
                   <div>
@@ -1094,7 +1087,6 @@ const ScholarshipCampaignForm = ({ isOpen, onClose, onSaved, campaign = null }) 
               )}
             </div>
 
-            {/* Sticky footer */}
             <div className="px-4 md:px-5 py-3 border-t border-border-light bg-bg-secondary/60 flex items-center justify-end gap-2 shrink-0">
               <button
                 type="button"
@@ -1119,7 +1111,6 @@ const ScholarshipCampaignForm = ({ isOpen, onClose, onSaved, campaign = null }) 
             </div>
           </div>
 
-          {/* RIGHT — live preview */}
           {showPreview && (
             <aside className="hidden md:flex w-72 shrink-0 border-l border-border-light bg-bg-secondary/30 flex-col">
               <div className="px-4 py-3 border-b border-border-light">

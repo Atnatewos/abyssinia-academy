@@ -920,9 +920,30 @@ export const withdrawApplication = async (params) => {
  * READ HELPERS
  * ========================================================================== */
 
+/**
+ * Fetch active campaigns for public listing.
+ *
+ * Visibility rules (all must be true):
+ *   - is_active = true
+ *   - applications_open_at <= NOW() + openingGraceSeconds
+ *   - applications_close_at is null OR in the future
+ *
+ * The grace window (config: defaults.openingGraceSeconds, default 60s)
+ * prevents a just-created campaign from being invisible for the first
+ * second — the form sets open-at to "now" and both timestamps resolve
+ * within the same wall-clock second.
+ *
+ * Ordered by created_at DESC — the newest campaign shows first in
+ * banner surfaces that slice the array.
+ *
+ * @param {object} [options]
+ * @param {number} [options.limit=20]
+ * @returns {Promise<Array>}
+ */
 export const listActiveCampaigns = async ({ limit = 20 } = {}) => {
   const defaults = getScholarshipDefaults();
   const graceSeconds = Number(defaults.openingGraceSeconds) || 60;
+
   const result = await query(
     `SELECT id, slug, name, name_am, description, description_am,
             grants_full_course, grants_phases,
@@ -939,6 +960,45 @@ export const listActiveCampaigns = async ({ limit = 20 } = {}) => {
      LIMIT $2`,
     [String(graceSeconds), limit]
   );
+
+  /*
+   * Diagnostic log — surfaces WHICH campaigns exist but were filtered
+   * out, and WHY. Only logs when NODE_ENV !== 'production'. Helps
+   * debug the "created campaign but it's not public" problem without
+   * needing a SQL client.
+   */
+  if (process.env.NODE_ENV !== 'production') {
+    try {
+      const allResult = await query(
+        `SELECT slug, is_active, applications_open_at, applications_close_at,
+                NOW() AS db_now,
+                (applications_open_at <= NOW()) AS opens_now,
+                (applications_close_at IS NULL OR applications_close_at > NOW()) AS close_ok
+         FROM scholarship_campaigns
+         ORDER BY created_at DESC`
+      );
+      const visibleSlugs = new Set(result.rows.map((r) => r.slug));
+      const hidden = allResult.rows.filter((r) => !visibleSlugs.has(r.slug));
+      if (hidden.length > 0) {
+        console.log(
+          '[scholarships/listActiveCampaigns] Hidden campaigns:',
+          hidden.map((r) => ({
+            slug: r.slug,
+            reason: !r.is_active
+              ? 'is_active=false'
+              : !r.opens_now
+              ? `opens in the future (${r.applications_open_at} > ${r.db_now})`
+              : !r.close_ok
+              ? 'closed (applications_close_at in the past)'
+              : 'unknown',
+          }))
+        );
+      }
+    } catch {
+      /* diagnostic is best-effort — never block the real query */
+    }
+  }
+
   return result.rows;
 };
 
