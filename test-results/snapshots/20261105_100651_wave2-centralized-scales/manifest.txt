@@ -1,0 +1,15 @@
+Snapshot: wave2-centralized-scales
+Timestamp: 20261105_100651
+Base URL: http://localhost:3000
+Pages:
+  /
+  /courses
+  /courses/fullstack-web-engineering-masterclass
+  /pricing
+  /auth/login
+  /auth/register
+  /admin/login
+  /admin
+  /portal
+  /profile
+  /profile/referrals
