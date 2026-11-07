@@ -12,11 +12,17 @@
  * Path: apps/web/lib/scholarships/http/handlers/admin-campaigns.js
  */
 
+/**
+ * @fileoverview Admin Campaign Handlers
+ *
+ * Path: apps/web/lib/scholarships/http/handlers/admin-campaigns.js
+ */
+
 import { requireAdmin, parseJsonBody, readIntQuery, readStringQuery } from '../middleware';
-import { ok, created, noContent, methodNotAllowed } from '../response';
+import { ok, created, methodNotAllowed } from '../response';
 import { handleError, domainError } from '../errors';
 import { validateCampaignPayload } from '../../validation';
-import { query } from '../../../db';
+import { query, pool } from '../../../db';
 
 /* ============================================================================
  * LIST
@@ -161,8 +167,6 @@ export const handleAdminCreateCampaign = async (req, res) => {
         ? body.learnMoreUrl.trim()
         : null;
 
-    /* Normalize required_documents. Empty array → JSON `[]` so the
-       column is never NULL after a first save. */
     const requiredDocuments = Array.isArray(body.requiredDocuments)
       ? body.requiredDocuments.map((d) => ({
           type: String(d.type),
@@ -330,7 +334,17 @@ export const handleAdminUpdateCampaign = async (req, res) => {
 };
 
 /* ============================================================================
- * DELETE (SOFT)
+ * DELETE — HARD DELETE with application guard
+ * ==========================================================================
+ * Deletes the campaign row if it has NO applications. If applications
+ * exist, blocks the delete with a clear domain error — admin must
+ * either mark the campaign as closed (soft archive via isActive=false)
+ * or manually delete applications first.
+ *
+ * Rationale: scholarship applications are audit records. Silently
+ * deleting them would break referral attribution, refund tracking,
+ * and the applicant's history. A hard block with a clear error is
+ * the professional answer.
  * ========================================================================== */
 
 export const handleAdminDeleteCampaign = async (req, res) => {
@@ -340,16 +354,65 @@ export const handleAdminDeleteCampaign = async (req, res) => {
 
     const { id } = req.query;
 
-    const result = await query(
-      `UPDATE scholarship_campaigns
-       SET is_active = false, updated_at = CURRENT_TIMESTAMP
-       WHERE id = $1
-       RETURNING id`,
-      [id]
-    );
-    if (result.rows.length === 0) throw domainError('NOT_FOUND', 'Campaign not found.');
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
 
-    return noContent(res);
+      /* Lock the campaign row so concurrent deletes/applications can't
+         race the check below. */
+      const campaignResult = await client.query(
+        `SELECT id, name FROM scholarship_campaigns WHERE id = $1 FOR UPDATE`,
+        [id]
+      );
+      const campaign = campaignResult.rows[0];
+      if (!campaign) {
+        throw domainError('NOT_FOUND', 'Campaign not found.');
+      }
+
+      /* Block delete if any applications reference this campaign. */
+      const appCountResult = await client.query(
+        `SELECT COUNT(*)::int AS count
+         FROM scholarship_applications
+         WHERE campaign_id = $1`,
+        [id]
+      );
+      const appCount = appCountResult.rows[0].count;
+
+      if (appCount > 0) {
+        await client.query('ROLLBACK');
+        const error = new Error(
+          `Cannot delete "${campaign.name}" — it has ${appCount} application${appCount === 1 ? '' : 's'}. ` +
+          `Mark it as inactive instead to hide it from the public listing while preserving application records.`
+        );
+        error.code = 'CAMPAIGN_HAS_APPLICATIONS';
+        error.appCount = appCount;
+        throw error;
+      }
+
+      /* Safe to hard-delete — no FK dependencies. */
+      await client.query(
+        `DELETE FROM scholarship_campaigns WHERE id = $1`,
+        [id]
+      );
+
+      await client.query('COMMIT');
+
+      /*
+       * Return 200 with explicit body so the frontend's `response.success`
+       * check passes. Previously 204 (no body) confused the delete
+       * handler in apps/web/pages/admin/scholarships/index.jsx.
+       */
+      return ok(res, {
+        deleted: true,
+        campaignId: id,
+        campaignName: campaign.name,
+      });
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
   } catch (error) {
     return handleError(error, res);
   }

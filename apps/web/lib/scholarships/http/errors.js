@@ -44,6 +44,9 @@ const ERROR_STATUS_MAP = {
   /* 409 — conflict */
   ALREADY_APPLIED: 409,
   QUOTA_EXCEEDED: 409,
+  
+  // scholarship errors 
+  CAMPAIGN_HAS_APPLICATIONS: 409,
 
   /* 429 — rate limited */
   RATE_LIMITED: 429,

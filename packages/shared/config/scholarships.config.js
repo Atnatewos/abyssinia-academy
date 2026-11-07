@@ -213,7 +213,17 @@ const scholarshipsConfig = {
    * PUBLIC LISTING BEHAVIOR
    * ========================================================================== */
   publicListing: {
-    cacheSeconds: envInt('SCHOLARSHIP_PUBLIC_CACHE_SECONDS', 300),
+    /*
+     * CDN cache TTL for the public campaign listing.
+     *
+     * Historically 300s (5 minutes), which caused a visible delay
+     * between admin pause/delete and public visibility. Reduced to 15s
+     * — a good tradeoff between CDN offload and admin responsiveness.
+     * Combined with `stale-while-revalidate=30`, the CDN serves stale
+     * for up to 30s while fetching fresh in the background, so users
+     * never see latency.
+     */
+    cacheSeconds: envInt('SCHOLARSHIP_PUBLIC_CACHE_SECONDS', 15),
     bannerDismissStorageDays: envInt(
       'SCHOLARSHIP_BANNER_DISMISS_DAYS',
       7

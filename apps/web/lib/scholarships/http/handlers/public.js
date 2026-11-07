@@ -10,6 +10,12 @@
  * Path: apps/web/lib/scholarships/http/handlers/public.js
  */
 
+/**
+ * @fileoverview Public Scholarship Handlers
+ *
+ * Path: apps/web/lib/scholarships/http/handlers/public.js
+ */
+
 import { listActiveCampaigns } from '../../service';
 import { getScholarshipPublicListingConfig, isScholarshipsEnabled } from '../../../config';
 import { ok, methodNotAllowed } from '../response';
@@ -18,17 +24,14 @@ import { handleError } from '../errors';
 /**
  * GET /api/public/scholarships/active
  *
- * Returns the campaigns currently open for applications. Consumed by
- * the auth page banner and any public marketing surface.
+ * Returns campaigns currently open for applications. Consumed by the
+ * auth page banner and the /scholarships browse page.
  *
- * Response includes:
- *   - Campaign identity (slug, name, description)
- *   - Grant description (full course or specific phases)
- *   - Fee and quota (for scarcity display)
- *   - Timing (open/close dates)
- *
- * Caching is applied via CDN headers based on
- * scholarshipsConfig.publicListing.cacheSeconds.
+ * Caching:
+ *   TTL sourced from config (default 15s). Combined with
+ *   `stale-while-revalidate=30`, the CDN serves stale content while
+ *   fetching fresh — zero user-facing latency, near-instant reflection
+ *   of admin pause/delete edits.
  */
 export const handleActiveCampaigns = async (req, res) => {
   try {
@@ -44,10 +47,6 @@ export const handleActiveCampaigns = async (req, res) => {
     const config = getScholarshipPublicListingConfig();
     const campaigns = await listActiveCampaigns({ limit: 20 });
 
-    /*
-     * Only expose fields safe for anonymous consumption. No internal IDs
-     * beyond `slug`. No created_by_admin_id, no admin notes.
-     */
     const sanitized = campaigns.map((c) => ({
       slug: c.slug,
       name: c.name,
@@ -67,10 +66,22 @@ export const handleActiveCampaigns = async (req, res) => {
       coverImageUrl: c.cover_image_url,
     }));
 
-    /* CDN cache hint — matches config. */
+    /*
+     * Cache strategy:
+     *   - s-maxage=15  : CDN caches for 15 seconds
+     *   - stale-while-revalidate=30 : serve stale while fetching fresh
+     *   - must-revalidate : require revalidation after expiry
+     *
+     * Result: pause/delete reflects within ~15-45 seconds instead of
+     * the previous 5-minute lag. Combined with the browser-side fetch
+     * which has `cache: 'no-store'`... wait, no, the fetch respects
+     * this header. Tradeoff accepted: 15s CDN cache is worth the DB
+     * offload.
+     */
+    const ttl = Number(config.cacheSeconds) || 15;
     res.setHeader(
       'Cache-Control',
-      `public, s-maxage=${config.cacheSeconds || 300}, stale-while-revalidate=60`
+      `public, s-maxage=${ttl}, stale-while-revalidate=30, must-revalidate`
     );
 
     return ok(res, { campaigns: sanitized });
