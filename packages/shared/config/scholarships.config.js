@@ -213,16 +213,6 @@ const scholarshipsConfig = {
    * PUBLIC LISTING BEHAVIOR
    * ========================================================================== */
   publicListing: {
-    /*
-     * CDN cache TTL for the public campaign listing.
-     *
-     * Historically 300s (5 minutes), which caused a visible delay
-     * between admin pause/delete and public visibility. Reduced to 15s
-     * — a good tradeoff between CDN offload and admin responsiveness.
-     * Combined with `stale-while-revalidate=30`, the CDN serves stale
-     * for up to 30s while fetching fresh in the background, so users
-     * never see latency.
-     */
     cacheSeconds: envInt('SCHOLARSHIP_PUBLIC_CACHE_SECONDS', 15),
     bannerDismissStorageDays: envInt(
       'SCHOLARSHIP_BANNER_DISMISS_DAYS',
@@ -230,6 +220,25 @@ const scholarshipsConfig = {
     ),
     maxBannerCampaigns: envInt('SCHOLARSHIP_BANNER_MAX_CAMPAIGNS', 1),
     showQuotaProgress: envBool('SCHOLARSHIP_SHOW_QUOTA', true),
+
+    /*
+     * Floating card — bottom-right persistent scholarship advertisement.
+     *
+     * Behavior:
+     *   - enabled=false  → never renders (instant kill switch)
+     *   - delayMs        → appearance delay after page load (soft onboarding)
+     *   - dismissDays    → how long the X-close lasts (localStorage)
+     *
+     * Hidden automatically on:
+     *   - Viewports < 768px (mobile too crowded)
+     *   - /auth/* pages (ScholarshipBanner already shown there)
+     *   - /admin/* pages (admins don't need marketing)
+     */
+    floatingCard: {
+      enabled: envBool('SCHOLARSHIP_FLOATING_CARD_ENABLED', true),
+      delayMs: envInt('SCHOLARSHIP_FLOATING_CARD_DELAY_MS', 3000),
+      dismissDays: envInt('SCHOLARSHIP_FLOATING_CARD_DISMISS_DAYS', 7),
+    },
   },
 
   /* ==========================================================================

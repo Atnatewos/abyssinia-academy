@@ -4,10 +4,10 @@
  * Fetches the authenticated user's full attribution state on mount:
  *   - MLM referral code + discount %
  *   - Agent code + agent display name (if registered via agent link)
- *   - Both are passed to CheckoutModal so checkout auto-applies them
+ *   - Reseller attribution (via ?reseller= query param)
  *
  * Attribution precedence at checkout (config-driven):
- *   Agent overrides MLM (per agents.config.js → overrideRules)
+ *   Reseller > Agent > MLM referral > discount code
  *
  * Path: apps/web/pages/pricing/index.jsx
  */
@@ -31,6 +31,7 @@ import apiClient from '../../lib/api';
 import useCart from '../../hooks/useCart';
 import usePortalCourse from '../../hooks/usePortalCourse';
 import usePaymentConfig from '../../hooks/usePaymentConfig';
+import useResellerCode from '../../hooks/useResellerCode';
 
 const PHASE_COLORS = [
   { accent: '#f59e0b', bg: 'rgba(245,158,11,0.06)', border: 'rgba(245,158,11,0.2)' },
@@ -47,6 +48,13 @@ const PricingPage = () => {
   const cart = useCart();
   const { phases: coursePhases } = usePortalCourse('fullstack-web-development');
   const { pricing, loading: pricingLoading } = usePaymentConfig();
+
+  /* Reseller attribution (from ?reseller=CODE) */
+  const {
+    resellerProfile,
+    resellerCode,
+    loading: resellerLoading,
+  } = useResellerCode();
 
   const fullCourse = pricing?.fullCourse || {};
   const perPhase = pricing?.perPhase || {};
@@ -68,8 +76,6 @@ const PricingPage = () => {
 
   /*
    * Fetch the user's attribution state. Runs once per auth state change.
-   * Both referral and agent attribution are captured in a single effect
-   * so the modal opens with full data available.
    */
   useEffect(() => {
     if (!isAuthenticated) {
@@ -106,10 +112,6 @@ const PricingPage = () => {
               setAgentCode(codeRes.data.code);
               setAgentName(codeRes.data.agentName || '');
               setIsAgentBuyer(true);
-            } else {
-              console.warn(
-                '[pricing] Agent code lookup returned no code — user has attribution but agent may be inactive'
-              );
             }
           } catch (agentErr) {
             console.warn(
@@ -135,6 +137,16 @@ const PricingPage = () => {
       cancelled = true;
     };
   }, [isAuthenticated]);
+
+  /*
+   * Display price: reseller price if active, otherwise full course price.
+   */
+  const displayedFullCoursePrice = useMemo(() => {
+    if (resellerProfile && resellerProfile.price != null) {
+      return Number(resellerProfile.price);
+    }
+    return fullCourse.amountETB || 0;
+  }, [resellerProfile, fullCourse.amountETB]);
 
   const phasesWithMeta = useMemo(() => {
     if (!coursePhases || coursePhases.length === 0) return [];
@@ -164,10 +176,14 @@ const PricingPage = () => {
   const handleOpenCheckout = useCallback(
     (mode = 'full-course') => {
       if (!isAuthenticated) {
+        /* Preserve reseller param through register redirect */
+        const resellerParam = resellerCode
+          ? `reseller=${encodeURIComponent(resellerCode)}&`
+          : '';
         const params =
           mode === 'individual-phases' && cart.selectedPhases.length > 0
-            ? `mode=individual-phases&phases=${cart.selectedPhases.join(',')}`
-            : 'mode=full-course';
+            ? `${resellerParam}mode=individual-phases&phases=${cart.selectedPhases.join(',')}`
+            : `${resellerParam}mode=full-course`;
         window.location.href = `/auth/register?redirect=${encodeURIComponent(
           `/pricing?checkout&${params}`
         )}`;
@@ -176,7 +192,7 @@ const PricingPage = () => {
       setPurchaseMode(mode);
       setIsModalOpen(true);
     },
-    [isAuthenticated, cart.selectedPhases]
+    [isAuthenticated, cart.selectedPhases, resellerCode]
   );
 
   const handleCloseModal = () => setIsModalOpen(false);
@@ -196,7 +212,7 @@ const PricingPage = () => {
     );
   }
 
-  const canOpenCheckout = !isAuthenticated || userDataLoaded;
+  const canOpenCheckout = (!isAuthenticated || userDataLoaded) && !resellerLoading;
 
   return (
     <>
@@ -205,16 +221,17 @@ const PricingPage = () => {
         <CountdownBanner />
         <div className="pricing-modern">
           <header className="pricing-modern-header">
-            {(referralDiscountPercent > 0 || isAgentBuyer) && (
-              <div style={{ marginBottom: '1rem' }}>
-                <DiscountCodeBadge
-                  type={isAgentBuyer ? 'referral' : 'referral'}
-                  referralPercent={isAgentBuyer ? 10 : referralDiscountPercent}
-                  discountPercent={appliedDiscountPercent}
-                  discountCode={appliedDiscountCode}
-                />
-              </div>
-            )}
+            {(referralDiscountPercent > 0 || isAgentBuyer) &&
+              !resellerProfile && (
+                <div style={{ marginBottom: '1rem' }}>
+                  <DiscountCodeBadge
+                    type={isAgentBuyer ? 'referral' : 'referral'}
+                    referralPercent={isAgentBuyer ? 10 : referralDiscountPercent}
+                    discountPercent={appliedDiscountPercent}
+                    discountCode={appliedDiscountCode}
+                  />
+                </div>
+              )}
             <span className="pricing-modern-eyebrow">
               {t.pricing?.tuitionEyebrow || 'Tuition'}
             </span>
@@ -260,15 +277,15 @@ const PricingPage = () => {
                   <div className="pricing-hero-price-block">
                     <div className="pricing-hero-price">
                       <span className="pricing-hero-amount">
-                        {fullCourse.amountETB?.toLocaleString()}
+                        {displayedFullCoursePrice.toLocaleString()}
                       </span>
                       <span className="pricing-hero-currency">
                         {fullCourse.currency || 'ETB'}
                       </span>
                     </div>
-                    {fullCourse.originalAmountETB &&
-                      fullCourse.originalAmountETB >
-                        fullCourse.amountETB && (
+                    {!resellerProfile &&
+                      fullCourse.originalAmountETB &&
+                      fullCourse.originalAmountETB > fullCourse.amountETB && (
                         <>
                           <span className="pricing-hero-save-badge">
                             Save{' '}
@@ -286,6 +303,14 @@ const PricingPage = () => {
                           </span>
                         </>
                       )}
+                    {resellerProfile && resellerProfile.displayName && (
+                      <span
+                        className="pricing-hero-original"
+                        style={{ color: '#f59e0b', fontWeight: 600 }}
+                      >
+                        Sold by {resellerProfile.displayName}
+                      </span>
+                    )}
                   </div>
                   {!isEnrolled && (
                     <button
@@ -465,6 +490,8 @@ const PricingPage = () => {
           initialAgentCode={agentCode}
           initialAgentName={agentName}
           isAgentBuyer={isAgentBuyer}
+          resellerCode={resellerCode}
+          resellerProfile={resellerProfile}
           onDiscountApplied={(data) => {
             setAppliedDiscountCode(data.code);
             setAppliedDiscountPercent(data.value || 0);

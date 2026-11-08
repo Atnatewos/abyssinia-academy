@@ -5,17 +5,22 @@
  * The public shape matches the legacy en.config.js exactly, so no
  * consumer code needs to change.
  *
- * To add a new namespace:
- *   1. Create the file in this folder (e.g., agents.js)
- *   2. require it below
- *   3. Spread it into the exported object
+ * Structure:
+ *   - Most namespaces are spread directly (their top-level keys become
+ *     top-level keys on the merged object).
+ *   - The `reseller` namespace is kept nested under a single `reseller`
+ *     key so consumers access `t.reseller.dashboard.title` (matching the
+ *     pattern used by other self-contained namespaces like `agents` and
+ *     `scholarships` which export wrapper objects).
  *
-/**
- * @fileoverview English — i18n Aggregator
+ * To add a new namespace:
+ *   1. Create the file in this folder (e.g., partners.js)
+ *   2. require it below
+ *   3. Either spread it (`...partners`) if its export is flat, or nest
+ *      it (`partners: partnersExport`) if its export has its own root key
  *
  * Path: packages/shared/config/i18n/en/index.js
  */
-
 
 'use strict';
 
@@ -38,6 +43,16 @@ const profile = require('./profile');
 const referrals = require('./referrals');
 const scholarships = require('./scholarships');
 
+/*
+ * Reseller namespace.
+ * The file `./reseller.js` exports a self-contained object with all
+ * reseller-related strings (dashboard, price, subResellers, terms, etc.).
+ * We nest it under a single `reseller` key so consumers read
+ * `t.reseller.<section>.<key>` — consistent with how `agents` and
+ * `scholarships` expose their strings.
+ */
+const reseller = require('./reseller');
+
 module.exports = {
   ...admin,
   ...agents,
@@ -57,4 +72,5 @@ module.exports = {
   ...profile,
   ...referrals,
   ...scholarships,
+  reseller,
 };

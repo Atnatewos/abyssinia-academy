@@ -406,25 +406,16 @@
  * @fileoverview Admin Approve Payment API
  *
  * Approves a payment, creates the enrollment record, and distributes
- * commissions:
- *   - If payment has agent_id → instant agent commission (no lock window)
- *   - If no agent_id → MLM 4-level distribution
+ * commissions using the correct mode for this payment:
  *
- * Scholarship registration fee path:
- *   When `payment.purpose = 'scholarship_registration'`, the approve
- *   flow SHORT-CIRCUITS:
- *     - NO commission distribution (the fee is not a sale)
- *     - NO enrollments DELETE (scholarship service handles enrollment)
- *     - Instead, calls scholarshipService.recordFeePaid() which:
- *         * Creates the enrollment (scholarship source, merges with any
- *           existing paid phases)
- *         * Marks the application as approved
- *         * Increments the campaign's approved_count
- *         * Writes audit events
- *         * Notifies the applicant
+ *   - SCHOLARSHIP purpose → short-circuit, no commission
+ *   - RESELLER (reseller_user_id set) → reseller split (70/30 + parent)
+ *   - LEGACY AGENT (agent_id set) → agent fixed/percentage commission
+ *   - MLM (buyer is in tree) → 4-level tree distribution
+ *   - DIRECT → no commission
  *
  * Accepts both PATCH and POST so any frontend caller works regardless of
- * which HTTP verb it chooses. Both paths are identical.
+ * which HTTP verb it chooses.
  *
  * Path: apps/web/pages/api/admin/payments/[id]/approve.js
  */
@@ -433,6 +424,7 @@ import { pool, query } from '../../../../../lib/db';
 import jwt from 'jsonwebtoken';
 import sharedMlm from '../../../../../../../packages/shared/mlm';
 import sharedAgents from '../../../../../../../packages/shared/agents';
+import sharedReseller from '../../../../../../../packages/shared/reseller';
 import referralsConfig from '../../../../../../../packages/shared/config/referrals.config';
 import { notify } from '../../../../../lib/notifications';
 import {
@@ -444,19 +436,14 @@ import {
 import { recordFeePaid } from '../../../../../lib/scholarships/service';
 
 /*
- * Adapter for the shared MLM module — matches its expected `db` shape.
+ * DB adapter for the shared modules — matches their expected shape.
  */
-const mlmDb = {
+const sharedDb = {
   query,
   getClient: () => pool.connect(),
 };
 
 export default async function handler(req, res) {
-  /*
-   * Accept both PATCH and POST. The admin UI historically sent POST,
-   * while the earlier API spec required PATCH. Accepting both keeps
-   * every caller working without touching the frontend.
-   */
   if (req.method !== 'PATCH' && req.method !== 'POST') {
     return res
       .status(405)
@@ -509,16 +496,9 @@ export default async function handler(req, res) {
       });
     }
 
-    /* ====================================================================
-     * SCHOLARSHIP REGISTRATION FEE PATH
-     * ====================================================================
-     * Short-circuit before any course-payment logic. This path:
-     *   - Sets payment.status = 'approved'
-     *   - Calls scholarshipService.recordFeePaid (which creates enrollment,
-     *     marks application approved, increments campaign count, writes
-     *     audit events, fires notifications)
-     *   - Returns immediately — no commissions, no enrollments DELETE
-     */
+    /* ═══════════════════════════════════════════════════════════════════
+     * SCHOLARSHIP REGISTRATION FEE PATH (short-circuit)
+     * ═══════════════════════════════════════════════════════════════════ */
     const purpose = payment.purpose || 'course';
 
     if (purpose === 'scholarship_registration') {
@@ -530,7 +510,6 @@ export default async function handler(req, res) {
         });
       }
 
-      /* Mark the payment approved FIRST so a retry sees the terminal state. */
       await query(
         `UPDATE payments
          SET status = 'approved', paid_at = CURRENT_TIMESTAMP
@@ -538,7 +517,6 @@ export default async function handler(req, res) {
         [id]
       );
 
-      /* Audit the admin action. */
       await query(
         `INSERT INTO admin_audit_logs (admin_id, action, target_type, target_id, details, ip_address, user_agent)
          VALUES ($1, 'payment.approve.scholarship_fee', 'payment', $2, $3, $4, $5)`,
@@ -556,12 +534,6 @@ export default async function handler(req, res) {
         ]
       );
 
-      /*
-       * Delegate the enrollment creation to the scholarship service.
-       * recordFeePaid is idempotent — if it's already been called
-       * (double-approve race), the second call returns the existing
-       * enrollment_id without duplicating work.
-       */
       try {
         const result = await recordFeePaid({
           applicationId: payment.scholarship_application_id,
@@ -591,10 +563,6 @@ export default async function handler(req, res) {
           }
         );
 
-        /*
-         * The payment is already marked approved. Return a specific error
-         * so the admin can investigate via the application detail page.
-         */
         return res.status(500).json({
           success: false,
           message:
@@ -608,9 +576,9 @@ export default async function handler(req, res) {
       }
     }
 
-    /* ====================================================================
-     * STANDARD COURSE PAYMENT PATH — UNCHANGED
-     * ==================================================================== */
+    /* ═══════════════════════════════════════════════════════════════════
+     * STANDARD COURSE PAYMENT PATH
+     * ═══════════════════════════════════════════════════════════════════ */
 
     /* Resolve and validate purchase mode. */
     const purchaseMode = payment.purchase_mode || 'full-course';
@@ -659,9 +627,7 @@ export default async function handler(req, res) {
       if (invalidPhases.length > 0) {
         return res.status(400).json({
           success: false,
-          message: `Payment has invalid phase IDs: ${invalidPhases.join(
-            ', '
-          )}.`,
+          message: `Payment has invalid phase IDs: ${invalidPhases.join(', ')}.`,
         });
       }
     }
@@ -712,10 +678,11 @@ export default async function handler(req, res) {
       [payment.user_id]
     );
 
-    /*
-     * Determine commission path.
-     *   Agent attribution (payment.agent_id) takes precedence and skips MLM.
-     */
+    /* ═══════════════════════════════════════════════════════════════════
+     * COMMISSION DISTRIBUTION — PRIORITY CASCADE
+     * ═══════════════════════════════════════════════════════════════════ */
+
+    const hasResellerAttribution = Boolean(payment.reseller_user_id);
     const hasAgentAttribution =
       isAgentsEnabled() &&
       payment.agent_id &&
@@ -734,22 +701,74 @@ export default async function handler(req, res) {
           purchaseMode,
           selectedPhases:
             purchaseMode === 'full-course' ? 'all' : selectedPhases,
+          resellerAttributed: hasResellerAttribution,
           agentAttributed: Boolean(hasAgentAttribution),
-          agentId: hasAgentAttribution ? payment.agent_id : null,
         }),
         req.headers['x-forwarded-for'] || req.socket.remoteAddress || null,
         req.headers['user-agent'] || null,
       ]
     );
 
-    /* ── Commission path A: AGENT ATTRIBUTED ── */
-    if (hasAgentAttribution) {
+    /* ── Priority 1: RESELLER ────────────────────────────────────────── */
+    if (hasResellerAttribution) {
+      try {
+        const result = await sharedReseller.processApprovedPayment(sharedDb, {
+          paymentId: id,
+          buyerIp: null,
+          buyerPhone: null,
+        });
+
+        if (!result.alreadyProcessed && result.route === 'reseller') {
+          console.log('[approve] Reseller commission distributed:', {
+            paymentId: id,
+            saleId: result.saleId,
+            split: result.split,
+          });
+
+          /* Notify the reseller of the sale */
+          try {
+            const resellerProfile = await query(
+              'SELECT user_id FROM reseller_profiles WHERE id = $1',
+              [payment.reseller_user_id]
+            );
+            if (resellerProfile.rows.length > 0) {
+              await notify(
+                resellerProfile.rows[0].user_id,
+                'reseller_sale',
+                {
+                  amount: result.split.subPayout,
+                  retailPrice: result.split.retailPrice,
+                },
+                '/profile/reseller'
+              );
+            }
+          } catch (notifErr) {
+            console.error(
+              '[notify] reseller sale notification failed:',
+              notifErr.message
+            );
+          }
+        }
+      } catch (resellerError) {
+        console.error(
+          'Reseller commission distribution failed after payment approval:',
+          {
+            paymentId: id,
+            resellerId: payment.reseller_user_id,
+            error: resellerError.message,
+            code: resellerError.code,
+          }
+        );
+      }
+    }
+    /* ── Priority 2: LEGACY AGENT ─────────────────────────────────────── */
+    else if (hasAgentAttribution) {
       try {
         const saleAmount = parseFloat(payment.amount);
         const agentConfig = getAgentConfig();
 
         const agentResult = await sharedAgents.distributeAgentCommission(
-          mlmDb,
+          sharedDb,
           agentConfig,
           id,
           payment.agent_id,
@@ -788,13 +807,14 @@ export default async function handler(req, res) {
           }
         );
       }
-    } else {
-      /* ── Commission path B: MLM (existing behavior) ── */
+    }
+    /* ── Priority 3: MLM ─────────────────────────────────────────────── */
+    else {
       try {
         const saleAmount = parseFloat(payment.amount);
 
         const distribution = await sharedMlm.distributeCommissions(
-          mlmDb,
+          sharedDb,
           referralsConfig,
           payment.user_id,
           id,
@@ -810,7 +830,7 @@ export default async function handler(req, res) {
           for (const row of commissionRows.rows) {
             try {
               const bonusResult = await sharedMlm.awardEligibleBonuses(
-                mlmDb,
+                sharedDb,
                 referralsConfig,
                 row.earning_user_id
               );
@@ -857,9 +877,9 @@ export default async function handler(req, res) {
       }
     }
 
-    /*
-     * Notifications — best-effort, fire-and-forget.
-     */
+    /* ═══════════════════════════════════════════════════════════════════
+     * NOTIFICATIONS (best-effort)
+     * ═══════════════════════════════════════════════════════════════════ */
     try {
       await notify(
         payment.user_id,
@@ -871,7 +891,11 @@ export default async function handler(req, res) {
         '/profile/payments'
       );
 
-      if (!hasAgentAttribution && payment.referred_by_code) {
+      if (
+        !hasResellerAttribution &&
+        !hasAgentAttribution &&
+        payment.referred_by_code
+      ) {
         const referrerResult = await query(
           `SELECT rc.user_id, u.full_name
            FROM referral_codes rc
@@ -912,6 +936,7 @@ export default async function handler(req, res) {
         purpose: 'course',
         purchaseMode,
         selectedPhases: purchaseMode === 'full-course' ? null : selectedPhases,
+        resellerAttributed: hasResellerAttribution,
         agentAttributed: Boolean(hasAgentAttribution),
       },
     });

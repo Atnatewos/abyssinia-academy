@@ -1086,13 +1086,65 @@ export const getScholarshipRules = () => {
  *
  * @returns {object}
  */
+/**
+ * Floating card configuration for the scholarship advertisement widget
+ * shown bottom-right on marketing pages.
+ *
+ * @returns {{ enabled: boolean, delayMs: number, dismissDays: number }}
+ */
+export const getScholarshipFloatingCardConfig = () => {
+  const config = getScholarshipsConfig();
+  const listing = config.publicListing || {};
+  const floating = listing.floatingCard || {};
+  return {
+    enabled: floating.enabled !== false,
+    delayMs: Number.isFinite(Number(floating.delayMs))
+      ? Number(floating.delayMs)
+      : 3000,
+    dismissDays: Number.isFinite(Number(floating.dismissDays))
+      ? Number(floating.dismissDays)
+      : 7,
+  };
+};
+
+/**
+ * Public listing configuration — banner + floating card + visibility rules.
+ * Read by ScholarshipBanner, ScholarshipFloatingCard, and the public
+ * scholarships browse page.
+ *
+ * @returns {{
+ *   enabled: boolean,
+ *   maxBannerCampaigns: number,
+ *   floatingCard: { enabled: boolean, delayMs: number, dismissDays: number },
+ *   cacheSeconds: number,
+ *   rateLimitPerMinute: number
+ * }}
+ */
 export const getScholarshipPublicListingConfig = () => {
   const config = getScholarshipsConfig();
-  return config.publicListing || {
-    cacheSeconds: 300,
-    bannerDismissStorageDays: 7,
-    maxBannerCampaigns: 1,
-    showQuotaProgress: true,
+  const listing = config.publicListing || {};
+  const floating = listing.floatingCard || {};
+
+  return {
+    enabled: listing.enabled !== false,
+    maxBannerCampaigns: Number.isFinite(Number(listing.maxBannerCampaigns))
+      ? Number(listing.maxBannerCampaigns)
+      : 1,
+    floatingCard: {
+      enabled: floating.enabled !== false,
+      delayMs: Number.isFinite(Number(floating.delayMs))
+        ? Number(floating.delayMs)
+        : 3000,
+      dismissDays: Number.isFinite(Number(floating.dismissDays))
+        ? Number(floating.dismissDays)
+        : 7,
+    },
+    cacheSeconds: Number.isFinite(Number(listing.cacheSeconds))
+      ? Number(listing.cacheSeconds)
+      : 300,
+    rateLimitPerMinute: Number.isFinite(Number(listing.rateLimitPerMinute))
+      ? Number(listing.rateLimitPerMinute)
+      : 30,
   };
 };
 

@@ -39,6 +39,7 @@ import {
   BarChart3,
   Megaphone,
   GraduationCap,
+  Store,
 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { getItem } from '../../lib/storage';
@@ -133,6 +134,11 @@ const AdminLayout = ({ children, title = 'Dashboard', subtitle = '' }) => {
           path: '/admin/agents',
           label: t.admin?.agentsTitle || 'Agents',
           icon: Briefcase,
+        },
+        {
+          path: '/admin/resellers',
+          label: 'Resellers',
+          icon: Store,
         },
         {
           path: '/admin/courses',

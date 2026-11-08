@@ -1,5 +1,10 @@
 /**
  * @fileoverview Checkout Modal — Database-Driven Pricing
+ *
+ * When a reseller code is active (?reseller=CODE), the reseller's custom
+ * price OVERRIDES the base pricing, and NO discounts apply. This enforces
+ * the reseller model: the reseller's price IS the price.
+ *
  * Path: apps/web/components/payment/CheckoutModal.jsx
  */
 
@@ -11,6 +16,7 @@ import PaymentStatus from './PaymentStatus';
 import DiscountCodeInput from '../discount/DiscountCodeInput';
 import DiscountBreakdown from '../discount/DiscountBreakdown';
 import DiscountCodeBadge from '../discount/DiscountCodeBadge';
+import ResellerCheckoutBanner from '../reseller/ResellerCheckoutBanner';
 import useCountdownTimer from '../../hooks/useCountdownTimer';
 import usePaymentConfig from '../../hooks/usePaymentConfig';
 import { useLanguage } from '../../context/LanguageContext';
@@ -33,6 +39,8 @@ const CheckoutModal = ({
   initialAgentCode = '',
   initialAgentName = '',
   isAgentBuyer = false,
+  resellerCode = '',
+  resellerProfile = null,
   onDiscountApplied,
   onDiscountRemoved,
 }) => {
@@ -43,6 +51,13 @@ const CheckoutModal = ({
 
   const approvalConfig = useMemo(() => getApprovalConfig(), []);
   const modalConfig = useMemo(() => getCheckoutModalConfig(), []);
+
+  /*
+   * When a reseller is active, ALL other attribution (referral, agent,
+   * discount codes, credits) is disabled. The reseller's custom price is
+   * the final price.
+   */
+  const isResellerActive = Boolean(resellerProfile && resellerCode);
 
   const [discountCode, setDiscountCode] = useState('');
   const [discountCodePercent, setDiscountCodePercent] = useState(0);
@@ -64,34 +79,53 @@ const CheckoutModal = ({
   }, [paymentMethods, selectedMethod]);
 
   const baseAmount = useMemo(() => {
+    /* Reseller price overrides everything */
+    if (isResellerActive && resellerProfile.price != null) {
+      return Number(resellerProfile.price);
+    }
     if (purchaseMode === 'individual-phases' && selectedPhases.length > 0) {
       const perPhaseAmount = pricing?.perPhase?.amountETB || 0;
       return perPhaseAmount * selectedPhases.length;
     }
     return pricing?.fullCourse?.amountETB || 0;
-  }, [purchaseMode, selectedPhases, pricing]);
+  }, [isResellerActive, resellerProfile, purchaseMode, selectedPhases, pricing]);
 
   const currency = pricing?.fullCourse?.currency || 'ETB';
 
-  const discountBreakdown = useMemo(
-    () =>
-      calculateCombinedDiscount({
+  const discountBreakdown = useMemo(() => {
+    /* Reseller active → no discounts at all */
+    if (isResellerActive) {
+      return {
         basePrice: baseAmount,
-        referralDiscountPercent,
-        discountCodePercent,
-        discountCodeFixed,
-        creditAmount: creditApplied,
-        isAgentBuyer,
-      }),
-    [
-      baseAmount,
+        agentDiscount: 0,
+        referralDiscount: 0,
+        discountCodeDiscount: 0,
+        creditApplied: 0,
+        totalDiscount: 0,
+        totalDiscountPercent: 0,
+        finalPrice: baseAmount,
+        wasCapped: false,
+        appliedAgentDiscount: false,
+        appliedReferral: false,
+      };
+    }
+    return calculateCombinedDiscount({
+      basePrice: baseAmount,
       referralDiscountPercent,
       discountCodePercent,
       discountCodeFixed,
-      creditApplied,
+      creditAmount: creditApplied,
       isAgentBuyer,
-    ]
-  );
+    });
+  }, [
+    isResellerActive,
+    baseAmount,
+    referralDiscountPercent,
+    discountCodePercent,
+    discountCodeFixed,
+    creditApplied,
+    isAgentBuyer,
+  ]);
 
   const finalAmount = discountBreakdown.finalPrice;
 
@@ -110,12 +144,13 @@ const CheckoutModal = ({
   }, [purchaseMode, selectedPhases, coursePhases, language]);
 
   const discountBadgeType = useMemo(() => {
+    if (isResellerActive) return null;
     const hasRef = referralDiscountPercent > 0 || isAgentBuyer;
     if (hasRef && discountCodePercent > 0) return 'both';
     if (hasRef) return 'referral';
     if (discountCodePercent > 0) return 'discount';
     return null;
-  }, [referralDiscountPercent, isAgentBuyer, discountCodePercent]);
+  }, [isResellerActive, referralDiscountPercent, isAgentBuyer, discountCodePercent]);
 
   useEffect(() => {
     document.body.style.overflow = isOpen ? 'hidden' : '';
@@ -134,6 +169,9 @@ const CheckoutModal = ({
 
   const handleDiscountApplied = useCallback(
     (data) => {
+      /* Discounts are disabled when reseller is active — ignore */
+      if (isResellerActive) return;
+
       setDiscountCode(data.code);
       if (data.type === 'percentage') {
         setDiscountCodePercent(data.value);
@@ -144,7 +182,7 @@ const CheckoutModal = ({
       }
       if (onDiscountApplied) onDiscountApplied(data);
     },
-    [onDiscountApplied]
+    [isResellerActive, onDiscountApplied]
   );
 
   const handleDiscountRemoved = useCallback(() => {
@@ -165,31 +203,41 @@ const CheckoutModal = ({
       formData.append('purchaseMode', purchaseMode);
       formData.append('amount', finalAmount.toString());
 
-      if (referralCode) formData.append('referralCode', referralCode);
-      if (discountCode) {
-        formData.append('discountCode', discountCode);
-        formData.append(
-          'discountCodeAmount',
-          String(discountBreakdown.discountCodeDiscount)
-        );
-      }
+      /*
+       * Reseller attribution — supersedes all other attribution.
+       * When present, the backend ignores referralCode, discountCode,
+       * agentId, etc.
+       */
+      if (isResellerActive) {
+        formData.append('resellerCode', resellerCode);
+      } else {
+        /* Standard attribution path (unchanged) */
+        if (referralCode) formData.append('referralCode', referralCode);
+        if (discountCode) {
+          formData.append('discountCode', discountCode);
+          formData.append(
+            'discountCodeAmount',
+            String(discountBreakdown.discountCodeDiscount)
+          );
+        }
 
-      if (isAgentBuyer) {
-        formData.append('isAgentBuyer', 'true');
-        formData.append(
-          'agentDiscountAmount',
-          String(discountBreakdown.agentDiscount)
-        );
-        if (initialAgentCode) formData.append('agentId', initialAgentCode);
-      } else if (referralDiscountPercent > 0) {
-        formData.append(
-          'referralDiscountPercent',
-          String(referralDiscountPercent)
-        );
-        formData.append(
-          'referralDiscountAmount',
-          String(discountBreakdown.referralDiscount)
-        );
+        if (isAgentBuyer) {
+          formData.append('isAgentBuyer', 'true');
+          formData.append(
+            'agentDiscountAmount',
+            String(discountBreakdown.agentDiscount)
+          );
+          if (initialAgentCode) formData.append('agentId', initialAgentCode);
+        } else if (referralDiscountPercent > 0) {
+          formData.append(
+            'referralDiscountPercent',
+            String(referralDiscountPercent)
+          );
+          formData.append(
+            'referralDiscountAmount',
+            String(discountBreakdown.referralDiscount)
+          );
+        }
       }
 
       if (
@@ -201,7 +249,7 @@ const CheckoutModal = ({
       if (paymentData.screenshot) {
         formData.append('screenshot', paymentData.screenshot);
       }
-      if (paymentData.agentId) {
+      if (!isResellerActive && paymentData.agentId) {
         formData.append('agentId', paymentData.agentId);
       }
 
@@ -269,6 +317,11 @@ const CheckoutModal = ({
           </div>
         ) : (
           <div className="checkout-modal-body">
+            {/* ── Reseller banner (only when active) ── */}
+            {isResellerActive && (
+              <ResellerCheckoutBanner resellerProfile={resellerProfile} />
+            )}
+
             <div className="checkout-modal-summary">
               {discountBadgeType && (
                 <DiscountCodeBadge
@@ -283,7 +336,7 @@ const CheckoutModal = ({
               <h3 className="checkout-modal-summary-title">
                 {t.checkoutModal?.purchaseSummaryTitle || 'Purchase Summary'}
               </h3>
-              {purchaseMode === 'full-course' ? (
+              {purchaseMode === 'full-course' || isResellerActive ? (
                 <div className="checkout-modal-summary-item">
                   <Sparkles size={16} />
                   <span>{t.pricing?.masterclass || 'Full Course'}</span>
@@ -303,33 +356,37 @@ const CheckoutModal = ({
                   </div>
                 ))
               )}
-              {(referralDiscountPercent > 0 ||
-                discountCodePercent > 0 ||
-                isAgentBuyer) && (
-                <DiscountBreakdown
-                  basePrice={baseAmount}
-                  breakdown={discountBreakdown}
-                  discountCode={discountCode}
-                  discountCodePercent={discountCodePercent}
-                  referralPercent={
-                    isAgentBuyer ? 10 : referralDiscountPercent
-                  }
-                  currency={currency}
-                />
-              )}
+              {!isResellerActive &&
+                (referralDiscountPercent > 0 ||
+                  discountCodePercent > 0 ||
+                  isAgentBuyer) && (
+                  <DiscountBreakdown
+                    basePrice={baseAmount}
+                    breakdown={discountBreakdown}
+                    discountCode={discountCode}
+                    discountCodePercent={discountCodePercent}
+                    referralPercent={
+                      isAgentBuyer ? 10 : referralDiscountPercent
+                    }
+                    currency={currency}
+                  />
+                )}
             </div>
 
-            <div className="checkout-modal-section">
-              <DiscountCodeInput
-                purchaseInfo={{
-                  amount: baseAmount,
-                  courseType: purchaseMode,
-                  selectedPhases,
-                }}
-                onDiscountApplied={handleDiscountApplied}
-                onDiscountRemoved={handleDiscountRemoved}
-              />
-            </div>
+            {/* Discount code input — hidden when reseller is active */}
+            {!isResellerActive && (
+              <div className="checkout-modal-section">
+                <DiscountCodeInput
+                  purchaseInfo={{
+                    amount: baseAmount,
+                    courseType: purchaseMode,
+                    selectedPhases,
+                  }}
+                  onDiscountApplied={handleDiscountApplied}
+                  onDiscountRemoved={handleDiscountRemoved}
+                />
+              </div>
+            )}
 
             <div className="checkout-modal-section">
               <label className="checkout-modal-section-label">
@@ -352,9 +409,9 @@ const CheckoutModal = ({
               discountCode={discountCode}
               discountCodePercent={discountCodePercent}
               discountBreakdown={discountBreakdown}
-              initialAgentCode={initialAgentCode}
-              initialAgentName={initialAgentName}
-              isAgentBuyer={isAgentBuyer}
+              initialAgentCode={isResellerActive ? '' : initialAgentCode}
+              initialAgentName={isResellerActive ? '' : initialAgentName}
+              isAgentBuyer={isResellerActive ? false : isAgentBuyer}
             />
           </div>
         )}

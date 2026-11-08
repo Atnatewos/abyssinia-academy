@@ -26,3 +26,8 @@ project-structure.txt
 apps/api/.env
 apps/web/.env.local
 project-structure0.txt
+
+# Environment variables — never commit
+.env
+.env.local
+.env.*.local
