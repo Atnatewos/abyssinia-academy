@@ -11,6 +11,7 @@ module.exports = {
     tuition: 'ክፍያ',
     enrollNow: 'አሁኑኩ ይመዝገቡ',
     claimDiscount: 'ቅናሽ ያግኙ →',
+    myResellerStore: 'የእኔ የግዢ መደብር',
   },
   banner: {
     text: '💰 ተማሪዎች እየተማሩ ያገኛሉ — በአንድ ሽያጭ እስከ {total} ETB · በ{hours} ሰዓት ያውጡ።',

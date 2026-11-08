@@ -270,7 +270,6 @@
 
 // export default Navigation;
 
-
 /**
  * @fileoverview Main Navigation Header (Tailwind, Mobile-First)
  *
@@ -309,6 +308,7 @@ import {
   LogOut,
   BookOpen,
   GraduationCap,
+  Store,
 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -337,6 +337,7 @@ const NAV_FALLBACKS = {
   enroll: 'Enroll Now',
   logout: 'Logout',
   myProfile: 'My Profile',
+  myResellerStore: 'My Reseller Store',
   referralDashboard: 'Referral Dashboard',
   myScholarships: 'My Scholarships',
 };
@@ -359,7 +360,6 @@ const NAV_FALLBACKS = {
 const resolveNavLabel = (t, keyPath) => {
   if (!keyPath || typeof keyPath !== 'string') return '';
 
-  /* Tier 1 + 2: walk the path */
   const parts = keyPath.split('.');
   let value = t;
   for (const part of parts) {
@@ -368,11 +368,9 @@ const resolveNavLabel = (t, keyPath) => {
   }
   if (typeof value === 'string' && value.length > 0) return value;
 
-  /* Tier 3: hardcoded English fallback by last path segment */
   const leaf = parts[parts.length - 1];
   if (NAV_FALLBACKS[leaf]) return NAV_FALLBACKS[leaf];
 
-  /* Absolute last resort: use the leaf key itself, capitalized */
   return leaf.charAt(0).toUpperCase() + leaf.slice(1);
 };
 
@@ -618,6 +616,14 @@ const Navigation = () => {
                     {resolveLabel(t, 'nav.myProfile', 'myProfile')}
                   </Link>
                   <Link
+                    href="/profile/reseller"
+                    role="menuitem"
+                    className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-text-muted hover:text-text-main hover:bg-bg-ghost-hover transition-colors"
+                  >
+                    <Store className="w-4 h-4" />
+                    {resolveLabel(t, 'nav.myResellerStore', 'myResellerStore')}
+                  </Link>
+                  <Link
                     href="/profile/scholarships"
                     role="menuitem"
                     className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-text-muted hover:text-text-main hover:bg-bg-ghost-hover transition-colors"
@@ -729,6 +735,13 @@ const Navigation = () => {
               >
                 <User className="w-4 h-4" />
                 {resolveLabel(t, 'nav.myProfile', 'myProfile')}
+              </Link>
+              <Link
+                href="/profile/reseller"
+                className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-text-nav-link hover:text-text-nav-link-hover hover:bg-bg-ghost-hover transition-colors"
+              >
+                <Store className="w-4 h-4" />
+                {resolveLabel(t, 'nav.myResellerStore', 'myResellerStore')}
               </Link>
               <Link
                 href="/profile/scholarships"

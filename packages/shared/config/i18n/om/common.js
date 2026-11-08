@@ -11,6 +11,7 @@ module.exports = {
     tuition: 'Kaffaltii Barnootaa',
     enrollNow: 'Amma Galmaa\'i',
     claimDiscount: 'Hir\'isaa Gaafadhu →',
+    myResellerStore: 'Suuqii Koo',
   },
   banner: {
     /* Income-first announcement — {percent} injected at render */

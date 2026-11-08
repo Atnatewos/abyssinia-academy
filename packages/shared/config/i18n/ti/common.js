@@ -11,6 +11,7 @@ module.exports = {
     tuition: 'ክፍሊት ትምህርቲ',
     enrollNow: 'ሕጂ ተመዝገብ',
     claimDiscount: 'ቅናሽ ርኸብ →',
+    myResellerStore: 'ናተይ ናይ ሸይጣ መደብር',
   },
   banner: {
     /* Income-first announcement — {percent} injected at render */
