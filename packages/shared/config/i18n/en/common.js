@@ -11,7 +11,7 @@ module.exports = {
     tuition: 'Tuition',
     enrollNow: 'Enroll Now',
     claimDiscount: 'Claim Discount →',
-    myResellerStore: 'My Reseller Store',
+    myResellerStore: 'My Store',
   },
   banner: {
     /* Income-first announcement — {percent} injected at render */

@@ -1,10 +1,9 @@
 /**
- * @fileoverview Checkout Page — Database-Driven
- * Uses usePaymentConfig hook for consistent pricing.
+ * @fileoverview Checkout Page — Single-column centered layout
  * Path: apps/web/pages/checkout/index.jsx
  */
 
-import { useState, useMemo, useEffect } from 'react';
+import { useMemo } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
@@ -13,173 +12,107 @@ import PageLayout from '../../components/shared/PageLayout';
 import CheckoutForm from '../../components/payment/CheckoutForm';
 import PaymentMethodSelector from '../../components/payment/PaymentMethodSelector';
 import PaymentStatus from '../../components/payment/PaymentStatus';
-import PhaseCartSummary from '../../components/checkout/PhaseCartSummary';
+import DiscountCodeInput from '../../components/discount/DiscountCodeInput';
+import DiscountBreakdown from '../../components/discount/DiscountBreakdown';
+import { useCheckoutEngine } from '../../hooks/useCheckoutEngine';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
-import { useToast } from '../../context/ToastContext';
-import apiClient from '../../lib/api';
-import usePaymentConfig from '../../hooks/usePaymentConfig';
-import { getApprovalConfig } from '../../lib/config';
+import { useCourses } from '../../hooks/useCourses';
+import useResellerCode from '../../hooks/useResellerCode';
 
 const CheckoutPage = () => {
   const router = useRouter();
-  const { t, language } = useLanguage();
+  const { t } = useLanguage();
   const { isAuthenticated } = useAuth();
-  const toast = useToast();
-  const { pricing, paymentMethods, loading: pricingLoading } = usePaymentConfig();
+  const { courses } = useCourses();
+  const { resellerProfile, resellerCode, loading: resellerLoading } = useResellerCode();
 
   const purchaseMode = router.query.mode || 'full-course';
-  const selectedPhasesFromUrl = router.query.phases
-    ? router.query.phases.split(',').filter(Boolean)
-    : [];
+  const selectedPhases = router.query.phases ? router.query.phases.split(',').filter(Boolean) : [];
+  const slug = router.query.course;
+  const courseContext = useMemo(() => (courses || []).find((c) => c.slug === slug), [courses, slug]);
 
-  const approvalConfig = useMemo(() => getApprovalConfig(), []);
-
-  const purchaseAmount = useMemo(() => {
-    if (purchaseMode === 'individual-phases' && selectedPhasesFromUrl.length > 0) {
-      const perPhasePrice = pricing?.perPhase?.amountETB || 0;
-      return perPhasePrice * selectedPhasesFromUrl.length;
-    }
-    return pricing?.fullCourse?.amountETB || 0;
-  }, [purchaseMode, selectedPhasesFromUrl, pricing]);
-
-  const currency = pricing?.fullCourse?.currency || 'ETB';
-
-  const [selectedMethod, setSelectedMethod] = useState('');
-  const [submitting, setSubmitting] = useState(false);
-  const [paymentSubmitted, setPaymentSubmitted] = useState(false);
-
-  useEffect(() => {
-    if (paymentMethods.length > 0 && !selectedMethod) {
-      setSelectedMethod(paymentMethods[0].id);
-    }
-  }, [paymentMethods, selectedMethod]);
-
-  const selectedMethodData = useMemo(() => {
-    return paymentMethods.find((m) => m.id === selectedMethod) || null;
-  }, [selectedMethod, paymentMethods]);
-
-  const handleSubmit = async (paymentData) => {
-    setSubmitting(true);
-    try {
-      const formData = new FormData();
-      formData.append('fullName', paymentData.fullName);
-      formData.append('phone', paymentData.phone);
-      formData.append('paymentMethod', paymentData.paymentMethod);
-      formData.append('transactionRef', paymentData.transactionRef);
-      formData.append('purchaseMode', purchaseMode);
-      formData.append('amount', purchaseAmount.toString());
-      if (purchaseMode === 'individual-phases') {
-        formData.append('selectedPhases', JSON.stringify(selectedPhasesFromUrl));
-      }
-      if (paymentData.screenshot) {
-        formData.append('screenshot', paymentData.screenshot);
-      }
-      if (paymentData.agentId) {
-        formData.append('agentId', paymentData.agentId);
-      }
-
-      const response = await apiClient.post('/payments/submit', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-
-      if (response && response.success) {
-        setPaymentSubmitted(true);
-        toast.success(
-          language === 'am'
-            ? approvalConfig.pendingMessageAm
-            : approvalConfig.pendingMessage
-        );
-      }
-    } catch {
-      toast.error('Payment submission failed.');
-    } finally {
-      setSubmitting(false);
-    }
-  };
+  const engine = useCheckoutEngine({
+    purchaseMode,
+    selectedPhases,
+    courseId: courseContext?.id || null,
+    coursePriceEtb: courseContext?.price_etb || null,
+    referralDiscountPercent: 0,
+    referralCode: '',
+    isAgentBuyer: false,
+    resellerCode,
+    resellerProfile,
+  });
 
   if (!isAuthenticated) {
     return (
       <PageLayout>
         <div className="empty-state" style={{ padding: '5rem 1rem' }}>
           <p className="empty-state-desc">Please log in to access checkout.</p>
-          <Link
-            href={`/auth/login?redirect=${encodeURIComponent(router.asPath)}`}
-            className="pricing-btn"
-          >
-            Go to Login
-          </Link>
+          <Link href={`/auth/login?redirect=${encodeURIComponent(router.asPath)}`} className="pricing-btn">Go to Login</Link>
         </div>
       </PageLayout>
     );
   }
 
-  if (pricingLoading || !pricing) {
+  if (engine.pricing === undefined || resellerLoading) {
     return (
       <PageLayout>
-        <div className="spinner" style={{ padding: '5rem 0' }}>
-          <div className="spinner-circle" />
-        </div>
+        <div className="spinner" style={{ padding: '5rem 0' }}><div className="spinner-circle" /></div>
       </PageLayout>
     );
   }
-
-  if (paymentSubmitted) {
-    return (
-      <PageLayout>
-        <div className="checkout-page">
-          <Link href="/pricing" className="auth-back-link">
-            <ArrowLeft />
-            Back to Pricing
-          </Link>
-          <PaymentStatus status="pending" />
-        </div>
-      </PageLayout>
-    );
-  }
-
-  const purchaseSummary =
-    purchaseMode === 'individual-phases'
-      ? `${selectedPhasesFromUrl.length} phase(s) selected`
-      : 'Full Course — All 5 Phases';
 
   return (
     <>
       <SEOHead title={t.checkout?.title || 'Enroll'} />
       <PageLayout>
-        <div className="checkout-page">
-          <Link href="/pricing" className="auth-back-link">
-            <ArrowLeft />
-            Back to Pricing
+        <div style={{ maxWidth: '34rem', margin: '0 auto', padding: '2.5rem 1rem' }}>
+          <Link href="/pricing" className="auth-back-link" style={{ marginBottom: '1rem', display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+            <ArrowLeft size={16} /> Back to Pricing
           </Link>
-          <div className="auth-card" style={{ maxWidth: '32rem', margin: '0 auto' }}>
-            <div style={{ marginBottom: '1.5rem' }}>
-              <span className="section-tag">Checkout</span>
-              <h2 className="auth-title">{t.checkout?.title || 'Enroll'}</h2>
-            </div>
-            <div className="checkout-purchase-summary">
-              <span>Purchase:</span>
-              <span>{purchaseSummary}</span>
-            </div>
-            <div style={{ marginBottom: '1.5rem' }}>
-              <label style={{ marginBottom: '0.5rem', display: 'block' }}>
-                {t.checkout?.paymentMethod || 'Payment Method'}
-              </label>
-              <PaymentMethodSelector
-                methods={paymentMethods}
-                selected={selectedMethod}
-                onSelect={setSelectedMethod}
+
+          {engine.paymentSubmitted ? (
+            <PaymentStatus status="pending" />
+          ) : (
+            <div style={{ background: 'var(--bg-card-solid)', borderRadius: '1.5rem', border: '1px solid var(--border-medium)', padding: '2rem', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)' }}>
+              <header style={{ marginBottom: '1.5rem' }}>
+                <span className="section-tag">CHECKOUT</span>
+                <h1 style={{ fontSize: '1.5rem', fontWeight: 800, margin: '0.5rem 0 0' }}>{t.checkout?.title || 'Complete Enrollment'}</h1>
+              </header>
+
+              <div className="checkout-modal-summary" style={{ background: 'var(--surface-secondary)', padding: '1rem', borderRadius: '1rem', marginBottom: '1.5rem', border: '1px solid var(--border-light)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.875rem', fontWeight: 600 }}>
+                  <span>{courseContext ? courseContext.title : (purchaseMode === 'individual-phases' ? `${selectedPhases.length} Phases` : 'Full Course')}</span>
+                  <span style={{ color: 'var(--accent-gold)' }}>{engine.baseAmount.toLocaleString()} {engine.currency}</span>
+                </div>
+              </div>
+
+              <div style={{ marginBottom: '1rem' }}>
+                <DiscountCodeInput purchaseInfo={{ amount: engine.baseAmount, courseType: purchaseMode, selectedPhases }} onDiscountApplied={engine.handleDiscountApplied} onDiscountRemoved={engine.handleDiscountRemoved} />
+              </div>
+
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{ fontSize: '0.75rem', fontWeight: 700, display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Payment Method</label>
+                <PaymentMethodSelector methods={engine.paymentMethods} selected={engine.selectedMethod} onSelect={engine.setSelectedMethod} />
+              </div>
+
+              <CheckoutForm
+                selectedMethod={engine.selectedMethod}
+                selectedMethodData={engine.selectedMethodData}
+                amount={engine.finalAmount}
+                currency={engine.currency}
+                onSubmit={engine.submitPayment}
+                loading={engine.submitting}
+                discountCode={engine.discountCode}
+                discountCodePercent={engine.discountCodePercent}
+                discountBreakdown={engine.discountBreakdown}
+                isAgentBuyer={engine.isAgentBuyer}
+                courseId={courseContext?.id || null}
+                resellerCode={resellerCode}
               />
             </div>
-            <CheckoutForm
-              selectedMethod={selectedMethod}
-              selectedMethodData={selectedMethodData}
-              amount={purchaseAmount}
-              currency={currency}
-              onSubmit={handleSubmit}
-              loading={submitting}
-            />
-          </div>
+          )}
         </div>
       </PageLayout>
     </>

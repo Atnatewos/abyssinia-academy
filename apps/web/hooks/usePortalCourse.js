@@ -6,13 +6,20 @@
 import { useState, useEffect, useCallback } from 'react';
 import apiClient from '../lib/api';
 
-const usePortalCourse = (slug = 'fullstack-web-engineering-masterclass') => {
+const usePortalCourse = (slug = null) => {
   const [course, setCourse] = useState(null);
   const [phases, setPhases] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   const fetchCourse = useCallback(async () => {
+    if (!slug || typeof slug !== 'string') {
+      setCourse(null);
+      setPhases([]);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     setError(null);
 

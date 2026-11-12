@@ -1,47 +1,85 @@
 /**
- * @fileoverview Payment Configuration Hook — Single Source of Truth
+ * @fileoverview Payment Configuration Hook with Cache
+ *
  * Fetches pricing + payment methods from /api/settings/public once.
- * All payment-related components consume this hook.
- * No flicker — returns null until data is loaded, components show skeleton.
- * 
+ * Uses stale-while-revalidate: returns the last cached response
+ * immediately, then refreshes in the background.
+ *
  * Path: apps/web/hooks/usePaymentConfig.js
  */
 
 import { useState, useEffect, useCallback } from 'react';
 
+const CACHE_KEY = 'abyssinia_cache_payment_config';
+
 /**
- * usePaymentConfig — Fetches payment settings from the admin database.
- * Falls back to null (not static config) to prevent price flicker.
- * Components should show a loading skeleton while data is null.
- * 
- * @returns {object}
- * @returns {object|null} returns.pricing — Full pricing object or null
- * @returns {Array} returns.paymentMethods — Payment methods array
- * @returns {boolean} returns.loading — Whether initial fetch is in progress
- * @returns {function} returns.refetch — Manually refetch settings
+ * Safely read the cached payment config.
  */
+const readCache = () => {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = window.localStorage.getItem(CACHE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+};
+
+/**
+ * Safely write the payment config to cache.
+ */
+const writeCache = (value) => {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(CACHE_KEY, JSON.stringify(value));
+  } catch {
+    /* ignore */
+  }
+};
+
 const usePaymentConfig = () => {
-  const [pricing, setPricing] = useState(null);
-  const [paymentMethods, setPaymentMethods] = useState([]);
+  // Initialize from cache so prices render on frame 1
+  const [pricing, setPricing] = useState(() => {
+    const cached = readCache();
+    return cached?.pricing || null;
+  });
+  const [paymentMethods, setPaymentMethods] = useState(() => {
+    const cached = readCache();
+    return cached?.paymentMethods || [];
+  });
   const [loading, setLoading] = useState(true);
 
   const fetchConfig = useCallback(async () => {
+    setLoading(true);
     try {
       const response = await fetch('/api/settings/public');
       const data = await response.json();
 
       if (data && data.success && data.data) {
-        if (data.data.pricing) {
-          setPricing(data.data.pricing);
-        }
-        if (data.data.paymentMethods) {
-          setPaymentMethods(
-            (data.data.paymentMethods || []).filter((m) => m.isActive !== false)
-          );
+        const nextPricing = data.data.pricing || null;
+        const nextMethods = (data.data.paymentMethods || []).filter(
+          (m) => m.isActive !== false
+        );
+
+        setPricing(nextPricing);
+        setPaymentMethods(nextMethods);
+        writeCache({ pricing: nextPricing, paymentMethods: nextMethods });
+      } else {
+        // Server returned something odd — rely on cache if we had it
+        const cached = readCache();
+        if (!cached?.pricing) {
+          setPricing(null);
+          setPaymentMethods([]);
         }
       }
     } catch (error) {
       console.error('Failed to fetch payment config:', error.message);
+      // On network failure, if we already have prices from cache, keep them.
+      const cached = readCache();
+      if (!cached?.pricing) {
+        setPricing(null);
+        setPaymentMethods([]);
+      }
     } finally {
       setLoading(false);
     }

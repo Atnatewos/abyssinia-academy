@@ -61,7 +61,10 @@
 │   │   │   │   │   ├── 022_scholarship_system.sql
 │   │   │   │   │   ├── 023_scholarship_learn_more.sql
 │   │   │   │   │   ├── 025_scholarship_refund_flow.sql
+│   │   │   │   │   ├── 026_create_reseller_system.sql
 │   │   │   │   │   ├── 026_scholarship_event_type_fix.sql
+│   │   │   │   │   ├── 027_create_wallet_events.sql
+│   │   │   │   │   ├── 028_add_reseller_to_payments.sql
 │   │   │   │   ├── pool.js
 │   │   │   │   ├── queries
 │   │   │   │   │   ├── admins.js
@@ -279,6 +282,21 @@
 │   │   │   │   ├── ReferralStatsCards.jsx
 │   │   │   │   ├── ReferralTierProgress.jsx
 │   │   │   │   ├── UnifiedOverview.jsx
+│   │   │   ├── reseller
+│   │   │   │   ├── EarningsPreview.jsx
+│   │   │   │   ├── PriceEditor.jsx
+│   │   │   │   ├── ResellerCheckoutBanner.jsx
+│   │   │   │   ├── ResellerDashboard.jsx
+│   │   │   │   ├── ResellerLandingBanner.jsx
+│   │   │   │   ├── ResellerLinkCard.jsx
+│   │   │   │   ├── ResellerSalesTable.jsx
+│   │   │   │   ├── ResellerStatsCards.jsx
+│   │   │   │   ├── ResellerTermsModal.jsx
+│   │   │   │   ├── SubResellerInviteForm.jsx
+│   │   │   │   ├── SubResellerInviteModal.jsx
+│   │   │   │   ├── SubResellerList.jsx
+│   │   │   │   ├── SubResellerShareSlider.jsx
+│   │   │   │   ├── SubResellersList.jsx
 │   │   │   ├── scholarships
 │   │   │   │   ├── ApplicationForm.jsx
 │   │   │   │   ├── index.jsx
@@ -339,7 +357,14 @@
 │   │   │   ├── ToastContext.js
 │   │   ├── Dockerfile
 │   │   ├── hooks
+│   │   │   ├── reseller
+│   │   │   │   ├── useResellerCode.js
+│   │   │   │   ├── useResellerDashboard.js
+│   │   │   │   ├── useResellerProfile.js
+│   │   │   │   ├── useResellerSales.js
+│   │   │   │   ├── useSubResellers.js
 │   │   │   ├── useAccessControl.js
+│   │   │   ├── useAdminResellers.js
 │   │   │   ├── useAgentCode.js
 │   │   │   ├── useAgentDashboard.js
 │   │   │   ├── useAuth.js
@@ -360,6 +385,11 @@
 │   │   │   ├── useProfile.js
 │   │   │   ├── useProgress.js
 │   │   │   ├── useReferrals.js
+│   │   │   ├── useResellerCode.js
+│   │   │   ├── useResellerDashboard.js
+│   │   │   ├── useResellerProfile.js
+│   │   │   ├── useResellerSales.js
+│   │   │   ├── useSubResellers.js
 │   │   │   ├── useTheme.js
 │   │   │   ├── useUnifiedActivity.js
 │   │   ├── jsconfig.json
@@ -375,6 +405,8 @@
 │   │   │   ├── db.js
 │   │   │   ├── notifications.js
 │   │   │   ├── rateLimiter.js
+│   │   │   ├── reseller-api.js
+│   │   │   ├── reseller-config.js
 │   │   │   ├── scholarships
 │   │   │   │   ├── enrollment.js
 │   │   │   │   ├── http
@@ -448,6 +480,9 @@
 │   │   │   │   │   │   │   ├── index.jsx
 │   │   │   │   │   │   │   ├── [userId].jsx
 │   │   │   │   │   │   ├── withdrawals.jsx
+│   │   │   │   ├── resellers
+│   │   │   │   │   ├── index.jsx
+│   │   │   │   │   ├── [id].jsx
 │   │   │   │   ├── scholarships
 │   │   │   │   │   ├── index.jsx
 │   │   │   │   │   ├── [id]
@@ -541,6 +576,10 @@
 │   │   │   │   │   │   │   │   ├── [id].js
 │   │   │   │   │   │   │   ├── withdrawals.js
 │   │   │   │   │   │   ├── top.js
+│   │   │   │   │   ├── resellers
+│   │   │   │   │   │   ├── index.js
+│   │   │   │   │   │   ├── sales.js
+│   │   │   │   │   │   ├── [id].js
 │   │   │   │   │   ├── scholarships
 │   │   │   │   │   │   ├── applications
 │   │   │   │   │   │   │   ├── [appId]
@@ -641,6 +680,18 @@
 │   │   │   │   │   ├── validate
 │   │   │   │   │   │   ├── [code]
 │   │   │   │   │   │   │   ├── index.js
+│   │   │   │   ├── reseller
+│   │   │   │   │   ├── dashboard.js
+│   │   │   │   │   ├── price.js
+│   │   │   │   │   ├── profile.js
+│   │   │   │   │   ├── sales.js
+│   │   │   │   │   ├── sub-resellers
+│   │   │   │   │   │   ├── index.js
+│   │   │   │   │   │   ├── [id].js
+│   │   │   │   │   ├── terms
+│   │   │   │   │   │   ├── accept.js
+│   │   │   │   │   │   ├── index.js
+│   │   │   │   │   ├── validate-code.js
 │   │   │   │   ├── scholarships
 │   │   │   │   │   ├── apply.js
 │   │   │   │   │   ├── fee-preview.js
@@ -677,7 +728,10 @@
 │   │   │   │   ├── index.jsx
 │   │   │   │   ├── payments.jsx
 │   │   │   │   ├── referrals.jsx
+│   │   │   │   ├── reseller.jsx
 │   │   │   │   ├── scholarships.jsx
+│   │   │   ├── reseller
+│   │   │   │   ├── index.jsx
 │   │   │   ├── scholarships
 │   │   │   │   ├── fee-pay.jsx
 │   │   │   │   ├── index.jsx
@@ -759,6 +813,7 @@
 │   │   │   │   │   ├── pricing.js
 │   │   │   │   │   ├── profile.js
 │   │   │   │   │   ├── referrals.js
+│   │   │   │   │   ├── reseller.js
 │   │   │   │   │   ├── scholarships.js
 │   │   │   │   ├── am.config.js
 │   │   │   │   ├── en
@@ -780,6 +835,7 @@
 │   │   │   │   │   ├── pricing.js
 │   │   │   │   │   ├── profile.js
 │   │   │   │   │   ├── referrals.js
+│   │   │   │   │   ├── reseller.js
 │   │   │   │   │   ├── scholarships.js
 │   │   │   │   ├── en.config.js
 │   │   │   │   ├── index.js
@@ -802,6 +858,7 @@
 │   │   │   │   │   ├── pricing.js
 │   │   │   │   │   ├── profile.js
 │   │   │   │   │   ├── referrals.js
+│   │   │   │   │   ├── reseller.js
 │   │   │   │   ├── om.config.js
 │   │   │   │   ├── ti
 │   │   │   │   │   ├── admin.js
@@ -822,6 +879,7 @@
 │   │   │   │   │   ├── pricing.js
 │   │   │   │   │   ├── profile.js
 │   │   │   │   │   ├── referrals.js
+│   │   │   │   │   ├── reseller.js
 │   │   │   │   ├── ti.config.js
 │   │   │   ├── i18n.config.js
 │   │   │   ├── index.js
@@ -831,6 +889,8 @@
 │   │   │   ├── phases.config.js
 │   │   │   ├── platform.config.js
 │   │   │   ├── referrals.config.js
+│   │   │   ├── reseller.config.defaults.js
+│   │   │   ├── reseller.config.js
 │   │   │   ├── scholarships.config.js
 │   │   │   ├── theme.config.js
 │   │   │   ├── themes.config.js
@@ -895,16 +955,29 @@
 │   │   ├── notifications
 │   │   │   ├── index.js
 │   │   ├── package.json
+│   │   ├── reseller
+│   │   │   ├── anti-fraud.js
+│   │   │   ├── caps.js
+│   │   │   ├── commissions.js
+│   │   │   ├── config-loader.js
+│   │   │   ├── errors.js
+│   │   │   ├── index.js
+│   │   │   ├── orchestrator.js
+│   │   │   ├── price-validator.js
+│   │   │   ├── profile-helpers.js
+│   │   │   ├── refunds.js
 │   │   ├── utils
 │   │   │   ├── formatters.js
 │   │   │   ├── pricing.js
 │   │   │   ├── validators.js
-├── project-structure.txt
 ├── project-tree.txt
 ├── README.md
+├── scaffold-reseller.sh
 ├── scripts
+│   ├── backfill-reseller-profiles.js
 │   ├── seed-realistic-activity.js
 │   ├── seed-social-proof.js
+│   ├── test-reseller.js
 ├── tests
 │   ├── e2e-production.spec.js
 │   ├── production-health.sh
@@ -933,9 +1006,11 @@
 
 
 
-******************************
-*** file structure command ***
-******************************
+
+
+**********************
+file structure command 
+**********************
 
 cd "C:/Users/Dell/OneDrive/Documents/Coding/Abyssinia Tech/abyssinia-academy"
 

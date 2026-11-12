@@ -1,41 +1,31 @@
 /**
- * @fileoverview Payment Method Selector Component
- * Grid of payment method options
- * ALL display text from i18n → t.checkout.* — zero hardcoded strings
+ * @fileoverview Payment Method Selector — Tailwind
  * Path: apps/web/components/payment/PaymentMethodSelector.jsx
  */
-
 import { useLanguage } from '../../context/LanguageContext';
 
-/**
- * PaymentMethodSelector — Grid of payment method buttons
- * @param {object} props
- * @param {Array} props.methods - Payment method objects from config
- * @param {string} props.selected - Currently selected method ID
- * @param {function} props.onSelect - Callback(methodId) when a method is selected
- */
 const PaymentMethodSelector = ({ methods = [], selected = '', onSelect }) => {
   const { t } = useLanguage();
 
   if (!methods || methods.length === 0) {
-    return (
-      <p style={{ fontSize: '0.75rem', color: 'var(--text-dim)', textAlign: 'center', padding: '1rem 0' }}>
-        {t.checkout?.noPaymentMethods || 'No payment methods available.'}
-      </p>
-    );
+    return <p className="text-xs text-slate-500 text-center py-4">{t.checkout?.noPaymentMethods || 'No payment methods available.'}</p>;
   }
 
   return (
-    <div className="payment-methods-grid">
+    <div className="grid grid-cols-3 gap-3">
       {methods.map((method) => (
         <button
           key={method.id}
           type="button"
           onClick={() => onSelect(method.id)}
-          className={`payment-method-btn ${selected === method.id ? 'selected' : ''}`}
+          className={`flex flex-col items-center justify-center gap-2 p-3 rounded-xl border transition-all duration-200 ${
+            selected === method.id
+              ? 'bg-amber-500/10 border-amber-500 text-amber-500'
+              : 'bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700'
+          }`}
         >
-          <span>{method.icon || '💳'}</span>
-          {method.name}
+          <span className="text-xl">{method.icon || '💳'}</span>
+          <span className="text-xs font-semibold">{method.name}</span>
         </button>
       ))}
     </div>

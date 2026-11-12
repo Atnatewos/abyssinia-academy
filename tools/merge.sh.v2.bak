@@ -1,0 +1,591 @@
+#!/usr/bin/env bash
+# ============================================================================
+# tools/merge.sh  (v3 — pre-flight checks + config-first + no manifests)
+#
+# PURPOSE:
+#   Deterministically merge many files into one reviewable artifact with
+#   clear boundary markers. Designed for handing source trees to an AI
+#   reviewer without pasting file-by-file.
+#
+# USAGE:
+#   ./tools/merge.sh <phase-name> <file1> <file2> ...
+#   ./tools/merge.sh <phase-name> --from-list <listfile>
+#   ./tools/merge.sh <phase-name> --dir <directory> [--ext <ext1,ext2>]
+#   ./tools/merge.sh --help
+#
+# OPTIONS:
+#   --from-list <file>       Read paths from <file> (one per line, # = comment)
+#   --dir <dir>              Recursively include matching files under <dir>
+#   --ext <exts>             Extensions for --dir mode (comma-separated)
+#   --exclude <glob>         Repeatable. Exclude paths matching glob (case-insensitive)
+#   --out <file>             Override the output filename
+#   --allow-protected        Allow files matching the protected deny-list
+#   --allow-binary           Allow files with binary content
+#   --dry-run                Show what WOULD be merged; produce no file
+#   --strict                 Abort if any file is missing, empty, or protected
+#   --config <file>          Load defaults from an env-style config file
+#   --help                   Show this help
+#
+# CONFIGURATION:
+#   All defaults are read from config (no hardcoded values in this script):
+#     MERGE_DEFAULT_EXTS           Default extensions for --dir mode
+#     MERGE_DEFAULT_OUT_SUFFIX     Suffix appended to phase-name for default output
+#     MERGE_DENY_PATTERNS          Colon-separated regex deny patterns
+#     MERGE_MAX_OUTPUT_BYTES       Soft warning threshold for artifact size
+#     MERGE_MAX_OUTPUT_LINES       Soft warning threshold for artifact line count
+#
+#   Config resolution order (first wins):
+#     1. --config <file>              explicit CLI flag
+#     2. $MERGE_CONFIG_FILE           environment variable
+#     3. ./.merge.env                 project-local default
+#     4. ./tools/.merge.env           tool-local default
+#     5. Built-in safe defaults below (guarded by ${VAR:-default})
+#
+# EXIT CODES:
+#   0 = success (with or without warnings)
+#   1 = usage error
+#   2 = --strict violated (missing / empty / protected file present)
+#
+# SAFETY:
+#   - Pre-flight validates every path BEFORE writing the artifact
+#   - Refuses .env*, node_modules/, .next/, dist/, build/, .git/, lockfiles
+#   - Skips binary files (with correct UTF-8-aware detection on Windows)
+#   - Detects CRLF, BOM, missing trailing newline, whitespace-only files
+#   - Warns if the artifact would be huge (from config thresholds)
+# ============================================================================
+
+set -uo pipefail
+
+# ----------------------------------------------------------------------------
+# Config loader — reads KEY=VALUE lines from an env-style file, ignoring
+# comments and blank lines. Must be called BEFORE using any config value.
+# ----------------------------------------------------------------------------
+load_config_file() {
+  local cfg="$1"
+  [ -f "$cfg" ] || return 0
+  while IFS= read -r line || [ -n "$line" ]; do
+    line="${line%$'\r'}"
+    case "$line" in
+      ''|\#*) continue ;;
+    esac
+    # Only accept lines that look like KEY=VALUE
+    case "$line" in
+      *=*) export "$line" ;;
+    esac
+  done < "$cfg"
+}
+
+# Resolve config source (first match wins)
+if [ -n "${MERGE_CONFIG_FILE:-}" ] && [ -f "${MERGE_CONFIG_FILE}" ]; then
+  load_config_file "$MERGE_CONFIG_FILE"
+elif [ -f "./.merge.env" ]; then
+  load_config_file "./.merge.env"
+elif [ -f "./tools/.merge.env" ]; then
+  load_config_file "./tools/.merge.env"
+fi
+
+# ----------------------------------------------------------------------------
+# Defaults (config-first: overridable via env or config file)
+# ----------------------------------------------------------------------------
+DEFAULT_EXTS="${MERGE_DEFAULT_EXTS:-.js,.jsx,.ts,.tsx,.sql,.json,.md,.txt,.css,.html,.yml,.yaml,.sh}"
+DEFAULT_OUT_SUFFIX="${MERGE_DEFAULT_OUT_SUFFIX:-_files.txt}"
+MAX_OUTPUT_BYTES="${MERGE_MAX_OUTPUT_BYTES:-5242880}"
+MAX_OUTPUT_LINES="${MERGE_MAX_OUTPUT_LINES:-100000}"
+
+# Deny-list patterns (colon-separated in config; defaults below)
+DEFAULT_DENY_RE='(^|/)\.env(\.|$)|(^|/)node_modules/|(^|/)\.next/|(^|/)dist/|(^|/)build/|(^|/)\.git/|(^|/)package-lock\.json$|(^|/)pnpm-lock\.yaml$|(^|/)yarn\.lock$|(^|/)\.DS_Store$'
+DENY_RE="${MERGE_DENY_PATTERNS:-$DEFAULT_DENY_RE}"
+
+# ----------------------------------------------------------------------------
+# Terminal colors (only if stdout is a TTY)
+# ----------------------------------------------------------------------------
+if [ -t 1 ]; then
+  C_RED=$'\033[0;31m'; C_GRN=$'\033[0;32m'; C_YLW=$'\033[0;33m'
+  C_BLU=$'\033[0;34m'; C_DIM=$'\033[2m';   C_RST=$'\033[0m'
+else
+  C_RED=""; C_GRN=""; C_YLW=""; C_BLU=""; C_DIM=""; C_RST=""
+fi
+
+# ----------------------------------------------------------------------------
+# Small output helpers
+# ----------------------------------------------------------------------------
+die()  { printf '%s❌ %s%s\n' "$C_RED" "$*" "$C_RST" >&2; exit 1; }
+warn() { printf '%s⚠️  %s%s\n' "$C_YLW" "$*" "$C_RST" >&2; }
+ok()   { printf '%s✅ %s%s\n' "$C_GRN" "$*" "$C_RST"; }
+note() { printf '%s•  %s%s\n' "$C_DIM" "$*" "$C_RST"; }
+
+need_val() {
+  [ $# -ge 2 ] && [ -n "$2" ] || die "$1 requires a value"
+}
+
+# ----------------------------------------------------------------------------
+# Argument parsing
+# ----------------------------------------------------------------------------
+PHASE_NAME=""
+FROM_LIST=""
+DIR=""
+EXTS="$DEFAULT_EXTS"
+OUTPUT_OVERRIDE=""
+ALLOW_PROTECTED=0
+ALLOW_BINARY=0
+DRY_RUN=0
+STRICT=0
+EXCLUDES=()
+FILE_ARGS=()
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --help|-h)
+      sed -n '2,60p' "$0" | sed 's/^# \{0,1\}//'
+      exit 0
+      ;;
+    --from-list)       need_val "$1" "${2:-}"; FROM_LIST="$2"; shift 2 ;;
+    --dir)             need_val "$1" "${2:-}"; DIR="$2"; shift 2 ;;
+    --ext)             need_val "$1" "${2:-}"; EXTS="$2"; shift 2 ;;
+    --exclude)         need_val "$1" "${2:-}"; EXCLUDES+=("$2"); shift 2 ;;
+    --out)             need_val "$1" "${2:-}"; OUTPUT_OVERRIDE="$2"; shift 2 ;;
+    --config)          need_val "$1" "${2:-}"; load_config_file "$2"; shift 2 ;;
+    --allow-protected) ALLOW_PROTECTED=1; shift ;;
+    --allow-binary)    ALLOW_BINARY=1; shift ;;
+    --dry-run)         DRY_RUN=1; shift ;;
+    --strict)          STRICT=1; shift ;;
+    --)                shift; while [ $# -gt 0 ]; do FILE_ARGS+=("$1"); shift; done ;;
+    --*)               die "Unknown option: $1" ;;
+    *)
+      if [ -z "$PHASE_NAME" ]; then PHASE_NAME="$1"; else FILE_ARGS+=("$1"); fi
+      shift
+      ;;
+  esac
+done
+
+[ -z "$PHASE_NAME" ] && die "Missing <phase-name>. Try --help."
+
+# ----------------------------------------------------------------------------
+# Load paths from --from-list (CRLF-safe, comment-safe, trim-safe)
+# ----------------------------------------------------------------------------
+if [ -n "$FROM_LIST" ]; then
+  [ -f "$FROM_LIST" ] || die "List file not found: $FROM_LIST"
+  while IFS= read -r line || [ -n "$line" ]; do
+    line="${line%$'\r'}"
+    line="$(printf '%s' "$line" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+    [ -z "$line" ] && continue
+    case "$line" in \#*) continue ;; esac
+    FILE_ARGS+=("$line")
+  done < "$FROM_LIST"
+fi
+
+# ----------------------------------------------------------------------------
+# Load paths from --dir (respects deny patterns + user excludes)
+# ----------------------------------------------------------------------------
+if [ -n "$DIR" ]; then
+  [ -d "$DIR" ] || die "Directory not found: $DIR"
+  IFS=',' read -ra EXT_LIST <<< "$EXTS"
+  FIND_NAME_ARGS=()
+  for e in "${EXT_LIST[@]}"; do
+    e="$(printf '%s' "$e" | tr -d '[:space:]')"
+    [ -z "$e" ] && continue
+    case "$e" in .*) ;; *) e=".$e" ;; esac
+    [ ${#FIND_NAME_ARGS[@]} -gt 0 ] && FIND_NAME_ARGS+=("-o")
+    FIND_NAME_ARGS+=("-name" "*${e}")
+  done
+
+  FIND_EXCLUDE_ARGS=(
+    -path '*/node_modules/*' -o
+    -path '*/.next/*'        -o
+    -path '*/dist/*'         -o
+    -path '*/build/*'        -o
+    -path '*/.git/*'
+  )
+  for pat in "${EXCLUDES[@]:-}"; do
+    [ -z "$pat" ] && continue
+    FIND_EXCLUDE_ARGS+=("-o" "-path" "$pat")
+  done
+
+  while IFS= read -r path; do
+    FILE_ARGS+=("$path")
+  done < <(
+    find "$DIR" -type f \
+      \( "${FIND_NAME_ARGS[@]}" \) \
+      ! \( "${FIND_EXCLUDE_ARGS[@]}" \) \
+      ! -name '.env' ! -name '.env.*' \
+      ! -name 'package-lock.json' ! -name 'yarn.lock' ! -name 'pnpm-lock.yaml' \
+      2>/dev/null | sort
+  )
+fi
+
+TOTAL=${#FILE_ARGS[@]}
+[ "$TOTAL" -eq 0 ] && die "No files to merge. Provide file paths, --from-list, or --dir."
+
+OUTPUT="${OUTPUT_OVERRIDE:-${PHASE_NAME}${DEFAULT_OUT_SUFFIX}}"
+
+# ----------------------------------------------------------------------------
+# Classifiers — every file gets exactly one classification
+# ----------------------------------------------------------------------------
+is_denied() {
+  [ "$ALLOW_PROTECTED" -eq 1 ] && return 1
+  printf '%s' "$1" | grep -Eq "$DENY_RE"
+}
+
+is_excluded() {
+  local path="$1" pat
+  for pat in "${EXCLUDES[@]:-}"; do
+    [ -z "$pat" ] && continue
+    # shellcheck disable=SC2254
+    case "$path" in $pat) return 0 ;; esac
+  done
+  return 1
+}
+
+# UTF-8 / Windows-aware binary detection.
+# Known text extensions are trusted. For unknown extensions, `file` is used,
+# but `unknown-8bit` and `utf-8` are treated as TEXT (not binary).
+is_binary() {
+  local path="$1"
+  [ "$ALLOW_BINARY" -eq 1 ] && return 1
+
+  case "$path" in
+    *.js|*.jsx|*.ts|*.tsx|*.mjs|*.cjs|*.json|*.sql|*.md|*.txt|*.css|*.scss|\
+    *.html|*.htm|*.xml|*.svg|*.yml|*.yaml|*.toml|*.ini|*.conf|*.sh|*.bash|\
+    *.py|*.rb|*.go|*.rs|*.java|*.kt|*.swift|*.c|*.cpp|*.h|*.hpp|*.env|\
+    *.env.*|*.example|*.gitignore|*.gitattributes|*.editorconfig|*.lock)
+      return 1
+      ;;
+  esac
+
+  if command -v file >/dev/null 2>&1; then
+    local enc
+    enc=$(file --brief --mime-encoding "$path" 2>/dev/null || echo "")
+    case "$enc" in
+      binary) return 0 ;;
+      *)      return 1 ;;
+    esac
+  fi
+  return 1
+}
+
+# Whitespace-only detection (file has bytes, but no meaningful content)
+is_whitespace_only() {
+  [ -s "$1" ] || return 1
+  ! grep -q '[^[:space:]]' "$1"
+}
+
+# CRLF detection
+has_crlf() {
+  grep -q $'\r' "$1" 2>/dev/null
+}
+
+# UTF-8 BOM detection
+has_bom() {
+  [ "$(head -c 3 "$1" | od -An -tx1 | tr -d ' \n')" = "efbbbf" ]
+}
+
+# Missing trailing newline
+missing_trailing_newline() {
+  [ -s "$1" ] || return 1
+  [ "$(tail -c 1 "$1" | od -An -tx1 | tr -d ' \n')" != "0a" ]
+}
+
+# Empty file
+is_empty() {
+  [ ! -s "$1" ]
+}
+
+# ----------------------------------------------------------------------------
+# Pre-flight — classify every file BEFORE writing anything
+# ----------------------------------------------------------------------------
+PREFLIGHT_MISSING=()
+PREFLIGHT_EMPTY=()
+PREFLIGHT_WHITESPACE=()
+PREFLIGHT_DENIED=()
+PREFLIGHT_EXCLUDED=()
+PREFLIGHT_BINARY=()
+PREFLIGHT_OK=()
+PREFLIGHT_DUPES=()
+declare -A SEEN_PATHS=()
+
+for f in "${FILE_ARGS[@]}"; do
+  # Duplicate detection
+  if [ -n "${SEEN_PATHS[$f]:-}" ]; then
+    PREFLIGHT_DUPES+=("$f")
+  fi
+  SEEN_PATHS["$f"]=1
+
+  if [ ! -e "$f" ]; then
+    PREFLIGHT_MISSING+=("$f")
+    continue
+  fi
+  if [ -L "$f" ]; then
+    warn "Symlink detected (resolved at read time): $f"
+  fi
+  if [ ! -f "$f" ]; then
+    PREFLIGHT_MISSING+=("$f")   # directory or device, not a regular file
+    continue
+  fi
+  is_denied "$f"   && { PREFLIGHT_DENIED+=("$f");   continue; }
+  is_excluded "$f" && { PREFLIGHT_EXCLUDED+=("$f"); continue; }
+  is_binary "$f"   && { PREFLIGHT_BINARY+=("$f");   continue; }
+  is_empty "$f"    && { PREFLIGHT_EMPTY+=("$f");    continue; }
+  is_whitespace_only "$f" && { PREFLIGHT_WHITESPACE+=("$f"); continue; }
+  PREFLIGHT_OK+=("$f")
+done
+
+# Strict-mode gate: any pre-flight problem aborts before writing
+if [ "$STRICT" -eq 1 ]; then
+  if [ ${#PREFLIGHT_MISSING[@]}   -gt 0 ] \
+  || [ ${#PREFLIGHT_EMPTY[@]}     -gt 0 ] \
+  || [ ${#PREFLIGHT_WHITESPACE[@]} -gt 0 ] \
+  || [ ${#PREFLIGHT_DENIED[@]}    -gt 0 ] \
+  || [ ${#PREFLIGHT_BINARY[@]}    -gt 0 ] \
+  || [ ${#PREFLIGHT_DUPES[@]}     -gt 0 ]; then
+    warn "Strict mode: pre-flight found problems. Aborting before writing."
+    [ ${#PREFLIGHT_MISSING[@]}    -gt 0 ] && for f in "${PREFLIGHT_MISSING[@]}";    do printf '   MISSING:    %s\n' "$f" >&2; done
+    [ ${#PREFLIGHT_EMPTY[@]}      -gt 0 ] && for f in "${PREFLIGHT_EMPTY[@]}";      do printf '   EMPTY:      %s\n' "$f" >&2; done
+    [ ${#PREFLIGHT_WHITESPACE[@]} -gt 0 ] && for f in "${PREFLIGHT_WHITESPACE[@]}"; do printf '   WS-ONLY:    %s\n' "$f" >&2; done
+    [ ${#PREFLIGHT_DENIED[@]}     -gt 0 ] && for f in "${PREFLIGHT_DENIED[@]}";     do printf '   PROTECTED:  %s\n' "$f" >&2; done
+    [ ${#PREFLIGHT_BINARY[@]}     -gt 0 ] && for f in "${PREFLIGHT_BINARY[@]}";     do printf '   BINARY:     %s\n' "$f" >&2; done
+    [ ${#PREFLIGHT_DUPES[@]}      -gt 0 ] && for f in "${PREFLIGHT_DUPES[@]}";      do printf '   DUPLICATE:  %s\n' "$f" >&2; done
+    exit 2
+  fi
+fi
+
+# ----------------------------------------------------------------------------
+# Dry-run — show classification, no file written
+# ----------------------------------------------------------------------------
+if [ "$DRY_RUN" -eq 1 ]; then
+  printf '%sDRY RUN — would merge %d requested file(s) → %s%s\n' "$C_BLU" "$TOTAL" "$OUTPUT" "$C_RST"
+  printf '============================================================\n'
+  i=0
+  for f in "${FILE_ARGS[@]}"; do
+    i=$((i+1))
+    if   is_denied "$f";         then printf '%s[%d] %s  (PROTECTED — will skip)%s\n' "$C_YLW" "$i" "$f" "$C_RST"
+    elif is_excluded "$f";       then printf '%s[%d] %s  (EXCLUDED — will skip)%s\n'  "$C_YLW" "$i" "$f" "$C_RST"
+    elif [ ! -e "$f" ];          then printf '%s[%d] %s  (MISSING)%s\n'               "$C_RED" "$i" "$f" "$C_RST"
+    elif [ ! -f "$f" ];          then printf '%s[%d] %s  (NOT A REGULAR FILE)%s\n'    "$C_RED" "$i" "$f" "$C_RST"
+    elif is_binary "$f";         then printf '%s[%d] %s  (BINARY — will skip)%s\n'    "$C_YLW" "$i" "$f" "$C_RST"
+    elif is_empty "$f";          then printf '%s[%d] %s  (EMPTY)%s\n'                "$C_YLW" "$i" "$f" "$C_RST"
+    elif is_whitespace_only "$f"; then printf '%s[%d] %s  (WHITESPACE-ONLY)%s\n'      "$C_YLW" "$i" "$f" "$C_RST"
+    else
+      local_lines=$(wc -l < "$f" | tr -d ' ')
+      tags=""
+      has_crlf "$f"                 && tags="${tags} CRLF"
+      has_bom "$f"                  && tags="${tags} BOM"
+      missing_trailing_newline "$f" && tags="${tags} NO-TRAILING-NL"
+      printf '%s[%d]%s %s  (%s lines%s)\n' "$C_GRN" "$i" "$C_RST" "$f" "$local_lines" "$tags"
+    fi
+  done
+  printf '============================================================\n'
+  exit 0
+fi
+
+# ----------------------------------------------------------------------------
+# Main merge — write the artifact
+# ----------------------------------------------------------------------------
+INDEX=0
+MISSING_COUNT=0
+SKIPPED_COUNT=0
+INCLUDED_COUNT=0
+EMPTY_COUNT=0
+WS_ONLY_COUNT=0
+TOTAL_LINES=0
+MISSING_LIST=""
+SKIPPED_LIST=""
+EMPTY_LIST=""
+WS_ONLY_LIST=""
+
+{
+  printf '#################################################################################\n'
+  printf '# MERGED FILES FOR: %s\n'            "$PHASE_NAME"
+  printf '# Generated: %s\n'                  "$(date)"
+  printf '# Repository root: %s\n'            "$(pwd)"
+  printf '# Files requested: %s\n'            "$TOTAL"
+  printf '#\n'
+  printf '# PRE-FLIGHT SUMMARY:\n'
+  printf '#   OK            : %d\n'            "${#PREFLIGHT_OK[@]}"
+  printf '#   Missing       : %d\n'            "${#PREFLIGHT_MISSING[@]}"
+  printf '#   Empty         : %d\n'            "${#PREFLIGHT_EMPTY[@]}"
+  printf '#   Whitespace    : %d\n'            "${#PREFLIGHT_WHITESPACE[@]}"
+  printf '#   Protected     : %d\n'            "${#PREFLIGHT_DENIED[@]}"
+  printf '#   Excluded      : %d\n'            "${#PREFLIGHT_EXCLUDED[@]}"
+  printf '#   Binary        : %d\n'            "${#PREFLIGHT_BINARY[@]}"
+  printf '#   Duplicates    : %d\n'            "${#PREFLIGHT_DUPES[@]}"
+  printf '#\n'
+  printf '# MANIFEST:\n'
+  i=0
+  for f in "${FILE_ARGS[@]}"; do
+    i=$((i+1))
+    printf '#   [%d] %s\n' "$i" "$f"
+  done
+  printf '#################################################################################\n'
+
+  for file in "${FILE_ARGS[@]}"; do
+    INDEX=$((INDEX + 1))
+    printf '\n================================================================================\n'
+
+    # --- Protected ---
+    if is_denied "$file"; then
+      printf '>>> FILE [%d/%d]: %s\n' "$INDEX" "$TOTAL" "$file"
+      printf '================================================================================\n'
+      printf '[SKIPPED — matches protected pattern; pass --allow-protected to override]\n'
+      printf '================================================================================\n'
+      printf '<<< END FILE [%d/%d]: %s (SKIPPED)\n' "$INDEX" "$TOTAL" "$file"
+      printf '================================================================================\n'
+      SKIPPED_COUNT=$((SKIPPED_COUNT + 1))
+      SKIPPED_LIST="${SKIPPED_LIST}"$'\n'"#   - $file (protected)"
+      continue
+    fi
+
+    # --- Excluded ---
+    if is_excluded "$file"; then
+      printf '>>> FILE [%d/%d]: %s\n' "$INDEX" "$TOTAL" "$file"
+      printf '================================================================================\n'
+      printf '[SKIPPED — matches --exclude pattern]\n'
+      printf '================================================================================\n'
+      printf '<<< END FILE [%d/%d]: %s (SKIPPED)\n' "$INDEX" "$TOTAL" "$file"
+      printf '================================================================================\n'
+      SKIPPED_COUNT=$((SKIPPED_COUNT + 1))
+      SKIPPED_LIST="${SKIPPED_LIST}"$'\n'"#   - $file (excluded)"
+      continue
+    fi
+
+    # --- Missing ---
+    if [ ! -e "$file" ]; then
+      printf '>>> FILE [%d/%d]: %s\n' "$INDEX" "$TOTAL" "$file"
+      printf '================================================================================\n'
+      printf '[MISSING FILE]\n'
+      printf '  Reason: path does not exist on disk.\n'
+      printf '  Hint:   verify the path relative to the repository root: %s\n' "$(pwd)"
+      printf '================================================================================\n'
+      printf '<<< END FILE [%d/%d]: %s (MISSING)\n' "$INDEX" "$TOTAL" "$file"
+      printf '================================================================================\n'
+      MISSING_COUNT=$((MISSING_COUNT + 1))
+      MISSING_LIST="${MISSING_LIST}"$'\n'"#   - $file"
+      continue
+    fi
+
+    # --- Not a regular file (directory, device, etc.) ---
+    if [ ! -f "$file" ]; then
+      printf '>>> FILE [%d/%d]: %s\n' "$INDEX" "$TOTAL" "$file"
+      printf '================================================================================\n'
+      printf '[NOT A REGULAR FILE]\n'
+      printf '  Reason: path exists but is not a regular file (directory, device, etc.).\n'
+      printf '================================================================================\n'
+      printf '<<< END FILE [%d/%d]: %s (SKIPPED)\n' "$INDEX" "$TOTAL" "$file"
+      printf '================================================================================\n'
+      SKIPPED_COUNT=$((SKIPPED_COUNT + 1))
+      SKIPPED_LIST="${SKIPPED_LIST}"$'\n'"#   - $file (not a regular file)"
+      continue
+    fi
+
+    # --- Binary ---
+    if is_binary "$file"; then
+      printf '>>> FILE [%d/%d]: %s\n' "$INDEX" "$TOTAL" "$file"
+      printf '================================================================================\n'
+      printf '[SKIPPED — binary file; pass --allow-binary to override]\n'
+      printf '================================================================================\n'
+      printf '<<< END FILE [%d/%d]: %s (SKIPPED)\n' "$INDEX" "$TOTAL" "$file"
+      printf '================================================================================\n'
+      SKIPPED_COUNT=$((SKIPPED_COUNT + 1))
+      SKIPPED_LIST="${SKIPPED_LIST}"$'\n'"#   - $file (binary)"
+      continue
+    fi
+
+    # --- Empty ---
+    if is_empty "$file"; then
+      printf '>>> FILE [%d/%d]: %s\n' "$INDEX" "$TOTAL" "$file"
+      printf '================================================================================\n'
+      printf '[EMPTY FILE]\n'
+      printf '  Reason: file exists but has 0 bytes.\n'
+      printf '================================================================================\n'
+      printf '<<< END FILE [%d/%d]: %s (EMPTY)\n' "$INDEX" "$TOTAL" "$file"
+      printf '================================================================================\n'
+      EMPTY_COUNT=$((EMPTY_COUNT + 1))
+      EMPTY_LIST="${EMPTY_LIST}"$'\n'"#   - $file"
+      continue
+    fi
+
+    # --- Whitespace-only ---
+    if is_whitespace_only "$file"; then
+      printf '>>> FILE [%d/%d]: %s\n' "$INDEX" "$TOTAL" "$file"
+      printf '================================================================================\n'
+      printf '[WHITESPACE-ONLY FILE]\n'
+      printf '  Reason: file has bytes but no meaningful non-whitespace content.\n'
+      printf '================================================================================\n'
+      printf '<<< END FILE [%d/%d]: %s (WHITESPACE-ONLY)\n' "$INDEX" "$TOTAL" "$file"
+      printf '================================================================================\n'
+      WS_ONLY_COUNT=$((WS_ONLY_COUNT + 1))
+      WS_ONLY_LIST="${WS_ONLY_LIST}"$'\n'"#   - $file"
+      continue
+    fi
+
+    # --- Included ---
+    local_lines=$(wc -l < "$file" | tr -d ' ')
+    TOTAL_LINES=$((TOTAL_LINES + local_lines))
+    INCLUDED_COUNT=$((INCLUDED_COUNT + 1))
+
+    tags=""
+    has_crlf "$file"                 && tags="${tags}, CRLF"
+    has_bom "$file"                  && tags="${tags}, BOM"
+    missing_trailing_newline "$file" && tags="${tags}, no-trailing-newline"
+
+    printf '>>> FILE [%d/%d]: %s (%s lines%s)\n' "$INDEX" "$TOTAL" "$file" "$local_lines" "$tags"
+    printf '================================================================================\n'
+    printf '\n'
+    cat "$file"
+    printf '\n'
+    printf '================================================================================\n'
+    printf '<<< END FILE [%d/%d]: %s\n' "$INDEX" "$TOTAL" "$file"
+    printf '================================================================================\n'
+  done
+
+  printf '\n'
+  printf '#################################################################################\n'
+  printf '# SUMMARY\n'
+  printf '#   Requested     : %d\n' "$TOTAL"
+  printf '#   Included      : %d\n' "$INCLUDED_COUNT"
+  printf '#   Missing       : %d\n' "$MISSING_COUNT"
+  printf '#   Empty         : %d\n' "$EMPTY_COUNT"
+  printf '#   Whitespace    : %d\n' "$WS_ONLY_COUNT"
+  printf '#   Skipped       : %d\n' "$SKIPPED_COUNT"
+  printf '#   Total lines   : %d\n' "$TOTAL_LINES"
+  if [ "$MISSING_COUNT" -gt 0 ]; then
+    printf '#\n# MISSING FILES:\n%s\n' "$MISSING_LIST"
+  else
+    printf '# MISSING FILES: none\n'
+  fi
+  if [ "$EMPTY_COUNT" -gt 0 ]; then
+    printf '#\n# EMPTY FILES:\n%s\n' "$EMPTY_LIST"
+  fi
+  if [ "$WS_ONLY_COUNT" -gt 0 ]; then
+    printf '#\n# WHITESPACE-ONLY FILES:\n%s\n' "$WS_ONLY_LIST"
+  fi
+  if [ "$SKIPPED_COUNT" -gt 0 ]; then
+    printf '#\n# SKIPPED FILES:\n%s\n' "$SKIPPED_LIST"
+  else
+    printf '# SKIPPED FILES: none\n'
+  fi
+  printf '#################################################################################\n'
+} > "$OUTPUT"
+
+OUTPUT_LINES=$(wc -l < "$OUTPUT" | tr -d ' ')
+OUTPUT_BYTES=$(wc -c < "$OUTPUT" | tr -d ' ')
+OUTPUT_KB=$((OUTPUT_BYTES / 1024))
+
+ok "Created $OUTPUT ($OUTPUT_LINES lines, ${OUTPUT_KB} KB)"
+note "Included: $INCLUDED_COUNT / $TOTAL   |   Missing: $MISSING_COUNT   |   Empty: $EMPTY_COUNT   |   WS-only: $WS_ONLY_COUNT   |   Skipped: $SKIPPED_COUNT   |   Content lines: $TOTAL_LINES"
+
+# Non-fatal warnings
+[ "$MISSING_COUNT" -gt 0 ]  && warn "$MISSING_COUNT file(s) were missing. See $OUTPUT."
+[ "$EMPTY_COUNT" -gt 0 ]    && warn "$EMPTY_COUNT file(s) were empty. See $OUTPUT."
+[ "$WS_ONLY_COUNT" -gt 0 ]  && warn "$WS_ONLY_COUNT file(s) were whitespace-only. See $OUTPUT."
+[ "$SKIPPED_COUNT" -gt 0 ]  && warn "$SKIPPED_COUNT file(s) were skipped. See $OUTPUT."
+[ ${#PREFLIGHT_DUPES[@]} -gt 0 ] && warn "Duplicate paths detected (merged once each): ${PREFLIGHT_DUPES[*]}"
+
+# Size thresholds (from config)
+if [ "$OUTPUT_LINES" -gt "$MAX_OUTPUT_LINES" ]; then
+  warn "Output is $OUTPUT_LINES lines (> $MAX_OUTPUT_LINES threshold from config). Consider splitting."
+fi
+if [ "$OUTPUT_BYTES" -gt "$MAX_OUTPUT_BYTES" ]; then
+  warn "Output is $OUTPUT_KB KB (> $((MAX_OUTPUT_BYTES / 1024)) KB threshold from config). Likely too large for one chat send."
+fi
+
+exit 0

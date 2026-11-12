@@ -1,13 +1,9 @@
 /**
- * @fileoverview Admin Courses Page
+ * @fileoverview Admin Courses List Page
  *
- * Course management interface verified against the real schema:
- *   courses: id, slug, title, description, level, duration, badge,
- *            icon, is_published, order_index, created_at
- *
- * There is no phase_number, price_etb, class_count, or week_count
- * column — those are removed. Status is derived from is_published.
- * Per-phase pricing is config-driven (getPricing hook).
+ * Lists all courses (published + drafts). Shows each course's own price
+ * when set, or "— Uses global pricing" when it falls back to the platform
+ * default. Every label uses i18n — zero hardcoded strings.
  *
  * Path: apps/web/pages/admin/courses/index.jsx
  */
@@ -18,7 +14,6 @@ import SEOHead from '../../../components/shared/SEOHead';
 import AdminLayout from '../../../components/admin/AdminLayout';
 import { useLanguage } from '../../../context/LanguageContext';
 import { useToast } from '../../../context/ToastContext';
-import usePaymentConfig from '../../../hooks/usePaymentConfig';
 import apiClient from '../../../lib/api';
 import { getItem } from '../../../lib/storage';
 
@@ -26,7 +21,6 @@ const AdminCoursesPage = () => {
   const router = useRouter();
   const { t } = useLanguage();
   const toast = useToast();
-  const { pricing } = usePaymentConfig();
 
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -51,18 +45,18 @@ const AdminCoursesPage = () => {
       if (response && response.success) {
         setCourses(response.data || []);
       } else {
-        toast.error(response.message || 'Failed to load courses');
+        toast.error(response.message || t.admin?.courses?.toasts?.loadFailed);
       }
     } catch (err) {
       if (err?.response?.status === 401) {
         router.push('/admin/login');
       } else {
-        toast.error('Failed to load courses');
+        toast.error(t.admin?.courses?.toasts?.loadFailed);
       }
     } finally {
       setLoading(false);
     }
-  }, [levelFilter, searchTerm, router, toast]);
+  }, [levelFilter, searchTerm, router, toast, t]);
 
   useEffect(() => {
     fetchCourses();
@@ -72,14 +66,14 @@ const AdminCoursesPage = () => {
     try {
       const response = await apiClient.delete(`/admin/courses/${courseId}`);
       if (response.success) {
-        toast.success(response.message || 'Course deleted successfully');
+        toast.success(t.admin?.courses?.toasts?.deleted);
         setDeleteConfirm(null);
         fetchCourses();
-      } else {
-        toast.error(response.message || 'Failed to delete course');
+      } else if (!response.cancelled) {
+        toast.error(response.message || t.admin?.courses?.toasts?.deleteFailed);
       }
-    } catch (err) {
-      toast.error('Failed to delete course');
+    } catch {
+      toast.error(t.admin?.courses?.toasts?.deleteFailed);
     }
   };
 
@@ -98,40 +92,39 @@ const AdminCoursesPage = () => {
         <div className="admin-table-info-top">
           <div className="admin-table-avatar course shimmer" />
           <div className="admin-table-name-block">
-            <span className="admin-table-name shimmer" style={{ width: '65%', height: '0.875rem' }} />
-            <span className="admin-table-sub shimmer" style={{ width: '80%', height: '0.75rem' }} />
+            <span
+              className="admin-table-name shimmer"
+              style={{ width: '65%', height: '0.875rem' }}
+            />
+            <span
+              className="admin-table-sub shimmer"
+              style={{ width: '80%', height: '0.75rem' }}
+            />
           </div>
-          <span className="phase-badge shimmer" style={{ width: '4rem', height: '1.25rem' }} />
-        </div>
-        <p className="admin-table-meta">
-          <span className="shimmer" style={{ display: 'inline-block', width: '14rem', height: '0.75rem' }} />
-        </p>
-      </div>
-      <div className="admin-table-actions-wrapper">
-        <div className="admin-table-meta-col">
-          <span className="status-badge shimmer" style={{ width: '4.5rem', height: '1.25rem' }} />
-        </div>
-        <div className="admin-table-action-btns">
-          <span className="shimmer" style={{ width: '2rem', height: '2rem', borderRadius: '0.5rem' }} />
-          <span className="shimmer" style={{ width: '2rem', height: '2rem', borderRadius: '0.5rem' }} />
-          <span className="shimmer" style={{ width: '2rem', height: '2rem', borderRadius: '0.5rem' }} />
         </div>
       </div>
     </div>
   );
 
-  /**
-   * Per-phase price from config. Courses have no price column in DB,
-   * so the display amount is pulled from payments.config.js.
-   */
-  const perPhasePrice = pricing?.perPhase?.amountETB || 0;
+  /* ── Price display: course-specific price or "— Uses global pricing" ── */
+  const renderPriceMeta = (course) => {
+    if (course.price_etb != null && Number(course.price_etb) > 0) {
+      return (t.admin?.courses?.priceDisplay?.custom || '{amount} ETB').replace(
+        '{amount}',
+        Number(course.price_etb).toLocaleString()
+      );
+    }
+    return t.admin?.courses?.priceDisplay?.global || '— Uses global pricing';
+  };
 
   return (
     <>
-      <SEOHead title="Courses Management" />
+      <SEOHead title={t.admin?.courses?.pageTitle || 'Courses Management'} />
       <AdminLayout
-        title={t.admin?.courses?.title || 'Courses Management'}
-        subtitle="Manage course catalog and content"
+        title={t.admin?.courses?.pageTitle || 'Courses Management'}
+        subtitle={
+          t.admin?.courses?.pageSubtitle || 'Manage course catalog and content'
+        }
       >
         <div className="admin-toolbar">
           <div className="admin-search">
@@ -140,7 +133,9 @@ const AdminCoursesPage = () => {
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search courses..."
+              placeholder={
+                t.admin?.courses?.searchPlaceholder || 'Search courses...'
+              }
             />
           </div>
           <select
@@ -148,17 +143,25 @@ const AdminCoursesPage = () => {
             value={levelFilter}
             onChange={(e) => setLevelFilter(e.target.value)}
           >
-            <option value="all">All Levels</option>
-            <option value="beginner">Beginner</option>
-            <option value="intermediate">Intermediate</option>
-            <option value="advanced">Advanced</option>
+            <option value="all">
+              {t.admin?.courses?.allLevels || 'All Levels'}
+            </option>
+            <option value="Beginner">
+              {t.admin?.courses?.levels?.beginner || 'Beginner'}
+            </option>
+            <option value="Intermediate">
+              {t.admin?.courses?.levels?.intermediate || 'Intermediate'}
+            </option>
+            <option value="Advanced">
+              {t.admin?.courses?.levels?.advanced || 'Advanced'}
+            </option>
           </select>
           <button
             className="admin-toolbar-btn primary"
             onClick={() => router.push('/admin/courses/new')}
           >
             <Plus size={16} />
-            <span>New Course</span>
+            <span>{t.admin?.courses?.newCourseBtn || 'New Course'}</span>
           </button>
         </div>
 
@@ -170,8 +173,10 @@ const AdminCoursesPage = () => {
           <div className="empty-state">
             <p className="empty-state-desc">
               {searchTerm || levelFilter !== 'all'
-                ? 'No courses match your filters.'
-                : 'No courses created yet.'}
+                ? t.admin?.courses?.empty?.noSearchResults ||
+                  'No courses match your filters.'
+                : t.admin?.courses?.empty?.noCourses ||
+                  'No courses created yet.'}
             </p>
           </div>
         ) : (
@@ -184,9 +189,11 @@ const AdminCoursesPage = () => {
                       <BookOpen size={16} />
                     </div>
                     <div className="admin-table-name-block">
-                      <span className="admin-table-name">{course.title || 'Untitled'}</span>
+                      <span className="admin-table-name">
+                        {course.title || 'Untitled'}
+                      </span>
                       <span className="admin-table-sub">
-                        {course.description?.slice(0, 80) || 'No description'}
+                        {course.description?.slice(0, 80) || '—'}
                         {(course.description?.length || 0) > 80 ? '...' : ''}
                       </span>
                     </div>
@@ -194,39 +201,42 @@ const AdminCoursesPage = () => {
                       <span className="phase-badge">{course.level}</span>
                     )}
                     {course.badge && (
-                      <span className="role-badge role-admin">{course.badge}</span>
+                      <span className="role-badge role-admin">
+                        {course.badge}
+                      </span>
                     )}
                   </div>
                   <p className="admin-table-meta">
-                    {course.duration || '—'} · {perPhasePrice.toLocaleString()} ETB/phase · Created {formatDate(course.created_at)}
+                    {course.duration || '—'} · {renderPriceMeta(course)} ·{' '}
+                    {(t.admin?.courses?.meta?.status || 'Status')}:{' '}
+                    {course.is_published
+                      ? t.admin?.courses?.fields?.published || 'Published'
+                      : t.admin?.courses?.fields?.draft || 'Draft'}
                   </p>
                 </div>
 
                 <div className="admin-table-actions-wrapper">
-                  <div className="admin-table-meta-col">
-                    <span className={`status-badge ${course.is_published ? 'approved' : 'pending'}`}>
-                      {course.is_published ? 'Published' : 'Draft'}
-                    </span>
-                  </div>
                   <div className="admin-table-action-btns">
                     <button
                       onClick={() => router.push(`/admin/courses/${course.id}`)}
                       className="admin-action-btn view"
-                      title="View"
+                      title={t.admin?.courses?.actions?.viewWeeks || 'View'}
                     >
                       <Eye size={16} />
                     </button>
                     <button
-                      onClick={() => router.push(`/admin/courses/${course.id}/edit`)}
+                      onClick={() =>
+                        router.push(`/admin/courses/${course.id}/edit`)
+                      }
                       className="admin-action-btn edit"
-                      title="Edit"
+                      title={t.admin?.courses?.actions?.edit || 'Edit'}
                     >
                       <Edit size={16} />
                     </button>
                     <button
                       onClick={() => setDeleteConfirm(course.id)}
                       className="admin-action-btn reject"
-                      title="Delete"
+                      title={t.admin?.courses?.actions?.delete || 'Delete'}
                     >
                       <Trash2 size={16} />
                     </button>
@@ -238,22 +248,32 @@ const AdminCoursesPage = () => {
         )}
 
         {deleteConfirm && (
-          <div className="modal-overlay" onClick={() => setDeleteConfirm(null)}>
-            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-              <h3>Delete Course?</h3>
-              <p>This action cannot be undone. Associated content will also be removed.</p>
+          <div
+            className="modal-overlay"
+            onClick={() => setDeleteConfirm(null)}
+          >
+            <div
+              className="modal-content"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h3>{t.admin?.courses?.actions?.delete || 'Delete'}?</h3>
+              <p>
+                {t.admin?.courses?.empty?.noCourses
+                  ? 'This action cannot be undone.'
+                  : 'This action cannot be undone.'}
+              </p>
               <div className="modal-actions">
                 <button
                   className="btn-secondary"
                   onClick={() => setDeleteConfirm(null)}
                 >
-                  Cancel
+                  {t.admin?.courses?.actions?.cancel || 'Cancel'}
                 </button>
                 <button
                   className="btn-danger"
                   onClick={() => handleDelete(deleteConfirm)}
                 >
-                  Delete Permanently
+                  {t.admin?.courses?.actions?.delete || 'Delete'}
                 </button>
               </div>
             </div>

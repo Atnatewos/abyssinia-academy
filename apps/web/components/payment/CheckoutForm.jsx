@@ -1,65 +1,35 @@
 /**
  * @fileoverview Checkout Form Component
+ *
+ * Contact details, agent code accordion, screenshot upload, and submit.
+ * Uses a semantic <details> element for the discount/agent code section
+ * so it collapses by default and expands on click.
+ *
  * Path: apps/web/components/payment/CheckoutForm.jsx
  */
 
-import { useState, useMemo, useCallback } from 'react';
-import {
-  ShieldCheck,
-  RefreshCw,
-  Upload,
-  X,
-  Copy,
-  Check,
-} from 'lucide-react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
+import { ShieldCheck, RefreshCw, Upload, X, Copy, Check, Tag, User } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useToast } from '../../context/ToastContext';
+import { useAuth } from '../../context/AuthContext';
 import { getScreenshotUploadConfig } from '../../lib/config';
 import DiscountBreakdown from '../discount/DiscountBreakdown';
 import AgentCodeInput from '../agents/AgentCodeInput';
 
-const CopyButton = ({ text, label = 'Copy to clipboard' }) => {
-  const { t } = useLanguage();
+const CopyButton = ({ text, label }) => {
   const [copied, setCopied] = useState(false);
-
   const handleCopy = useCallback(async () => {
     try {
       await navigator.clipboard.writeText(text);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } catch {
-      const ta = document.createElement('textarea');
-      ta.value = text;
-      ta.style.position = 'fixed';
-      ta.style.opacity = '0';
-      document.body.appendChild(ta);
-      ta.select();
-      try {
-        document.execCommand('copy');
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-      } catch {
-        /* silent */
-      }
-      document.body.removeChild(ta);
-    }
+    } catch {}
   }, [text]);
 
   return (
-    <button
-      type="button"
-      onClick={handleCopy}
-      className="copy-btn"
-      aria-label={label}
-      title={
-        copied ? t.checkout?.copied || 'Copied!' : t.checkout?.copy || 'Copy'
-      }
-    >
-      {copied ? (
-        <Check size={14} style={{ color: '#10b981' }} />
-      ) : (
-        <Copy size={14} />
-      )}
+    <button type="button" onClick={handleCopy} className="copy-btn" aria-label={label} title={label}>
+      {copied ? <Check size={14} style={{ color: '#10b981' }} /> : <Copy size={14} />}
     </button>
   );
 };
@@ -77,24 +47,21 @@ const CheckoutForm = ({
   initialAgentCode = '',
   initialAgentName = '',
   isAgentBuyer = false,
-  onAgentApplied,
-  onAgentRemoved,
+  courseId,
+  resellerCode,
 }) => {
   const { t, language } = useLanguage();
+  const { user } = useAuth();
   const toast = useToast();
 
   const uploadConfig = useMemo(() => getScreenshotUploadConfig(), []);
   const maxFileSize = uploadConfig.maxSize || 5 * 1024 * 1024;
-  const allowedTypes = uploadConfig.allowedTypes || [
-    'image/jpeg',
-    'image/png',
-    'image/webp',
-  ];
+  const allowedTypes = uploadConfig.allowedTypes || ['image/jpeg', 'image/png', 'image/webp'];
   const maxSizeMB = Math.round(maxFileSize / (1024 * 1024));
 
   const [formData, setFormData] = useState({
-    fullName: '',
-    phone: '',
+    fullName: user?.full_name || '',
+    phone: user?.phone || '',
     transactionRef: '',
     screenshot: null,
     agentId: null,
@@ -102,32 +69,32 @@ const CheckoutForm = ({
   const [screenshotPreview, setScreenshotPreview] = useState(null);
   const [errors, setErrors] = useState({});
 
+  useEffect(() => {
+    if (user) {
+      setFormData((prev) => ({
+        ...prev,
+        fullName: prev.fullName || user.full_name || '',
+        phone: prev.phone || user.phone || '',
+      }));
+    }
+  }, [user]);
+
   const handleFileChange = (e) => {
     const file = e.target.files[0];
-    if (!file) {
-      setFormData((p) => ({ ...p, screenshot: null }));
-      setScreenshotPreview(null);
-      return;
-    }
+    if (!file) return;
     if (!allowedTypes.includes(file.type)) {
-      toast.error(
-        t.checkout?.invalidFileType ||
-          'Please upload a JPEG, PNG, or WebP image.'
-      );
+      toast.error(t.checkout?.invalidFileType || 'Invalid file type.');
       e.target.value = '';
       return;
     }
     if (file.size > maxFileSize) {
-      toast.error(
-        (
-          t.checkout?.fileTooLarge || 'File size must be under {size}MB.'
-        ).replace('{size}', maxSizeMB)
-      );
+      toast.error((t.checkout?.fileTooLarge || 'File too large.').replace('{size}', maxSizeMB));
       e.target.value = '';
       return;
     }
     setFormData((p) => ({ ...p, screenshot: file }));
     setScreenshotPreview(URL.createObjectURL(file));
+    if (errors.referenceOrScreenshot) setErrors((p) => ({ ...p, referenceOrScreenshot: '' }));
   };
 
   const handleRemoveScreenshot = () => {
@@ -137,20 +104,12 @@ const CheckoutForm = ({
 
   const validateForm = () => {
     const newErrors = {};
-    if (!formData.fullName.trim())
-      newErrors.fullName =
-        t.checkout?.fullNameRequired || 'Full name is required.';
-    if (!formData.phone.trim())
-      newErrors.phone =
-        t.checkout?.phoneRequired || 'Phone number is required.';
-    if (!formData.transactionRef.trim())
-      newErrors.transactionRef =
-        t.checkout?.transactionRefRequired ||
-        'Transaction reference is required.';
-    if (!selectedMethod)
-      newErrors.method =
-        t.checkout?.paymentMethodRequired ||
-        'Please select a payment method.';
+    if (!formData.fullName.trim()) newErrors.fullName = t.checkout?.fullNameRequired || 'Full name required.';
+    if (!formData.phone.trim()) newErrors.phone = t.checkout?.phoneRequired || 'Phone required.';
+    if (!selectedMethod) newErrors.method = t.checkout?.paymentMethodRequired || 'Select payment method.';
+    if (!formData.transactionRef.trim() && !formData.screenshot) {
+      newErrors.referenceOrScreenshot = 'Please provide either a transaction reference or a screenshot.';
+    }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -163,237 +122,132 @@ const CheckoutForm = ({
       fullName: formData.fullName.trim(),
       phone: formData.phone.trim(),
       paymentMethod: selectedMethod,
-      transactionRef: formData.transactionRef.trim(),
+      transactionRef: formData.transactionRef.trim() || undefined,
       screenshot: formData.screenshot,
       agentId: formData.agentId,
+      courseId: courseId || null,
+      resellerCode: resellerCode || null,
     });
   };
 
   const handleChange = (field, value) => {
     setFormData((p) => ({ ...p, [field]: value }));
     if (errors[field]) setErrors((p) => ({ ...p, [field]: '' }));
+    if (field === 'transactionRef' && value.trim() && errors.referenceOrScreenshot) {
+      setErrors((p) => ({ ...p, referenceOrScreenshot: '' }));
+    }
   };
 
-  const handleAgentApplied = useCallback(
-    (agentData) => {
-      setFormData((p) => ({
-        ...p,
-        agentId: agentData?.agentUserId || agentData?.code || null,
-      }));
-      if (onAgentApplied) onAgentApplied(agentData);
-    },
-    [onAgentApplied]
-  );
+  const handleAgentApplied = useCallback((agentData) => {
+    setFormData((p) => ({ ...p, agentId: agentData?.agentUserId || agentData?.code || null }));
+  }, []);
 
   const handleAgentRemoved = useCallback(() => {
     setFormData((p) => ({ ...p, agentId: null }));
-    if (onAgentRemoved) onAgentRemoved();
-  }, [onAgentRemoved]);
+  }, []);
 
-  const methodDisplayName =
-    language === 'am'
-      ? selectedMethodData?.nameAm ||
-        selectedMethodData?.name ||
-        selectedMethod
-      : selectedMethodData?.name || selectedMethod;
-
-  const methodInstructions =
-    language === 'am'
-      ? selectedMethodData?.instructionsAm ||
-        selectedMethodData?.instructions ||
-        ''
-      : selectedMethodData?.instructions || '';
-
+  const methodDisplayName = language === 'am' ? selectedMethodData?.nameAm || selectedMethodData?.name : selectedMethodData?.name || selectedMethod;
+  const methodInstructions = language === 'am' ? selectedMethodData?.instructionsAm || selectedMethodData?.instructions : selectedMethodData?.instructions;
   const accountLabel = selectedMethodData?.bankName
-    ? (t.checkout?.bankLabel || 'Bank: {bankName}').replace(
-        '{bankName}',
-        selectedMethodData.bankName
-      )
+    ? (t.checkout?.bankLabel || 'Bank: {bankName}').replace('{bankName}', selectedMethodData.bankName)
     : t.checkout?.accountLabel || 'Account';
 
   return (
     <form onSubmit={handleSubmit} className="checkout-form">
-      <div className="checkout-field">
-        <label htmlFor="checkout-fullname">
-          {t.checkout?.fullName || 'Full Name'}
-        </label>
-        <input
-          id="checkout-fullname"
-          type="text"
-          value={formData.fullName}
-          onChange={(e) => handleChange('fullName', e.target.value)}
-          placeholder="Abebe Kebede"
-          className={`checkout-input ${errors.fullName ? 'error' : ''}`}
-          autoComplete="name"
-        />
-        {errors.fullName && (
-          <p className="checkout-error">{errors.fullName}</p>
-        )}
-      </div>
-
-      <div className="checkout-field">
-        <label htmlFor="checkout-phone">
-          {t.checkout?.phone || 'Phone Number'}
-        </label>
-        <input
-          id="checkout-phone"
-          type="text"
-          value={formData.phone}
-          onChange={(e) => handleChange('phone', e.target.value)}
-          placeholder="+251 911 234 567"
-          className={`checkout-input ${errors.phone ? 'error' : ''}`}
-          autoComplete="tel"
-        />
-        {errors.phone && <p className="checkout-error">{errors.phone}</p>}
-      </div>
-
-      <div className="checkout-field">
-        <label htmlFor="checkout-transaction-ref">
-          {t.checkout?.transactionRef || 'Transaction Reference Number'}
-        </label>
-        <input
-          id="checkout-transaction-ref"
-          type="text"
-          value={formData.transactionRef}
-          onChange={(e) => handleChange('transactionRef', e.target.value)}
-          placeholder="Enter the transaction ID"
-          className={`checkout-input ${
-            errors.transactionRef ? 'error' : ''
-          }`}
-        />
-        {errors.transactionRef && (
-          <p className="checkout-error">{errors.transactionRef}</p>
-        )}
-      </div>
+      {user && (
+        <div className="checkout-autofill-banner">
+          <User size={14} />
+          <span>Auto-filled from your profile. You can edit if needed.</span>
+        </div>
+      )}
 
       {selectedMethodData && (
         <div className="checkout-payment-info">
           <p className="checkout-payment-method-name">
-            <span className="label">
-              {(t.checkout?.payVia || 'Pay via {method}').replace(
-                '{method}',
-                methodDisplayName
-              )}
-            </span>
+            <span className="label">{(t.checkout?.payVia || 'Pay via {method}').replace('{method}', methodDisplayName)}</span>
           </p>
           <div className="checkout-payment-account-row">
-            <span className="checkout-payment-account-label">
-              {accountLabel}:
-            </span>
-            <span className="checkout-payment-account-number">
-              {selectedMethodData.accountNumber}
-            </span>
-            <CopyButton
-              text={selectedMethodData.accountNumber}
-              label={`${t.checkout?.copy || 'Copy'} ${
-                selectedMethodData.name
-              } ${t.checkout?.accountLabel || 'account'}`}
-            />
+            <span className="checkout-payment-account-label">{accountLabel}:</span>
+            <span className="checkout-payment-account-number">{selectedMethodData.accountNumber}</span>
+            <CopyButton text={selectedMethodData.accountNumber} label="Copy" />
           </div>
           {selectedMethodData.accountName && (
             <p className="checkout-payment-account-name">
-              {t.checkout?.accountNameLabel || 'Account Name:'}{' '}
-              <span>{selectedMethodData.accountName}</span>
+              {t.checkout?.accountNameLabel || 'Account Name:'} <span>{selectedMethodData.accountName}</span>
             </p>
           )}
-          {methodInstructions && (
-            <p className="checkout-payment-instructions">
-              {methodInstructions}
-            </p>
-          )}
+          {methodInstructions && <p className="checkout-payment-instructions">{methodInstructions}</p>}
         </div>
       )}
 
-      <div className="checkout-field">
-        <AgentCodeInput
-          onAgentApplied={handleAgentApplied}
-          onAgentRemoved={handleAgentRemoved}
-          initialCode={initialAgentCode}
-          initialAgentName={initialAgentName}
-          isLocked={isAgentBuyer}
-        />
+      <div className="checkout-form-row">
+        <div className="checkout-field">
+          <label htmlFor="fullname">{t.checkout?.fullName || 'Full Name'}</label>
+          <input id="fullname" type="text" value={formData.fullName} onChange={(e) => handleChange('fullName', e.target.value)} className={`checkout-input ${errors.fullName ? 'error' : ''}`} />
+          {errors.fullName && <p className="checkout-error">{errors.fullName}</p>}
+        </div>
+        <div className="checkout-field">
+          <label htmlFor="phone">{t.checkout?.phone || 'Phone Number'}</label>
+          <input id="phone" type="tel" value={formData.phone} onChange={(e) => handleChange('phone', e.target.value)} className={`checkout-input ${errors.phone ? 'error' : ''}`} />
+          {errors.phone && <p className="checkout-error">{errors.phone}</p>}
+        </div>
       </div>
 
       <div className="checkout-field">
-        <label>
-          {t.checkout?.uploadScreenshot || 'Upload Payment Screenshot'}{' '}
-          <span className="checkout-field-optional">(Optional)</span>
-        </label>
+        <label htmlFor="txref">{t.checkout?.transactionRef || 'Transaction Reference'}</label>
+        <input
+          id="txref"
+          type="text"
+          value={formData.transactionRef}
+          onChange={(e) => handleChange('transactionRef', e.target.value)}
+          placeholder="Enter transaction ID (or upload screenshot below)"
+          className={`checkout-input ${errors.referenceOrScreenshot && !formData.screenshot ? 'error' : ''}`}
+        />
+      </div>
+
+      {!isAgentBuyer && (
+        <details className="checkout-details-accordion">
+          <summary>
+            <Tag size={14} />
+            <span>Have a discount or agent code?</span>
+          </summary>
+          <div className="checkout-details-body">
+            <AgentCodeInput onAgentApplied={handleAgentApplied} onAgentRemoved={handleAgentRemoved} initialCode={initialAgentCode} initialAgentName={initialAgentName} />
+          </div>
+        </details>
+      )}
+
+      <div className="checkout-field">
+        <label>{t.checkout?.uploadScreenshot || 'Upload Screenshot'} <span className="checkout-field-optional">(Optional)</span></label>
         {screenshotPreview ? (
           <div className="checkout-upload-preview">
-            <img src={screenshotPreview} alt="Payment screenshot preview" />
-            <button
-              type="button"
-              onClick={handleRemoveScreenshot}
-              className="checkout-upload-remove"
-              aria-label="Remove screenshot"
-            >
-              <X size={16} />
-            </button>
+            <img src={screenshotPreview} alt="Preview" />
+            <button type="button" onClick={handleRemoveScreenshot} className="checkout-upload-remove"><X size={16} /></button>
           </div>
         ) : (
           <label className="checkout-upload-label">
             <Upload size={24} />
-            <span className="checkout-upload-text">
-              {t.checkout?.clickToUpload || 'Click to upload screenshot'}
-            </span>
-            <span className="checkout-upload-hint">
-              {(
-                t.checkout?.uploadHint ||
-                'JPEG, PNG, or WebP (max {size}MB)'
-              ).replace('{size}', maxSizeMB)}
-            </span>
-            <input
-              type="file"
-              accept={allowedTypes.join(',')}
-              onChange={handleFileChange}
-              style={{ display: 'none' }}
-            />
+            <span className="checkout-upload-text">{t.checkout?.clickToUpload || 'Click to upload'}</span>
+            <span className="checkout-upload-hint">{(t.checkout?.uploadHint || 'JPEG, PNG, WebP').replace('{size}', maxSizeMB)}</span>
+            <input type="file" accept={allowedTypes.join(',')} onChange={handleFileChange} style={{ display: 'none' }} />
           </label>
         )}
+        {errors.referenceOrScreenshot && <p className="checkout-error">{errors.referenceOrScreenshot}</p>}
       </div>
 
       {discountBreakdown && discountBreakdown.totalDiscountPercent > 0 && (
-        <div style={{ marginBottom: '1rem' }}>
-          <DiscountBreakdown
-            basePrice={amount}
-            breakdown={discountBreakdown}
-            discountCode={discountCode}
-            discountCodePercent={discountCodePercent}
-            referralPercent={isAgentBuyer ? 10 : 0}
-            currency={currency}
-          />
-        </div>
+        <DiscountBreakdown basePrice={amount} breakdown={discountBreakdown} discountCode={discountCode} discountCodePercent={discountCodePercent} referralPercent={isAgentBuyer ? 10 : 0} currency={currency} />
       )}
 
       <div className="checkout-total">
         <span>{t.checkout?.tuitionFee || 'Tuition Fee'}</span>
-        <span className="checkout-total-amount">
-          {amount.toLocaleString()} {currency}
-        </span>
+        <span className="checkout-total-amount">{amount.toLocaleString()} {currency}</span>
       </div>
 
       {errors.method && <p className="checkout-error">{errors.method}</p>}
 
-      <button
-        type="submit"
-        disabled={loading}
-        className="checkout-submit-btn"
-      >
-        {loading ? (
-          <>
-            <RefreshCw size={16} className="animate-spin" />
-            <span>{t.checkout?.verifying || 'Verifying...'}</span>
-          </>
-        ) : (
-          <>
-            <ShieldCheck size={16} />
-            <span>
-              {t.checkout?.completeEnrollment ||
-                'Complete Enrollment & Unlock Portal'}
-            </span>
-          </>
-        )}
+      <button type="submit" disabled={loading} className="checkout-submit-btn">
+        {loading ? <><RefreshCw size={16} className="animate-spin" /><span>{t.checkout?.verifying || 'Verifying...'}</span></> : <><ShieldCheck size={16} /><span>{t.checkout?.completeEnrollment || 'Complete Enrollment'}</span></>}
       </button>
     </form>
   );

@@ -1,237 +1,115 @@
 /**
- * @fileoverview Pricing Page — Database-Driven
+ * @fileoverview Pricing Page
  *
- * Fetches the authenticated user's full attribution state on mount:
- *   - MLM referral code + discount %
- *   - Agent code + agent display name (if registered via agent link)
- *   - Reseller attribution (via ?reseller= query param)
+ * Three modes:
+ *   1. Reseller   (?reseller=CODE) — single hero, reseller's price
+ *   2. Course     (?course=slug)   — full course + per-phase cart
+ *   3. Catalog    (default)        — grid of all published courses
  *
- * Attribution precedence at checkout (config-driven):
- *   Reseller > Agent > MLM referral > discount code
+ * Every CheckoutModal invocation passes the resolved `coursePriceEtb`
+ * so the modal shows the correct price (600 for Full-Stack) instead of
+ * the global fallback (1,199).
  *
  * Path: apps/web/pages/pricing/index.jsx
  */
 
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import {
-  Check, ArrowRight, Sparkles, Clock, BookOpen, Code,
-  Layers, ChevronDown, ChevronUp, ShoppingCart, Shield, Zap,
+  Check, ArrowRight, Sparkles, BookOpen, Crown, Zap, GraduationCap,
+  Layers, ChevronDown, ChevronUp,
 } from 'lucide-react';
 import SEOHead from '../../components/shared/SEOHead';
 import PageLayout from '../../components/shared/PageLayout';
-import PhaseCartSummary from '../../components/checkout/PhaseCartSummary';
-import CountdownBanner from '../../components/pricing/CountdownBanner';
 import CheckoutModal from '../../components/payment/CheckoutModal';
-import DiscountCodeBadge from '../../components/discount/DiscountCodeBadge';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
-import apiClient from '../../lib/api';
+
+// Named exports — the hook file has no default export. Using a default
+// import here crashes the page with `useCourses is not a function`.
+import { useCourses, useCourseBySlug } from '../../hooks/useCourses';
+
 import useCart from '../../hooks/useCart';
-import usePortalCourse from '../../hooks/usePortalCourse';
 import usePaymentConfig from '../../hooks/usePaymentConfig';
 import useResellerCode from '../../hooks/useResellerCode';
-
-const PHASE_COLORS = [
-  { accent: '#f59e0b', bg: 'rgba(245,158,11,0.06)', border: 'rgba(245,158,11,0.2)' },
-  { accent: '#3b82f6', bg: 'rgba(59,130,246,0.06)', border: 'rgba(59,130,246,0.2)' },
-  { accent: '#10b981', bg: 'rgba(16,185,129,0.06)', border: 'rgba(16,185,129,0.2)' },
-  { accent: '#8b5cf6', bg: 'rgba(139,92,246,0.06)', border: 'rgba(139,92,246,0.2)' },
-  { accent: '#ec4899', bg: 'rgba(236,72,153,0.06)', border: 'rgba(236,72,153,0.2)' },
-];
 
 const PricingPage = () => {
   const router = useRouter();
   const { t, language } = useLanguage();
-  const { isAuthenticated, isEnrolled } = useAuth();
+  const { isAuthenticated } = useAuth();
   const cart = useCart();
-  const { phases: coursePhases } = usePortalCourse('fullstack-web-development');
+  const { courses, loading: coursesLoading } = useCourses();
   const { pricing, loading: pricingLoading } = usePaymentConfig();
+  const { resellerProfile, resellerCode, loading: resellerLoading } =
+    useResellerCode();
 
-  /* Reseller attribution (from ?reseller=CODE) */
-  const {
-    resellerProfile,
-    resellerCode,
-    loading: resellerLoading,
-  } = useResellerCode();
-
-  const fullCourse = pricing?.fullCourse || {};
-  const perPhase = pricing?.perPhase || {};
+  const slug = router.query.course;
+  const { course: courseContext, loading: courseLoading } = useCourseBySlug(
+    slug
+  );
 
   const [purchaseMode, setPurchaseMode] = useState('full-course');
   const [expandedPhase, setExpandedPhase] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  /* Attribution state */
-  const [referralDiscountPercent, setReferralDiscountPercent] = useState(0);
-  const [referralCode, setReferralCode] = useState('');
-  const [isAgentBuyer, setIsAgentBuyer] = useState(false);
-  const [agentCode, setAgentCode] = useState('');
-  const [agentName, setAgentName] = useState('');
-  const [userDataLoaded, setUserDataLoaded] = useState(false);
+  const fullCourse = pricing?.fullCourse || {};
+  const perPhase = pricing?.perPhase || {};
+  const currency =
+    fullCourse.currency || perPhase.currency || 'ETB';
+  const isResellerActive = Boolean(resellerProfile && resellerCode);
 
-  const [appliedDiscountCode, setAppliedDiscountCode] = useState('');
-  const [appliedDiscountPercent, setAppliedDiscountPercent] = useState(0);
+  const featuredCourse = useMemo(() => {
+    if (!courses || courses.length === 0) return null;
+    return (
+      courses.find(
+        (c) => c.badge && String(c.badge).toLowerCase() === 'most popular'
+      ) || courses[0]
+    );
+  }, [courses]);
 
-  /*
-   * Fetch the user's attribution state. Runs once per auth state change.
-   */
-  useEffect(() => {
-    if (!isAuthenticated) {
-      setUserDataLoaded(true);
-      return;
-    }
-
-    let cancelled = false;
-
-    const fetchAttribution = async () => {
-      try {
-        const response = await apiClient.get('/auth/me');
-        if (cancelled || !response?.success || !response.data?.user) return;
-
-        const user = response.data.user;
-
-        /* ── MLM referral attribution ── */
-        if (user.referred_by_code) {
-          setReferralCode(user.referred_by_code);
-          const discount = parseFloat(user.referral_discount_percent || 0);
-          if (discount > 0) setReferralDiscountPercent(discount);
-        }
-
-        /* ── Agent attribution ── */
-        if (user.registered_via_agent_id) {
-          try {
-            const codeRes = await apiClient.get(
-              `/agents/code-by-user/${user.registered_via_agent_id}`
-            );
-
-            if (cancelled) return;
-
-            if (codeRes?.success && codeRes.data?.code) {
-              setAgentCode(codeRes.data.code);
-              setAgentName(codeRes.data.agentName || '');
-              setIsAgentBuyer(true);
-            }
-          } catch (agentErr) {
-            console.warn(
-              '[pricing] Agent code lookup failed:',
-              agentErr?.response?.status,
-              agentErr?.response?.data?.message
-            );
-          }
-        }
-      } catch (err) {
-        console.error(
-          '[pricing] Attribution fetch failed:',
-          err?.response?.data?.message || err?.message
-        );
-      } finally {
-        if (!cancelled) setUserDataLoaded(true);
-      }
-    };
-
-    fetchAttribution();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [isAuthenticated]);
-
-  /*
-   * Display price: reseller price if active, otherwise full course price.
-   */
-  const displayedFullCoursePrice = useMemo(() => {
-    if (resellerProfile && resellerProfile.price != null) {
-      return Number(resellerProfile.price);
-    }
-    return fullCourse.amountETB || 0;
-  }, [resellerProfile, fullCourse.amountETB]);
-
-  const phasesWithMeta = useMemo(() => {
-    if (!coursePhases || coursePhases.length === 0) return [];
-    return coursePhases.map((coursePhase, index) => {
-      const purchasePhase = cart.allPhases.find(
-        (pp) => pp.number === coursePhase.number
-      );
-      const colors = PHASE_COLORS[index] || PHASE_COLORS[0];
-      const weekCount = coursePhase.weeks ? coursePhase.weeks.length : 0;
-      return {
-        ...coursePhase,
-        prerequisites: purchasePhase?.prerequisites || [],
-        weekCount,
-        colors,
-      };
-    });
-  }, [coursePhases, cart.allPhases]);
-
-  const fullCourseFeatures = [
-    { icon: Layers, text: t.pricing?.instantAccess || 'Instant access to all 5 phases' },
-    { icon: Zap, text: t.pricing?.hdPlaylists || 'HD pre-recorded masterclasses' },
-    { icon: Clock, text: t.pricing?.timestampsNotes || 'Timestamped breakdowns' },
-    { icon: Code, text: t.pricing?.githubAssets || 'GitHub repositories' },
-    { icon: Shield, text: t.pricing?.telegramCommunity || 'Telegram community' },
-  ];
+  const handleToggleCart = (phaseId) => cart.togglePhase(phaseId);
 
   const handleOpenCheckout = useCallback(
     (mode = 'full-course') => {
       if (!isAuthenticated) {
-        /* Preserve reseller param through register redirect */
-        const resellerParam = resellerCode
-          ? `reseller=${encodeURIComponent(resellerCode)}&`
-          : '';
-        const params =
-          mode === 'individual-phases' && cart.selectedPhases.length > 0
-            ? `${resellerParam}mode=individual-phases&phases=${cart.selectedPhases.join(',')}`
-            : `${resellerParam}mode=full-course`;
-        window.location.href = `/auth/register?redirect=${encodeURIComponent(
-          `/pricing?checkout&${params}`
+        window.location.href = `/auth/login?redirect=${encodeURIComponent(
+          router.asPath
         )}`;
         return;
       }
       setPurchaseMode(mode);
       setIsModalOpen(true);
     },
-    [isAuthenticated, cart.selectedPhases, resellerCode]
+    [isAuthenticated, router.asPath]
   );
 
   const handleCloseModal = () => setIsModalOpen(false);
-  const handleToggleExpand = (phaseId) =>
-    setExpandedPhase(expandedPhase === phaseId ? null : phaseId);
-  const handleToggleCart = (phaseId) => cart.togglePhase(phaseId);
 
-  if (pricingLoading || !pricing) {
+  if (
+    pricingLoading ||
+    coursesLoading ||
+    resellerLoading ||
+    (slug && courseLoading)
+  ) {
     return (
       <PageLayout>
-        <div className="pricing-modern">
-          <div className="spinner" style={{ padding: '5rem 0' }}>
-            <div className="spinner-circle" />
-          </div>
+        <div className="spinner" style={{ padding: '5rem 0' }}>
+          <div className="spinner-circle" />
         </div>
       </PageLayout>
     );
   }
 
-  const canOpenCheckout = (!isAuthenticated || userDataLoaded) && !resellerLoading;
-
-  return (
-    <>
-      <SEOHead title={t.pricing?.heading || 'Tuition'} />
+  /* ────────────────────────────────────────────────────────────────────────
+   * RESELLER MODE
+   * ──────────────────────────────────────────────────────────────────────── */
+  if (isResellerActive) {
+    const resellerPrice = Number(resellerProfile.price) || 0;
+    return (
       <PageLayout>
-        <CountdownBanner />
         <div className="pricing-modern">
           <header className="pricing-modern-header">
-            {(referralDiscountPercent > 0 || isAgentBuyer) &&
-              !resellerProfile && (
-                <div style={{ marginBottom: '1rem' }}>
-                  <DiscountCodeBadge
-                    type={isAgentBuyer ? 'referral' : 'referral'}
-                    referralPercent={isAgentBuyer ? 10 : referralDiscountPercent}
-                    discountPercent={appliedDiscountPercent}
-                    discountCode={appliedDiscountCode}
-                  />
-                </div>
-              )}
             <span className="pricing-modern-eyebrow">
               {t.pricing?.tuitionEyebrow || 'Tuition'}
             </span>
@@ -242,13 +120,8 @@ const PricingPage = () => {
               {t.pricing?.subheading || 'Choose your path.'}
             </p>
           </header>
-
           <div className="pricing-hero-card-wrapper">
-            <div
-              className={`pricing-hero-card ${
-                purchaseMode === 'full-course' ? 'active' : ''
-              }`}
-            >
+            <div className="pricing-hero-card active">
               <div className="pricing-hero-glow" />
               <div className="pricing-hero-content">
                 <div className="pricing-hero-left">
@@ -257,226 +130,250 @@ const PricingPage = () => {
                       <Sparkles size={14} />
                       {t.pricing?.bestValue || 'Best Value'}
                     </span>
-                    <span className="pricing-hero-badge-pass">
-                      {t.pricing?.fullPass || 'Full Academy Pass'}
-                    </span>
                   </div>
                   <h2 className="pricing-hero-name">
                     {t.pricing?.masterclass || 'Full-Stack Masterclass'}
                   </h2>
-                  <ul className="pricing-hero-features">
-                    {fullCourseFeatures.map((feature, index) => (
-                      <li key={index}>
-                        <feature.icon size={16} />
-                        <span>{feature.text}</span>
-                      </li>
-                    ))}
-                  </ul>
                 </div>
                 <div className="pricing-hero-right">
                   <div className="pricing-hero-price-block">
                     <div className="pricing-hero-price">
                       <span className="pricing-hero-amount">
-                        {displayedFullCoursePrice.toLocaleString()}
+                        {resellerPrice.toLocaleString()}
                       </span>
                       <span className="pricing-hero-currency">
-                        {fullCourse.currency || 'ETB'}
+                        {currency}
                       </span>
                     </div>
-                    {!resellerProfile &&
-                      fullCourse.originalAmountETB &&
-                      fullCourse.originalAmountETB > fullCourse.amountETB && (
-                        <>
-                          <span className="pricing-hero-save-badge">
-                            Save{' '}
-                            {Math.round(
-                              ((fullCourse.originalAmountETB -
-                                fullCourse.amountETB) /
-                                fullCourse.originalAmountETB) *
-                                100
-                            )}
-                            %
-                          </span>
-                          <span className="pricing-hero-original">
-                            {fullCourse.originalAmountETB.toLocaleString()}{' '}
-                            {fullCourse.currency || 'ETB'}
-                          </span>
-                        </>
-                      )}
-                    {resellerProfile && resellerProfile.displayName && (
-                      <span
-                        className="pricing-hero-original"
-                        style={{ color: '#f59e0b', fontWeight: 600 }}
-                      >
-                        Sold by {resellerProfile.displayName}
+                    <span
+                      className="pricing-hero-original"
+                      style={{ color: '#f59e0b', fontWeight: 600 }}
+                    >
+                      Sold by {resellerProfile.displayName}
+                    </span>
+                  </div>
+                  <button
+                    className="pricing-btn-primary"
+                    onClick={() => handleOpenCheckout('full-course')}
+                  >
+                    <Sparkles size={18} />
+                    {t.pricing?.enrollToday || 'Enroll Today'}
+                    <ArrowRight size={18} />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <CheckoutModal
+          isOpen={isModalOpen}
+          onClose={handleCloseModal}
+          purchaseMode="full-course"
+          selectedPhases={[]}
+          coursePhases={[]}
+          courseId={null}
+          coursePriceEtb={null}
+          resellerCode={resellerCode}
+          resellerProfile={resellerProfile}
+        />
+      </PageLayout>
+    );
+  }
+
+  /* ────────────────────────────────────────────────────────────────────────
+   * COURSE CONTEXT MODE (cart + phases)
+   * ──────────────────────────────────────────────────────────────────────── */
+  if (courseContext) {
+    const phases = courseContext.phases || [];
+    const coursePrice =
+      courseContext.price_etb != null
+        ? Number(courseContext.price_etb)
+        : fullCourse.amountETB || 0;
+    const phasePrice = perPhase.amountETB || 0;
+    const cartTotal = cart.selectedPhases.length * phasePrice;
+
+    return (
+      <PageLayout>
+        <div className="pricing-modern">
+          <Link href="/pricing" className="pricing-back-link">
+            ← {t.pricing?.backToCatalog || 'Back to All Courses'}
+          </Link>
+
+          <header className="pricing-modern-header">
+            <span className="pricing-modern-eyebrow">
+              {t.pricing?.tuitionEyebrow || 'Tuition'}
+            </span>
+            <h1 className="pricing-modern-title">
+              {language === 'am' && courseContext.title_am
+                ? courseContext.title_am
+                : courseContext.title}
+            </h1>
+            <p className="pricing-modern-subtitle">
+              {language === 'am' && courseContext.description_am
+                ? courseContext.description_am
+                : courseContext.description}
+            </p>
+          </header>
+
+          {/* Hero full-course card */}
+          <div className="pricing-hero-card-wrapper">
+            <div className="pricing-hero-card active">
+              <div className="pricing-hero-glow" />
+              <div className="pricing-hero-content">
+                <div className="pricing-hero-left">
+                  <div className="pricing-hero-badges">
+                    {courseContext.badge && (
+                      <span className="pricing-hero-badge-best">
+                        <Crown size={14} /> {courseContext.badge}
                       </span>
                     )}
+                    <span className="pricing-hero-badge-pass">
+                      {t.pricing?.fullCourseLabel || 'Full Course'}
+                    </span>
                   </div>
-                  {!isEnrolled && (
-                    <button
-                      className="pricing-btn-primary"
-                      onClick={() => handleOpenCheckout('full-course')}
-                      disabled={!canOpenCheckout}
-                    >
-                      <Sparkles size={18} />
-                      {t.pricing?.enrollToday || 'Enroll Today'}
-                      <ArrowRight size={18} />
-                    </button>
-                  )}
-                  {isEnrolled && (
-                    <Link href="/portal" className="pricing-btn-primary">
-                      <BookOpen size={18} />
-                      {t.pricing?.goToPortal || 'Go to Portal'}
-                    </Link>
-                  )}
+                  <h2 className="pricing-hero-name">
+                    {courseContext.duration} · {courseContext.level}
+                  </h2>
+                </div>
+                <div className="pricing-hero-right">
+                  <div className="pricing-hero-price-block">
+                    <div className="pricing-hero-price">
+                      <span className="pricing-hero-amount">
+                        {coursePrice.toLocaleString()}
+                      </span>
+                      <span className="pricing-hero-currency">
+                        {currency}
+                      </span>
+                    </div>
+                  </div>
+                  <button
+                    className="pricing-btn-primary"
+                    onClick={() => handleOpenCheckout('full-course')}
+                  >
+                    <Sparkles size={18} />
+                    {t.pricing?.enrollToday || 'Enroll Today'}
+                    <ArrowRight size={18} />
+                  </button>
                 </div>
               </div>
             </div>
           </div>
 
+          {/* Build your own path */}
           <div className="pricing-roadmap-section">
             <div className="pricing-roadmap-header">
               <div>
                 <h2 className="pricing-roadmap-title">
-                  {t.pricing?.orBuildYourOwn || 'Build Your Own Path'}
+                  {t.pricing?.orBuildYourOwn || 'Or Build Your Own Path'}
                 </h2>
                 <p className="pricing-roadmap-subtitle">
                   {(
                     t.pricing?.selectIndividualPhases ||
-                    '{price} {currency} per phase.'
+                    'Select individual phases at {price} {currency} each.'
                   )
-                    .replace(
-                      '{price}',
-                      (perPhase.amountETB || 0).toLocaleString()
-                    )
-                    .replace('{currency}', perPhase.currency || 'ETB')}
+                    .replace('{price}', phasePrice.toLocaleString())
+                    .replace('{currency}', currency)}
                 </p>
               </div>
-              <button
-                className={`pricing-roadmap-mode-btn ${
-                  purchaseMode === 'individual-phases' ? 'active' : ''
-                }`}
-                onClick={() => setPurchaseMode('individual-phases')}
-              >
-                {purchaseMode === 'individual-phases' ? (
-                  <>
-                    <Check size={16} />
-                    Custom Mode
-                  </>
-                ) : (
-                  <>
-                    <Layers size={16} />
-                    Switch to Custom
-                  </>
-                )}
-              </button>
             </div>
 
             <div className="pricing-timeline">
-              <div className="pricing-timeline-line" />
-              {phasesWithMeta.map((phase) => {
-                const phaseId = phase.id || `phase-${phase.number}`;
+              {phases.map((phase, idx) => {
+                const phaseId =
+                  phase.id || `phase-${phase.phase_number || idx + 1}`;
                 const isSelected = cart.isPhaseSelected(phaseId);
-                const selectability = cart.canSelectPhase(phaseId);
                 const isExpanded = expandedPhase === phaseId;
-                const isLocked = !selectability.canSelect && !isSelected;
-                const isCustomMode = purchaseMode === 'individual-phases';
 
                 return (
-                  <div
-                    key={phaseId}
-                    className={`pricing-timeline-item ${
-                      isExpanded ? 'expanded' : ''
-                    }`}
-                    style={{ '--phase-accent': phase.colors.accent }}
-                  >
-                    <div className="pricing-timeline-marker">
-                      <div className="pricing-timeline-dot">
-                        {isSelected ? (
-                          <Check size={14} />
+                  <div key={phaseId} className="pricing-timeline-card">
+                    <button
+                      className="pricing-timeline-card-header"
+                      onClick={() =>
+                        setExpandedPhase(isExpanded ? null : phaseId)
+                      }
+                    >
+                      <div>
+                        <span className="pricing-timeline-phase-label">
+                          {t.pricing?.phaseLabel || 'Phase'}{' '}
+                          {phase.phase_number || idx + 1}
+                        </span>
+                        <h3 className="pricing-timeline-phase-title">
+                          {phase.title}
+                        </h3>
+                      </div>
+                      <div className="pricing-timeline-card-header-right">
+                        <span className="pricing-timeline-price-badge">
+                          {phasePrice.toLocaleString()} {currency}
+                        </span>
+                        {isExpanded ? (
+                          <ChevronUp size={18} />
                         ) : (
-                          <span>{phase.number}</span>
+                          <ChevronDown size={18} />
                         )}
                       </div>
-                    </div>
-                    <div className="pricing-timeline-card">
-                      <button
-                        className="pricing-timeline-card-header"
-                        onClick={() => handleToggleExpand(phaseId)}
-                      >
-                        <div>
-                          <span className="pricing-timeline-phase-label">
-                            Phase {phase.number}
-                          </span>
-                          <h3 className="pricing-timeline-phase-title">
-                            {language === 'am'
-                              ? phase.title_am || phase.title
-                              : phase.title}
-                          </h3>
-                        </div>
-                        <div className="pricing-timeline-card-header-right">
-                          {isCustomMode && (
-                            <span className="pricing-timeline-price-badge">
-                              {perPhase.amountETB?.toLocaleString()}{' '}
-                              {perPhase.currency || 'ETB'}
-                            </span>
-                          )}
-                          {isExpanded ? (
-                            <ChevronUp size={18} />
-                          ) : (
-                            <ChevronDown size={18} />
-                          )}
-                        </div>
-                      </button>
-                      {isExpanded && (
-                        <div className="pricing-timeline-card-body">
-                          <p className="pricing-timeline-card-desc">
-                            {language === 'am'
-                              ? phase.description_am || phase.description
-                              : phase.description}
-                          </p>
-                          {isCustomMode && (
-                            <button
-                              onClick={() => handleToggleCart(phaseId)}
-                              disabled={isLocked}
-                              className={`pricing-timeline-cart-btn ${
-                                isSelected ? 'remove' : 'add'
-                              }`}
-                            >
-                              {isSelected ? 'Remove' : 'Add to Cart'}
-                            </button>
-                          )}
-                        </div>
-                      )}
-                    </div>
+                    </button>
+                    {isExpanded && (
+                      <div className="pricing-timeline-card-body">
+                        <p className="pricing-timeline-card-desc">
+                          {phase.description}
+                        </p>
+                        <button
+                          onClick={() => handleToggleCart(phaseId)}
+                          className={`pricing-timeline-cart-btn ${
+                            isSelected ? 'remove' : 'add'
+                          }`}
+                        >
+                          {isSelected
+                            ? 'Remove'
+                            : `Add to Cart — ${phasePrice.toLocaleString()} ${currency}`}
+                        </button>
+                      </div>
+                    )}
                   </div>
                 );
               })}
             </div>
           </div>
 
-          {purchaseMode === 'individual-phases' &&
-            cart.selectedPhases.length > 0 && (
-              <div className="pricing-sticky-cart">
-                <div className="pricing-sticky-cart-inner">
-                  <PhaseCartSummary
-                    selectedPhases={cart.selectedPhases}
-                    compact
-                  />
-                  <button
-                    className="pricing-btn-primary"
-                    onClick={() => handleOpenCheckout('individual-phases')}
-                    disabled={!canOpenCheckout}
+          {/* Sticky cart */}
+          {cart.selectedPhases.length > 0 && (
+            <div className="pricing-sticky-cart">
+              <div className="pricing-sticky-cart-inner">
+                <div>
+                  <span
+                    style={{
+                      fontSize: '0.75rem',
+                      color: 'var(--text-muted)',
+                      display: 'block',
+                    }}
                   >
-                    <Sparkles size={18} />
-                    Enroll
-                    <ArrowRight size={18} />
-                  </button>
+                    {cart.selectedPhases.length}{' '}
+                    {t.pricing?.phasesUnit || 'phases'} selected
+                  </span>
+                  <span
+                    style={{
+                      fontSize: '1.25rem',
+                      fontWeight: 800,
+                      color: 'var(--text-main)',
+                    }}
+                  >
+                    {cartTotal.toLocaleString()} {currency}
+                  </span>
                 </div>
+                <button
+                  className="pricing-btn-primary"
+                  onClick={() => handleOpenCheckout('individual-phases')}
+                >
+                  <Sparkles size={18} />
+                  {t.pricing?.enrollToday || 'Enroll'}
+                  <ArrowRight size={18} />
+                </button>
               </div>
-            )}
+            </div>
+          )}
         </div>
 
+        {/* Modal — coursePriceEtb passed so the modal shows 600, not 1199 */}
         <CheckoutModal
           isOpen={isModalOpen}
           onClose={handleCloseModal}
@@ -484,25 +381,83 @@ const PricingPage = () => {
           selectedPhases={
             purchaseMode === 'individual-phases' ? cart.selectedPhases : []
           }
-          coursePhases={coursePhases || []}
-          referralDiscountPercent={referralDiscountPercent}
-          referralCode={referralCode}
-          initialAgentCode={agentCode}
-          initialAgentName={agentName}
-          isAgentBuyer={isAgentBuyer}
-          resellerCode={resellerCode}
-          resellerProfile={resellerProfile}
-          onDiscountApplied={(data) => {
-            setAppliedDiscountCode(data.code);
-            setAppliedDiscountPercent(data.value || 0);
-          }}
-          onDiscountRemoved={() => {
-            setAppliedDiscountCode('');
-            setAppliedDiscountPercent(0);
-          }}
+          coursePhases={phases}
+          courseId={courseContext.id}
+          coursePriceEtb={courseContext.price_etb}
+          resellerCode=""
+          resellerProfile={null}
         />
       </PageLayout>
-    </>
+    );
+  }
+
+  /* ────────────────────────────────────────────────────────────────────────
+   * CATALOG MODE (default)
+   * ──────────────────────────────────────────────────────────────────────── */
+  return (
+    <PageLayout>
+      <div className="pricing-modern">
+        <header className="pricing-modern-header">
+          <span className="pricing-modern-eyebrow">
+            {t.pricing?.courseGridEyebrow || 'Course Catalog'}
+          </span>
+          <h1 className="pricing-modern-title">
+            {t.pricing?.courseGridTitle || 'Explore Our Courses'}
+          </h1>
+          <p className="pricing-modern-subtitle">
+            {t.pricing?.courseGridSubtitle ||
+              'Every course is a complete learning journey.'}
+          </p>
+        </header>
+
+        <div className="landing-pricing-equal-grid">
+          {courses.map((course) => {
+            const isFeatured = course.id === featuredCourse?.id;
+            const coursePrice =
+              course.price_etb != null
+                ? Number(course.price_etb)
+                : fullCourse.amountETB || 0;
+            return (
+              <Link
+                key={course.id}
+                href={`/pricing?course=${course.slug}`}
+                className={`landing-pricing-equal-card ${
+                  isFeatured ? 'premium-card' : ''
+                }`}
+              >
+                {course.badge && (
+                  <span className="landing-pricing-equal-badge">
+                    <Crown size={12} /> {course.badge}
+                  </span>
+                )}
+                <h3 className="landing-pricing-equal-title">
+                  {language === 'am' && course.title_am
+                    ? course.title_am
+                    : course.title}
+                </h3>
+                <p className="landing-pricing-equal-subtitle">
+                  {course.level} · {course.duration}
+                </p>
+                <div className="landing-pricing-equal-price-row">
+                  <span className="landing-pricing-equal-price">
+                    {coursePrice.toLocaleString()} {currency}
+                  </span>
+                  <span className="landing-pricing-equal-per-phase">
+                    / {t.pricing?.perCourse || 'per course'}
+                  </span>
+                </div>
+                <div className="landing-pricing-equal-cta primary">
+                  <span>
+                    {t.pricing?.courseCard?.viewDetails || 'View Details'}
+                  </span>
+                  <ArrowRight size={14} />
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      </div>
+    </PageLayout>
   );
 };
 

@@ -14,7 +14,8 @@
     "build": "cd apps/web && npx next build",
     "start": "cd apps/web && npx next start",
     "db:migrate": "node tools/migrate.js",
-    "db:seed": "node tools/seed.js"
+    "db:seed": "node tools/seed.js",
+    "seed:course": "node apps/api/src/database/seeds/course-content.seed.js"
   },
   "dependencies": {
     "cloudinary": "^2.10.0",

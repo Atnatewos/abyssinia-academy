@@ -1,17 +1,8 @@
 /**
  * @fileoverview Admin Courses List API
  *
- * Returns courses with verified schema-only fields (probe 2026-10-08):
- *
- *   courses columns used:
- *     id, slug, title, title_am, description, description_am, level,
- *     duration, badge, icon, is_published, order_index, thumbnail_url,
- *     created_at, updated_at
- *
- *   NOT in schema (never referenced):
- *     is_active, phase_number, price_etb, class_count, week_count
- *
- * Status is DERIVED from is_published → 'published' | 'draft'.
+ * Returns courses with search + level filter support. Includes price_etb
+ * so the admin list can show each course's own price (or fallback label).
  *
  * Path: apps/web/pages/api/admin/courses/index.js
  */
@@ -26,12 +17,6 @@ const pool = new Pool({
       : false,
 });
 
-/**
- * Validate admin JWT.
- * @param {string} authHeader - Authorization header
- * @returns {object} Decoded payload
- * @throws {Error} On auth failure with status attached
- */
 const verifyAdmin = (authHeader) => {
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     const err = new Error('Missing or malformed Authorization header');
@@ -56,20 +41,34 @@ const verifyAdmin = (authHeader) => {
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
-    return res.status(405).json({ success: false, message: 'Method not allowed.' });
+    return res
+      .status(405)
+      .json({ success: false, message: 'Method not allowed.' });
   }
 
   try {
     verifyAdmin(req.headers.authorization);
 
     const search = (req.query.search || '').trim();
-    const searchPattern = search ? `%${search}%` : '%';
+    const level = (req.query.level || '').trim();
 
-    /**
-     * Schema-verified SELECT. is_published is the only status-like column.
-     * Order by order_index first (NULLS LAST so unordered items fall below),
-     * then by created_at DESC as secondary sort.
-     */
+    const params = [];
+    const where = [];
+
+    if (search) {
+      params.push(`%${search}%`);
+      where.push(
+        `(c.title ILIKE $${params.length} OR c.description ILIKE $${params.length} OR c.slug ILIKE $${params.length})`
+      );
+    }
+
+    if (level && level !== 'all') {
+      params.push(level);
+      where.push(`c.level = $${params.length}`);
+    }
+
+    const whereClause = where.length ? `WHERE ${where.join(' AND ')}` : '';
+
     const sql = `
       SELECT
         c.id,
@@ -82,23 +81,18 @@ export default async function handler(req, res) {
         c.duration,
         c.badge,
         c.icon,
+        c.price_etb,
         c.is_published,
         c.order_index,
         c.thumbnail_url,
         c.created_at,
-        c.updated_at,
-        CASE WHEN c.is_published = TRUE THEN 'published' ELSE 'draft' END AS status
+        c.updated_at
       FROM courses c
-      WHERE (
-              $1 = '%'
-              OR c.title ILIKE $1
-              OR c.description ILIKE $1
-              OR c.slug ILIKE $1
-            )
+      ${whereClause}
       ORDER BY c.order_index ASC NULLS LAST, c.created_at DESC
     `;
 
-    const result = await pool.query(sql, [searchPattern]);
+    const result = await pool.query(sql, params);
 
     return res.status(200).json({
       success: true,

@@ -1,32 +1,30 @@
 /**
- * @fileoverview Checkout Modal — Database-Driven Pricing
+ * @fileoverview Checkout Modal
  *
- * When a reseller code is active (?reseller=CODE), the reseller's custom
- * price OVERRIDES the base pricing, and NO discounts apply. This enforces
- * the reseller model: the reseller's price IS the price.
+ * Three-layer structure:
+ *   .checkout-modal-overlay    ← fixed full-viewport backdrop
+ *   .checkout-modal-container  ← capped-width scrollable card
+ *   .checkout-modal-body       ← form + summary content
+ *
+ * All styling lives in components.css as pure CSS — no Tailwind classes
+ * on the shell so nothing from the utility layer can override the modal
+ * geometry.
  *
  * Path: apps/web/components/payment/CheckoutModal.jsx
  */
 
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
-import { X, Clock, Sparkles } from 'lucide-react';
+import React, { useMemo, useEffect } from 'react';
+import { X, Clock, Sparkles, Layers } from 'lucide-react';
 import CheckoutForm from './CheckoutForm';
 import PaymentMethodSelector from './PaymentMethodSelector';
 import PaymentStatus from './PaymentStatus';
 import DiscountCodeInput from '../discount/DiscountCodeInput';
 import DiscountBreakdown from '../discount/DiscountBreakdown';
-import DiscountCodeBadge from '../discount/DiscountCodeBadge';
 import ResellerCheckoutBanner from '../reseller/ResellerCheckoutBanner';
 import useCountdownTimer from '../../hooks/useCountdownTimer';
-import usePaymentConfig from '../../hooks/usePaymentConfig';
+import { useCheckoutEngine } from '../../hooks/useCheckoutEngine';
 import { useLanguage } from '../../context/LanguageContext';
-import { useToast } from '../../context/ToastContext';
-import apiClient from '../../lib/api';
-import {
-  getApprovalConfig,
-  getCheckoutModalConfig,
-  calculateCombinedDiscount,
-} from '../../lib/config';
+import { getCheckoutModalConfig } from '../../lib/config';
 
 const CheckoutModal = ({
   isOpen = false,
@@ -34,6 +32,8 @@ const CheckoutModal = ({
   purchaseMode = 'full-course',
   selectedPhases = [],
   coursePhases = [],
+  courseId = null,
+  coursePriceEtb = null,
   referralDiscountPercent = 0,
   referralCode = '',
   initialAgentCode = '',
@@ -41,242 +41,65 @@ const CheckoutModal = ({
   isAgentBuyer = false,
   resellerCode = '',
   resellerProfile = null,
-  onDiscountApplied,
-  onDiscountRemoved,
 }) => {
   const { t, language } = useLanguage();
-  const toast = useToast();
   const timer = useCountdownTimer();
-  const { pricing, paymentMethods } = usePaymentConfig();
-
-  const approvalConfig = useMemo(() => getApprovalConfig(), []);
   const modalConfig = useMemo(() => getCheckoutModalConfig(), []);
 
-  /*
-   * When a reseller is active, ALL other attribution (referral, agent,
-   * discount codes, credits) is disabled. The reseller's custom price is
-   * the final price.
-   */
-  const isResellerActive = Boolean(resellerProfile && resellerCode);
-
-  const [discountCode, setDiscountCode] = useState('');
-  const [discountCodePercent, setDiscountCodePercent] = useState(0);
-  const [discountCodeFixed, setDiscountCodeFixed] = useState(0);
-  const [creditApplied] = useState(0);
-  const [selectedMethod, setSelectedMethod] = useState('');
-  const [submitting, setSubmitting] = useState(false);
-  const [paymentSubmitted, setPaymentSubmitted] = useState(false);
-
-  const selectedMethodData = useMemo(
-    () => paymentMethods.find((m) => m.id === selectedMethod) || null,
-    [selectedMethod, paymentMethods]
-  );
-
-  useEffect(() => {
-    if (paymentMethods.length > 0 && !selectedMethod) {
-      setSelectedMethod(paymentMethods[0].id);
-    }
-  }, [paymentMethods, selectedMethod]);
-
-  const baseAmount = useMemo(() => {
-    /* Reseller price overrides everything */
-    if (isResellerActive && resellerProfile.price != null) {
-      return Number(resellerProfile.price);
-    }
-    if (purchaseMode === 'individual-phases' && selectedPhases.length > 0) {
-      const perPhaseAmount = pricing?.perPhase?.amountETB || 0;
-      return perPhaseAmount * selectedPhases.length;
-    }
-    return pricing?.fullCourse?.amountETB || 0;
-  }, [isResellerActive, resellerProfile, purchaseMode, selectedPhases, pricing]);
-
-  const currency = pricing?.fullCourse?.currency || 'ETB';
-
-  const discountBreakdown = useMemo(() => {
-    /* Reseller active → no discounts at all */
-    if (isResellerActive) {
-      return {
-        basePrice: baseAmount,
-        agentDiscount: 0,
-        referralDiscount: 0,
-        discountCodeDiscount: 0,
-        creditApplied: 0,
-        totalDiscount: 0,
-        totalDiscountPercent: 0,
-        finalPrice: baseAmount,
-        wasCapped: false,
-        appliedAgentDiscount: false,
-        appliedReferral: false,
-      };
-    }
-    return calculateCombinedDiscount({
-      basePrice: baseAmount,
-      referralDiscountPercent,
-      discountCodePercent,
-      discountCodeFixed,
-      creditAmount: creditApplied,
-      isAgentBuyer,
-    });
-  }, [
-    isResellerActive,
-    baseAmount,
+  const engine = useCheckoutEngine({
+    purchaseMode,
+    selectedPhases,
+    courseId,
+    coursePriceEtb,
     referralDiscountPercent,
-    discountCodePercent,
-    discountCodeFixed,
-    creditApplied,
+    referralCode,
+    initialAgentCode,
     isAgentBuyer,
-  ]);
+    resellerCode,
+    resellerProfile,
+  });
 
-  const finalAmount = discountBreakdown.finalPrice;
-
-  const selectedPhaseNames = useMemo(() => {
-    if (purchaseMode === 'full-course') return [];
-    return selectedPhases.map((phaseId) => {
-      const phase = coursePhases.find(
-        (p) => (p.id || `phase-${p.number}`) === phaseId
-      );
-      return phase
-        ? language === 'am'
-          ? phase.title_am || phase.title
-          : phase.title
-        : phaseId;
-    });
-  }, [purchaseMode, selectedPhases, coursePhases, language]);
-
-  const discountBadgeType = useMemo(() => {
-    if (isResellerActive) return null;
-    const hasRef = referralDiscountPercent > 0 || isAgentBuyer;
-    if (hasRef && discountCodePercent > 0) return 'both';
-    if (hasRef) return 'referral';
-    if (discountCodePercent > 0) return 'discount';
-    return null;
-  }, [isResellerActive, referralDiscountPercent, isAgentBuyer, discountCodePercent]);
-
+  /* Lock body scroll while the modal is open. */
   useEffect(() => {
-    document.body.style.overflow = isOpen ? 'hidden' : '';
+    if (!isOpen) return undefined;
+    const original = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
     return () => {
-      document.body.style.overflow = '';
+      document.body.style.overflow = original;
     };
   }, [isOpen]);
 
+  /* Close on Escape. */
   useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.key === 'Escape' && isOpen) onClose();
+    if (!isOpen) return undefined;
+    const handleKey = (e) => {
+      if (e.key === 'Escape') onClose?.();
     };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
   }, [isOpen, onClose]);
 
-  const handleDiscountApplied = useCallback(
-    (data) => {
-      /* Discounts are disabled when reseller is active — ignore */
-      if (isResellerActive) return;
-
-      setDiscountCode(data.code);
-      if (data.type === 'percentage') {
-        setDiscountCodePercent(data.value);
-        setDiscountCodeFixed(0);
-      } else {
-        setDiscountCodePercent(0);
-        setDiscountCodeFixed(data.discountAmount);
-      }
-      if (onDiscountApplied) onDiscountApplied(data);
-    },
-    [isResellerActive, onDiscountApplied]
-  );
-
-  const handleDiscountRemoved = useCallback(() => {
-    setDiscountCode('');
-    setDiscountCodePercent(0);
-    setDiscountCodeFixed(0);
-    if (onDiscountRemoved) onDiscountRemoved();
-  }, [onDiscountRemoved]);
-
-  const handleSubmit = async (paymentData) => {
-    setSubmitting(true);
-    try {
-      const formData = new FormData();
-      formData.append('fullName', paymentData.fullName);
-      formData.append('phone', paymentData.phone);
-      formData.append('paymentMethod', paymentData.paymentMethod);
-      formData.append('transactionRef', paymentData.transactionRef);
-      formData.append('purchaseMode', purchaseMode);
-      formData.append('amount', finalAmount.toString());
-
-      /*
-       * Reseller attribution — supersedes all other attribution.
-       * When present, the backend ignores referralCode, discountCode,
-       * agentId, etc.
-       */
-      if (isResellerActive) {
-        formData.append('resellerCode', resellerCode);
-      } else {
-        /* Standard attribution path (unchanged) */
-        if (referralCode) formData.append('referralCode', referralCode);
-        if (discountCode) {
-          formData.append('discountCode', discountCode);
-          formData.append(
-            'discountCodeAmount',
-            String(discountBreakdown.discountCodeDiscount)
-          );
-        }
-
-        if (isAgentBuyer) {
-          formData.append('isAgentBuyer', 'true');
-          formData.append(
-            'agentDiscountAmount',
-            String(discountBreakdown.agentDiscount)
-          );
-          if (initialAgentCode) formData.append('agentId', initialAgentCode);
-        } else if (referralDiscountPercent > 0) {
-          formData.append(
-            'referralDiscountPercent',
-            String(referralDiscountPercent)
-          );
-          formData.append(
-            'referralDiscountAmount',
-            String(discountBreakdown.referralDiscount)
-          );
-        }
-      }
-
-      if (
-        purchaseMode === 'individual-phases' &&
-        selectedPhases.length > 0
-      ) {
-        formData.append('selectedPhases', JSON.stringify(selectedPhases));
-      }
-      if (paymentData.screenshot) {
-        formData.append('screenshot', paymentData.screenshot);
-      }
-      if (!isResellerActive && paymentData.agentId) {
-        formData.append('agentId', paymentData.agentId);
-      }
-
-      const response = await apiClient.post('/payments/submit', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-
-      if (response && response.success) {
-        setPaymentSubmitted(true);
-        toast.success(
-          language === 'am'
-            ? approvalConfig.pendingMessageAm
-            : approvalConfig.pendingMessage
-        );
-      }
-    } catch (err) {
-      console.error(
-        '[checkout] Payment submission failed:',
-        err?.response?.data?.message || err?.message
-      );
-      toast.error(
-        language === 'am' ? 'ክፍያ መላክ አልተሳካም።' : 'Payment submission failed.'
-      );
-    } finally {
-      setSubmitting(false);
+  /* Resolve phase display names. */
+  const selectedPhaseDetails = useMemo(() => {
+    if (purchaseMode !== 'individual-phases' || selectedPhases.length === 0) {
+      return [];
     }
-  };
+    const perPhasePrice = engine.pricing?.perPhase?.amountETB || 0;
+    return selectedPhases.map((phaseId) => {
+      const phase = coursePhases.find(
+        (p) => (p.id || `phase-${p.phase_number}`) === phaseId
+      );
+      return {
+        id: phaseId,
+        title: phase
+          ? language === 'am'
+            ? phase.title_am || phase.title
+            : phase.title
+          : phaseId,
+        price: perPhasePrice,
+      };
+    });
+  }, [purchaseMode, selectedPhases, coursePhases, engine.pricing, language]);
 
   if (!isOpen) return null;
 
@@ -289,12 +112,25 @@ const CheckoutModal = ({
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="checkout-modal-container">
-        <button className="checkout-modal-close" onClick={onClose}>
+      <div
+        className="checkout-modal-container"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="checkout-modal-title"
+      >
+        <button
+          type="button"
+          className="checkout-modal-close"
+          onClick={onClose}
+          aria-label="Close"
+        >
           <X size={20} />
         </button>
+
         <div className="checkout-modal-header">
-          <h2 className="checkout-modal-title">{modalTitle}</h2>
+          <h2 id="checkout-modal-title" className="checkout-modal-title">
+            {modalTitle}
+          </h2>
           {timer.isEnabled && (
             <div
               className="checkout-modal-timer"
@@ -311,79 +147,82 @@ const CheckoutModal = ({
           )}
         </div>
 
-        {paymentSubmitted ? (
+        {engine.paymentSubmitted ? (
           <div className="checkout-modal-body">
             <PaymentStatus status="pending" />
           </div>
         ) : (
           <div className="checkout-modal-body">
-            {/* ── Reseller banner (only when active) ── */}
-            {isResellerActive && (
+            {engine.isResellerActive && (
               <ResellerCheckoutBanner resellerProfile={resellerProfile} />
             )}
 
             <div className="checkout-modal-summary">
-              {discountBadgeType && (
-                <DiscountCodeBadge
-                  type={discountBadgeType}
-                  referralPercent={
-                    isAgentBuyer ? 10 : referralDiscountPercent
-                  }
-                  discountPercent={discountCodePercent}
-                  discountCode={discountCode}
-                />
-              )}
               <h3 className="checkout-modal-summary-title">
-                {t.checkoutModal?.purchaseSummaryTitle || 'Purchase Summary'}
+                {t.checkout?.purchaseSummaryTitle || 'Purchase Summary'}
               </h3>
-              {purchaseMode === 'full-course' || isResellerActive ? (
+
+              {purchaseMode === 'full-course' && (
                 <div className="checkout-modal-summary-item">
                   <Sparkles size={16} />
                   <span>{t.pricing?.masterclass || 'Full Course'}</span>
                   <span>
-                    {baseAmount.toLocaleString()} {currency}
+                    {engine.baseAmount.toLocaleString()} {engine.currency}
                   </span>
                 </div>
-              ) : (
-                selectedPhaseNames.map((name, i) => (
-                  <div key={i} className="checkout-modal-summary-item">
-                    <Sparkles size={16} />
-                    <span>{name}</span>
-                    <span>
-                      {pricing?.perPhase?.amountETB?.toLocaleString()}{' '}
-                      {currency}
-                    </span>
-                  </div>
-                ))
               )}
-              {!isResellerActive &&
-                (referralDiscountPercent > 0 ||
-                  discountCodePercent > 0 ||
-                  isAgentBuyer) && (
+
+              {purchaseMode === 'individual-phases' &&
+                selectedPhaseDetails.length > 0 && (
+                  <>
+                    {selectedPhaseDetails.map((phase, idx) => (
+                      <div
+                        key={phase.id || idx}
+                        className="checkout-modal-summary-item"
+                      >
+                        <Layers size={16} />
+                        <span>{phase.title}</span>
+                        <span>
+                          {phase.price.toLocaleString()} {engine.currency}
+                        </span>
+                      </div>
+                    ))}
+                    <div className="checkout-modal-summary-item is-total">
+                      <span className="checkout-modal-summary-total-label">
+                        {t.pricing?.totalLabel || 'Total'}
+                      </span>
+                      <span>
+                        {engine.baseAmount.toLocaleString()} {engine.currency}
+                      </span>
+                    </div>
+                  </>
+                )}
+
+              {!engine.isResellerActive &&
+                engine.discountBreakdown.totalDiscountPercent > 0 && (
                   <DiscountBreakdown
-                    basePrice={baseAmount}
-                    breakdown={discountBreakdown}
-                    discountCode={discountCode}
-                    discountCodePercent={discountCodePercent}
+                    basePrice={engine.baseAmount}
+                    breakdown={engine.discountBreakdown}
+                    discountCode={engine.discountCode}
+                    discountCodePercent={engine.discountCodePercent}
                     referralPercent={
                       isAgentBuyer ? 10 : referralDiscountPercent
                     }
-                    currency={currency}
+                    currency={engine.currency}
                   />
                 )}
             </div>
 
-            {/* Discount code input — hidden when reseller is active */}
-            {!isResellerActive && (
+            {!engine.isResellerActive && (
               <div className="checkout-modal-section">
                 <DiscountCodeInput
                   purchaseInfo={{
-                    amount: baseAmount,
+                    amount: engine.baseAmount,
                     courseType: purchaseMode,
                     selectedPhases,
                   }}
-                  onDiscountApplied={handleDiscountApplied}
-                  onDiscountRemoved={handleDiscountRemoved}
+                  onDiscountApplied={engine.handleDiscountApplied}
+                  onDiscountRemoved={engine.handleDiscountRemoved}
                 />
               </div>
             )}
@@ -393,25 +232,27 @@ const CheckoutModal = ({
                 {t.checkout?.paymentMethod || 'Payment Method'}
               </label>
               <PaymentMethodSelector
-                methods={paymentMethods}
-                selected={selectedMethod}
-                onSelect={setSelectedMethod}
+                methods={engine.paymentMethods}
+                selected={engine.selectedMethod}
+                onSelect={engine.setSelectedMethod}
               />
             </div>
 
             <CheckoutForm
-              selectedMethod={selectedMethod}
-              selectedMethodData={selectedMethodData}
-              amount={finalAmount}
-              currency={currency}
-              onSubmit={handleSubmit}
-              loading={submitting}
-              discountCode={discountCode}
-              discountCodePercent={discountCodePercent}
-              discountBreakdown={discountBreakdown}
-              initialAgentCode={isResellerActive ? '' : initialAgentCode}
-              initialAgentName={isResellerActive ? '' : initialAgentName}
-              isAgentBuyer={isResellerActive ? false : isAgentBuyer}
+              selectedMethod={engine.selectedMethod}
+              selectedMethodData={engine.selectedMethodData}
+              amount={engine.finalAmount}
+              currency={engine.currency}
+              onSubmit={engine.submitPayment}
+              loading={engine.submitting}
+              discountCode={engine.discountCode}
+              discountCodePercent={engine.discountCodePercent}
+              discountBreakdown={engine.discountBreakdown}
+              initialAgentCode={isAgentBuyer ? '' : initialAgentCode}
+              initialAgentName={isAgentBuyer ? '' : initialAgentName}
+              isAgentBuyer={isAgentBuyer}
+              courseId={courseId}
+              resellerCode={resellerCode}
             />
           </div>
         )}
