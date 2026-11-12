@@ -1,11 +1,8 @@
 /**
  * @fileoverview English — Admin Namespace
  *
- * Contains admin-specific UI copy including:
- *   - Coming Soon stub labels (one per unfinished CRUD route)
- *   - Announcements composer labels
- *   - Agent management labels
- *   - God Mode UI (user detail page: wallet, agent, ban/unban, impersonation)
+ * Contains every admin-specific UI copy: coming-soon stubs, announcements,
+ * agent management, god-mode user detail, and courses management.
  *
  * All copy is config-driven — no hardcoded strings in JSX components.
  *
@@ -14,6 +11,7 @@
 
 module.exports = {
   admin: {
+    /* ── COMING SOON ────────────────────────────────────────────────── */
     comingSoon: {
       eyebrow: 'Work in Progress',
       heading: 'This feature is being built',
@@ -22,7 +20,8 @@ module.exports = {
       subtitle: 'This feature is coming soon',
       contactSupport: 'Need this now? Contact support',
       supportEmail: process.env.SUPPORT_EMAIL || 'support@abyssinia-academy.com',
-      footerNote: 'Engineering team is on it — this page will be live in a future update.',
+      footerNote:
+        'Engineering team is on it — this page will be live in a future update.',
       defaultTitle: 'Feature Coming Soon',
       defaultBack: 'Back',
 
@@ -43,10 +42,12 @@ module.exports = {
       backToAdmins: 'Back to Administrators',
     },
 
+    /* ── ANNOUNCEMENTS (single, correct copy) ──────────────────────── */
     announcements: {
       navLabel: 'Announcements',
       pageTitle: 'Announcements',
-      pageSubtitle: 'Broadcast messages to all users, enrolled users, or specific users',
+      pageSubtitle:
+        'Broadcast messages to all users, enrolled users, or specific users',
       backToDashboard: 'Back to Dashboard',
 
       tabCompose: 'Compose',
@@ -61,7 +62,8 @@ module.exports = {
       targetedLabel: 'Pick users',
       targetedCountSuffix: 'selected',
       targetedPlaceholder: 'Search by name, phone, or email…',
-      targetedHint: 'Type at least 2 characters. Click any result to add it. You can pick as many users as you need.',
+      targetedHint:
+        'Type at least 2 characters. Click any result to add it. You can pick as many users as you need.',
       removeUser: 'Remove user',
       noResults: 'No users match your search',
       noEmail: 'No email',
@@ -90,7 +92,8 @@ module.exports = {
       previewTimeJustNow: 'Just now',
       previewAudienceLabel: 'Audience',
       previewSeverityLabel: 'Severity',
-      previewWarning: 'All recipients will receive this announcement as a notification in their inbox.',
+      previewWarning:
+        'All recipients will receive this announcement as a notification in their inbox.',
 
       confirmTitle: 'Confirm broadcast',
       confirmBody:
@@ -118,7 +121,7 @@ module.exports = {
       sendFailed: 'Failed to send announcement. Please try again.',
     },
 
-    /* ── Agent Management ── */
+    /* ── AGENT MANAGEMENT ──────────────────────────────────────────── */
     agentsTitle: 'Agent Management',
     agentsSubtitle: 'Configure agent commission rates and view performance.',
     agentName: 'Agent Name',
@@ -129,12 +132,8 @@ module.exports = {
     commissionValue: 'Commission Value',
     agentStatus: 'Status',
 
-    /* ═══════════════════════════════════════════════════════════════════════
-       GOD MODE — User Detail Page
-       Every string rendered by apps/web/pages/admin/users/[id]/index.jsx
-       ═══════════════════════════════════════════════════════════════════════ */
+    /* ── GOD MODE ──────────────────────────────────────────────────── */
     godMode: {
-      /* Page chrome */
       backToUsers: 'Back to Users',
       userDetailsTitle: 'User Details',
       loadingUser: 'Loading user information...',
@@ -142,21 +141,17 @@ module.exports = {
       userNotFoundSubtitle: 'The requested user does not exist.',
       unknownUser: 'Unknown',
 
-      /* Header meta */
       joined: 'Joined',
       notAvailable: 'N/A',
       emDash: '—',
 
-      /* Status badges */
       statusBanned: 'banned',
       statusEnrolled: 'enrolled',
       statusRegistered: 'registered',
 
-      /* Header actions */
       unenroll: 'Unenroll',
       markEnrolled: 'Mark Enrolled',
 
-      /* Stats row */
       stats: {
         directReferrals: 'Direct Referrals',
         teamSize: 'Team Size',
@@ -164,14 +159,12 @@ module.exports = {
         lifetimeEarned: 'Lifetime Earned',
       },
 
-      /* Tabs */
       tabs: {
         overview: 'Overview',
         walletAndAgent: 'Wallet & Agent',
         godMode: 'God Mode',
       },
 
-      /* Overview tab */
       overview: {
         enrollmentHistory: 'Enrollment History',
         noEnrollments: 'No enrollments yet.',
@@ -181,7 +174,6 @@ module.exports = {
         phaseBundle: 'Phase Bundle',
       },
 
-      /* Wallet tab */
       wallet: {
         heading: 'Wallet',
         currentBalance: 'Current Balance',
@@ -198,7 +190,6 @@ module.exports = {
         currency: 'ETB',
       },
 
-      /* Agent tab */
       agent: {
         heading: 'Agent Status',
         agentCode: 'Agent Code',
@@ -218,7 +209,6 @@ module.exports = {
         applying: 'Applying...',
       },
 
-      /* God Mode tab — impersonation */
       impersonation: {
         heading: 'Impersonation & Access',
         hint:
@@ -227,7 +217,6 @@ module.exports = {
         generateReset: 'Generate Password Reset Link',
       },
 
-      /* God Mode tab — manual enrollment */
       manualEnroll: {
         heading: 'Manual Enrollment',
         hint:
@@ -237,13 +226,11 @@ module.exports = {
         enrolling: 'Enrolling...',
       },
 
-      /* God Mode tab — network & account */
       network: {
         heading: 'Network & Account',
         orphanButton: 'Orphan from MLM Tree',
       },
 
-      /* Danger zone — ban form */
       ban: {
         heading: 'Danger Zone — Ban',
         hint:
@@ -252,7 +239,6 @@ module.exports = {
         button: 'Ban User',
       },
 
-      /* Danger zone — unban form */
       unban: {
         heading: 'User is currently banned',
         bannedOnTemplate: 'Banned on {date} — reason: {reason}',
@@ -264,7 +250,6 @@ module.exports = {
         unbanning: 'Unbanning...',
       },
 
-      /* Toasts */
       toasts: {
         statusUpdated: 'User status updated',
         statusFailed: 'Failed to update status',
@@ -286,195 +271,188 @@ module.exports = {
         enrollFailed: 'Failed to enroll user',
         loadError: 'Failed to load user details',
       },
+    },
 
-      /* ── Course management (admin panel) ── */
-      courses: {
-        pageTitle: 'Courses Management',
-        pageSubtitle: 'Manage course catalog and content',
-        newCourseBtn: 'New Course',
-        searchPlaceholder: 'Search courses...',
-        allLevels: 'All Levels',
+    /* ── COURSES MANAGEMENT ────────────────────────────────────────── */
+    courses: {
+      pageTitle: 'Courses Management',
+      pageSubtitle: 'Manage course catalog and content',
+      newCourseBtn: 'New Course',
+      searchPlaceholder: 'Search courses...',
+      allLevels: 'All Levels',
 
-        createTitle: 'Create New Course',
-        createSubtitle: 'Add a course to the academy catalog',
-        editTitle: 'Edit Course',
-        editSubtitle: 'Update this course',
-        detailTitle: 'Course Details',
-        detailSubtitle: 'View and manage this course',
+      createTitle: 'Create New Course',
+      createSubtitle: 'Add a course to the academy catalog',
+      editTitle: 'Edit Course',
+      editSubtitle: 'Update this course',
+      detailTitle: 'Course Details',
+      detailSubtitle: 'View and manage this course',
 
-        /* Sections */
-        sections: {
-          identity: 'Course Identity',
-          pricing: 'Pricing & Delivery',
-          visibility: 'Visibility',
-          phases: 'Phases',
-          weeks: 'Weeks',
-          lessons: 'Lessons',
-        },
+      sections: {
+        identity: 'Course Identity',
+        pricing: 'Pricing & Delivery',
+        visibility: 'Visibility',
+        phases: 'Phases',
+        weeks: 'Weeks',
+        lessons: 'Lessons',
+      },
 
-        /* Field labels */
-        fields: {
-          titleEn: 'Title (English)',
-          titleAm: 'Title (Amharic)',
-          slug: 'Slug',
-          slugHint: 'Auto-generated from title. Edit only if you need a custom URL.',
-          descriptionEn: 'Description (English)',
-          descriptionAm: 'Description (Amharic)',
-          priceEtb: 'Price (ETB)',
-          priceHint: 'Optional. Overrides the platform default for this course.',
-          priceHintPhase: 'Optional. Overrides the platform default for this phase.',
-          duration: 'Duration',
-          level: 'Level',
-          badge: 'Badge',
-          icon: 'Icon',
-          orderIndex: 'Order Index',
-          orderIndexHint: 'Lower number appears first.',
-          phaseNumber: 'Phase Number',
-          phaseNumberHint: 'Sequential order within the course.',
-          subtitleEn: 'Subtitle (English)',
-          subtitleAm: 'Subtitle (Amharic)',
-          outcomesLabel: 'Learning Outcomes',
-          outcomesHint: 'One outcome per line',
-          publishCheckbox: 'Publish this course (visible on the public site)',
-          publishHint: 'Leave unchecked to save as a draft. You can publish later from the course detail page.',
-          publishPhaseCheckbox: 'Publish this phase (visible to students)',
-          weekTitle: 'Week title',
-          weekTitlePlaceholder: 'e.g. HTML5 Semantics & Web Mechanics',
-          lessonTitleEn: 'Title (English)',
-          lessonTitleAm: 'Title (Amharic)',
-          lessonDuration: 'Duration',
-          lessonYoutube: 'YouTube ID or URL',
-          lessonYoutubeHint: 'Any YouTube URL format will be normalized to an 11-character ID.',
-          lessonNotes: 'Notes',
-          lessonSessions: 'Sessions (timestamps)',
-          lessonResources: 'Resources',
-          sessionName: 'Session name',
-          sessionTime: 'MM:SS',
-          resourceName: 'File name',
-          resourceType: 'Type',
-          resourceUrl: 'URL (optional)',
-          freePreview: 'Free preview',
-          published: 'Published',
-          draft: 'Draft',
-        },
+      fields: {
+        titleEn: 'Title (English)',
+        titleAm: 'Title (Amharic)',
+        slug: 'Slug',
+        slugHint: 'Auto-generated from title. Edit only if you need a custom URL.',
+        descriptionEn: 'Description (English)',
+        descriptionAm: 'Description (Amharic)',
+        priceEtb: 'Price (ETB)',
+        priceHint: 'Optional. Overrides the platform default for this course.',
+        priceHintPhase: 'Optional. Overrides the platform default for this phase.',
+        duration: 'Duration',
+        level: 'Level',
+        badge: 'Badge',
+        icon: 'Icon',
+        orderIndex: 'Order Index',
+        orderIndexHint: 'Lower number appears first.',
+        phaseNumber: 'Phase Number',
+        phaseNumberHint: 'Sequential order within the course.',
+        subtitleEn: 'Subtitle (English)',
+        subtitleAm: 'Subtitle (Amharic)',
+        outcomesLabel: 'Learning Outcomes',
+        outcomesHint: 'One outcome per line',
+        publishCheckbox: 'Publish this course (visible on the public site)',
+        publishHint:
+          'Leave unchecked to save as a draft. You can publish later from the course detail page.',
+        publishPhaseCheckbox: 'Publish this phase (visible to students)',
+        weekTitle: 'Week title',
+        weekTitlePlaceholder: 'e.g. HTML5 Semantics & Web Mechanics',
+        lessonTitleEn: 'Title (English)',
+        lessonTitleAm: 'Title (Amharic)',
+        lessonDuration: 'Duration',
+        lessonYoutube: 'YouTube ID or URL',
+        lessonYoutubeHint:
+          'Any YouTube URL format will be normalized to an 11-character ID.',
+        lessonNotes: 'Notes',
+        lessonSessions: 'Sessions (timestamps)',
+        lessonResources: 'Resources',
+        sessionName: 'Session name',
+        sessionTime: 'MM:SS',
+        resourceName: 'File name',
+        resourceType: 'Type',
+        resourceUrl: 'URL (optional)',
+        freePreview: 'Free preview',
+        published: 'Published',
+        draft: 'Draft',
+      },
 
-        /* Levels dropdown */
-        levels: {
-          beginner: 'Beginner',
-          intermediate: 'Intermediate',
-          advanced: 'Advanced',
-          beginnerToAdvanced: 'Beginner to Advanced',
-          intermediateToAdvanced: 'Intermediate to Advanced',
-        },
+      levels: {
+        beginner: 'Beginner',
+        intermediate: 'Intermediate',
+        advanced: 'Advanced',
+        beginnerToAdvanced: 'Beginner to Advanced',
+        intermediateToAdvanced: 'Intermediate to Advanced',
+      },
 
-        /* Actions */
-        actions: {
-          create: 'Create Course',
-          createPhase: 'Create Phase',
-          createLesson: 'Create Lesson',
-          createWeek: 'Create Week',
-          save: 'Save Changes',
-          cancel: 'Cancel',
-          creating: 'Creating...',
-          saving: 'Saving...',
-          edit: 'Edit',
-          delete: 'Delete',
-          publish: 'Publish',
-          unpublish: 'Unpublish',
-          addPhase: 'Add Phase',
-          addWeek: 'Add Week',
-          addLesson: 'Add Lesson',
-          addSession: 'Add Session',
-          addResource: 'Add Resource',
-          backToCourses: 'Back to Courses',
-          backToCourse: 'Back to Course',
-          viewWeeks: 'View weeks',
-          close: 'Close',
-        },
+      actions: {
+        create: 'Create Course',
+        createPhase: 'Create Phase',
+        createLesson: 'Create Lesson',
+        createWeek: 'Create Week',
+        save: 'Save Changes',
+        cancel: 'Cancel',
+        creating: 'Creating...',
+        saving: 'Saving...',
+        edit: 'Edit',
+        delete: 'Delete',
+        publish: 'Publish',
+        unpublish: 'Unpublish',
+        addPhase: 'Add Phase',
+        addWeek: 'Add Week',
+        addLesson: 'Add Lesson',
+        addSession: 'Add Session',
+        addResource: 'Add Resource',
+        backToCourses: 'Back to Courses',
+        backToCourse: 'Back to Course',
+        viewWeeks: 'View weeks',
+        close: 'Close',
+      },
 
-        /* Price display */
-        priceDisplay: {
-          custom: '{amount} ETB',
-          global: '— Uses global pricing',
-          globalShort: 'Global price',
-          perPhaseGlobal: 'Global per-phase price',
-          perPhaseCustom: '{amount} ETB',
-        },
+      priceDisplay: {
+        custom: '{amount} ETB',
+        global: '— Uses global pricing',
+        globalShort: 'Global price',
+        perPhaseGlobal: 'Global per-phase price',
+        perPhaseCustom: '{amount} ETB',
+      },
 
-        /* Validation */
-        validation: {
-          titleRequired: 'Title is required.',
-          slugRequired: 'Slug is required.',
-          slugFormat: 'Only lowercase letters, numbers, and hyphens.',
-          descriptionRequired: 'Description is required.',
-          subtitleRequired: 'Subtitle is required.',
-          durationRequired: 'Duration is required.',
-          youtubeRequired: 'YouTube ID or URL is required.',
-          priceNonNegative: 'Price must be zero or positive.',
-          fixHighlighted: 'Please fix the highlighted fields.',
-          noChanges: 'No changes to save.',
-          sessionNameRequired: 'Session name is required.',
-          sessionTimeRequired: 'Time is required.',
-          resourceNameRequired: 'Resource name is required.',
-        },
+      validation: {
+        titleRequired: 'Title is required.',
+        slugRequired: 'Slug is required.',
+        slugFormat: 'Only lowercase letters, numbers, and hyphens.',
+        descriptionRequired: 'Description is required.',
+        subtitleRequired: 'Subtitle is required.',
+        durationRequired: 'Duration is required.',
+        youtubeRequired: 'YouTube ID or URL is required.',
+        priceNonNegative: 'Price must be zero or positive.',
+        fixHighlighted: 'Please fix the highlighted fields.',
+        noChanges: 'No changes to save.',
+        sessionNameRequired: 'Session name is required.',
+        sessionTimeRequired: 'Time is required.',
+        resourceNameRequired: 'Resource name is required.',
+      },
 
-        /* Toasts */
-        toasts: {
-          created: 'Course created successfully.',
-          updated: 'Course updated successfully.',
-          deleted: 'Course deleted.',
-          phaseCreated: 'Phase created.',
-          phaseUpdated: 'Phase updated.',
-          phaseDeleted: 'Phase deleted.',
-          weekCreated: 'Week created.',
-          weekDeleted: 'Week deleted.',
-          lessonCreated: 'Lesson created.',
-          lessonUpdated: 'Lesson updated.',
-          lessonDeleted: 'Lesson deleted.',
-          coursePublished: 'Course published.',
-          courseUnpublished: 'Course unpublished.',
-          phasePublished: 'Phase published.',
-          phaseUnpublished: 'Phase unpublished.',
-          weekPublished: 'Week published.',
-          weekUnpublished: 'Week unpublished.',
-          lessonPublished: 'Lesson published.',
-          lessonUnpublished: 'Lesson unpublished.',
-          createFailed: 'Failed to create course.',
-          updateFailed: 'Failed to update course.',
-          deleteFailed: 'Failed to delete course.',
-          loadFailed: 'Failed to load course.',
-          toggleFailed: 'Failed to toggle.',
-        },
+      toasts: {
+        created: 'Course created successfully.',
+        updated: 'Course updated successfully.',
+        deleted: 'Course deleted.',
+        phaseCreated: 'Phase created.',
+        phaseUpdated: 'Phase updated.',
+        phaseDeleted: 'Phase deleted.',
+        weekCreated: 'Week created.',
+        weekDeleted: 'Week deleted.',
+        lessonCreated: 'Lesson created.',
+        lessonUpdated: 'Lesson updated.',
+        lessonDeleted: 'Lesson deleted.',
+        coursePublished: 'Course published.',
+        courseUnpublished: 'Course unpublished.',
+        phasePublished: 'Phase published.',
+        phaseUnpublished: 'Phase unpublished.',
+        weekPublished: 'Week published.',
+        weekUnpublished: 'Week unpublished.',
+        lessonPublished: 'Lesson published.',
+        lessonUnpublished: 'Lesson unpublished.',
+        createFailed: 'Failed to create course.',
+        updateFailed: 'Failed to update course.',
+        deleteFailed: 'Failed to delete course.',
+        loadFailed: 'Failed to load course.',
+        toggleFailed: 'Failed to toggle.',
+      },
 
-        /* Empty states */
-        empty: {
-          noCourses: 'No courses created yet.',
-          noSearchResults: 'No courses match your filters.',
-          noPhases: 'No phases yet. Click "Add Phase" to create the first one.',
-          noWeeks: 'No weeks yet. Click "Add Week" to create the first one.',
-          noLessons: 'No lessons yet.',
-          courseNotFound: 'Course Not Found',
-          courseNotFoundDesc: 'This course was deleted or never existed.',
-          phaseNotFound: 'Phase Not Found',
-          phaseNotFoundDesc: 'This phase was deleted or never existed.',
-        },
+      empty: {
+        noCourses: 'No courses created yet.',
+        noSearchResults: 'No courses match your filters.',
+        noPhases: 'No phases yet. Click "Add Phase" to create the first one.',
+        noWeeks: 'No weeks yet. Click "Add Week" to create the first one.',
+        noLessons: 'No lessons yet.',
+        courseNotFound: 'Course Not Found',
+        courseNotFoundDesc: 'This course was deleted or never existed.',
+        phaseNotFound: 'Phase Not Found',
+        phaseNotFoundDesc: 'This phase was deleted or never existed.',
+      },
 
-        /* Meta row */
-        meta: {
-          slug: 'Slug',
-          level: 'Level',
-          duration: 'Duration',
-          price: 'Price',
-          status: 'Status',
-          weekCount: '{count} week',
-          weekCountPlural: '{count} weeks',
-          outcomeCount: '{count} outcome',
-          outcomeCountPlural: '{count} outcomes',
-          lessonCount: '{count} lesson',
-          lessonCountPlural: '{count} lessons',
-          phaseLabel: 'Phase {number}: {title}',
-          weekLabel: 'Week {number}: {title}',
-        },
+      meta: {
+        slug: 'Slug',
+        level: 'Level',
+        duration: 'Duration',
+        price: 'Price',
+        status: 'Status',
+        weekCount: '{count} week',
+        weekCountPlural: '{count} weeks',
+        outcomeCount: '{count} outcome',
+        outcomeCountPlural: '{count} outcomes',
+        lessonCount: '{count} lesson',
+        lessonCountPlural: '{count} lessons',
+        phaseLabel: 'Phase {number}: {title}',
+        weekLabel: 'Week {number}: {title}',
       },
     },
   },
