@@ -1102,3 +1102,91 @@ export const listUserApplications = async (userId) => {
   );
   return result.rows;
 };
+
+
+/* ============================================================================
+ * DELETE CAMPAIGN (SOFT/HARD DELETE)
+ * ========================================================================== */
+
+/**
+ * Deletes a campaign.
+ * 
+ * To protect applicant data and financial ledgers, campaigns with existing 
+ * applications are "soft deleted" (hidden from the UI but kept in the DB).
+ * Campaigns with zero applications are permanently removed.
+ *
+ * @param {object} params
+ * @param {string} params.campaignId
+ * @param {string} params.adminId
+ * @param {object} [params.reqMeta]
+ * @returns {Promise<{ success: boolean, type: 'hard'|'soft' }>}
+ */
+export const deleteCampaign = async (params) => {
+  const { campaignId, adminId, reqMeta } = params;
+
+  if (!campaignId) throw new Error('campaignId is required.');
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    const campaignResult = await client.query(
+      `SELECT id, name FROM scholarship_campaigns WHERE id = $1 FOR UPDATE`,
+      [campaignId]
+    );
+    const campaign = campaignResult.rows[0];
+    if (!campaign) {
+      const error = new Error('Campaign not found.');
+      error.code = 'NOT_FOUND';
+      throw error;
+    }
+
+    const appCountResult = await client.query(
+      `SELECT COUNT(*)::int AS count FROM scholarship_applications WHERE campaign_id = $1`,
+      [campaignId]
+    );
+    const appCount = appCountResult.rows[0].count;
+
+    let deleteType = 'hard';
+
+    if (appCount > 0) {
+      /* Soft Delete: Preserve applicant data and payment records */
+      await client.query(
+        `UPDATE scholarship_campaigns
+         SET is_deleted = true, is_active = false, updated_at = CURRENT_TIMESTAMP
+         WHERE id = $1`,
+        [campaignId]
+      );
+      deleteType = 'soft';
+    } else {
+      /* Hard Delete: No applicants, safe to destroy */
+      await client.query(
+        `DELETE FROM scholarship_campaigns WHERE id = $1`,
+        [campaignId]
+      );
+    }
+
+    await appendEvent(client, {
+      applicationId: null, // No specific application for campaign deletion
+      eventType: 'noted',
+      actorAdminId: adminId,
+      payload: { action: 'campaign_deleted', campaignName: campaign.name, appCount, type: deleteType },
+    }).catch(() => {}); // Best effort if the events table requires an application_id
+
+    await auditAdminAction(client, {
+      adminId,
+      action: `scholarship.campaign.${deleteType}_deleted`,
+      targetId: campaignId,
+      details: { campaignName: campaign.name, appCount },
+      reqMeta,
+    });
+
+    await client.query('COMMIT');
+    return { success: true, type: deleteType };
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
+};
