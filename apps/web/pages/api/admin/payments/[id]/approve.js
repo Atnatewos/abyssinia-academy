@@ -2,12 +2,16 @@
 //  * @fileoverview Admin Approve Payment API
 //  *
 //  * Approves a payment, creates the enrollment record, and distributes
-//  * commissions:
-//  *   - If payment has agent_id → instant agent commission (no lock window)
-//  *   - If no agent_id → MLM 4-level distribution
+//  * commissions using the correct mode for this payment:
+//  *
+//  *   - SCHOLARSHIP purpose → short-circuit, no commission
+//  *   - RESELLER (reseller_user_id set) → reseller split (70/30 + parent)
+//  *   - LEGACY AGENT (agent_id set) → agent fixed/percentage commission
+//  *   - MLM (buyer is in tree) → 4-level tree distribution
+//  *   - DIRECT → no commission
 //  *
 //  * Accepts both PATCH and POST so any frontend caller works regardless of
-//  * which HTTP verb it chooses. Both paths are identical.
+//  * which HTTP verb it chooses.
 //  *
 //  * Path: apps/web/pages/api/admin/payments/[id]/approve.js
 //  */
@@ -16,28 +20,26 @@
 // import jwt from 'jsonwebtoken';
 // import sharedMlm from '../../../../../../../packages/shared/mlm';
 // import sharedAgents from '../../../../../../../packages/shared/agents';
+// import sharedReseller from '../../../../../../../packages/shared/reseller';
 // import referralsConfig from '../../../../../../../packages/shared/config/referrals.config';
 // import { notify } from '../../../../../lib/notifications';
 // import {
 //   getPaymentConfig,
 //   getAgentConfig,
 //   isAgentsEnabled,
+//   getScholarshipRegistrationFeeConfig,
 // } from '../../../../../lib/config';
+// import { recordFeePaid } from '../../../../../lib/scholarships/service';
 
 // /*
-//  * Adapter for the shared MLM module — matches its expected `db` shape.
+//  * DB adapter for the shared modules — matches their expected shape.
 //  */
-// const mlmDb = {
+// const sharedDb = {
 //   query,
 //   getClient: () => pool.connect(),
 // };
 
 // export default async function handler(req, res) {
-//   /*
-//    * Accept both PATCH and POST. The admin UI historically sent POST,
-//    * while the earlier API spec required PATCH. Accepting both keeps
-//    * every caller working without touching the frontend.
-//    */
 //   if (req.method !== 'PATCH' && req.method !== 'POST') {
 //     return res
 //       .status(405)
@@ -90,6 +92,90 @@
 //       });
 //     }
 
+//     /* ═══════════════════════════════════════════════════════════════════
+//      * SCHOLARSHIP REGISTRATION FEE PATH (short-circuit)
+//      * ═══════════════════════════════════════════════════════════════════ */
+//     const purpose = payment.purpose || 'course';
+
+//     if (purpose === 'scholarship_registration') {
+//       if (!payment.scholarship_application_id) {
+//         return res.status(400).json({
+//           success: false,
+//           message:
+//             'Payment has purpose=scholarship_registration but no scholarship_application_id.',
+//         });
+//       }
+
+//       await query(
+//         `UPDATE payments
+//          SET status = 'approved', paid_at = CURRENT_TIMESTAMP
+//          WHERE id = $1`,
+//         [id]
+//       );
+
+//       await query(
+//         `INSERT INTO admin_audit_logs (admin_id, action, target_type, target_id, details, ip_address, user_agent)
+//          VALUES ($1, 'payment.approve.scholarship_fee', 'payment', $2, $3, $4, $5)`,
+//         [
+//           decoded.adminId,
+//           id,
+//           JSON.stringify({
+//             amount: payment.amount,
+//             method: payment.method,
+//             purpose,
+//             scholarshipApplicationId: payment.scholarship_application_id,
+//           }),
+//           req.headers['x-forwarded-for'] || req.socket.remoteAddress || null,
+//           req.headers['user-agent'] || null,
+//         ]
+//       );
+
+//       try {
+//         const result = await recordFeePaid({
+//           applicationId: payment.scholarship_application_id,
+//           paymentId: id,
+//           adminId: decoded.adminId,
+//           amountPaid: parseFloat(payment.amount),
+//         });
+
+//         return res.status(200).json({
+//           success: true,
+//           message:
+//             'Scholarship registration fee approved. Enrollment granted.',
+//           data: {
+//             purpose,
+//             enrollmentId: result.enrollmentId,
+//             scholarshipApplicationId: payment.scholarship_application_id,
+//           },
+//         });
+//       } catch (scholarshipError) {
+//         console.error(
+//           'Scholarship enrollment creation failed after fee approval:',
+//           {
+//             paymentId: id,
+//             applicationId: payment.scholarship_application_id,
+//             error: scholarshipError.message,
+//             code: scholarshipError.code,
+//           }
+//         );
+
+//         return res.status(500).json({
+//           success: false,
+//           message:
+//             'Payment approved but scholarship enrollment failed. Check the application and retry, or contact support.',
+//           data: {
+//             paymentId: id,
+//             scholarshipApplicationId: payment.scholarship_application_id,
+//             errorCode: scholarshipError.code || 'ENROLLMENT_FAILED',
+//           },
+//         });
+//       }
+//     }
+
+//     /* ═══════════════════════════════════════════════════════════════════
+//      * STANDARD COURSE PAYMENT PATH
+//      * ═══════════════════════════════════════════════════════════════════ */
+
 //     /* Resolve and validate purchase mode. */
 //     const purchaseMode = payment.purchase_mode || 'full-course';
 //     const selectedPhases = payment.selected_phases || null;
@@ -137,9 +223,7 @@
 //       if (invalidPhases.length > 0) {
 //         return res.status(400).json({
 //           success: false,
-//           message: `Payment has invalid phase IDs: ${invalidPhases.join(
-//             ', '
-//           )}.`,
+//           message: `Payment has invalid phase IDs: ${invalidPhases.join(', ')}.`,
 //         });
 //       }
 //     }
@@ -171,8 +255,8 @@
 //     ]);
 
 //     await query(
-//       `INSERT INTO enrollments (user_id, purchase_mode, selected_phases, purchase_amount, payment_id, enrolled_at)
-//        VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP)`,
+//       `INSERT INTO enrollments (user_id, purchase_mode, selected_phases, purchase_amount, payment_id, purchase_source, enrolled_at)
+//        VALUES ($1, $2, $3, $4, $5, 'payment', CURRENT_TIMESTAMP)`,
 //       [
 //         payment.user_id,
 //         purchaseMode,
@@ -190,10 +274,11 @@
 //       [payment.user_id]
 //     );
 
-//     /*
-//      * Determine commission path.
-//      *   Agent attribution (payment.agent_id) takes precedence and skips MLM.
-//      */
+//     /* ═══════════════════════════════════════════════════════════════════
+//      * COMMISSION DISTRIBUTION — PRIORITY CASCADE
+//      * ═══════════════════════════════════════════════════════════════════ */
+
+//     const hasResellerAttribution = Boolean(payment.reseller_user_id);
 //     const hasAgentAttribution =
 //       isAgentsEnabled() &&
 //       payment.agent_id &&
@@ -212,22 +297,74 @@
 //           purchaseMode,
 //           selectedPhases:
 //             purchaseMode === 'full-course' ? 'all' : selectedPhases,
+//           resellerAttributed: hasResellerAttribution,
 //           agentAttributed: Boolean(hasAgentAttribution),
-//           agentId: hasAgentAttribution ? payment.agent_id : null,
 //         }),
 //         req.headers['x-forwarded-for'] || req.socket.remoteAddress || null,
 //         req.headers['user-agent'] || null,
 //       ]
 //     );
 
-//     /* ── Commission path A: AGENT ATTRIBUTED ── */
-//     if (hasAgentAttribution) {
+//     /* ── Priority 1: RESELLER ────────────────────────────────────────── */
+//     if (hasResellerAttribution) {
+//       try {
+//         const result = await sharedReseller.processApprovedPayment(sharedDb, {
+//           paymentId: id,
+//           buyerIp: null,
+//           buyerPhone: null,
+//         });
+
+//         if (!result.alreadyProcessed && result.route === 'reseller') {
+//           console.log('[approve] Reseller commission distributed:', {
+//             paymentId: id,
+//             saleId: result.saleId,
+//             split: result.split,
+//           });
+
+//           /* Notify the reseller of the sale */
+//           try {
+//             const resellerProfile = await query(
+//               'SELECT user_id FROM reseller_profiles WHERE id = $1',
+//               [payment.reseller_user_id]
+//             );
+//             if (resellerProfile.rows.length > 0) {
+//               await notify(
+//                 resellerProfile.rows[0].user_id,
+//                 'reseller_sale',
+//                 {
+//                   amount: result.split.subPayout,
+//                   retailPrice: result.split.retailPrice,
+//                 },
+//                 '/profile/reseller'
+//               );
+//             }
+//           } catch (notifErr) {
+//             console.error(
+//               '[notify] reseller sale notification failed:',
+//               notifErr.message
+//             );
+//           }
+//         }
+//       } catch (resellerError) {
+//         console.error(
+//           'Reseller commission distribution failed after payment approval:',
+//           {
+//             paymentId: id,
+//             resellerId: payment.reseller_user_id,
+//             error: resellerError.message,
+//             code: resellerError.code,
+//           }
+//         );
+//       }
+//     }
+//     /* ── Priority 2: LEGACY AGENT ─────────────────────────────────────── */
+//     else if (hasAgentAttribution) {
 //       try {
 //         const saleAmount = parseFloat(payment.amount);
 //         const agentConfig = getAgentConfig();
 
 //         const agentResult = await sharedAgents.distributeAgentCommission(
-//           mlmDb,
+//           sharedDb,
 //           agentConfig,
 //           id,
 //           payment.agent_id,
@@ -266,13 +403,14 @@
 //           }
 //         );
 //       }
-//     } else {
-//       /* ── Commission path B: MLM (existing behavior) ── */
+//     }
+//     /* ── Priority 3: MLM ─────────────────────────────────────────────── */
+//     else {
 //       try {
 //         const saleAmount = parseFloat(payment.amount);
 
 //         const distribution = await sharedMlm.distributeCommissions(
-//           mlmDb,
+//           sharedDb,
 //           referralsConfig,
 //           payment.user_id,
 //           id,
@@ -288,7 +426,7 @@
 //           for (const row of commissionRows.rows) {
 //             try {
 //               const bonusResult = await sharedMlm.awardEligibleBonuses(
-//                 mlmDb,
+//                 sharedDb,
 //                 referralsConfig,
 //                 row.earning_user_id
 //               );
@@ -335,9 +473,9 @@
 //       }
 //     }
 
-//     /*
-//      * Notifications — best-effort, fire-and-forget.
-//      */
+//     /* ═══════════════════════════════════════════════════════════════════
+//      * NOTIFICATIONS (best-effort)
+//      * ═══════════════════════════════════════════════════════════════════ */
 //     try {
 //       await notify(
 //         payment.user_id,
@@ -349,7 +487,11 @@
 //         '/profile/payments'
 //       );
 
-//       if (!hasAgentAttribution && payment.referred_by_code) {
+//       if (
+//         !hasResellerAttribution &&
+//         !hasAgentAttribution &&
+//         payment.referred_by_code
+//       ) {
 //         const referrerResult = await query(
 //           `SELECT rc.user_id, u.full_name
 //            FROM referral_codes rc
@@ -387,8 +529,10 @@
 //       success: true,
 //       message: 'Payment approved and student enrolled successfully.',
 //       data: {
+//         purpose: 'course',
 //         purchaseMode,
 //         selectedPhases: purchaseMode === 'full-course' ? null : selectedPhases,
+//         resellerAttributed: hasResellerAttribution,
 //         agentAttributed: Boolean(hasAgentAttribution),
 //       },
 //     });
@@ -402,26 +546,31 @@
 // }
 
 
+
+
 /**
- * @fileoverview Admin Approve Payment API
+ * @fileoverview Admin Approve Course Payment API
  *
- * Approves a payment, creates the enrollment record, and distributes
+ * Approves a course payment, enrolls the student, and distributes
  * commissions using the correct mode for this payment:
  *
- *   - SCHOLARSHIP purpose → short-circuit, no commission
- *   - RESELLER (reseller_user_id set) → reseller split (70/30 + parent)
- *   - LEGACY AGENT (agent_id set) → agent fixed/percentage commission
- *   - MLM (buyer is in tree) → 4-level tree distribution
- *   - DIRECT → no commission
+ *   - RESELLER      (reseller_user_id set) → reseller split
+ *   - LEGACY AGENT  (agent_id set)         → agent fixed/percentage
+ *   - MLM           (buyer in tree)        → 4-level distribution
+ *   - DIRECT        (none of the above)    → no commission
  *
- * Accepts both PATCH and POST so any frontend caller works regardless of
- * which HTTP verb it chooses.
+ * Scholarship registration fees are REJECTED at the top of this handler.
+ * They must be processed through the scholarship admin surface to preserve
+ * the atomic application → enrollment chain and the refund invariants.
+ *
+ * Accepts both PATCH and POST so every frontend caller works regardless
+ * of HTTP verb.
  *
  * Path: apps/web/pages/api/admin/payments/[id]/approve.js
  */
 
-import { pool, query } from '../../../../../lib/db';
 import jwt from 'jsonwebtoken';
+import { pool, query } from '../../../../../lib/db';
 import sharedMlm from '../../../../../../../packages/shared/mlm';
 import sharedAgents from '../../../../../../../packages/shared/agents';
 import sharedReseller from '../../../../../../../packages/shared/reseller';
@@ -431,13 +580,8 @@ import {
   getPaymentConfig,
   getAgentConfig,
   isAgentsEnabled,
-  getScholarshipRegistrationFeeConfig,
 } from '../../../../../lib/config';
-import { recordFeePaid } from '../../../../../lib/scholarships/service';
 
-/*
- * DB adapter for the shared modules — matches their expected shape.
- */
 const sharedDb = {
   query,
   getClient: () => pool.connect(),
@@ -472,7 +616,6 @@ export default async function handler(req, res) {
   const { id } = req.query;
 
   try {
-    /* Fetch payment + user context. */
     const paymentResult = await query(
       `SELECT p.*, u.referred_by_code
        FROM payments p
@@ -489,6 +632,15 @@ export default async function handler(req, res) {
 
     const payment = paymentResult.rows[0];
 
+    /* Guard: scholarship fees live in a different queue. */
+    if (payment.purpose === 'scholarship_registration') {
+      return res.status(400).json({
+        success: false,
+        message:
+          'Scholarship registration fees must be processed from the scholarship admin panel, not the payments queue.',
+      });
+    }
+
     if (payment.status !== 'pending') {
       return res.status(400).json({
         success: false,
@@ -496,91 +648,6 @@ export default async function handler(req, res) {
       });
     }
 
-    /* ═══════════════════════════════════════════════════════════════════
-     * SCHOLARSHIP REGISTRATION FEE PATH (short-circuit)
-     * ═══════════════════════════════════════════════════════════════════ */
-    const purpose = payment.purpose || 'course';
-
-    if (purpose === 'scholarship_registration') {
-      if (!payment.scholarship_application_id) {
-        return res.status(400).json({
-          success: false,
-          message:
-            'Payment has purpose=scholarship_registration but no scholarship_application_id.',
-        });
-      }
-
-      await query(
-        `UPDATE payments
-         SET status = 'approved', paid_at = CURRENT_TIMESTAMP
-         WHERE id = $1`,
-        [id]
-      );
-
-      await query(
-        `INSERT INTO admin_audit_logs (admin_id, action, target_type, target_id, details, ip_address, user_agent)
-         VALUES ($1, 'payment.approve.scholarship_fee', 'payment', $2, $3, $4, $5)`,
-        [
-          decoded.adminId,
-          id,
-          JSON.stringify({
-            amount: payment.amount,
-            method: payment.method,
-            purpose,
-            scholarshipApplicationId: payment.scholarship_application_id,
-          }),
-          req.headers['x-forwarded-for'] || req.socket.remoteAddress || null,
-          req.headers['user-agent'] || null,
-        ]
-      );
-
-      try {
-        const result = await recordFeePaid({
-          applicationId: payment.scholarship_application_id,
-          paymentId: id,
-          adminId: decoded.adminId,
-          amountPaid: parseFloat(payment.amount),
-        });
-
-        return res.status(200).json({
-          success: true,
-          message:
-            'Scholarship registration fee approved. Enrollment granted.',
-          data: {
-            purpose,
-            enrollmentId: result.enrollmentId,
-            scholarshipApplicationId: payment.scholarship_application_id,
-          },
-        });
-      } catch (scholarshipError) {
-        console.error(
-          'Scholarship enrollment creation failed after fee approval:',
-          {
-            paymentId: id,
-            applicationId: payment.scholarship_application_id,
-            error: scholarshipError.message,
-            code: scholarshipError.code,
-          }
-        );
-
-        return res.status(500).json({
-          success: false,
-          message:
-            'Payment approved but scholarship enrollment failed. Check the application and retry, or contact support.',
-          data: {
-            paymentId: id,
-            scholarshipApplicationId: payment.scholarship_application_id,
-            errorCode: scholarshipError.code || 'ENROLLMENT_FAILED',
-          },
-        });
-      }
-    }
-
-    /* ═══════════════════════════════════════════════════════════════════
-     * STANDARD COURSE PAYMENT PATH
-     * ═══════════════════════════════════════════════════════════════════ */
-
-    /* Resolve and validate purchase mode. */
     const purchaseMode = payment.purchase_mode || 'full-course';
     const selectedPhases = payment.selected_phases || null;
 
@@ -601,13 +668,7 @@ export default async function handler(req, res) {
       });
     }
 
-    const validPhaseIds = [
-      'phase-1',
-      'phase-2',
-      'phase-3',
-      'phase-4',
-      'phase-5',
-    ];
+    const validPhaseIds = ['phase-1', 'phase-2', 'phase-3', 'phase-4', 'phase-5'];
     if (purchaseMode === 'individual-phases') {
       if (
         !selectedPhases ||
@@ -620,10 +681,7 @@ export default async function handler(req, res) {
             'Payment has purchase_mode=individual-phases but no selected_phases.',
         });
       }
-
-      const invalidPhases = selectedPhases.filter(
-        (p) => !validPhaseIds.includes(p)
-      );
+      const invalidPhases = selectedPhases.filter((p) => !validPhaseIds.includes(p));
       if (invalidPhases.length > 0) {
         return res.status(400).json({
           success: false,
@@ -632,7 +690,6 @@ export default async function handler(req, res) {
       }
     }
 
-    /* Core approval writes. */
     await query(
       `UPDATE payments
        SET status = 'approved', paid_at = CURRENT_TIMESTAMP
@@ -653,10 +710,7 @@ export default async function handler(req, res) {
       [payment.method, payment.amount, payment.reference, payment.user_id]
     );
 
-    /* Replace any existing enrollment with a clean one. */
-    await query('DELETE FROM enrollments WHERE user_id = $1', [
-      payment.user_id,
-    ]);
+    await query('DELETE FROM enrollments WHERE user_id = $1', [payment.user_id]);
 
     await query(
       `INSERT INTO enrollments (user_id, purchase_mode, selected_phases, purchase_amount, payment_id, purchase_source, enrolled_at)
@@ -670,7 +724,6 @@ export default async function handler(req, res) {
       ]
     );
 
-    /* Initialize course progress. */
     await query(
       `INSERT INTO course_progress (user_id, course_id, progress)
        VALUES ($1, (SELECT id FROM courses WHERE slug = 'fullstack-web-engineering-masterclass' LIMIT 1), 0)
@@ -678,17 +731,12 @@ export default async function handler(req, res) {
       [payment.user_id]
     );
 
-    /* ═══════════════════════════════════════════════════════════════════
-     * COMMISSION DISTRIBUTION — PRIORITY CASCADE
-     * ═══════════════════════════════════════════════════════════════════ */
-
     const hasResellerAttribution = Boolean(payment.reseller_user_id);
     const hasAgentAttribution =
       isAgentsEnabled() &&
       payment.agent_id &&
       payment.agent_id !== payment.user_id;
 
-    /* Admin audit log. */
     await query(
       `INSERT INTO admin_audit_logs (admin_id, action, target_type, target_id, details, ip_address, user_agent)
        VALUES ($1, 'payment.approve', 'payment', $2, $3, $4, $5)`,
@@ -709,7 +757,7 @@ export default async function handler(req, res) {
       ]
     );
 
-    /* ── Priority 1: RESELLER ────────────────────────────────────────── */
+    /* Commission distribution cascade — reseller > agent > mlm > direct. */
     if (hasResellerAttribution) {
       try {
         const result = await sharedReseller.processApprovedPayment(sharedDb, {
@@ -717,37 +765,12 @@ export default async function handler(req, res) {
           buyerIp: null,
           buyerPhone: null,
         });
-
         if (!result.alreadyProcessed && result.route === 'reseller') {
           console.log('[approve] Reseller commission distributed:', {
             paymentId: id,
             saleId: result.saleId,
             split: result.split,
           });
-
-          /* Notify the reseller of the sale */
-          try {
-            const resellerProfile = await query(
-              'SELECT user_id FROM reseller_profiles WHERE id = $1',
-              [payment.reseller_user_id]
-            );
-            if (resellerProfile.rows.length > 0) {
-              await notify(
-                resellerProfile.rows[0].user_id,
-                'reseller_sale',
-                {
-                  amount: result.split.subPayout,
-                  retailPrice: result.split.retailPrice,
-                },
-                '/profile/reseller'
-              );
-            }
-          } catch (notifErr) {
-            console.error(
-              '[notify] reseller sale notification failed:',
-              notifErr.message
-            );
-          }
         }
       } catch (resellerError) {
         console.error(
@@ -756,17 +779,13 @@ export default async function handler(req, res) {
             paymentId: id,
             resellerId: payment.reseller_user_id,
             error: resellerError.message,
-            code: resellerError.code,
           }
         );
       }
-    }
-    /* ── Priority 2: LEGACY AGENT ─────────────────────────────────────── */
-    else if (hasAgentAttribution) {
+    } else if (hasAgentAttribution) {
       try {
         const saleAmount = parseFloat(payment.amount);
         const agentConfig = getAgentConfig();
-
         const agentResult = await sharedAgents.distributeAgentCommission(
           sharedDb,
           agentConfig,
@@ -775,27 +794,13 @@ export default async function handler(req, res) {
           payment.user_id,
           saleAmount
         );
-
         if (agentResult.distributed > 0) {
-          try {
-            await notify(
-              payment.agent_id,
-              'commission_unlocked',
-              { amount: agentResult.totalCommission },
-              '/profile/agents'
-            );
-          } catch (notifErr) {
-            console.error(
-              '[notify] agent commission notification failed:',
-              notifErr.message
-            );
-          }
-        } else {
-          console.warn('Agent commission not distributed:', {
-            paymentId: id,
-            agentId: payment.agent_id,
-            reason: agentResult.reason,
-          });
+          notify(
+            payment.agent_id,
+            'commission_unlocked',
+            { amount: agentResult.totalCommission },
+            '/profile/agents'
+          ).catch(() => {});
         }
       } catch (agentError) {
         console.error(
@@ -807,12 +812,9 @@ export default async function handler(req, res) {
           }
         );
       }
-    }
-    /* ── Priority 3: MLM ─────────────────────────────────────────────── */
-    else {
+    } else {
       try {
         const saleAmount = parseFloat(payment.amount);
-
         const distribution = await sharedMlm.distributeCommissions(
           sharedDb,
           referralsConfig,
@@ -820,13 +822,11 @@ export default async function handler(req, res) {
           id,
           saleAmount
         );
-
         if (distribution.distributed > 0) {
           const commissionRows = await query(
             'SELECT DISTINCT earning_user_id FROM affiliate_commissions WHERE payment_id = $1',
             [id]
           );
-
           for (const row of commissionRows.rows) {
             try {
               const bonusResult = await sharedMlm.awardEligibleBonuses(
@@ -834,26 +834,18 @@ export default async function handler(req, res) {
                 referralsConfig,
                 row.earning_user_id
               );
-
               if (
                 bonusResult &&
                 bonusResult.awarded &&
                 bonusResult.awarded.length > 0
               ) {
                 for (const bonus of bonusResult.awarded) {
-                  try {
-                    await notify(
-                      row.earning_user_id,
-                      'bonus_awarded',
-                      { bonusName: bonus.name, amount: bonus.amount },
-                      '/profile/referrals'
-                    );
-                  } catch (notifErr) {
-                    console.error(
-                      '[notify] bonus_awarded failed:',
-                      notifErr.message
-                    );
-                  }
+                  notify(
+                    row.earning_user_id,
+                    'bonus_awarded',
+                    { bonusName: bonus.name, amount: bonus.amount },
+                    '/profile/referrals'
+                  ).catch(() => {});
                 }
               }
             } catch (bonusError) {
@@ -877,9 +869,6 @@ export default async function handler(req, res) {
       }
     }
 
-    /* ═══════════════════════════════════════════════════════════════════
-     * NOTIFICATIONS (best-effort)
-     * ═══════════════════════════════════════════════════════════════════ */
     try {
       await notify(
         payment.user_id,
@@ -904,7 +893,6 @@ export default async function handler(req, res) {
            LIMIT 1`,
           [payment.referred_by_code]
         );
-
         if (referrerResult.rows.length > 0) {
           const referrer = referrerResult.rows[0];
           const buyerResult = await query(
@@ -913,7 +901,6 @@ export default async function handler(req, res) {
           );
           const buyerName =
             buyerResult.rows[0]?.full_name || 'A member of your team';
-
           await notify(
             referrer.user_id,
             'referral_purchased',

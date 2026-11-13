@@ -1,24 +1,12 @@
 /**
  * @fileoverview Scholarship System — English Translations
  *
- * Every user-facing string for the scholarship program lives here.
- * Zero hardcoded copy in the component tree.
+ * Every user-facing string for the scholarship program lives here. Zero
+ * hardcoded copy in the component tree.
  *
- * Namespaces:
- *   scholarships.page.*        — public + student-facing pages
- *   scholarships.form.*        — application form
- *   scholarships.status.*      — status labels
- *   scholarships.notifications.* — notification titles + bodies
- *   scholarships.admin.*       — admin panel
- *   scholarships.documents.*   — document type labels
- *   scholarships.banner.*      — auth page banner
- *   scholarships.feePolicy.*   — pay-at-apply explanation
- *
- * Path: packages/shared/config/i18n/en/scholarships.js
- */
-
-/**
- * @fileoverview Scholarship System — English Translations
+ * Fee model: "pay at apply". The registration fee is collected during
+ * application submission. If the application is not approved, the fee is
+ * refunded in full by an admin within the configured deadline.
  *
  * Path: packages/shared/config/i18n/en/scholarships.js
  */
@@ -38,7 +26,7 @@ module.exports = {
       viewApplicationButton: 'View My Application',
       quotaLabel: '{remaining} of {total} spots remaining',
       quotaFull: 'All spots filled',
-      registrationFeeLabel: 'Registration Fee',
+      registrationFeeLabel: 'Refundable Application Fee',
       registrationFeeFree: 'Free',
       grantsFullCourse: 'Full Course Access',
       grantsPhases: 'Access to Selected Phases',
@@ -73,23 +61,22 @@ module.exports = {
     },
 
     status: {
-      pending: 'Pending Review',
-      pendingPayment: 'Approved — Awaiting Payment',
+      pending: 'Payment Under Review',
+      paymentVerified: 'Awaiting Decision',
       approved: 'Approved',
-      rejected: 'Rejected',
+      rejected: 'Not Approved',
       withdrawn: 'Withdrawn',
       revoked: 'Revoked',
-      pendingDescription: 'Your application is being reviewed. You will be notified when a decision is made.',
-      pendingPaymentDescription: 'Your application was approved! Pay the registration fee to activate your enrollment.',
+      pendingDescription: 'We received your payment. Our team is verifying it now — usually under 24 hours.',
+      paymentVerifiedDescription: 'Your payment is verified. Our team is reviewing your application now.',
       approvedDescription: 'Congratulations! Your enrollment is active.',
       rejectedDescription: 'Your application was not approved.',
       withdrawnDescription: 'You withdrew this application.',
       revokedDescription: 'This scholarship has been revoked.',
-      payFeeButton: 'Pay Registration Fee ({amount} ETB)',
       withdrawButton: 'Withdraw Application',
       withdrawConfirmTitle: 'Withdraw Application?',
-      withdrawConfirmBody: 'This action cannot be undone. You will not be able to reapply to this campaign.',
-      withdrawSuccess: 'Application withdrawn.',
+      withdrawConfirmBody: 'If you withdraw, your registration fee will be refunded within {days} business days. This cannot be undone.',
+      withdrawSuccess: 'Application withdrawn. Your refund is being processed.',
       withdrawFailed: 'Failed to withdraw application.',
     },
 
@@ -108,14 +95,14 @@ module.exports = {
       ariaLabel: 'Scholarship announcement',
       dismissAriaLabel: 'Dismiss announcement',
       headline: 'New Scholarship Available',
-      grantFullCourseMessage: 'Get full-course access to {campaign} — completely free for {quota} students.',
-      grantPhasesMessage: 'Get free access to selected phases of {campaign} — limited to {quota} students.',
+      grantFullCourseMessage: 'Get full-course access to {campaign} — {quota} spots available.',
+      grantPhasesMessage: 'Get access to selected phases of {campaign} — {quota} spots available.',
       applyNowButton: 'Apply Now',
       learnMoreButton: 'Learn More',
       spotsLeft: '{remaining} of {quota} spots left',
       loadingLabel: 'Loading scholarship announcement...',
       title: '🎓 Scholarship Available',
-      message: 'Apply for the {campaign} scholarship and get free access to {grant}.',
+      message: 'Apply for the {campaign} scholarship and get access to {grant}.',
       grantFullCourse: 'the full course',
       grantPhases: '{count} phase(s)',
       applyNow: 'Apply Now',
@@ -138,23 +125,19 @@ module.exports = {
     notifications: {
       applied: {
         title: 'Application Submitted',
-        body: 'Your scholarship application for {campaign} was submitted successfully. We will review it shortly.',
+        body: 'Your application for {campaign} was submitted. We are verifying your payment now.',
+      },
+      paymentVerified: {
+        title: '✓ Payment Verified',
+        body: 'Your {amount} ETB payment for {campaign} has been verified. Your application is now under review.',
       },
       approved: {
         title: '🎉 Scholarship Approved!',
         body: 'Congratulations! Your application for {campaign} was approved. Your enrollment is now active.',
       },
-      feeDue: {
-        title: 'Scholarship Approved — Payment Required',
-        body: 'Your application for {campaign} was approved. Pay the {amount} ETB registration fee to activate your enrollment.',
-      },
-      feePaid: {
-        title: '✓ Enrollment Activated',
-        body: 'Your registration fee was received. Welcome to {campaign}! Your course access is now active.',
-      },
       rejected: {
         title: 'Application Not Approved',
-        body: 'Unfortunately, your application for {campaign} was not approved. Reason: {reason}',
+        body: 'Unfortunately, your application for {campaign} was not approved. Reason: {reason}. Your {amount} ETB registration fee is being refunded.',
       },
       revoked: {
         title: 'Scholarship Revoked',
@@ -162,27 +145,15 @@ module.exports = {
       },
       withdrawn: {
         title: 'Application Withdrawn',
-        body: 'You have withdrawn your application for {campaign}.',
+        body: 'You withdrew your application for {campaign}. Your {amount} ETB registration fee is being refunded.',
       },
       appReceived: {
         title: 'New Scholarship Application',
         body: '{applicant} applied for {campaign}. Review it in the admin panel.',
       },
-      feeDeadline: {
-        title: 'Registration Fee Deadline',
-        body: 'Please pay the {amount} ETB registration fee for {campaign} by {deadline}.',
-      },
-      paymentUnderReview: {
-        title: 'Payment Received — Under Review',
-        body: 'We received your {amount} ETB registration fee for {campaign}. Your application is now pending admin review.',
-      },
-      paymentVerified: {
-        title: '✓ Payment Verified',
-        body: 'Your {amount} ETB payment for {campaign} has been verified. Your application is now in the review queue.',
-      },
       refundInitiated: {
         title: 'Refund Being Processed',
-        body: 'Your application for {campaign} was not approved. Your {amount} ETB fee has been queued for refund — you will receive it within {days} days.',
+        body: 'Your {amount} ETB registration fee for {campaign} is being refunded. Expect it within {days} business days.',
       },
       refundCompleted: {
         title: '✓ Refund Completed',
@@ -190,7 +161,6 @@ module.exports = {
       },
     },
 
-    /* ── Admin panel ── */
     admin: {
       sectionLabel: 'Scholarships',
       campaignsNavLabel: 'Scholarship Campaigns',
@@ -219,8 +189,8 @@ module.exports = {
       formGrantFullCourse: 'Full Course Access',
       formGrantSpecificPhases: 'Specific Phases Only',
       formPhasesLabel: 'Select Phases',
-      formFee: 'Registration Fee (ETB)',
-      formFeeHint: 'Set to 0 for a completely free scholarship.',
+      formFee: 'Refundable Application Fee (ETB)',
+      formFeeHint: 'Set to 0 for a completely free scholarship. Applicants pay this when they submit.',
       formQuota: 'Maximum Recipients',
       formOpenAt: 'Applications Open',
       formCloseAt: 'Applications Close',
@@ -247,8 +217,8 @@ module.exports = {
       applicationsSubtitle: 'Review and process applications for {campaign}',
       applicationsEmpty: 'No applications match your filters.',
       applicationSearchPlaceholder: 'Search by applicant name, phone, or email...',
-      filterPending: 'Pending',
-      filterPendingPayment: 'Awaiting Payment',
+      filterPending: 'Payment Verification',
+      filterPaymentVerified: 'Awaiting Decision',
       filterApproved: 'Approved',
       filterRejected: 'Rejected',
       filterAll: 'All',
@@ -273,15 +243,15 @@ module.exports = {
       detailRejectButton: 'Reject Application',
       detailRevokeButton: 'Revoke Scholarship',
       detailConfirmApproveTitle: 'Approve Application?',
-      detailConfirmApproveBody: 'This will grant {grant} to {applicant}. {feeNote}',
-      detailConfirmApproveFeeNote: 'They will be asked to pay {amount} ETB before access is granted.',
+      detailConfirmApproveBody: 'This will grant {grant} to {applicant}.',
+      detailConfirmApproveFeeNote: 'The {amount} ETB registration fee has been verified.',
       detailConfirmApproveFreeNote: 'They will receive immediate access.',
       detailConfirmRejectTitle: 'Reject Application?',
-      detailConfirmRejectBody: 'You must provide a reason. The applicant will be notified.',
+      detailConfirmRejectBody: 'A reason is required. The applicant will be notified and their {amount} ETB fee will be queued for refund.',
       detailConfirmRevokeTitle: 'Revoke Scholarship?',
       detailConfirmRevokeBody: "This will remove the applicant's access. Progress is preserved for audit.",
       approveSuccess: 'Application approved.',
-      rejectSuccess: 'Application rejected.',
+      rejectSuccess: 'Application rejected. Refund queued.',
       revokeSuccess: 'Scholarship revoked.',
       approveFailed: 'Failed to approve.',
       rejectFailed: 'Failed to reject.',
@@ -293,11 +263,11 @@ module.exports = {
       statsPendingApplications: 'Pending Applications',
       statsApprovedRecipients: 'Approved Recipients',
 
-      /* Verify payment flow */
+      /* Payment verification flow */
       verifyPaymentButton: 'Verify Payment',
-      verifyPaymentConfirmTitle: 'Verify Payment?',
-      verifyPaymentConfirmBody: 'Confirm that the {amount} ETB payment for this application has been received. This will move the application to the review queue.',
-      paymentVerifiedSuccess: 'Payment verified. Application is now ready for review.',
+      verifyPaymentConfirmTitle: 'Verify Payment Received?',
+      verifyPaymentConfirmBody: 'Confirm that the {amount} ETB {method} payment (ref: {reference}) for this application has been received. This will move the application to the decision queue.',
+      paymentVerifiedSuccess: 'Payment verified. Application is now awaiting a decision.',
       paymentAlreadyVerified: 'Payment has already been verified.',
       noPaymentOnFile: 'No payment on file. Applicant has not submitted payment proof.',
       waitingForPaymentHint: 'Verify the payment first, then you can approve the application.',
@@ -321,8 +291,8 @@ module.exports = {
       spotsFilled: 'All spots filled',
       fullCourse: 'Full Course Access',
       phases: '{count} Phase(s)',
-      registrationFree: 'Free Registration',
-      registrationFee: '{amount} ETB Registration',
+      registrationFree: 'Free Application',
+      registrationFee: '{amount} ETB Application Fee',
       viewDetails: 'View Details',
       applied: 'Applied',
       applyNow: 'Apply Now',
@@ -366,7 +336,6 @@ module.exports = {
       documentOptional: 'Optional',
       applyCta: 'Apply for This Scholarship',
       viewApplicationCta: 'View My Application',
-      payFeeCta: 'Pay Registration Fee ({amount} ETB)',
       withdrawnNotice: 'You withdrew this application on {date}.',
       rejectionNotice: 'Reason: {reason}',
       loadingLabel: 'Loading scholarship...',
@@ -374,11 +343,11 @@ module.exports = {
       notFoundDescription: 'This scholarship may have closed or been renamed.',
       backToBrowse: 'Browse Other Scholarships',
 
-      feePolicyTitle: 'Registration Fee Policy',
-      feePolicyFreeMessage: 'This scholarship is completely free. No fee is ever charged.',
-      feePolicyPaidTitle: 'Pay at apply, refund if rejected',
-      feePolicyPaidMessage: 'The {amount} ETB registration fee is collected when you submit your application. This fee is fully refundable if your application is not approved.',
-      feePolicyRefundMessage: 'If your application is rejected, your full fee is automatically queued for refund. Admin processes refunds within {days} days.',
+      feePolicyTitle: 'Application Fee Policy',
+      feePolicyFreeMessage: 'This scholarship is completely free to apply for. No fee is ever charged.',
+      feePolicyPaidTitle: 'Refundable application fee',
+      feePolicyPaidMessage: 'A {amount} ETB application fee is collected when you submit. This fee is a seriousness deposit — it is fully refundable if your application is not approved.',
+      feePolicyRefundMessage: 'If your application is rejected, your full fee is automatically queued for refund. Refunds are processed within {days} business days.',
       feePolicySecureMessage: 'Your payment is held securely until a decision is made.',
       feePolicyDeferredTitle: 'When you pay',
       feePolicyDeferredMessage: 'The {amount} ETB registration fee is payable only after your application is approved. You pay nothing to apply.',
@@ -405,15 +374,15 @@ module.exports = {
       validationMotivationShort: 'Motivation must be at least {min} characters.',
       validationRequiredDocMissing: 'Required document "{type}" is missing.',
       validationUploadInProgress: 'Please wait for all uploads to complete.',
-      submitConfirmTitle: 'Submit Application?',
-      submitConfirmBody: 'Once submitted, you cannot edit or re-apply to this campaign.',
-      submitConfirmButton: 'Yes, Submit',
+      submitConfirmTitle: 'Submit Application and Pay {amount} ETB?',
+      submitConfirmBody: 'A {amount} ETB application fee will be collected now. If your application is not approved, the full fee is refunded within {days} business days.',
+      submitConfirmButton: 'Yes, Pay {amount} ETB and Submit',
       submitSuccessTitle: 'Application Submitted',
-      submitSuccessBody: 'We have received your application. You will be notified when it has been reviewed.',
+      submitSuccessBody: 'We have received your application and your {amount} ETB payment proof. You will be notified once your payment is verified.',
       submitErrorTitle: 'Submission Failed',
 
-      paymentStepTitle: 'Pay Registration Fee',
-      paymentStepSubtitle: 'Complete payment to submit your application.',
+      paymentStepTitle: 'Application Fee',
+      paymentStepSubtitle: 'Pay the refundable application fee to submit.',
       paymentMethodLabel: 'Payment Method',
       transactionRefLabel: 'Transaction Reference',
       transactionRefPlaceholder: 'e.g. TB1234567890',
@@ -422,8 +391,8 @@ module.exports = {
       amountDueLabel: 'Amount Due',
 
       feeNoteFree: 'This scholarship is free — no payment required.',
-      feeNotePayAtApply: 'A registration fee of {amount} ETB is required to submit your application. This fee is 100% refundable if your application is not approved.',
-      feeNoteRefundGuarantee: 'If rejected, your {amount} ETB fee is automatically queued for refund within {days} days.',
+      feeNotePayAtApply: 'A {amount} ETB application fee is collected when you submit. This fee is 100% refundable if your application is not approved.',
+      feeNoteRefundGuarantee: 'If rejected, your {amount} ETB fee is queued for refund within {days} business days.',
       feeNoteDeferred: 'A registration fee of {amount} ETB is payable only after your application is approved.',
       feeNoteRefundable: 'If your application is not approved, you will not be charged.',
     },
@@ -443,25 +412,25 @@ module.exports = {
       viewCampaignLabel: 'View Campaign',
       withdrawButton: 'Withdraw Application',
       withdrawConfirmTitle: 'Withdraw Application?',
-      withdrawConfirmBody: 'This cannot be undone.',
+      withdrawConfirmBody: 'If you withdraw, your {amount} ETB application fee will be refunded within {days} business days. This cannot be undone.',
       withdrawConfirmButton: 'Yes, Withdraw',
       withdrawSuccessTitle: 'Application Withdrawn',
-      withdrawSuccessBody: 'Your application has been withdrawn.',
+      withdrawSuccessBody: 'Your application has been withdrawn. Your refund is being processed.',
       withdrawErrorTitle: 'Withdrawal Failed',
-      payFeeButton: 'Pay Fee',
+      refundPending: 'Refund Processing',
+      refundCompleted: 'Refunded',
+      goToPortal: 'Go to Course Portal',
     },
 
     statusLabel: {
-      pending: 'Pending Review',
-      pendingPayment: 'Awaiting Payment',
+      pending: 'Payment Under Review',
+      paymentVerified: 'Awaiting Decision',
       approved: 'Approved',
       rejected: 'Not Approved',
       withdrawn: 'Withdrawn',
       revoked: 'Revoked',
-      pendingPaymentVerification: 'Payment Under Review',
-      refundPending: 'Refund Being Processed',
+      refundPending: 'Refund Processing',
       refunded: 'Refunded',
-      filterPendingPayment: 'Awaiting Payment',
     },
 
     learnMore: {
@@ -475,27 +444,27 @@ module.exports = {
     },
 
     feePage: {
-      pageTitle: 'Pay Registration Fee',
-      pageSubtitle: 'Complete your enrollment for {campaign}',
+      pageTitle: 'Pay Application Fee',
+      pageSubtitle: 'Complete your application for {campaign}',
       backLink: 'Back to Scholarship',
       summaryTitle: 'Payment Summary',
       campaignLabel: 'Campaign',
-      feeLabel: 'Registration Fee',
+      feeLabel: 'Application Fee',
       deadlineLabel: 'Deadline',
       deadlineExpired: 'Deadline has passed',
-      statusApproved: 'Approved — Awaiting Payment',
+      statusApproved: 'Approved',
       statusPending: 'Application Pending',
       statusRejected: 'Application Not Approved',
       statusWithdrawn: 'Application Withdrawn',
-      statusApprovedMessage: 'Pay the registration fee to activate your enrollment.',
-      statusPendingMessage: 'Your application is still being reviewed.',
+      statusApprovedMessage: 'Your application is already approved.',
+      statusPendingMessage: 'Your application is already submitted and under review.',
       statusRejectedMessage: 'This application was not approved.',
       statusWithdrawnMessage: 'You withdrew this application.',
       notFoundTitle: 'Application Not Found',
       notFoundDescription: 'We could not find this application.',
       loadingLabel: 'Loading payment details...',
-      alreadyPaidTitle: 'Fee Already Submitted',
-      alreadyPaidDescription: 'Your payment is under review.',
+      alreadyPaidTitle: 'Application Already Submitted',
+      alreadyPaidDescription: 'Your application is under review.',
       submitButton: 'Submit Payment Proof',
       submitSuccessTitle: 'Payment Submitted',
       submitSuccessBody: 'Your payment is under review.',

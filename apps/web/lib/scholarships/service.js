@@ -1,38 +1,8 @@
 /**
  * @fileoverview Scholarship Lifecycle Service
  *
- * The single source of truth for scholarship business logic. Every
- * state transition runs inside a transaction with proper row locks.
- *
- * Payment handling:
- *   When a campaign has `registration_fee_etb > 0`, the applicant is
- *   expected to submit a `payment` payload alongside their application.
- *   `applyForScholarship` inserts a `payments` row with
- *   `purpose='scholarship_registration'` inside the same transaction as
- *   the application itself. This guarantees atomicity — either both rows
- *   land, or neither does.
- *
- *   The application transitions directly to `pending_payment` for paid
- *   campaigns so the admin's review queue correctly reflects "waiting on
- *   money" state. Free campaigns skip the payment step entirely and go
- *   straight to `pending`.
- *
- * Ban semantics:
- *   A ban is modeled as `users.banned_at IS NOT NULL`. There is no
- *   boolean `is_banned` column. Every ban check derives the boolean
- *   from the timestamp field.
- *
- * Path: apps/web/lib/scholarships/service.js
- */
-
-/**
- * @fileoverview Scholarship Lifecycle Service
- *
- * Two-step approval for paid campaigns:
- *   1. verifyPayment()  — admin confirms money arrived (pending_payment → pending)
- *   2. approveApplication() — admin grants the scholarship (pending → approved)
- *
- * Free campaigns skip step 1 (they start at 'pending').
+ * The single source of truth for scholarship business logic under the
+ * "pay at apply" fee model.
  *
  * Path: apps/web/lib/scholarships/service.js
  */
@@ -41,7 +11,6 @@ import { pool, query } from '../db';
 import {
   getScholarshipRules,
   getScholarshipAdminConfig,
-  getScholarshipRegistrationFeeConfig,
   getScholarshipDefaults,
 } from '../config';
 import {
@@ -54,10 +23,11 @@ import {
 } from './enrollment';
 import {
   notifyApplied,
+  notifyPaymentVerified,
   notifyApproved,
-  notifyFeeDue,
-  notifyFeePaid,
   notifyRejected,
+  notifyRefundInitiated,
+  notifyRefundCompleted,
   notifyRevoked,
   notifyWithdrawn,
 } from './notifications';
@@ -103,27 +73,35 @@ const isUserBanned = async (client, userId) => {
   return result.rows[0].banned_at !== null && result.rows[0].banned_at !== undefined;
 };
 
+/**
+ * Validate the applicant-supplied payment proof for a paid campaign.
+ * Accepts EITHER a transaction reference OR a screenshot (at least one required).
+ */
 const validatePaymentPayload = (payment, expectedAmount) => {
   const errors = [];
+
   if (!payment || typeof payment !== 'object') {
-    errors.push('Payment details are required for paid campaigns.');
+    errors.push('Payment proof is required for paid campaigns.');
     return { valid: false, errors };
   }
   if (!payment.method || typeof payment.method !== 'string') {
     errors.push('Payment method is required.');
   }
-  if (!payment.transactionRef || typeof payment.transactionRef !== 'string' || !payment.transactionRef.trim()) {
-    errors.push('Transaction reference is required.');
+
+  const hasRef = payment.transactionRef && String(payment.transactionRef).trim().length > 0;
+  const hasScreenshot = payment.screenshotUrl && String(payment.screenshotUrl).trim().length > 0;
+
+  if (!hasRef && !hasScreenshot) {
+    errors.push('Please provide either a transaction reference or a payment screenshot.');
   }
-  if (!payment.screenshotUrl || typeof payment.screenshotUrl !== 'string') {
-    errors.push('Payment screenshot is required.');
-  }
+
   const amount = Number(payment.amount);
   if (!Number.isFinite(amount) || amount <= 0) {
     errors.push('Payment amount is invalid.');
   } else if (Math.abs(amount - expectedAmount) > 1) {
     errors.push(`Payment amount must equal the campaign fee of ${expectedAmount} ETB.`);
   }
+
   return { valid: errors.length === 0, errors };
 };
 
@@ -145,9 +123,34 @@ const insertScholarshipPayment = async (client, params) => {
      )
      VALUES ($1, $2, $3, 'pending', $4, 'scholarship_registration', $5, $6, CURRENT_TIMESTAMP)
      RETURNING id`,
-    [userId, amount, method, transactionRef.trim(), applicationId, screenshotUrl]
+    [userId, amount, method, transactionRef?.trim() || null, applicationId, screenshotUrl || null]
   );
   return { paymentId: result.rows[0].id };
+};
+
+const auditAdminAction = async (client, params) => {
+  const { adminId, action, targetId, details, reqMeta } = params;
+  try {
+    await client.query(
+      `INSERT INTO admin_audit_logs
+         (admin_id, action, target_type, target_id, details, ip_address, user_agent)
+       VALUES ($1, $2, 'scholarship_application', $3, $4, $5, $6)`,
+      [
+        adminId,
+        action,
+        targetId,
+        JSON.stringify(details || {}),
+        reqMeta?.ip || null,
+        reqMeta?.userAgent || null,
+      ]
+    );
+  } catch (error) {
+    console.error('[scholarships/service] admin audit insert failed:', {
+      adminId,
+      action,
+      error: error?.message,
+    });
+  }
 };
 
 /* ============================================================================
@@ -155,13 +158,7 @@ const insertScholarshipPayment = async (client, params) => {
  * ========================================================================== */
 
 export const applyForScholarship = async (params) => {
-  const {
-    userId,
-    campaignSlug,
-    motivation,
-    documents = [],
-    payment = null,
-  } = params;
+  const { userId, campaignSlug, motivation, documents = [], payment = null } = params;
 
   if (!userId) throw new Error('userId is required.');
   if (!campaignSlug) throw new Error('campaignSlug is required.');
@@ -223,7 +220,7 @@ export const applyForScholarship = async (params) => {
       }
     }
 
-    const initialStatus = requiresPayment ? 'pending_payment' : 'pending';
+    const initialStatus = 'pending';
 
     const insertResult = await client.query(
       `INSERT INTO scholarship_applications
@@ -288,24 +285,8 @@ export const applyForScholarship = async (params) => {
  * VERIFY PAYMENT
  * ========================================================================== */
 
-/**
- * Admin confirms the payment arrived. Transitions:
- *   payments.status: pending → approved
- *   application.status: pending_payment → pending
- *
- * After this, the application is ready for review (approve / reject).
- *
- * Idempotent — if already verified (payment approved + app pending or
- * approved), returns without error.
- *
- * @param {object} params
- * @param {string} params.applicationId
- * @param {string} params.adminId
- * @param {string} [params.note]
- * @returns {Promise<{ status: string, paymentStatus: string, nextStep: string }>}
- */
 export const verifyPayment = async (params) => {
-  const { applicationId, adminId, note } = params;
+  const { applicationId, adminId, note, reqMeta } = params;
 
   if (!applicationId) throw new Error('applicationId is required.');
   if (!adminId) throw new Error('adminId is required.');
@@ -315,9 +296,12 @@ export const verifyPayment = async (params) => {
     await client.query('BEGIN');
 
     const appResult = await client.query(
-      `SELECT id, campaign_id, applicant_user_id, status
-       FROM scholarship_applications
-       WHERE id = $1 FOR UPDATE`,
+      `SELECT a.id, a.campaign_id, a.applicant_user_id, a.status,
+              c.name AS campaign_name, c.registration_fee_etb
+       FROM scholarship_applications a
+       JOIN scholarship_campaigns c ON c.id = a.campaign_id
+       WHERE a.id = $1
+       FOR UPDATE`,
       [applicationId]
     );
     const application = appResult.rows[0];
@@ -327,8 +311,7 @@ export const verifyPayment = async (params) => {
       throw error;
     }
 
-    /* Idempotent: if app is already past pending_payment, no-op. */
-    if (application.status === 'pending' || application.status === 'approved') {
+    if (['payment_verified', 'approved'].includes(application.status)) {
       await client.query('COMMIT');
       return {
         status: application.status,
@@ -337,7 +320,7 @@ export const verifyPayment = async (params) => {
       };
     }
 
-    if (application.status !== 'pending_payment') {
+    if (application.status !== 'pending') {
       const error = new Error(
         `Cannot verify payment: application is "${application.status}".`
       );
@@ -345,8 +328,15 @@ export const verifyPayment = async (params) => {
       throw error;
     }
 
+    const fee = Number(application.registration_fee_etb) || 0;
+    if (fee <= 0) {
+      const error = new Error('This campaign has no registration fee to verify.');
+      error.code = 'INVALID_STATE';
+      throw error;
+    }
+
     const paymentResult = await client.query(
-      `SELECT id, amount, status
+      `SELECT id, amount, status, method, reference
        FROM payments
        WHERE scholarship_application_id = $1
          AND purpose = 'scholarship_registration'
@@ -357,22 +347,19 @@ export const verifyPayment = async (params) => {
     );
     const payment = paymentResult.rows[0];
     if (!payment) {
-      const error = new Error(
-        'No payment on file for this application. Applicant has not submitted proof.'
-      );
+      const error = new Error('No payment on file for this application.');
       error.code = 'NOT_FOUND';
       throw error;
     }
 
     if (payment.status === 'approved') {
-      /* Payment already verified but app still pending_payment — fix status. */
       await client.query(
-        `UPDATE scholarship_applications SET status = 'pending' WHERE id = $1`,
+        `UPDATE scholarship_applications SET status = 'payment_verified' WHERE id = $1`,
         [applicationId]
       );
       await client.query('COMMIT');
       return {
-        status: 'pending',
+        status: 'payment_verified',
         paymentStatus: 'approved',
         nextStep: 'review',
       };
@@ -394,7 +381,7 @@ export const verifyPayment = async (params) => {
     );
 
     await client.query(
-      `UPDATE scholarship_applications SET status = 'pending' WHERE id = $1`,
+      `UPDATE scholarship_applications SET status = 'payment_verified' WHERE id = $1`,
       [applicationId]
     );
 
@@ -405,28 +392,28 @@ export const verifyPayment = async (params) => {
       payload: { paymentId: payment.id, amount: Number(payment.amount), note },
     });
 
-    const campaignResult = await client.query(
-      `SELECT name FROM scholarship_campaigns WHERE id = $1`,
-      [application.campaign_id]
-    );
-    const campaignName = campaignResult.rows[0]?.name || 'the campaign';
+    await auditAdminAction(client, {
+      adminId,
+      action: 'scholarship.payment.verified',
+      targetId: applicationId,
+      details: {
+        paymentId: payment.id,
+        amount: Number(payment.amount),
+        method: payment.method,
+        reference: payment.reference,
+      },
+      reqMeta,
+    });
 
     await client.query('COMMIT');
 
-    try {
-      const { notify } = await import('../notifications');
-      notify(
-        application.applicant_user_id,
-        'scholarship_payment_verified',
-        { campaign: campaignName, amount: Number(payment.amount) },
-        '/profile/scholarships'
-      ).catch(() => {});
-    } catch (err) {
-      console.error('[verify-payment] notification failed:', err?.message);
-    }
+    notifyPaymentVerified(application.applicant_user_id, {
+      campaignName: application.campaign_name,
+      amount: Number(payment.amount),
+    }).catch(() => {});
 
     return {
-      status: 'pending',
+      status: 'payment_verified',
       paymentStatus: 'approved',
       nextStep: 'review',
     };
@@ -442,18 +429,8 @@ export const verifyPayment = async (params) => {
  * APPROVE APPLICATION
  * ========================================================================== */
 
-/**
- * Grant the scholarship. Requires status='pending' — the payment (if any)
- * must have been verified via verifyPayment() first.
- *
- * @param {object} params
- * @param {string} params.applicationId
- * @param {string} params.adminId
- * @param {string} [params.note]
- * @returns {Promise<{ status: 'approved', enrollmentId: string }>}
- */
 export const approveApplication = async (params) => {
-  const { applicationId, adminId, note } = params;
+  const { applicationId, adminId, note, reqMeta } = params;
 
   if (!applicationId) throw new Error('applicationId is required.');
   if (!adminId) throw new Error('adminId is required.');
@@ -474,13 +451,13 @@ export const approveApplication = async (params) => {
       error.code = 'NOT_FOUND';
       throw error;
     }
-    if (application.status !== 'pending') {
-      const error = new Error(
-        `Application is "${application.status}", cannot approve. ` +
-        `For paid campaigns, verify the payment first.`
-      );
-      error.code = 'INVALID_STATE';
-      throw error;
+
+    if (application.status === 'approved' && application.enrollment_id) {
+      await client.query('COMMIT');
+      return {
+        status: 'approved',
+        enrollmentId: application.enrollment_id,
+      };
     }
 
     const campaignResult = await client.query(
@@ -491,6 +468,28 @@ export const approveApplication = async (params) => {
     if (!campaign) {
       const error = new Error('Campaign not found.');
       error.code = 'NOT_FOUND';
+      throw error;
+    }
+
+    const fee = Number(campaign.registration_fee_etb) || 0;
+    const isPaid = fee > 0;
+
+    if (isPaid) {
+      if (application.status !== 'payment_verified') {
+        const error = new Error(
+          application.status === 'pending'
+            ? 'Verify the payment before approving this application.'
+            : `Application is "${application.status}", cannot approve.`
+        );
+        error.code =
+          application.status === 'pending' ? 'PAYMENT_NOT_VERIFIED' : 'INVALID_STATE';
+        throw error;
+      }
+    } else if (application.status !== 'pending') {
+      const error = new Error(
+        `Application is "${application.status}", cannot approve.`
+      );
+      error.code = 'INVALID_STATE';
       throw error;
     }
 
@@ -514,19 +513,25 @@ export const approveApplication = async (params) => {
       }
     }
 
-    /* Look up the approved payment amount so the enrollment row records
-       what was actually paid. */
-    const paymentResult = await client.query(
-      `SELECT amount FROM payments
-       WHERE scholarship_application_id = $1
-         AND purpose = 'scholarship_registration'
-         AND status = 'approved'
-       LIMIT 1`,
-      [applicationId]
-    );
-    const paidAmount = paymentResult.rows[0]
-      ? Number(paymentResult.rows[0].amount) || 0
-      : 0;
+    let paidAmount = 0;
+    if (isPaid) {
+      const paymentResult = await client.query(
+        `SELECT amount FROM payments
+         WHERE scholarship_application_id = $1
+           AND purpose = 'scholarship_registration'
+           AND status = 'approved'
+         LIMIT 1`,
+        [applicationId]
+      );
+      if (paymentResult.rows.length === 0) {
+        const error = new Error(
+          'Registration fee is not verified. Verify the payment before approving.'
+        );
+        error.code = 'PAYMENT_NOT_VERIFIED';
+        throw error;
+      }
+      paidAmount = Number(paymentResult.rows[0].amount) || 0;
+    }
 
     const enrollmentResult = await createScholarshipEnrollment(client, {
       userId: application.applicant_user_id,
@@ -542,7 +547,8 @@ export const approveApplication = async (params) => {
            reviewed_at = CURRENT_TIMESTAMP,
            admin_notes = COALESCE($3, admin_notes),
            enrollment_id = $4,
-           enrollment_created_at = CURRENT_TIMESTAMP
+           enrollment_created_at = CURRENT_TIMESTAMP,
+           refund_status = COALESCE(refund_status, 'not_required')
        WHERE id = $1`,
       [applicationId, adminId, note || null, enrollmentResult.enrollmentId]
     );
@@ -560,6 +566,18 @@ export const approveApplication = async (params) => {
       eventType: 'approved',
       actorAdminId: adminId,
       payload: { enrollmentId: enrollmentResult.enrollmentId, paidAmount },
+    });
+
+    await auditAdminAction(client, {
+      adminId,
+      action: 'scholarship.application.approved',
+      targetId: applicationId,
+      details: {
+        campaignId: campaign.id,
+        enrollmentId: enrollmentResult.enrollmentId,
+        paidAmount,
+      },
+      reqMeta,
     });
 
     await client.query('COMMIT');
@@ -581,93 +599,13 @@ export const approveApplication = async (params) => {
 };
 
 /* ============================================================================
- * RECORD FEE PAID / REJECT / REVOKE / WITHDRAW (unchanged)
- * ==========================================================================
- * Full implementations shipped in the previous batch.
- * If you need those files re-pasted, say so — but they don't change.
+ * REJECT APPLICATION
  * ========================================================================== */
 
-// [recordFeePaid, rejectApplication, revokeApplication, withdrawApplication,
-//  listActiveCampaigns, getCampaignBySlug, listUserApplications — unchanged]
-
-export const recordFeePaid = async (params) => {
-  const { applicationId, paymentId, adminId, amountPaid } = params;
-  if (!applicationId) throw new Error('applicationId is required.');
-  const client = await pool.connect();
-  try {
-    await client.query('BEGIN');
-    const appResult = await client.query(
-      `SELECT * FROM scholarship_applications WHERE id = $1 FOR UPDATE`,
-      [applicationId]
-    );
-    const application = appResult.rows[0];
-    if (!application) {
-      const error = new Error('Application not found.');
-      error.code = 'NOT_FOUND';
-      throw error;
-    }
-    if (application.status === 'approved' && application.enrollment_id) {
-      await client.query('COMMIT');
-      return { enrollmentId: application.enrollment_id };
-    }
-    if (application.status !== 'pending_payment') {
-      const error = new Error(
-        `Cannot record fee payment for application in status ${application.status}.`
-      );
-      error.code = 'INVALID_STATE';
-      throw error;
-    }
-    const campaignResult = await client.query(
-      `SELECT * FROM scholarship_campaigns WHERE id = $1 FOR UPDATE`,
-      [application.campaign_id]
-    );
-    const campaign = campaignResult.rows[0];
-    if (!campaign) {
-      const error = new Error('Campaign not found.');
-      error.code = 'NOT_FOUND';
-      throw error;
-    }
-    const enrollmentResult = await createScholarshipEnrollment(client, {
-      userId: application.applicant_user_id,
-      applicationId: application.id,
-      campaign,
-      registrationFeePaid: Number(amountPaid) || 0,
-    });
-    await client.query(
-      `UPDATE scholarship_applications
-       SET status = 'approved',
-           enrollment_id = $2,
-           enrollment_created_at = CURRENT_TIMESTAMP
-       WHERE id = $1`,
-      [applicationId, enrollmentResult.enrollmentId]
-    );
-    await client.query(
-      `UPDATE scholarship_campaigns
-       SET approved_count = approved_count + 1, updated_at = CURRENT_TIMESTAMP
-       WHERE id = $1`,
-      [campaign.id]
-    );
-    await appendEvent(client, {
-      applicationId,
-      eventType: 'payment_received',
-      actorAdminId: adminId || null,
-      payload: { paymentId, amountPaid },
-    });
-    await client.query('COMMIT');
-    notifyFeePaid(application.applicant_user_id, { campaignName: campaign.name }).catch(() => {});
-    return { enrollmentId: enrollmentResult.enrollmentId };
-  } catch (error) {
-    await client.query('ROLLBACK');
-    throw error;
-  } finally {
-    client.release();
-  }
-};
-
 export const rejectApplication = async (params) => {
-  const { applicationId, adminId, reason, note } = params;
+  const { applicationId, adminId, reason, note, reqMeta } = params;
   const adminConfig = getScholarshipAdminConfig();
-  const scholarshipDefaults = getScholarshipDefaults();
+  const rules = getScholarshipRules();
 
   if (!applicationId) throw new Error('applicationId is required.');
   if (!adminId) throw new Error('adminId is required.');
@@ -680,9 +618,14 @@ export const rejectApplication = async (params) => {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
+
     const appResult = await client.query(
-      `SELECT id, campaign_id, applicant_user_id, status, refund_status
-       FROM scholarship_applications WHERE id = $1 FOR UPDATE`,
+      `SELECT a.id, a.campaign_id, a.applicant_user_id, a.status, a.refund_status,
+              c.name AS campaign_name, c.registration_fee_etb
+       FROM scholarship_applications a
+       JOIN scholarship_campaigns c ON c.id = a.campaign_id
+       WHERE a.id = $1
+       FOR UPDATE`,
       [applicationId]
     );
     const application = appResult.rows[0];
@@ -691,7 +634,16 @@ export const rejectApplication = async (params) => {
       error.code = 'NOT_FOUND';
       throw error;
     }
-    if (!['pending', 'pending_payment'].includes(application.status)) {
+
+    if (application.status === 'rejected') {
+      await client.query('COMMIT');
+      return {
+        status: 'rejected',
+        refundQueued: application.refund_status === 'pending',
+      };
+    }
+
+    if (!['pending', 'payment_verified'].includes(application.status)) {
       const error = new Error(
         `Cannot reject application in status ${application.status}.`
       );
@@ -703,15 +655,16 @@ export const rejectApplication = async (params) => {
       `SELECT id, amount, status FROM payments
        WHERE scholarship_application_id = $1
          AND purpose = 'scholarship_registration'
-         AND status IN ('pending', 'approved')
        ORDER BY created_at DESC LIMIT 1 FOR UPDATE`,
       [applicationId]
     );
     const payment = paymentResult.rows[0] || null;
-    const refundAmount = payment ? Number(payment.amount) : 0;
-    const refundQueued = refundAmount > 0;
+    const fee = Number(application.registration_fee_etb) || 0;
+    const refundQueued = fee > 0 && Boolean(payment);
+    const refundAmount = refundQueued ? Number(payment.amount) || fee : 0;
+    const refundDeadlineDays = rules.refundProcessingDeadlineDays || 3;
 
-    if (refundQueued && payment.status === 'approved') {
+    if (refundQueued) {
       await client.query(
         `UPDATE scholarship_applications
          SET status = 'rejected',
@@ -750,28 +703,28 @@ export const rejectApplication = async (params) => {
       payload: { reason, refundQueued, refundAmount },
     });
 
-    const campaignResult = await client.query(
-      `SELECT name FROM scholarship_campaigns WHERE id = $1`,
-      [application.campaign_id]
-    );
-    const campaignName = campaignResult.rows[0]?.name || 'the campaign';
+    await auditAdminAction(client, {
+      adminId,
+      action: 'scholarship.application.rejected',
+      targetId: applicationId,
+      details: { reason, refundQueued, refundAmount },
+      reqMeta,
+    });
 
     await client.query('COMMIT');
-    notifyRejected(application.applicant_user_id, { campaignName, reason }).catch(() => {});
+
+    notifyRejected(application.applicant_user_id, {
+      campaignName: application.campaign_name,
+      reason,
+      amount: refundAmount,
+    }).catch(() => {});
 
     if (refundQueued) {
-      try {
-        const { notify } = await import('../notifications');
-        const deadlineDays = scholarshipDefaults.refundProcessingDeadlineDays || 3;
-        notify(
-          application.applicant_user_id,
-          'scholarship_refund_initiated',
-          { campaign: campaignName, amount: refundAmount, days: deadlineDays },
-          '/profile/scholarships'
-        ).catch(() => {});
-      } catch (err) {
-        console.error('[reject] refund notification failed:', err?.message);
-      }
+      notifyRefundInitiated(application.applicant_user_id, {
+        campaignName: application.campaign_name,
+        amount: refundAmount,
+        days: refundDeadlineDays,
+      }).catch(() => {});
     }
 
     return { status: 'rejected', refundQueued };
@@ -783,9 +736,15 @@ export const rejectApplication = async (params) => {
   }
 };
 
+/* ============================================================================
+ * REVOKE APPLICATION
+ * ========================================================================== */
+
 export const revokeApplication = async (params) => {
-  const { applicationId, adminId, reason } = params;
+  const { applicationId, adminId, reason, reqMeta } = params;
   const adminConfig = getScholarshipAdminConfig();
+  const rules = getScholarshipRules();
+
   if (!adminConfig.allowRevocation) {
     const error = new Error('Revocation is not enabled.');
     error.code = 'REVOKE_DISABLED';
@@ -798,11 +757,17 @@ export const revokeApplication = async (params) => {
     error.code = 'REASON_REQUIRED';
     throw error;
   }
+
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
+
     const appResult = await client.query(
-      `SELECT * FROM scholarship_applications WHERE id = $1 FOR UPDATE`,
+      `SELECT a.*, c.name AS campaign_name
+       FROM scholarship_applications a
+       JOIN scholarship_campaigns c ON c.id = a.campaign_id
+       WHERE a.id = $1
+       FOR UPDATE`,
       [applicationId]
     );
     const application = appResult.rows[0];
@@ -811,6 +776,10 @@ export const revokeApplication = async (params) => {
       error.code = 'NOT_FOUND';
       throw error;
     }
+    if (application.status === 'revoked') {
+      await client.query('COMMIT');
+      return { status: 'revoked' };
+    }
     if (application.status !== 'approved') {
       const error = new Error(
         `Cannot revoke application in status ${application.status}.`
@@ -818,12 +787,15 @@ export const revokeApplication = async (params) => {
       error.code = 'INVALID_STATE';
       throw error;
     }
+
     if (application.enrollment_id) {
       await revokeScholarshipEnrollment(client, {
         enrollmentId: application.enrollment_id,
         reason,
+        preserveProgress: rules.revokePreservesProgress !== false,
       });
     }
+
     await client.query(
       `UPDATE scholarship_applications
        SET status = 'revoked',
@@ -833,6 +805,7 @@ export const revokeApplication = async (params) => {
        WHERE id = $1`,
       [applicationId, adminId, reason]
     );
+
     await client.query(
       `UPDATE scholarship_campaigns
        SET approved_count = GREATEST(approved_count - 1, 0),
@@ -840,19 +813,29 @@ export const revokeApplication = async (params) => {
        WHERE id = $1`,
       [application.campaign_id]
     );
+
     await appendEvent(client, {
       applicationId,
       eventType: 'revoked',
       actorAdminId: adminId,
       payload: { reason },
     });
-    const campaignResult = await client.query(
-      `SELECT name FROM scholarship_campaigns WHERE id = $1`,
-      [application.campaign_id]
-    );
-    const campaignName = campaignResult.rows[0]?.name || 'the campaign';
+
+    await auditAdminAction(client, {
+      adminId,
+      action: 'scholarship.application.revoked',
+      targetId: applicationId,
+      details: { reason },
+      reqMeta,
+    });
+
     await client.query('COMMIT');
-    notifyRevoked(application.applicant_user_id, { campaignName, reason }).catch(() => {});
+
+    notifyRevoked(application.applicant_user_id, {
+      campaignName: application.campaign_name,
+      reason,
+    }).catch(() => {});
+
     return { status: 'revoked' };
   } catch (error) {
     await client.query('ROLLBACK');
@@ -862,15 +845,27 @@ export const revokeApplication = async (params) => {
   }
 };
 
+/* ============================================================================
+ * WITHDRAW APPLICATION (user-initiated)
+ * ========================================================================== */
+
 export const withdrawApplication = async (params) => {
   const { applicationId, userId } = params;
+  const rules = getScholarshipRules();
+
   if (!applicationId) throw new Error('applicationId is required.');
   if (!userId) throw new Error('userId is required.');
+
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
+
     const appResult = await client.query(
-      `SELECT * FROM scholarship_applications WHERE id = $1 FOR UPDATE`,
+      `SELECT a.*, c.name AS campaign_name
+       FROM scholarship_applications a
+       JOIN scholarship_campaigns c ON c.id = a.campaign_id
+       WHERE a.id = $1
+       FOR UPDATE`,
       [applicationId]
     );
     const application = appResult.rows[0];
@@ -884,30 +879,173 @@ export const withdrawApplication = async (params) => {
       error.code = 'FORBIDDEN';
       throw error;
     }
-    if (!['pending', 'pending_payment'].includes(application.status)) {
+
+    if (application.status === 'withdrawn') {
+      await client.query('COMMIT');
+      return { status: 'withdrawn' };
+    }
+
+    if (!['pending', 'payment_verified'].includes(application.status)) {
       const error = new Error(
         `Cannot withdraw application in status ${application.status}.`
       );
       error.code = 'INVALID_STATE';
       throw error;
     }
-    await client.query(
-      `UPDATE scholarship_applications SET status = 'withdrawn' WHERE id = $1`,
+
+    const paymentResult = await client.query(
+      `SELECT id, amount FROM payments
+       WHERE scholarship_application_id = $1
+         AND purpose = 'scholarship_registration'
+       ORDER BY created_at DESC LIMIT 1 FOR UPDATE`,
       [applicationId]
     );
+    const payment = paymentResult.rows[0] || null;
+    const refundQueued = Boolean(payment);
+    const refundAmount = refundQueued ? Number(payment.amount) : 0;
+    const refundDeadlineDays = rules.refundProcessingDeadlineDays || 3;
+
+    if (refundQueued) {
+      await client.query(
+        `UPDATE scholarship_applications
+         SET status = 'withdrawn',
+             refund_status = 'pending',
+             refund_amount_etb = $2,
+             refund_requested_at = CURRENT_TIMESTAMP
+         WHERE id = $1`,
+        [applicationId, refundAmount]
+      );
+      await client.query(
+        `UPDATE payments SET status = 'refund_pending' WHERE id = $1`,
+        [payment.id]
+      );
+    } else {
+      await client.query(
+        `UPDATE scholarship_applications
+         SET status = 'withdrawn',
+             refund_status = 'not_required'
+         WHERE id = $1`,
+        [applicationId]
+      );
+    }
+
     await appendEvent(client, {
       applicationId,
       eventType: 'withdrawn',
       actorUserId: userId,
+      payload: { refundQueued, refundAmount },
     });
+
+    await client.query('COMMIT');
+
+    notifyWithdrawn(userId, {
+      campaignName: application.campaign_name,
+      amount: refundAmount,
+    }).catch(() => {});
+
+    if (refundQueued) {
+      notifyRefundInitiated(userId, {
+        campaignName: application.campaign_name,
+        amount: refundAmount,
+        days: refundDeadlineDays,
+      }).catch(() => {});
+    }
+
+    return { status: 'withdrawn' };
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
+};
+
+/* ============================================================================
+ * MARK REFUND COMPLETED (admin)
+ * ========================================================================== */
+
+export const markRefundCompleted = async (params) => {
+  const { applicationId, adminId, note, reqMeta } = params;
+
+  if (!applicationId) throw new Error('applicationId is required.');
+  if (!adminId) throw new Error('adminId is required.');
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    const appResult = await client.query(
+      `SELECT id, applicant_user_id, campaign_id, refund_status, refund_amount_etb
+       FROM scholarship_applications WHERE id = $1 FOR UPDATE`,
+      [applicationId]
+    );
+    const application = appResult.rows[0];
+    if (!application) {
+      const error = new Error('Application not found.');
+      error.code = 'NOT_FOUND';
+      throw error;
+    }
+    if (application.refund_status === 'completed') {
+      await client.query('COMMIT');
+      return { refundStatus: 'completed' };
+    }
+    if (application.refund_status !== 'pending') {
+      const error = new Error(`Refund is "${application.refund_status}".`);
+      error.code = 'REFUND_NOT_PENDING';
+      throw error;
+    }
+
+    await client.query(
+      `UPDATE scholarship_applications
+       SET refund_status = 'completed',
+           refund_processed_at = CURRENT_TIMESTAMP,
+           refund_processed_by = $2,
+           refund_note = COALESCE($3, refund_note)
+       WHERE id = $1`,
+      [applicationId, adminId, note ? String(note).slice(0, 2000) : null]
+    );
+
+    await client.query(
+      `UPDATE payments SET status = 'refunded'
+       WHERE scholarship_application_id = $1 AND status = 'refund_pending'`,
+      [applicationId]
+    );
+
+    await appendEvent(client, {
+      applicationId,
+      eventType: 'refund_completed',
+      actorAdminId: adminId,
+      payload: {
+        amount: Number(application.refund_amount_etb) || 0,
+        note: note || null,
+      },
+    });
+
+    await auditAdminAction(client, {
+      adminId,
+      action: 'scholarship.refund.completed',
+      targetId: applicationId,
+      details: {
+        amount: Number(application.refund_amount_etb) || 0,
+        note: note || null,
+      },
+      reqMeta,
+    });
+
     const campaignResult = await client.query(
       `SELECT name FROM scholarship_campaigns WHERE id = $1`,
       [application.campaign_id]
     );
     const campaignName = campaignResult.rows[0]?.name || 'the campaign';
+
     await client.query('COMMIT');
-    notifyWithdrawn(userId, { campaignName }).catch(() => {});
-    return { status: 'withdrawn' };
+
+    notifyRefundCompleted(application.applicant_user_id, {
+      campaignName,
+      amount: Number(application.refund_amount_etb) || 0,
+    }).catch(() => {});
+
+    return { refundStatus: 'completed' };
   } catch (error) {
     await client.query('ROLLBACK');
     throw error;
@@ -920,26 +1058,6 @@ export const withdrawApplication = async (params) => {
  * READ HELPERS
  * ========================================================================== */
 
-/**
- * Fetch active campaigns for public listing.
- *
- * Visibility rules (all must be true):
- *   - is_active = true
- *   - applications_open_at <= NOW() + openingGraceSeconds
- *   - applications_close_at is null OR in the future
- *
- * The grace window (config: defaults.openingGraceSeconds, default 60s)
- * prevents a just-created campaign from being invisible for the first
- * second — the form sets open-at to "now" and both timestamps resolve
- * within the same wall-clock second.
- *
- * Ordered by created_at DESC — the newest campaign shows first in
- * banner surfaces that slice the array.
- *
- * @param {object} [options]
- * @param {number} [options.limit=20]
- * @returns {Promise<Array>}
- */
 export const listActiveCampaigns = async ({ limit = 20 } = {}) => {
   const defaults = getScholarshipDefaults();
   const graceSeconds = Number(defaults.openingGraceSeconds) || 60;
@@ -960,44 +1078,6 @@ export const listActiveCampaigns = async ({ limit = 20 } = {}) => {
      LIMIT $2`,
     [String(graceSeconds), limit]
   );
-
-  /*
-   * Diagnostic log — surfaces WHICH campaigns exist but were filtered
-   * out, and WHY. Only logs when NODE_ENV !== 'production'. Helps
-   * debug the "created campaign but it's not public" problem without
-   * needing a SQL client.
-   */
-  if (process.env.NODE_ENV !== 'production') {
-    try {
-      const allResult = await query(
-        `SELECT slug, is_active, applications_open_at, applications_close_at,
-                NOW() AS db_now,
-                (applications_open_at <= NOW()) AS opens_now,
-                (applications_close_at IS NULL OR applications_close_at > NOW()) AS close_ok
-         FROM scholarship_campaigns
-         ORDER BY created_at DESC`
-      );
-      const visibleSlugs = new Set(result.rows.map((r) => r.slug));
-      const hidden = allResult.rows.filter((r) => !visibleSlugs.has(r.slug));
-      if (hidden.length > 0) {
-        console.log(
-          '[scholarships/listActiveCampaigns] Hidden campaigns:',
-          hidden.map((r) => ({
-            slug: r.slug,
-            reason: !r.is_active
-              ? 'is_active=false'
-              : !r.opens_now
-              ? `opens in the future (${r.applications_open_at} > ${r.db_now})`
-              : !r.close_ok
-              ? 'closed (applications_close_at in the past)'
-              : 'unknown',
-          }))
-        );
-      }
-    } catch {
-      /* diagnostic is best-effort — never block the real query */
-    }
-  }
 
   return result.rows;
 };

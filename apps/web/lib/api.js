@@ -9,6 +9,11 @@
 //  *   2. Add the copy to en/confirmations.js + am/confirmations.js under
 //  *      `confirmations.actions.<key>`
 //  *
+//  * Base URL resolves from NEXT_PUBLIC_API_URL. When set (production,
+//  * or dev pointing at the Express backend), every request routes to
+//  * Express. When unset, falls back to '/api' — the Next.js API route
+//  * tree — which keeps older pages working during migration.
+//  *
 //  * Path: apps/web/lib/api.js
 //  */
 
@@ -69,8 +74,18 @@
 
 // /* ── Base axios instance ───────────────────────────────────────────── */
 
+// /*
+//  * Base URL resolution:
+//  *   - NEXT_PUBLIC_API_URL when set (points to Express)
+//  *   - '/api' otherwise (Next.js API route tree, legacy behavior)
+//  *
+//  * Both resolve to same-origin requests, so CORS behavior is identical
+//  * regardless of which backend is targeted.
+//  */
+// const baseURL = process.env.NEXT_PUBLIC_API_URL || '/api';
+
 // const axiosInstance = axios.create({
-//   baseURL: '/api',
+//   baseURL,
 //   timeout: 30000,
 //   headers: { 'Content-Type': 'application/json' },
 // });
@@ -223,21 +238,21 @@
 
 
 
+
 /**
  * @fileoverview API Client with Global Confirmation Interceptor
  *
  * All confirmation copy is sourced from the shared i18n confirmations
  * namespace. Zero hardcoded strings in this file.
  *
- * To add a new confirmation pattern:
- *   1. Add a `patterns` entry to DELETE_PATTERNS or a specific matcher
- *   2. Add the copy to en/confirmations.js + am/confirmations.js under
- *      `confirmations.actions.<key>`
+ * Base URL resolution logic:
+ *   The platform uses a dual-backend architecture during migration:
+ *   1. Express API (`NEXT_PUBLIC_API_URL`) — handles legacy routes.
+ *   2. Next.js API Routes (`/api`) — handles new feature modules like
+ *      scholarships and notifications.
  *
- * Base URL resolves from NEXT_PUBLIC_API_URL. When set (production,
- * or dev pointing at the Express backend), every request routes to
- * Express. When unset, falls back to '/api' — the Next.js API route
- * tree — which keeps older pages working during migration.
+ * To prevent 404s, requests to modules that live entirely in Next.js
+ * MUST bypass the Express URL and route to the same-origin Next.js backend.
  *
  * Path: apps/web/lib/api.js
  */
@@ -300,17 +315,42 @@ function getConfirmCopy(keyPath) {
 /* ── Base axios instance ───────────────────────────────────────────── */
 
 /*
- * Base URL resolution:
- *   - NEXT_PUBLIC_API_URL when set (points to Express)
- *   - '/api' otherwise (Next.js API route tree, legacy behavior)
- *
- * Both resolve to same-origin requests, so CORS behavior is identical
- * regardless of which backend is targeted.
+ * Express base URL (legacy routes).
  */
-const baseURL = process.env.NEXT_PUBLIC_API_URL || '/api';
+const EXPRESS_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '';
+
+/**
+ * Determine the correct base URL for a given endpoint.
+ *
+ * Scholarship and notification endpoints live entirely in Next.js API routes.
+ * Legacy endpoints (auth, payments, referrals, etc.) live in Express.
+ *
+ * @param {string} url - The request path
+ * @returns {string} The base URL
+ */
+function resolveBaseURL(url) {
+  const u = String(url || '');
+  
+  /* 
+   * Next.js-only modules. These must hit the same-origin Next.js API,
+   * completely bypassing the Express proxy.
+   */
+  const isNextjsRoute =
+    u.startsWith('/admin/scholarships') ||
+    u.startsWith('/scholarships') ||
+    u.startsWith('/public/scholarships') ||
+    u.startsWith('/notifications') ||
+    u.startsWith('/settings/public');
+
+  if (isNextjsRoute) {
+    return '/api'; // Same-origin Next.js
+  }
+
+  /* Everything else goes to Express if configured, or same-origin fallback */
+  return EXPRESS_BASE_URL || '/api';
+}
 
 const axiosInstance = axios.create({
-  baseURL,
   timeout: 30000,
   headers: { 'Content-Type': 'application/json' },
 });
@@ -318,6 +358,9 @@ const axiosInstance = axios.create({
 axiosInstance.interceptors.request.use((config) => {
   const token = getItem('auth_token');
   const adminToken = getItem('admin_token');
+
+  /* Dynamically resolve the base URL per request */
+  config.baseURL = resolveBaseURL(config.url);
 
   if (config.url && config.url.startsWith('/admin') && adminToken) {
     config.headers.Authorization = `Bearer ${adminToken}`;
@@ -358,6 +401,7 @@ const DELETE_PATTERNS = [
   [/\/admin\/phases\/[^/]+$/, 'actions.deletePhase'],
   [/\/admin\/weeks\/[^/]+$/, 'actions.deleteWeek'],
   [/\/admin\/admins\/[^/]+$/, 'actions.deleteAdmin'],
+  [/\/admin\/scholarships\/[^/]+$/, 'actions.deleteCampaign'],
 ];
 
 /**
