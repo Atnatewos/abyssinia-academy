@@ -8,10 +8,8 @@
  * Structure:
  *   - Most namespaces are spread directly (their top-level keys become
  *     top-level keys on the merged object).
- *   - The `reseller` namespace is kept nested under a single `reseller`
- *     key so consumers access `t.reseller.dashboard.title` (matching the
- *     pattern used by other self-contained namespaces like `agents` and
- *     `scholarships` which export wrapper objects).
+ *   - Self-contained namespaces (reseller, footer) are nested under
+ *     their own root key so consumers access `t.<namespace>.<section>`.
  *
  * To add a new namespace:
  *   1. Create the file in this folder (e.g., partners.js)
@@ -44,14 +42,18 @@ const referrals = require('./referrals');
 const scholarships = require('./scholarships');
 
 /*
- * Reseller namespace.
- * The file `./reseller.js` exports a self-contained object with all
- * reseller-related strings (dashboard, price, subResellers, terms, etc.).
- * We nest it under a single `reseller` key so consumers read
- * `t.reseller.<section>.<key>` — consistent with how `agents` and
- * `scholarships` expose their strings.
+ * Self-contained namespaces.
+ *
+ * Each of these files exports an object wrapped in its own root key
+ * (e.g., ./footer.js exports { footer: { ... } }), so we nest them under
+ * their root key rather than spreading them flat.
+ *
+ * This keeps access patterns consistent:
+ *   t.footer.columns.platform
+ *   t.reseller.dashboard.title
  */
 const reseller = require('./reseller');
+const footerNamespace = require('./footer');
 
 module.exports = {
   ...admin,
@@ -72,5 +74,10 @@ module.exports = {
   ...profile,
   ...referrals,
   ...scholarships,
+
+  /* Footer exposes its own root key so we spread it to flatten. */
+  ...footerNamespace,
+
+  /* Reseller stays nested as a single object. */
   reseller,
 };
