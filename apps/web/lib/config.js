@@ -35,22 +35,42 @@ let cachedDefaultsAttempted = false;
 
 /**
  * Load the full shared configuration from packages/shared/config.
- * Resolves from apps/web/lib/ → repo root → packages/shared/config.
  *
- * Path resolution: '../../../' from lib/ → 'abyssinia-academy/' (repo root)
+ * In production (Vercel), we skip the module-level cache because:
+ *   1. Vercel's serverless functions reuse module state across invocations
+ *   2. A deploy updates platform.config.js but the cache may persist
+ *   3. Config reads are cheap (require is fast after first load)
  *
- * @returns {object|null} Shared config object, or null when unreachable
+ * In development, the cache is safe — Next.js dev server reloads modules
+ * on file change, so the cache naturally invalidates.
+ *
+ * @returns {object|null}
  */
 const loadConfig = () => {
+  const isProduction = process.env.NODE_ENV === 'production';
+  
+  // In production: no caching, always re-read. require() is memoized by Node
+  // so the actual file read happens once per process anyway.
+  if (isProduction) {
+    try {
+      return require('../../../packages/shared/config');
+    } catch (primaryError) {
+      try {
+        return require('@shared/config');
+      } catch {
+        return null;
+      }
+    }
+  }
+
+  // In development: cache to avoid re-parsing on every render
   if (cachedConfigAttempted) return cachedConfig;
   cachedConfigAttempted = true;
 
   try {
-    /* Three levels up: lib → web → apps → repo root */
     cachedConfig = require('../../../packages/shared/config');
   } catch (primaryError) {
     try {
-      /* Alias fallback via jsconfig @shared/* → ../../packages/shared/* */
       cachedConfig = require('@shared/config');
     } catch {
       cachedConfig = null;
@@ -59,18 +79,22 @@ const loadConfig = () => {
   return cachedConfig;
 };
 
-/**
- * Load the defaults configuration — the always-available safety net.
- * Resolves from apps/web/lib/ → repo root → packages/shared/config.
- *
- * @returns {object} Defaults config object (never null)
- */
+
 const loadDefaults = () => {
+  const isProduction = process.env.NODE_ENV === 'production';
+
+  if (isProduction) {
+    try {
+      return require('../../../packages/shared/config/defaults.config');
+    } catch {
+      return buildInlineDefaults();
+    }
+  }
+
   if (cachedDefaultsAttempted) return cachedDefaults;
   cachedDefaultsAttempted = true;
 
   try {
-    /* Three levels up: lib → web → apps → repo root */
     cachedDefaults = require('../../../packages/shared/config/defaults.config');
   } catch {
     cachedDefaults = buildInlineDefaults();
