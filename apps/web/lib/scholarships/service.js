@@ -1109,11 +1109,9 @@ export const listUserApplications = async (userId) => {
  * ========================================================================== */
 
 /**
- * Deletes a campaign.
- * 
- * To protect applicant data and financial ledgers, campaigns with existing 
- * applications are "soft deleted" (hidden from the UI but kept in the DB).
- * Campaigns with zero applications are permanently removed.
+ * Deletes a campaign. If it has applications, it performs a soft delete
+ * (archives it) to protect the applicant and payment data. If it has 
+ * zero applications, it hard deletes the row.
  *
  * @param {object} params
  * @param {string} params.campaignId
@@ -1165,13 +1163,6 @@ export const deleteCampaign = async (params) => {
         [campaignId]
       );
     }
-
-    await appendEvent(client, {
-      applicationId: null, // No specific application for campaign deletion
-      eventType: 'noted',
-      actorAdminId: adminId,
-      payload: { action: 'campaign_deleted', campaignName: campaign.name, appCount, type: deleteType },
-    }).catch(() => {}); // Best effort if the events table requires an application_id
 
     await auditAdminAction(client, {
       adminId,

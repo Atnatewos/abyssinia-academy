@@ -4,17 +4,6 @@
 //  * CRUD operations for scholarship campaigns. All handlers require a
 //  * valid admin JWT via requireAdmin().
 //  *
-//  * requiredDocuments is stored verbatim in the campaign row's JSONB
-//  * column. The shape is validated against the platform registry
-//  * (scholarshipsConfig.documentTypes) so an admin cannot save a
-//  * reference to a type that doesn't exist.
-//  *
-//  * Path: apps/web/lib/scholarships/http/handlers/admin-campaigns.js
-//  */
-
-// /**
-//  * @fileoverview Admin Campaign Handlers
-//  *
 //  * Path: apps/web/lib/scholarships/http/handlers/admin-campaigns.js
 //  */
 
@@ -22,6 +11,7 @@
 // import { ok, created, methodNotAllowed } from '../response';
 // import { handleError, domainError } from '../errors';
 // import { validateCampaignPayload } from '../../validation';
+// import { deleteCampaign } from '../../service'; // <-- ADDED THIS IMPORT
 // import { query, pool } from '../../../db';
 
 // /* ============================================================================
@@ -334,89 +324,8 @@
 // };
 
 // /* ============================================================================
-//  * DELETE — HARD DELETE with application guard
-//  * ==========================================================================
-//  * Deletes the campaign row if it has NO applications. If applications
-//  * exist, blocks the delete with a clear domain error — admin must
-//  * either mark the campaign as closed (soft archive via isActive=false)
-//  * or manually delete applications first.
-//  *
-//  * Rationale: scholarship applications are audit records. Silently
-//  * deleting them would break referral attribution, refund tracking,
-//  * and the applicant's history. A hard block with a clear error is
-//  * the professional answer.
+//  * DELETE
 //  * ========================================================================== */
-
-// // export const handleAdminDeleteCampaign = async (req, res) => {
-// //   try {
-// //     if (req.method !== 'DELETE') return methodNotAllowed(res, ['DELETE']);
-// //     await requireAdmin(req);
-
-// //     const { id } = req.query;
-
-// //     const client = await pool.connect();
-// //     try {
-// //       await client.query('BEGIN');
-
-// //       /* Lock the campaign row so concurrent deletes/applications can't
-// //          race the check below. */
-// //       const campaignResult = await client.query(
-// //         `SELECT id, name FROM scholarship_campaigns WHERE id = $1 FOR UPDATE`,
-// //         [id]
-// //       );
-// //       const campaign = campaignResult.rows[0];
-// //       if (!campaign) {
-// //         throw domainError('NOT_FOUND', 'Campaign not found.');
-// //       }
-
-// //       /* Block delete if any applications reference this campaign. */
-// //       const appCountResult = await client.query(
-// //         `SELECT COUNT(*)::int AS count
-// //          FROM scholarship_applications
-// //          WHERE campaign_id = $1`,
-// //         [id]
-// //       );
-// //       const appCount = appCountResult.rows[0].count;
-
-// //       if (appCount > 0) {
-// //         await client.query('ROLLBACK');
-// //         const error = new Error(
-// //           `Cannot delete "${campaign.name}" — it has ${appCount} application${appCount === 1 ? '' : 's'}. ` +
-// //           `Mark it as inactive instead to hide it from the public listing while preserving application records.`
-// //         );
-// //         error.code = 'CAMPAIGN_HAS_APPLICATIONS';
-// //         error.appCount = appCount;
-// //         throw error;
-// //       }
-
-// //       /* Safe to hard-delete — no FK dependencies. */
-// //       await client.query(
-// //         `DELETE FROM scholarship_campaigns WHERE id = $1`,
-// //         [id]
-// //       );
-
-// //       await client.query('COMMIT');
-
-// //       /*
-// //        * Return 200 with explicit body so the frontend's `response.success`
-// //        * check passes. Previously 204 (no body) confused the delete
-// //        * handler in apps/web/pages/admin/scholarships/index.jsx.
-// //        */
-// //       return ok(res, {
-// //         deleted: true,
-// //         campaignId: id,
-// //         campaignName: campaign.name,
-// //       });
-// //     } catch (error) {
-// //       await client.query('ROLLBACK');
-// //       throw error;
-// //     } finally {
-// //       client.release();
-// //     }
-// //   } catch (error) {
-// //     return handleError(error, res);
-// //   }
-// // };
 
 // export const handleAdminDeleteCampaign = async (req, res) => {
 //   try {
@@ -451,6 +360,10 @@
 
 
 
+
+
+
+
 /**
  * @fileoverview Admin Campaign Handlers
  *
@@ -464,7 +377,7 @@ import { requireAdmin, parseJsonBody, readIntQuery, readStringQuery } from '../m
 import { ok, created, methodNotAllowed } from '../response';
 import { handleError, domainError } from '../errors';
 import { validateCampaignPayload } from '../../validation';
-import { deleteCampaign } from '../../service'; // <-- ADDED THIS IMPORT
+import { deleteCampaign } from '../../service'; 
 import { query, pool } from '../../../db';
 
 /* ============================================================================
@@ -787,7 +700,6 @@ export const handleAdminDeleteCampaign = async (req, res) => {
 
     const { id } = req.query;
     
-    // We pass a sanitized req meta object for the audit logs
     const reqMeta = {
       ip: req.headers['x-forwarded-for'] || req.socket.remoteAddress,
       userAgent: req.headers['user-agent'],
