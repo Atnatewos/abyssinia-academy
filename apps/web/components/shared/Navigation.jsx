@@ -2,25 +2,15 @@
 //  * @fileoverview Main Navigation Header (Tailwind, Mobile-First)
 //  *
 //  * Config-driven nav pill list sourced from `landing.config.js → navLinks`.
-//  * Each entry supplies:
-//  *   - href
-//  *   - labelKey (dot-path into the i18n tree)
-//  *   - optional requiresAuth / configGate / showDot
-//  *
-//  * i18n label resolution uses a three-tier cascade so the UI never shows
-//  * raw keys:
-//  *   1. Direct path (e.g. 'nav.overview')
-//  *   2. Nested namespace (e.g. 'scholarships.nav.scholarships')
-//  *   3. Hardcoded English fallback
-//  *
-//  * Layout:
-//  *   - md+ (>= 768px): inline pill nav + controls
-//  *   - < md: hamburger opens a slide-down menu
+//  * Brand block renders the logo from `platform.brand.logo` if provided,
+//  * otherwise falls back to the icon + text layout.
 //  *
 //  * Path: apps/web/components/shared/Navigation.jsx
 //  */
+
 // import { useState, useEffect, useCallback, useMemo } from 'react';
 // import Link from 'next/link';
+// import Image from 'next/image';
 // import { useRouter } from 'next/router';
 // import {
 //   Code2,
@@ -37,21 +27,15 @@
 //   BookOpen,
 //   GraduationCap,
 //   Store,
+//   Wallet,
 // } from 'lucide-react';
 // import { useLanguage } from '../../context/LanguageContext';
 // import { useTheme } from '../../context/ThemeContext';
 // import { useAuth } from '../../context/AuthContext';
 // import { getPlatformConfig, getLandingConfig } from '../../lib/config';
+// import { useWalletBalance } from '../../hooks/useWalletBalance';
 // import NotificationBell from '../notifications/NotificationBell';
 // import LanguageToggle from './LanguageToggle';
-
-// /* ============================================================================
-//  * HARDCODED ENGLISH FALLBACKS
-//  * ==========================================================================
-//  * Used only when a translation is missing from every cascade tier.
-//  * Preventing a raw key from ever reaching the UI is more important than
-//  * enforcing i18n strictness at the nav level.
-//  * ========================================================================== */
 
 // const NAV_FALLBACKS = {
 //   overview: 'Overview',
@@ -70,24 +54,8 @@
 //   myScholarships: 'My Scholarships',
 // };
 
-// /* ============================================================================
-//  * RESOLVERS
-//  * ========================================================================== */
-
-// /**
-//  * Resolve a translated nav pill label. Cascade:
-//  *   1. Direct path (e.g. 'nav.overview') → t.nav.overview
-//  *   2. Nested path (e.g. 'scholarships.nav.scholarships')
-//  *      → t.scholarships.nav.scholarships
-//  *   3. Hardcoded English fallback
-//  *
-//  * @param {object} t - Translation tree
-//  * @param {string} keyPath - Dot-path passed from landing.config.js
-//  * @returns {string}
-//  */
 // const resolveNavLabel = (t, keyPath) => {
 //   if (!keyPath || typeof keyPath !== 'string') return '';
-
 //   const parts = keyPath.split('.');
 //   let value = t;
 //   for (const part of parts) {
@@ -95,20 +63,11 @@
 //     if (value === undefined || value === null) break;
 //   }
 //   if (typeof value === 'string' && value.length > 0) return value;
-
 //   const leaf = parts[parts.length - 1];
 //   if (NAV_FALLBACKS[leaf]) return NAV_FALLBACKS[leaf];
-
 //   return leaf.charAt(0).toUpperCase() + leaf.slice(1);
 // };
 
-// /**
-//  * Resolve a dot-path inside a config object tree.
-//  *
-//  * @param {object} cfg - Root config object
-//  * @param {string} keyPath - e.g. 'landing.earn.enabled'
-//  * @returns {*}
-//  */
 // const resolveConfig = (cfg, keyPath) => {
 //   if (!keyPath || typeof keyPath !== 'string') return undefined;
 //   const parts = keyPath.split('.');
@@ -120,15 +79,6 @@
 //   return value;
 // };
 
-// /**
-//  * Simple string resolver for profile / menu labels that don't live in
-//  * the config-driven navLinks array. Uses the same cascade.
-//  *
-//  * @param {object} t
-//  * @param {string} keyPath
-//  * @param {string} fallbackKey
-//  * @returns {string}
-//  */
 // const resolveLabel = (t, keyPath, fallbackKey) => {
 //   const parts = keyPath.split('.');
 //   let value = t;
@@ -140,15 +90,13 @@
 //   return NAV_FALLBACKS[fallbackKey] || fallbackKey;
 // };
 
-// /* ============================================================================
-//  * COMPONENT
-//  * ========================================================================== */
-
 // const Navigation = () => {
 //   const router = useRouter();
 //   const { t, mounted: langMounted } = useLanguage();
 //   const { theme, toggleTheme, mounted: themeMounted } = useTheme();
 //   const { isAuthenticated, user, logout } = useAuth();
+  
+//   const { balance, loading: balanceLoading } = useWalletBalance(isAuthenticated);
 
 //   const [isScrolled, setIsScrolled] = useState(false);
 //   const [isMobileOpen, setIsMobileOpen] = useState(false);
@@ -158,6 +106,8 @@
 //   const brand = platformConfig?.brand || {};
 //   const brandName = brand.name || 'ABYSSiNIA';
 //   const brandSuffix = brand.suffix || 'Tech Academy';
+//   const brandLogo = brand.logo || null;
+//   const brandLogoAlt = brand.logoAlt || brandName;
 
 //   const landingConfig = getLandingConfig();
 //   const isMounted = langMounted && themeMounted;
@@ -198,7 +148,6 @@
 //       }));
 //   }, [landingConfig, t, isAuthenticated, isEnrolled]);
 
-//   /* Sticky header elevation */
 //   useEffect(() => {
 //     const handleScroll = () => setIsScrolled(window.scrollY > 20);
 //     window.addEventListener('scroll', handleScroll, { passive: true });
@@ -244,18 +193,39 @@
 //     >
 //       <div className="w-full max-w-7xl mx-auto flex items-center justify-between gap-3">
 //         {/* ── Brand ── */}
-//         <Link href="/" className="flex items-center gap-2.5 shrink-0 group" aria-label={brandName}>
-//           <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-accent-light via-accent to-accent-dark flex items-center justify-center shadow-glow-gold-sm group-hover:scale-105 transition-transform duration-300">
-//             <Code2 className="w-5 h-5 text-text-inverse" />
-//           </div>
-//           <div className="hidden sm:flex flex-col leading-none">
-//             <span className="text-base font-extrabold text-text-main tracking-tight">
-//               {brandName}
-//             </span>
-//             <span className="text-[10px] tracking-[0.12em] text-text-dim uppercase font-medium mt-0.5">
-//               {brandSuffix}
-//             </span>
-//           </div>
+//         <Link
+//           href="/"
+//           className="flex items-center gap-2.5 shrink-0 group"
+//           aria-label={brandName}
+//         >
+//           {brandLogo ? (
+//             /* Config-driven logo image */
+//             <div className="relative h-10 w-auto min-w-[140px] flex items-center">
+//               <Image
+//                 src={brandLogo}
+//                 alt={brandLogoAlt}
+//                 width={brand.logoWidth || 140}
+//                 height={brand.logoHeight || 40}
+//                 priority
+//                 className="object-contain h-full w-auto group-hover:scale-[1.02] transition-transform duration-300"
+//               />
+//             </div>
+//           ) : (
+//             /* Fallback: icon + text */
+//             <>
+//               <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-accent-light via-accent to-accent-dark flex items-center justify-center shadow-glow-gold-sm group-hover:scale-105 transition-transform duration-300">
+//                 <Code2 className="w-5 h-5 text-text-inverse" />
+//               </div>
+//               <div className="hidden sm:flex flex-col leading-none">
+//                 <span className="text-base font-extrabold text-text-main tracking-tight">
+//                   {brandName}
+//                 </span>
+//                 <span className="text-[10px] tracking-[0.12em] text-text-dim uppercase font-medium mt-0.5">
+//                   {brandSuffix}
+//                 </span>
+//               </div>
+//             </>
+//           )}
 //         </Link>
 
 //         {/* ── Desktop pills ── */}
@@ -300,6 +270,23 @@
 //             {isMounted && (theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />)}
 //           </button>
 
+//           {isAuthenticated && (
+//             <Link
+//               href="/profile/referrals"
+//               className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-accent/10 border border-accent/30 text-accent hover:bg-accent/20 transition-all mr-1"
+//               title="View Wallet Dashboard"
+//             >
+//               <Wallet className="w-3.5 h-3.5" />
+//               <span className="text-xs font-bold font-mono">
+//                 {balanceLoading
+//                   ? '...'
+//                   : balance !== null
+//                     ? `${balance.toLocaleString()} ETB`
+//                     : '0 ETB'}
+//               </span>
+//             </Link>
+//           )}
+
 //           {isAuthenticated && <NotificationBell />}
 
 //           {isAuthenticated ? (
@@ -335,43 +322,23 @@
 //                   </div>
 //                   <div className="h-px bg-border-light my-1" />
 
-//                   <Link
-//                     href="/profile"
-//                     role="menuitem"
-//                     className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-text-muted hover:text-text-main hover:bg-bg-ghost-hover transition-colors"
-//                   >
+//                   <Link href="/profile" role="menuitem" className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-text-muted hover:text-text-main hover:bg-bg-ghost-hover transition-colors">
 //                     <User className="w-4 h-4" />
 //                     {resolveLabel(t, 'nav.myProfile', 'myProfile')}
 //                   </Link>
-//                   <Link
-//                     href="/profile/reseller"
-//                     role="menuitem"
-//                     className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-text-muted hover:text-text-main hover:bg-bg-ghost-hover transition-colors"
-//                   >
+//                   <Link href="/profile/reseller" role="menuitem" className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-text-muted hover:text-text-main hover:bg-bg-ghost-hover transition-colors">
 //                     <Store className="w-4 h-4" />
 //                     {resolveLabel(t, 'nav.myResellerStore', 'myResellerStore')}
 //                   </Link>
-//                   <Link
-//                     href="/profile/scholarships"
-//                     role="menuitem"
-//                     className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-text-muted hover:text-text-main hover:bg-bg-ghost-hover transition-colors"
-//                   >
+//                   <Link href="/profile/scholarships" role="menuitem" className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-text-muted hover:text-text-main hover:bg-bg-ghost-hover transition-colors">
 //                     <GraduationCap className="w-4 h-4" />
 //                     {resolveLabel(t, 'scholarships.myApplications.pageTitle', 'myScholarships')}
 //                   </Link>
-//                   <Link
-//                     href="/profile/referrals"
-//                     role="menuitem"
-//                     className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-text-muted hover:text-text-main hover:bg-bg-ghost-hover transition-colors"
-//                   >
+//                   <Link href="/profile/referrals" role="menuitem" className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-text-muted hover:text-text-main hover:bg-bg-ghost-hover transition-colors">
 //                     <Share2 className="w-4 h-4" />
 //                     {resolveLabel(t, 'nav.referralDashboard', 'referralDashboard')}
 //                   </Link>
-//                   <Link
-//                     href="/portal"
-//                     role="menuitem"
-//                     className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-text-muted hover:text-text-main hover:bg-bg-ghost-hover transition-colors"
-//                   >
+//                   <Link href="/portal" role="menuitem" className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-text-muted hover:text-text-main hover:bg-bg-ghost-hover transition-colors">
 //                     <BookOpen className="w-4 h-4" />
 //                     {resolveLabel(t, 'nav.portal', 'portal')}
 //                   </Link>
@@ -430,6 +397,18 @@
 //                      px-5 pt-4 pb-6 flex flex-col gap-1
 //                      z-40"
 //         >
+//           {isAuthenticated && (
+//             <div className="mb-2 p-3 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-between">
+//               <div className="flex items-center gap-2 text-accent">
+//                 <Wallet className="w-4 h-4" />
+//                 <span className="text-xs font-bold uppercase tracking-wider">Wallet Balance</span>
+//               </div>
+//               <span className="text-sm font-extrabold text-accent font-mono">
+//                 {balanceLoading ? '...' : balance !== null ? `${balance.toLocaleString()} ETB` : '0 ETB'}
+//               </span>
+//             </div>
+//           )}
+
 //           {pills.map((pill) => {
 //             const active = isActive(pill.href, pill.exact);
 //             return (
@@ -457,31 +436,19 @@
 //                 <NotificationBell />
 //               </div>
 //               <div className="h-px bg-border-mobile-link my-2" />
-//               <Link
-//                 href="/profile"
-//                 className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-text-nav-link hover:text-text-nav-link-hover hover:bg-bg-ghost-hover transition-colors"
-//               >
+//               <Link href="/profile" className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-text-nav-link hover:text-text-nav-link-hover hover:bg-bg-ghost-hover transition-colors">
 //                 <User className="w-4 h-4" />
 //                 {resolveLabel(t, 'nav.myProfile', 'myProfile')}
 //               </Link>
-//               <Link
-//                 href="/profile/reseller"
-//                 className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-text-nav-link hover:text-text-nav-link-hover hover:bg-bg-ghost-hover transition-colors"
-//               >
+//               <Link href="/profile/reseller" className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-text-nav-link hover:text-text-nav-link-hover hover:bg-bg-ghost-hover transition-colors">
 //                 <Store className="w-4 h-4" />
 //                 {resolveLabel(t, 'nav.myResellerStore', 'myResellerStore')}
 //               </Link>
-//               <Link
-//                 href="/profile/scholarships"
-//                 className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-text-nav-link hover:text-text-nav-link-hover hover:bg-bg-ghost-hover transition-colors"
-//               >
+//               <Link href="/profile/scholarships" className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-text-nav-link hover:text-text-nav-link-hover hover:bg-bg-ghost-hover transition-colors">
 //                 <GraduationCap className="w-4 h-4" />
 //                 {resolveLabel(t, 'scholarships.myApplications.pageTitle', 'myScholarships')}
 //               </Link>
-//               <Link
-//                 href="/profile/referrals"
-//                 className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-text-nav-link hover:text-text-nav-link-hover hover:bg-bg-ghost-hover transition-colors"
-//               >
+//               <Link href="/profile/referrals" className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-text-nav-link hover:text-text-nav-link-hover hover:bg-bg-ghost-hover transition-colors">
 //                 <Share2 className="w-4 h-4" />
 //                 {resolveLabel(t, 'nav.referralDashboard', 'referralDashboard')}
 //               </Link>
@@ -526,19 +493,19 @@
 
 
 
-
-
-
 /**
  * @fileoverview Main Navigation Header (Tailwind, Mobile-First)
  *
- * Config-driven nav pill list sourced from `landing.config.js → navLinks`.
+ * Config-driven brand block. Reads theme from useTheme() and swaps
+ * between brand.logo (dark mode) and brand.logoLight (light mode).
+ * Falls back to icon + text if either logo is missing.
  *
  * Path: apps/web/components/shared/Navigation.jsx
  */
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/router';
 import {
   Code2,
@@ -624,17 +591,27 @@ const Navigation = () => {
   const { theme, toggleTheme, mounted: themeMounted } = useTheme();
   const { isAuthenticated, user, logout } = useAuth();
   
-  /* Real-time wallet balance */
   const { balance, loading: balanceLoading } = useWalletBalance(isAuthenticated);
 
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [logoError, setLogoError] = useState(false);
 
   const platformConfig = getPlatformConfig();
   const brand = platformConfig?.brand || {};
   const brandName = brand.name || 'ABYSSiNIA';
   const brandSuffix = brand.suffix || 'Tech Academy';
+  const brandLogoAlt = brand.logoAlt || brandName;
+
+  /* 
+   * Theme-aware logo selection.
+   * Falls back to the dark logo if no light version is configured.
+   */
+  const activeLogo =
+    theme === 'light'
+      ? brand.logoLight || brand.logo
+      : brand.logo;
 
   const landingConfig = getLandingConfig();
   const isMounted = langMounted && themeMounted;
@@ -708,6 +685,15 @@ const Navigation = () => {
     return router.pathname.startsWith(href);
   };
 
+  /* 
+   * Reset the logo error flag when the theme changes so it can try the
+   * other logo. If both fail, the text fallback takes over permanently
+   * for that theme.
+   */
+  useEffect(() => {
+    setLogoError(false);
+  }, [theme]);
+
   return (
     <header
       className={`fixed top-0 left-0 right-0 z-50 h-[72px]
@@ -719,22 +705,45 @@ const Navigation = () => {
                     : 'bg-bg-nav border-transparent'}`}
     >
       <div className="w-full max-w-7xl mx-auto flex items-center justify-between gap-3">
-        {/* Brand */}
-        <Link href="/" className="flex items-center gap-2.5 shrink-0 group" aria-label={brandName}>
-          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-accent-light via-accent to-accent-dark flex items-center justify-center shadow-glow-gold-sm group-hover:scale-105 transition-transform duration-300">
-            <Code2 className="w-5 h-5 text-text-inverse" />
-          </div>
-          <div className="hidden sm:flex flex-col leading-none">
-            <span className="text-base font-extrabold text-text-main tracking-tight">
-              {brandName}
-            </span>
-            <span className="text-[10px] tracking-[0.12em] text-text-dim uppercase font-medium mt-0.5">
-              {brandSuffix}
-            </span>
-          </div>
+        {/* ── Brand ── */}
+        <Link
+          href="/"
+          className="flex items-center gap-2.5 shrink-0 group"
+          aria-label={brandName}
+        >
+          {activeLogo && !logoError ? (
+            /* Theme-aware logo image */
+            <div className="relative h-10 w-auto min-w-[140px] flex items-center">
+              <Image
+                key={activeLogo} /* force remount on theme change */
+                src={activeLogo}
+                alt={brandLogoAlt}
+                width={brand.logoWidth || 140}
+                height={brand.logoHeight || 40}
+                priority
+                onError={() => setLogoError(true)}
+                className="object-contain h-full w-auto group-hover:scale-[1.02] transition-transform duration-300"
+              />
+            </div>
+          ) : (
+            /* Fallback: icon + text (shown if no logo, or logo fails) */
+            <>
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-accent-light via-accent to-accent-dark flex items-center justify-center shadow-glow-gold-sm group-hover:scale-105 transition-transform duration-300">
+                <Code2 className="w-5 h-5 text-text-inverse" />
+              </div>
+              <div className="hidden sm:flex flex-col leading-none">
+                <span className="text-base font-extrabold text-text-main tracking-tight">
+                  {brandName}
+                </span>
+                <span className="text-[10px] tracking-[0.12em] text-text-dim uppercase font-medium mt-0.5">
+                  {brandSuffix}
+                </span>
+              </div>
+            </>
+          )}
         </Link>
 
-        {/* Desktop pills */}
+        {/* ── Desktop pills ── */}
         <nav
           className="hidden md:flex items-center gap-0.5 bg-bg-pill-container p-1 rounded-full border border-border-pill"
           aria-label="Primary"
@@ -762,7 +771,7 @@ const Navigation = () => {
           })}
         </nav>
 
-        {/* Controls */}
+        {/* ── Controls ── */}
         <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
           <LanguageToggle />
 
@@ -776,11 +785,6 @@ const Navigation = () => {
             {isMounted && (theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />)}
           </button>
 
-          {/* 
-           * Wallet Balance Pill
-           * Only visible for authenticated users. Shows the current
-           * withdrawable balance with a quick link to the dashboard.
-           */}
           {isAuthenticated && (
             <Link
               href="/profile/referrals"
@@ -833,43 +837,23 @@ const Navigation = () => {
                   </div>
                   <div className="h-px bg-border-light my-1" />
 
-                  <Link
-                    href="/profile"
-                    role="menuitem"
-                    className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-text-muted hover:text-text-main hover:bg-bg-ghost-hover transition-colors"
-                  >
+                  <Link href="/profile" role="menuitem" className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-text-muted hover:text-text-main hover:bg-bg-ghost-hover transition-colors">
                     <User className="w-4 h-4" />
                     {resolveLabel(t, 'nav.myProfile', 'myProfile')}
                   </Link>
-                  <Link
-                    href="/profile/reseller"
-                    role="menuitem"
-                    className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-text-muted hover:text-text-main hover:bg-bg-ghost-hover transition-colors"
-                  >
+                  <Link href="/profile/reseller" role="menuitem" className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-text-muted hover:text-text-main hover:bg-bg-ghost-hover transition-colors">
                     <Store className="w-4 h-4" />
                     {resolveLabel(t, 'nav.myResellerStore', 'myResellerStore')}
                   </Link>
-                  <Link
-                    href="/profile/scholarships"
-                    role="menuitem"
-                    className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-text-muted hover:text-text-main hover:bg-bg-ghost-hover transition-colors"
-                  >
+                  <Link href="/profile/scholarships" role="menuitem" className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-text-muted hover:text-text-main hover:bg-bg-ghost-hover transition-colors">
                     <GraduationCap className="w-4 h-4" />
                     {resolveLabel(t, 'scholarships.myApplications.pageTitle', 'myScholarships')}
                   </Link>
-                  <Link
-                    href="/profile/referrals"
-                    role="menuitem"
-                    className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-text-muted hover:text-text-main hover:bg-bg-ghost-hover transition-colors"
-                  >
+                  <Link href="/profile/referrals" role="menuitem" className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-text-muted hover:text-text-main hover:bg-bg-ghost-hover transition-colors">
                     <Share2 className="w-4 h-4" />
                     {resolveLabel(t, 'nav.referralDashboard', 'referralDashboard')}
                   </Link>
-                  <Link
-                    href="/portal"
-                    role="menuitem"
-                    className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-text-muted hover:text-text-main hover:bg-bg-ghost-hover transition-colors"
-                  >
+                  <Link href="/portal" role="menuitem" className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-text-muted hover:text-text-main hover:bg-bg-ghost-hover transition-colors">
                     <BookOpen className="w-4 h-4" />
                     {resolveLabel(t, 'nav.portal', 'portal')}
                   </Link>
@@ -919,7 +903,7 @@ const Navigation = () => {
         </div>
       </div>
 
-      {/* Mobile menu */}
+      {/* ── Mobile menu ── */}
       {isMobileOpen && (
         <div
           className="md:hidden absolute top-[72px] left-0 right-0
@@ -928,7 +912,6 @@ const Navigation = () => {
                      px-5 pt-4 pb-6 flex flex-col gap-1
                      z-40"
         >
-          {/* Mobile Wallet Display */}
           {isAuthenticated && (
             <div className="mb-2 p-3 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-between">
               <div className="flex items-center gap-2 text-accent">
@@ -968,31 +951,19 @@ const Navigation = () => {
                 <NotificationBell />
               </div>
               <div className="h-px bg-border-mobile-link my-2" />
-              <Link
-                href="/profile"
-                className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-text-nav-link hover:text-text-nav-link-hover hover:bg-bg-ghost-hover transition-colors"
-              >
+              <Link href="/profile" className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-text-nav-link hover:text-text-nav-link-hover hover:bg-bg-ghost-hover transition-colors">
                 <User className="w-4 h-4" />
                 {resolveLabel(t, 'nav.myProfile', 'myProfile')}
               </Link>
-              <Link
-                href="/profile/reseller"
-                className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-text-nav-link hover:text-text-nav-link-hover hover:bg-bg-ghost-hover transition-colors"
-              >
+              <Link href="/profile/reseller" className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-text-nav-link hover:text-text-nav-link-hover hover:bg-bg-ghost-hover transition-colors">
                 <Store className="w-4 h-4" />
                 {resolveLabel(t, 'nav.myResellerStore', 'myResellerStore')}
               </Link>
-              <Link
-                href="/profile/scholarships"
-                className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-text-nav-link hover:text-text-nav-link-hover hover:bg-bg-ghost-hover transition-colors"
-              >
+              <Link href="/profile/scholarships" className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-text-nav-link hover:text-text-nav-link-hover hover:bg-bg-ghost-hover transition-colors">
                 <GraduationCap className="w-4 h-4" />
                 {resolveLabel(t, 'scholarships.myApplications.pageTitle', 'myScholarships')}
               </Link>
-              <Link
-                href="/profile/referrals"
-                className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-text-nav-link hover:text-text-nav-link-hover hover:bg-bg-ghost-hover transition-colors"
-              >
+              <Link href="/profile/referrals" className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-text-nav-link hover:text-text-nav-link-hover hover:bg-bg-ghost-hover transition-colors">
                 <Share2 className="w-4 h-4" />
                 {resolveLabel(t, 'nav.referralDashboard', 'referralDashboard')}
               </Link>

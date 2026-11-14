@@ -284,26 +284,41 @@ const platformConfig = {
     resellersEnabled: parseBoolEnv('RESELLERS_ENABLED', true),
   },
 
-  /* ── Brand Identity ───────────────────────────────────────────────────
+
+    /* ── Brand Identity ───────────────────────────────────────────────────
    * These are display-only constants. They do NOT belong in env because
    * they are product identity, not deployment configuration.
    * -------------------------------------------------------------------- */
   brand: {
-    name: process.env.BRAND_NAME || 'ABYSSiNIA',
+    name: process.env.BRAND_NAME || 'ABYSSiNiA',
     suffix: process.env.BRAND_SUFFIX || 'Tech Academy',
     tagline:
       process.env.BRAND_TAGLINE ||
       'Master Full-Stack Engineering from Ethiopia to the World',
     established: process.env.BRAND_ESTABLISHED || '2026',
-    contactPhone: process.env.BRAND_CONTACT_PHONE || '+251 911 234 567',
+    contactPhone: process.env.BRAND_CONTACT_PHONE || '+251 920 944 941',
     telegramSupport:
-      process.env.BRAND_TELEGRAM_SUPPORT || '@AbyssiniaAcademySupport',
-    email: process.env.BRAND_EMAIL || 'support@abyssinia.academy',
+      process.env.BRAND_TELEGRAM_SUPPORT || '@abyssinia_tech_academy',
+    email: process.env.BRAND_EMAIL || 'abitigetasew@gmail.com',
     location: process.env.BRAND_LOCATION || 'Addis Ababa, Ethiopia',
-    website: process.env.BRAND_WEBSITE || 'https://abyssinia.academy',
+    website: process.env.BRAND_WEBSITE || 'https://abyssiniatech.vercel.app/',
+    
+    /* 
+     * Theme-aware logo configuration. 
+     * `logo`      → used in dark mode (default)
+     * `logoLight` → used in light mode
+     * If either is missing or fails, the Nav falls back to text.
+     */
+    logo: process.env.BRAND_LOGO || '/images/logo-dark.png',
+    logoLight: process.env.BRAND_LOGO_LIGHT || '/images/logo-light.png',
+    logoAlt: process.env.BRAND_LOGO_ALT || 'ABYSSiNiA',
+    logoWidth: parseInt(process.env.BRAND_LOGO_WIDTH, 10) || 140,
+    logoHeight: parseInt(process.env.BRAND_LOGO_HEIGHT, 10) || 40,
+    footerLogoWidth: parseInt(process.env.BRAND_FOOTER_LOGO_WIDTH, 10) || 120,
+
     socialLinks: {
       telegram:
-        process.env.BRAND_TELEGRAM || 'https://t.me/AbyssiniaAcademy',
+        process.env.BRAND_TELEGRAM || 'https://t.me/abyssinia_tech_academy',
       youtube:
         process.env.BRAND_YOUTUBE ||
         'https://youtube.com/@AbyssiniaAcademy',
