@@ -13,7 +13,7 @@ module.exports = {
       company: 'Company',
     },
     links: {
-      referrals: 'MLM Referrals',
+      referrals: 'Referrals',
       reseller: 'Reseller Program',
       agents: 'Agent Program',
       withdrawals: 'Withdrawals',

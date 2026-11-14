@@ -1,18 +1,14 @@
 /**
- * @fileoverview Site Footer Component (Config-Driven, Tailwind-Only)
+ * @fileoverview Site Footer Component (Translucent + Blurred Top Shadow)
  *
- * Premium multi-column footer with brand block, quick-link columns,
- * contact details, social links, language toggle, and legal bar.
+ * The footer stays translucent (bg-bg-secondary/60 + backdrop-blur-md) so
+ * the ambient glow orbs bleed through. Above the footer, a soft blurred
+ * gradient shadow creates a "lifted" effect that anchors it to the page
+ * without turning it into a solid dark slab.
  *
- * Every string, link, and social entry resolves from platform.config.js
- * → footer and brand blocks. Every visual value resolves from the shared
- * Tailwind design system (themes.css → tailwind.config.js).
- *
- * Fallback strategy:
- *   - Logo: if the configured logo fails to load, the icon + text brand
- *     block renders instead (theme-aware, matches Navigation).
- *   - Strings: t.footer.* → English fallback → raw key path.
- *   - Columns: if `footer.columns` is missing, only brand + legal render.
+ * The shadow is a separate absolutely-positioned div sitting just above
+ * the footer's top edge. It's `pointer-events-none` so it never blocks
+ * clicks on content above.
  *
  * Path: apps/web/components/shared/Footer.jsx
  */
@@ -29,19 +25,12 @@ import {
   Youtube,
   Github,
   ArrowUp,
-  Heart,
 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTheme } from '../../context/ThemeContext';
 import { getPlatformConfig } from '../../lib/config';
 import LanguageToggle from './LanguageToggle';
 
-/* ============================================================================
- * LABEL RESOLVER
- * ============================================================================
- * Cascade: t.<keyPath> → English fallback → humanized key leaf.
- * Prevents raw keys from ever reaching the UI.
- * ========================================================================== */
 const resolveLabel = (t, keyPath, fallback) => {
   if (!keyPath || typeof keyPath !== 'string') return fallback || '';
   const parts = keyPath.split('.');
@@ -56,23 +45,12 @@ const resolveLabel = (t, keyPath, fallback) => {
   return leaf.charAt(0).toUpperCase() + leaf.slice(1).replace(/([A-Z])/g, ' $1');
 };
 
-/* ============================================================================
- * SOCIAL ICON REGISTRY
- * ============================================================================
- * Maps config keys → Lucide icon components. Unknown keys fall back to
- * the Send icon so a new social platform can be added to config without
- * breaking the footer.
- * ========================================================================== */
 const SOCIAL_ICONS = {
   telegram: Send,
   youtube: Youtube,
   github: Github,
   email: Mail,
 };
-
-/* ============================================================================
- * COMPONENT
- * ========================================================================== */
 
 const Footer = () => {
   const { t } = useLanguage();
@@ -81,7 +59,6 @@ const Footer = () => {
   const [logoError, setLogoError] = useState(false);
   const [newsletterEmail, setNewsletterEmail] = useState('');
   const [newsletterStatus, setNewsletterStatus] = useState(null);
-  /* status: null | 'success' | 'error' */
 
   const platformConfig = getPlatformConfig();
   const brand = platformConfig?.brand || {};
@@ -91,7 +68,6 @@ const Footer = () => {
   const brandSuffix = brand.suffix || 'Tech Academy';
   const brandLogoAlt = brand.logoAlt || brandName;
 
-  /* Theme-aware logo, matching Navigation */
   const activeLogo =
     theme === 'light' ? brand.logoLight || brand.logo : brand.logo;
 
@@ -116,10 +92,6 @@ const Footer = () => {
   const poweredByLabel = footer.poweredByLabel || 'Powered by SoDar!';
   const backToTopLabel = footer.backToTopLabel || 'Back to top';
 
-  /**
-   * Smooth-scroll to the top. Uses window.scrollTo with `behavior: smooth`
-   * for browsers that support it; instant fallback otherwise.
-   */
   const handleBackToTop = useCallback(() => {
     if (typeof window === 'undefined') return;
     try {
@@ -129,11 +101,6 @@ const Footer = () => {
     }
   }, []);
 
-  /**
-   * Newsletter subscribe — client-side validation only for now.
-   * The actual endpoint is intentionally not wired to avoid overreach;
-   * this is UI scaffolding for a future backend integration.
-   */
   const handleNewsletterSubmit = useCallback(
     (event) => {
       event.preventDefault();
@@ -154,10 +121,24 @@ const Footer = () => {
     <footer
       className="relative z-10
                  border-t border-border-medium
-                 bg-bg-secondary/60 backdrop-blur-sm
+                 bg-bg-secondary/60 backdrop-blur-md
                  text-sm text-text-dim"
     >
-      {/* Top gradient accent line */}
+      {/* 
+       * Blurred top shadow — a soft gradient that fades from a dark blur
+       * at the top edge to transparent. Sits ABOVE the footer (negative
+       * top offset) so it appears to lift the footer off the page content.
+       * pointer-events-none ensures it never blocks interactions.
+       */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0 -top-12 h-12
+                   bg-gradient-to-b from-black/25 via-black/10 to-transparent
+                   blur-md
+                   dark:from-black/40 dark:via-black/15"
+      />
+
+      {/* Top accent line */}
       <div
         aria-hidden="true"
         className="h-px w-full
@@ -165,10 +146,10 @@ const Footer = () => {
       />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-14">
-        {/* ── Main grid: brand (2 col) + link columns + contact (2 col) ── */}
+        {/* ── Main grid ── */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-10 lg:gap-8">
 
-          {/* BRAND COLUMN (spans 4 of 12 on desktop) */}
+          {/* BRAND COLUMN */}
           <div className="lg:col-span-4 flex flex-col gap-5">
             <Link
               href="/"
@@ -210,13 +191,10 @@ const Footer = () => {
               </p>
             )}
 
-            {/* Made-in badge */}
-            <div className="inline-flex items-center gap-1.5 text-2xs font-bold text-accent">
-              <Heart className="w-3 h-3 fill-current" aria-hidden="true" />
+            <div className="inline-flex items-center text-2xs font-bold text-accent">
               {madeIn}
             </div>
 
-            {/* Social icons */}
             {socialEntries.length > 0 && (
               <div className="flex flex-wrap items-center gap-2 mt-1">
                 {socialEntries.map(([key, href]) => {
@@ -243,7 +221,7 @@ const Footer = () => {
             )}
           </div>
 
-          {/* LINK COLUMNS (spans 5 of 12) */}
+          {/* LINK COLUMNS */}
           {columns.length > 0 && (
             <div className="lg:col-span-5 grid grid-cols-2 sm:grid-cols-3 gap-8">
               {columns.map((col) => (
@@ -270,7 +248,7 @@ const Footer = () => {
             </div>
           )}
 
-          {/* CONTACT + NEWSLETTER (spans 3 of 12) */}
+          {/* CONTACT + NEWSLETTER */}
           <div className="lg:col-span-3 flex flex-col gap-5">
             <h3 className="text-2xs font-extrabold uppercase tracking-[0.15em] text-text-main">
               {resolveLabel(t, 'footer.contactTitle', 'Get in touch')}
@@ -324,7 +302,6 @@ const Footer = () => {
               )}
             </ul>
 
-            {/* Newsletter form */}
             <form
               onSubmit={handleNewsletterSubmit}
               className="flex flex-col gap-2 mt-2"

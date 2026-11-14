@@ -244,13 +244,17 @@ const platformConfig = {
    * -------------------------------------------------------------------- */
   footer: {
     /* Copyright suffix rendered after the dynamic year */
-    copyrightSuffix:
-      process.env.FOOTER_COPYRIGHT_SUFFIX ||
-      'ABYSSiNiA Tech Academy. All rights reserved.',
-    poweredByLabel:
-      process.env.FOOTER_POWERED_BY_LABEL || 'Powered by SoDar!',
-    backToTopLabel:
-      process.env.FOOTER_BACK_TO_TOP_LABEL || 'Back to top',
+    copyrightSuffix: process.env.FOOTER_COPYRIGHT_SUFFIX || 'ABYSSiNiA Tech Academy. All rights reserved.',
+    poweredByLabel: process.env.FOOTER_POWERED_BY_LABEL || 'Powered by SoDar!',
+    backToTopLabel: process.env.FOOTER_BACK_TO_TOP_LABEL || 'Back to top',
+
+    /* Shadow animation config */
+    shadowOpacityDark: parseFloat(process.env.FOOTER_SHADOW_OPACITY_DARK) || 0.2,
+    shadowOpacityLight: parseFloat(process.env.FOOTER_SHADOW_OPACITY_LIGHT) || 0.08,
+    shadowBlur: parseInt(process.env.FOOTER_SHADOW_BLUR, 10) || 24,
+    shadowOffsetY: parseInt(process.env.FOOTER_SHADOW_OFFSET_Y, 10) || -4,
+    animationDurationMs: parseInt(process.env.FOOTER_ANIMATION_MS, 10) || 600,
+
 
     /* Columns rendered between the brand block and the bottom bar.
        Each entry: { key, labelKey, links: [{ labelKey, href }] } */
