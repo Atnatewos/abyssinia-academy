@@ -16,18 +16,13 @@
 /**
  * @fileoverview GET /api/public/scholarships/active
  *
- * Public (unauthenticated) endpoint. Returns active campaigns.
- *
  * Path: apps/web/pages/api/public/scholarships/active.js
  */
 
 import { handleActiveCampaigns } from '../../../../lib/scholarships/http/handlers/public';
 
 /* 
- * FORCE VERCEL TO BYPASS CACHE
- * 
- * By exporting these two constants, we tell Next.js this route is a 
- * pure API endpoint that must execute dynamically on every request.
+ * Force Vercel to treat this route as dynamic (no build-time cache).
  */
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;

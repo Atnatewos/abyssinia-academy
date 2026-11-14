@@ -106,6 +106,9 @@ import { handleError } from '../errors';
 
 /**
  * GET /api/public/scholarships/active
+ *
+ * Public (unauthenticated) endpoint. Returns active campaigns for the
+ * public browse page and marketing banners.
  */
 export const handleActiveCampaigns = async (req, res) => {
   try {
@@ -119,6 +122,8 @@ export const handleActiveCampaigns = async (req, res) => {
     }
 
     const config = getScholarshipPublicListingConfig();
+    
+    /* Fetch live campaigns from the database */
     const campaigns = await listActiveCampaigns({ limit: 20 });
 
     const sanitized = campaigns.map((c) => ({
@@ -141,9 +146,10 @@ export const handleActiveCampaigns = async (req, res) => {
     }));
 
     /* 
-     * FORCE NO CACHE
-     * Since this is live campaign data, we cannot let Vercel or the browser
-     * cache this response. If an admin deletes a campaign, it must vanish.
+     * FORCE NO CACHE:
+     * We cannot allow Vercel's Edge Network or the browser to cache
+     * public campaign data. If an admin pauses a campaign, it must
+     * vanish for guests immediately.
      */
     res.setHeader(
       'Cache-Control',
@@ -154,6 +160,7 @@ export const handleActiveCampaigns = async (req, res) => {
 
     return ok(res, { campaigns: sanitized });
   } catch (error) {
+    console.error('[public/scholarships/active] fetch failed:', error);
     return handleError(error, res);
   }
 };
