@@ -7,11 +7,10 @@
 //  * Base URL resolution logic:
 //  *   The platform uses a dual-backend architecture during migration:
 //  *   1. Express API (`NEXT_PUBLIC_API_URL`) — handles legacy routes.
-//  *   2. Next.js API Routes (`/api`) — handles new feature modules like
-//  *      scholarships and notifications.
+//  *   2. Next.js API Routes (`/api`) — handles new feature modules.
 //  *
-//  * To prevent 404s, requests to modules that live entirely in Next.js
-//  * MUST bypass the Express URL and route to the same-origin Next.js backend.
+//  * Modules that live entirely in Next.js MUST bypass the Express URL
+//  * and route to the same-origin Next.js backend.
 //  *
 //  * Path: apps/web/lib/api.js
 //  */
@@ -22,10 +21,6 @@
 
 // /* ── i18n resolver ─────────────────────────────────────────────────── */
 
-// /**
-//  * Resolve the current language from the same localStorage key that
-//  * LanguageContext writes. Falls back to 'en'.
-//  */
 // function getCurrentLanguage() {
 //   if (typeof window === 'undefined') return 'en';
 //   try {
@@ -35,13 +30,6 @@
 //   }
 // }
 
-// /**
-//  * Load a nested i18n key from the confirmations namespace.
-//  * Falls back to English if the key is missing in the current language.
-//  *
-//  * @param {string} keyPath - e.g. 'actions.deleteCourse'
-//  * @returns {object|null}
-//  */
 // function getConfirmCopy(keyPath) {
 //   const lang = getCurrentLanguage();
 //   try {
@@ -73,23 +61,20 @@
 
 // /* ── Base axios instance ───────────────────────────────────────────── */
 
-// /*
-//  * Express base URL (legacy routes).
-//  */
 // const EXPRESS_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '';
 
 // /**
 //  * Determine the correct base URL for a given endpoint.
 //  *
-//  * Scholarship and notification endpoints live entirely in Next.js API routes.
-//  * Legacy endpoints (auth, payments, referrals, etc.) live in Express.
+//  * All endpoints that live entirely in Next.js API routes must bypass
+//  * the Express URL. Everything else routes to Express if configured.
 //  *
 //  * @param {string} url - The request path
 //  * @returns {string} The base URL
 //  */
 // function resolveBaseURL(url) {
 //   const u = String(url || '');
-  
+
 //   /* 
 //    * Next.js-only modules. These must hit the same-origin Next.js API,
 //    * completely bypassing the Express proxy.
@@ -99,7 +84,11 @@
 //     u.startsWith('/scholarships') ||
 //     u.startsWith('/public/scholarships') ||
 //     u.startsWith('/notifications') ||
-//     u.startsWith('/settings/public');
+//     u.startsWith('/settings/public') ||
+//     u.startsWith('/reseller') ||
+//     u.startsWith('/referrals') ||
+//     u.startsWith('/agents') ||
+//     u.startsWith('/mlm');
 
 //   if (isNextjsRoute) {
 //     return '/api'; // Same-origin Next.js
@@ -148,9 +137,6 @@
 
 // /* ── Pattern → i18n key mapping ─────────────────────────────────────── */
 
-// /**
-//  * Delete patterns — first match wins. Each entry is [regex, i18nKey].
-//  */
 // const DELETE_PATTERNS = [
 //   [/\/admin\/courses\/[^/]+$/, 'actions.deleteCourse'],
 //   [/\/admin\/course-videos\/[^/]+$/, 'actions.deleteVideo'],
@@ -163,9 +149,6 @@
 //   [/\/admin\/scholarships\/[^/]+$/, 'actions.deleteCampaign'],
 // ];
 
-// /**
-//  * Hydrate a raw i18n entry into ConfirmDialog options.
-//  */
 // function hydrate(copy) {
 //   if (!copy) return null;
 //   return {
@@ -178,10 +161,6 @@
 //   };
 // }
 
-// /**
-//  * Resolve the default confirmation for a method + URL.
-//  * Returns null when no confirmation is configured.
-//  */
 // function getDefaultConfirm(method, url) {
 //   const m = method.toLowerCase();
 //   const u = (url || '').toString();
@@ -270,24 +249,8 @@
 
 
 
-
-
-
-
-
 /**
  * @fileoverview API Client with Global Confirmation Interceptor
- *
- * All confirmation copy is sourced from the shared i18n confirmations
- * namespace. Zero hardcoded strings in this file.
- *
- * Base URL resolution logic:
- *   The platform uses a dual-backend architecture during migration:
- *   1. Express API (`NEXT_PUBLIC_API_URL`) — handles legacy routes.
- *   2. Next.js API Routes (`/api`) — handles new feature modules.
- *
- * Modules that live entirely in Next.js MUST bypass the Express URL
- * and route to the same-origin Next.js backend.
  *
  * Path: apps/web/lib/api.js
  */
@@ -295,8 +258,6 @@
 import axios from 'axios';
 import { getItem, removeItem } from './storage';
 import { requestConfirm } from './confirmBridge';
-
-/* ── i18n resolver ─────────────────────────────────────────────────── */
 
 function getCurrentLanguage() {
   if (typeof window === 'undefined') return 'en';
@@ -336,26 +297,20 @@ function getConfirmCopy(keyPath) {
   }
 }
 
-/* ── Base axios instance ───────────────────────────────────────────── */
-
 const EXPRESS_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '';
 
 /**
  * Determine the correct base URL for a given endpoint.
  *
- * All endpoints that live entirely in Next.js API routes must bypass
- * the Express URL. Everything else routes to Express if configured.
+ * Next.js-only modules (which have their own `pages/api/*` routes) must
+ * bypass the Express URL. Everything else goes to Express if configured.
  *
- * @param {string} url - The request path
- * @returns {string} The base URL
+ * @param {string} url
+ * @returns {string}
  */
 function resolveBaseURL(url) {
   const u = String(url || '');
 
-  /* 
-   * Next.js-only modules. These must hit the same-origin Next.js API,
-   * completely bypassing the Express proxy.
-   */
   const isNextjsRoute =
     u.startsWith('/admin/scholarships') ||
     u.startsWith('/scholarships') ||
@@ -365,13 +320,14 @@ function resolveBaseURL(url) {
     u.startsWith('/reseller') ||
     u.startsWith('/referrals') ||
     u.startsWith('/agents') ||
-    u.startsWith('/mlm');
+    u.startsWith('/mlm') ||
+    u === '/profile' ||
+    u.startsWith('/profile/');
 
   if (isNextjsRoute) {
     return '/api'; // Same-origin Next.js
   }
 
-  /* Everything else goes to Express if configured, or same-origin fallback */
   return EXPRESS_BASE_URL || '/api';
 }
 
@@ -384,7 +340,6 @@ axiosInstance.interceptors.request.use((config) => {
   const token = getItem('auth_token');
   const adminToken = getItem('admin_token');
 
-  /* Dynamically resolve the base URL per request */
   config.baseURL = resolveBaseURL(config.url);
 
   if (config.url && config.url.startsWith('/admin') && adminToken) {
@@ -411,8 +366,6 @@ axiosInstance.interceptors.response.use(
     return Promise.reject(error);
   }
 );
-
-/* ── Pattern → i18n key mapping ─────────────────────────────────────── */
 
 const DELETE_PATTERNS = [
   [/\/admin\/courses\/[^/]+$/, 'actions.deleteCourse'],
@@ -482,8 +435,6 @@ function getDefaultConfirm(method, url) {
   return null;
 }
 
-/* ── Interceptor wrapper ───────────────────────────────────────────── */
-
 const CANCELLED_RESPONSE = Object.freeze({
   success: false,
   cancelled: true,
@@ -501,8 +452,6 @@ async function interceptedRequest(method, url, data, options = {}) {
 
   return axiosInstance.request({ method, url, data, ...axiosOptions });
 }
-
-/* ── Public API client ─────────────────────────────────────────────── */
 
 const apiClient = {
   get: (url, options = {}) =>
