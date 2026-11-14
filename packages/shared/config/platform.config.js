@@ -327,6 +327,20 @@ const platformConfig = {
     },
   },
 
+
+    /* ── Banner Configuration ─────────────────────────────────────────────
+   * Top promotional strip shown above navigation. Dismissible by the user.
+   * Dismissal persists for `dismissStorageDays` days, then the banner
+   * resurfaces to catch fresh campaigns.
+   * -------------------------------------------------------------------- */
+  banner: {
+    enabled: process.env.BANNER_ENABLED !== 'false',
+    dismissStorageDays: parseInt(process.env.BANNER_DISMISS_DAYS, 10) || 30,
+    storageKey: process.env.BANNER_STORAGE_KEY || 'abyssinia_banner_dismissed_until',
+    heightPx: parseInt(process.env.BANNER_HEIGHT_PX, 10) || 40,
+    animationDurationMs: parseInt(process.env.BANNER_ANIMATION_MS, 10) || 300,
+  },
+
   /* ── Course Defaults ──────────────────────────────────────────────────
    * Structural defaults. Business rules that vary per course live in the
    * DB, not here — this block only defines shape, not pricing.

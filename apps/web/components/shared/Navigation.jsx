@@ -1,9 +1,11 @@
 // /**
 //  * @fileoverview Main Navigation Header (Tailwind, Mobile-First)
 //  *
-//  * Config-driven nav pill list sourced from `landing.config.js → navLinks`.
-//  * Brand block renders the logo from `platform.brand.logo` if provided,
-//  * otherwise falls back to the icon + text layout.
+//  * Config-driven brand block. Reads theme from useTheme() and swaps
+//  * between brand.logo (dark mode) and brand.logoLight (light mode).
+//  *
+//  * The logo is gated on `mounted` to prevent a theme flash on first render
+//  * (before the ThemeContext useEffect resolves localStorage).
 //  *
 //  * Path: apps/web/components/shared/Navigation.jsx
 //  */
@@ -32,6 +34,7 @@
 // import { useLanguage } from '../../context/LanguageContext';
 // import { useTheme } from '../../context/ThemeContext';
 // import { useAuth } from '../../context/AuthContext';
+// import { useBanner } from '../../context/BannerContext';
 // import { getPlatformConfig, getLandingConfig } from '../../lib/config';
 // import { useWalletBalance } from '../../hooks/useWalletBalance';
 // import NotificationBell from '../notifications/NotificationBell';
@@ -95,23 +98,36 @@
 //   const { t, mounted: langMounted } = useLanguage();
 //   const { theme, toggleTheme, mounted: themeMounted } = useTheme();
 //   const { isAuthenticated, user, logout } = useAuth();
-  
+//   const { headerHeight } = useBanner();
+
 //   const { balance, loading: balanceLoading } = useWalletBalance(isAuthenticated);
 
 //   const [isScrolled, setIsScrolled] = useState(false);
 //   const [isMobileOpen, setIsMobileOpen] = useState(false);
 //   const [isProfileOpen, setIsProfileOpen] = useState(false);
+//   const [logoError, setLogoError] = useState(false);
 
 //   const platformConfig = getPlatformConfig();
 //   const brand = platformConfig?.brand || {};
 //   const brandName = brand.name || 'ABYSSiNIA';
 //   const brandSuffix = brand.suffix || 'Tech Academy';
-//   const brandLogo = brand.logo || null;
 //   const brandLogoAlt = brand.logoAlt || brandName;
 
 //   const landingConfig = getLandingConfig();
 //   const isMounted = langMounted && themeMounted;
 //   const isEnrolled = Boolean(user?.is_enrolled || user?.isEnrolled);
+
+//   /* 
+//    * Logo selection is gated on `mounted` to prevent a theme flash.
+//    * Before mount, we render the dark logo (the configured default),
+//    * then flip to the correct one once theme state is resolved.
+//    */
+//   const activeLogo = useMemo(() => {
+//     if (!themeMounted) return brand.logo;
+//     return theme === 'light'
+//       ? brand.logoLight || brand.logo
+//       : brand.logo;
+//   }, [theme, themeMounted, brand.logo, brand.logoLight]);
 
 //   const pills = useMemo(() => {
 //     const configured = Array.isArray(landingConfig?.navLinks)
@@ -181,6 +197,11 @@
 //     return router.pathname.startsWith(href);
 //   };
 
+//   /* Reset logo error when theme changes so the other logo can load */
+//   useEffect(() => {
+//     setLogoError(false);
+//   }, [theme]);
+
 //   return (
 //     <header
 //       className={`fixed top-0 left-0 right-0 z-50 h-[72px]
@@ -190,28 +211,29 @@
 //                   ${isScrolled
 //                     ? 'bg-bg-nav-scrolled border-accent/20 shadow-lg'
 //                     : 'bg-bg-nav border-transparent'}`}
+//       data-header-height={headerHeight}
 //     >
 //       <div className="w-full max-w-7xl mx-auto flex items-center justify-between gap-3">
-//         {/* ── Brand ── */}
+//         {/* Brand */}
 //         <Link
 //           href="/"
 //           className="flex items-center gap-2.5 shrink-0 group"
 //           aria-label={brandName}
 //         >
-//           {brandLogo ? (
-//             /* Config-driven logo image */
+//           {activeLogo && !logoError ? (
 //             <div className="relative h-10 w-auto min-w-[140px] flex items-center">
 //               <Image
-//                 src={brandLogo}
+//                 key={activeLogo}
+//                 src={activeLogo}
 //                 alt={brandLogoAlt}
 //                 width={brand.logoWidth || 140}
 //                 height={brand.logoHeight || 40}
 //                 priority
+//                 onError={() => setLogoError(true)}
 //                 className="object-contain h-full w-auto group-hover:scale-[1.02] transition-transform duration-300"
 //               />
 //             </div>
 //           ) : (
-//             /* Fallback: icon + text */
 //             <>
 //               <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-accent-light via-accent to-accent-dark flex items-center justify-center shadow-glow-gold-sm group-hover:scale-105 transition-transform duration-300">
 //                 <Code2 className="w-5 h-5 text-text-inverse" />
@@ -228,7 +250,7 @@
 //           )}
 //         </Link>
 
-//         {/* ── Desktop pills ── */}
+//         {/* Desktop pills */}
 //         <nav
 //           className="hidden md:flex items-center gap-0.5 bg-bg-pill-container p-1 rounded-full border border-border-pill"
 //           aria-label="Primary"
@@ -256,7 +278,7 @@
 //           })}
 //         </nav>
 
-//         {/* ── Controls ── */}
+//         {/* Controls */}
 //         <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
 //           <LanguageToggle />
 
@@ -388,7 +410,7 @@
 //         </div>
 //       </div>
 
-//       {/* ── Mobile menu ── */}
+//       {/* Mobile menu */}
 //       {isMobileOpen && (
 //         <div
 //           className="md:hidden absolute top-[72px] left-0 right-0
@@ -493,12 +515,15 @@
 
 
 
+
+
+
 /**
  * @fileoverview Main Navigation Header (Tailwind, Mobile-First)
  *
- * Config-driven brand block. Reads theme from useTheme() and swaps
- * between brand.logo (dark mode) and brand.logoLight (light mode).
- * Falls back to icon + text if either logo is missing.
+ * Navigation sits BELOW the banner when the banner is visible, and
+ * slides to top-0 when the banner is dismissed. The top offset is
+ * driven by BannerContext so the two components stay in lockstep.
  *
  * Path: apps/web/components/shared/Navigation.jsx
  */
@@ -527,6 +552,7 @@ import {
 import { useLanguage } from '../../context/LanguageContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
+import { useBanner } from '../../context/BannerContext';
 import { getPlatformConfig, getLandingConfig } from '../../lib/config';
 import { useWalletBalance } from '../../hooks/useWalletBalance';
 import NotificationBell from '../notifications/NotificationBell';
@@ -590,7 +616,8 @@ const Navigation = () => {
   const { t, mounted: langMounted } = useLanguage();
   const { theme, toggleTheme, mounted: themeMounted } = useTheme();
   const { isAuthenticated, user, logout } = useAuth();
-  
+  const { isVisible: bannerVisible, bannerHeight, animationDurationMs } = useBanner();
+
   const { balance, loading: balanceLoading } = useWalletBalance(isAuthenticated);
 
   const [isScrolled, setIsScrolled] = useState(false);
@@ -604,18 +631,16 @@ const Navigation = () => {
   const brandSuffix = brand.suffix || 'Tech Academy';
   const brandLogoAlt = brand.logoAlt || brandName;
 
-  /* 
-   * Theme-aware logo selection.
-   * Falls back to the dark logo if no light version is configured.
-   */
-  const activeLogo =
-    theme === 'light'
-      ? brand.logoLight || brand.logo
-      : brand.logo;
-
   const landingConfig = getLandingConfig();
   const isMounted = langMounted && themeMounted;
   const isEnrolled = Boolean(user?.is_enrolled || user?.isEnrolled);
+
+  const activeLogo = useMemo(() => {
+    if (!themeMounted) return brand.logo;
+    return theme === 'light'
+      ? brand.logoLight || brand.logo
+      : brand.logo;
+  }, [theme, themeMounted, brand.logo, brand.logoLight]);
 
   const pills = useMemo(() => {
     const configured = Array.isArray(landingConfig?.navLinks)
@@ -685,37 +710,38 @@ const Navigation = () => {
     return router.pathname.startsWith(href);
   };
 
-  /* 
-   * Reset the logo error flag when the theme changes so it can try the
-   * other logo. If both fail, the text fallback takes over permanently
-   * for that theme.
-   */
   useEffect(() => {
     setLogoError(false);
   }, [theme]);
 
+  /* Top offset: 40px when banner visible, 0 when dismissed */
+  const topOffset = bannerVisible ? bannerHeight : 0;
+
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-50 h-[72px]
+      className={`fixed left-0 right-0 z-50 h-[72px]
                   flex items-center px-4 sm:px-6 lg:px-10
                   backdrop-blur-xl saturate-150
                   border-b transition-all duration-300
                   ${isScrolled
                     ? 'bg-bg-nav-scrolled border-accent/20 shadow-lg'
                     : 'bg-bg-nav border-transparent'}`}
+      style={{
+        top: `${topOffset}px`,
+        transitionDuration: `${animationDurationMs}ms`,
+      }}
     >
       <div className="w-full max-w-7xl mx-auto flex items-center justify-between gap-3">
-        {/* ── Brand ── */}
+        {/* Brand */}
         <Link
           href="/"
           className="flex items-center gap-2.5 shrink-0 group"
           aria-label={brandName}
         >
           {activeLogo && !logoError ? (
-            /* Theme-aware logo image */
             <div className="relative h-10 w-auto min-w-[140px] flex items-center">
               <Image
-                key={activeLogo} /* force remount on theme change */
+                key={activeLogo}
                 src={activeLogo}
                 alt={brandLogoAlt}
                 width={brand.logoWidth || 140}
@@ -726,7 +752,6 @@ const Navigation = () => {
               />
             </div>
           ) : (
-            /* Fallback: icon + text (shown if no logo, or logo fails) */
             <>
               <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-accent-light via-accent to-accent-dark flex items-center justify-center shadow-glow-gold-sm group-hover:scale-105 transition-transform duration-300">
                 <Code2 className="w-5 h-5 text-text-inverse" />
@@ -743,7 +768,7 @@ const Navigation = () => {
           )}
         </Link>
 
-        {/* ── Desktop pills ── */}
+        {/* Desktop pills */}
         <nav
           className="hidden md:flex items-center gap-0.5 bg-bg-pill-container p-1 rounded-full border border-border-pill"
           aria-label="Primary"
@@ -771,7 +796,7 @@ const Navigation = () => {
           })}
         </nav>
 
-        {/* ── Controls ── */}
+        {/* Controls */}
         <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
           <LanguageToggle />
 
@@ -903,7 +928,7 @@ const Navigation = () => {
         </div>
       </div>
 
-      {/* ── Mobile menu ── */}
+      {/* Mobile menu */}
       {isMobileOpen && (
         <div
           className="md:hidden absolute top-[72px] left-0 right-0
