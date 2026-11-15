@@ -31,3 +31,9 @@ project-structure0.txt
 .env
 .env.local
 .env.*.local
+
+# Build outputs
+.next/
+.vercel/
+dist/
+build/
