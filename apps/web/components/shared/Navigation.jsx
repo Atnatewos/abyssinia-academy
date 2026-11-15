@@ -1,11 +1,10 @@
 // /**
-//  * @fileoverview Main Navigation Header (Tailwind, Mobile-First)
+//  * @fileoverview Main Navigation Header
 //  *
-//  * Config-driven brand block. Reads theme from useTheme() and swaps
-//  * between brand.logo (dark mode) and brand.logoLight (light mode).
-//  *
-//  * The logo is gated on `mounted` to prevent a theme flash on first render
-//  * (before the ThemeContext useEffect resolves localStorage).
+//  * Pure Tailwind implementation. The mobile menu uses an explicit RGBA
+//  * background color so the opacity is controllable directly in code
+//  * (adjust the 0.98 in the style prop). Backdrop blur adds the premium
+//  * glass feel without sacrificing readability.
 //  *
 //  * Path: apps/web/components/shared/Navigation.jsx
 //  */
@@ -98,7 +97,7 @@
 //   const { t, mounted: langMounted } = useLanguage();
 //   const { theme, toggleTheme, mounted: themeMounted } = useTheme();
 //   const { isAuthenticated, user, logout } = useAuth();
-//   const { headerHeight } = useBanner();
+//   const { isVisible: bannerVisible, bannerHeight, animationDurationMs } = useBanner();
 
 //   const { balance, loading: balanceLoading } = useWalletBalance(isAuthenticated);
 
@@ -117,16 +116,9 @@
 //   const isMounted = langMounted && themeMounted;
 //   const isEnrolled = Boolean(user?.is_enrolled || user?.isEnrolled);
 
-//   /* 
-//    * Logo selection is gated on `mounted` to prevent a theme flash.
-//    * Before mount, we render the dark logo (the configured default),
-//    * then flip to the correct one once theme state is resolved.
-//    */
 //   const activeLogo = useMemo(() => {
 //     if (!themeMounted) return brand.logo;
-//     return theme === 'light'
-//       ? brand.logoLight || brand.logo
-//       : brand.logo;
+//     return theme === 'light' ? brand.logoLight || brand.logo : brand.logo;
 //   }, [theme, themeMounted, brand.logo, brand.logoLight]);
 
 //   const pills = useMemo(() => {
@@ -185,6 +177,16 @@
 //     return () => document.removeEventListener('click', handleOutside);
 //   }, [isProfileOpen]);
 
+//   /* Lock body scroll when the mobile menu is open */
+//   useEffect(() => {
+//     if (isMobileOpen) {
+//       document.body.style.overflow = 'hidden';
+//     } else {
+//       document.body.style.overflow = '';
+//     }
+//     return () => { document.body.style.overflow = ''; };
+//   }, [isMobileOpen]);
+
 //   const handleLogout = useCallback(async () => {
 //     if (typeof logout === 'function') await logout();
 //     setIsProfileOpen(false);
@@ -197,29 +199,27 @@
 //     return router.pathname.startsWith(href);
 //   };
 
-//   /* Reset logo error when theme changes so the other logo can load */
 //   useEffect(() => {
 //     setLogoError(false);
 //   }, [theme]);
 
+//   const topOffset = bannerVisible ? bannerHeight : 0;
+
 //   return (
 //     <header
-//       className={`fixed top-0 left-0 right-0 z-50 h-[72px]
-//                   flex items-center px-4 sm:px-6 lg:px-10
-//                   backdrop-blur-xl saturate-150
-//                   border-b transition-all duration-300
+//       className={`fixed left-0 right-0 z-50 h-[72px] flex items-center px-4 sm:px-6 lg:px-10
+//                   backdrop-blur-xl saturate-150 border-b transition-all duration-300
 //                   ${isScrolled
 //                     ? 'bg-bg-nav-scrolled border-accent/20 shadow-lg'
 //                     : 'bg-bg-nav border-transparent'}`}
-//       data-header-height={headerHeight}
+//       style={{
+//         top: `${topOffset}px`,
+//         transitionDuration: `${animationDurationMs}ms`,
+//       }}
 //     >
 //       <div className="w-full max-w-7xl mx-auto flex items-center justify-between gap-3">
 //         {/* Brand */}
-//         <Link
-//           href="/"
-//           className="flex items-center gap-2.5 shrink-0 group"
-//           aria-label={brandName}
-//         >
+//         <Link href="/" className="flex items-center gap-2.5 shrink-0 group" aria-label={brandName}>
 //           {activeLogo && !logoError ? (
 //             <div className="relative h-10 w-auto min-w-[140px] flex items-center">
 //               <Image
@@ -239,22 +239,15 @@
 //                 <Code2 className="w-5 h-5 text-text-inverse" />
 //               </div>
 //               <div className="hidden sm:flex flex-col leading-none">
-//                 <span className="text-base font-extrabold text-text-main tracking-tight">
-//                   {brandName}
-//                 </span>
-//                 <span className="text-[10px] tracking-[0.12em] text-text-dim uppercase font-medium mt-0.5">
-//                   {brandSuffix}
-//                 </span>
+//                 <span className="text-base font-extrabold text-text-main tracking-tight">{brandName}</span>
+//                 <span className="text-[10px] tracking-[0.12em] text-text-dim uppercase font-medium mt-0.5">{brandSuffix}</span>
 //               </div>
 //             </>
 //           )}
 //         </Link>
 
 //         {/* Desktop pills */}
-//         <nav
-//           className="hidden md:flex items-center gap-0.5 bg-bg-pill-container p-1 rounded-full border border-border-pill"
-//           aria-label="Primary"
-//         >
+//         <nav className="hidden md:flex items-center gap-0.5 bg-bg-pill-container p-1 rounded-full border border-border-pill" aria-label="Primary">
 //           {pills.map((pill) => {
 //             const active = isActive(pill.href, pill.exact);
 //             return (
@@ -268,10 +261,7 @@
 //               >
 //                 {pill.label}
 //                 {pill.dot ? (
-//                   <span
-//                     className="inline-block w-1.5 h-1.5 rounded-full bg-success ml-1.5 align-middle animate-pulse"
-//                     aria-hidden="true"
-//                   />
+//                   <span className="inline-block w-1.5 h-1.5 rounded-full bg-success ml-1.5 align-middle animate-pulse" aria-hidden="true" />
 //                 ) : null}
 //               </Link>
 //             );
@@ -300,11 +290,7 @@
 //             >
 //               <Wallet className="w-3.5 h-3.5" />
 //               <span className="text-xs font-bold font-mono">
-//                 {balanceLoading
-//                   ? '...'
-//                   : balance !== null
-//                     ? `${balance.toLocaleString()} ETB`
-//                     : '0 ETB'}
+//                 {balanceLoading ? '...' : balance !== null ? `${balance.toLocaleString()} ETB` : '0 ETB'}
 //               </span>
 //             </Link>
 //           )}
@@ -323,27 +309,16 @@
 //                 <span className="w-8 h-8 rounded-full bg-gradient-to-br from-accent to-accent-dark flex items-center justify-center text-text-inverse text-xs font-bold shrink-0">
 //                   {(user?.full_name || user?.fullName || 'A').charAt(0).toUpperCase()}
 //                 </span>
-//                 <ChevronDown
-//                   size={14}
-//                   className={`text-text-nav-icon transition-transform duration-200 ${isProfileOpen ? 'rotate-180' : ''}`}
-//                 />
+//                 <ChevronDown size={14} className={`text-text-nav-icon transition-transform duration-200 ${isProfileOpen ? 'rotate-180' : ''}`} />
 //               </button>
 
 //               {isProfileOpen && (
-//                 <div
-//                   role="menu"
-//                   className="absolute top-[calc(100%+8px)] right-0 w-60 rounded-xl border border-border-nav-scrolled bg-bg-card-solid backdrop-blur-xl shadow-xl p-2 z-[55] animate-fade-in-up"
-//                 >
+//                 <div role="menu" className="absolute top-[calc(100%+8px)] right-0 w-60 rounded-xl border border-border-nav-scrolled bg-bg-card-solid backdrop-blur-xl shadow-xl p-2 z-[55] animate-fade-in-up">
 //                   <div className="px-3 pt-2 pb-2">
-//                     <p className="text-xs font-bold text-text-main truncate">
-//                       {user?.full_name || user?.fullName || ''}
-//                     </p>
-//                     <p className="text-[11px] text-text-dim truncate mt-0.5">
-//                       {user?.email || user?.phone || ''}
-//                     </p>
+//                     <p className="text-xs font-bold text-text-main truncate">{user?.full_name || user?.fullName || ''}</p>
+//                     <p className="text-[11px] text-text-dim truncate mt-0.5">{user?.email || user?.phone || ''}</p>
 //                   </div>
 //                   <div className="h-px bg-border-light my-1" />
-
 //                   <Link href="/profile" role="menuitem" className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-text-muted hover:text-text-main hover:bg-bg-ghost-hover transition-colors">
 //                     <User className="w-4 h-4" />
 //                     {resolveLabel(t, 'nav.myProfile', 'myProfile')}
@@ -364,15 +339,8 @@
 //                     <BookOpen className="w-4 h-4" />
 //                     {resolveLabel(t, 'nav.portal', 'portal')}
 //                   </Link>
-
 //                   <div className="h-px bg-border-light my-1" />
-
-//                   <button
-//                     type="button"
-//                     role="menuitem"
-//                     onClick={handleLogout}
-//                     className="flex items-center gap-2.5 w-full text-left px-3 py-2 rounded-lg text-xs font-medium text-error hover:bg-error/10 transition-colors"
-//                   >
+//                   <button type="button" role="menuitem" onClick={handleLogout} className="flex items-center gap-2.5 w-full text-left px-3 py-2 rounded-lg text-xs font-medium text-error hover:bg-error/10 transition-colors">
 //                     <LogOut className="w-4 h-4" />
 //                     {resolveLabel(t, 'nav.logout', 'logout')}
 //                   </button>
@@ -381,17 +349,11 @@
 //             </div>
 //           ) : (
 //             <div className="flex items-center gap-1">
-//               <Link
-//                 href="/auth/login"
-//                 className="hidden sm:flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold text-text-nav-icon hover:text-text-nav-icon-hover hover:bg-bg-icon-btn-hover transition-colors"
-//               >
+//               <Link href="/auth/login" className="hidden sm:flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold text-text-nav-icon hover:text-text-nav-icon-hover hover:bg-bg-icon-btn-hover transition-colors">
 //                 <LogIn className="w-4 h-4" />
 //                 <span>{resolveLabel(t, 'nav.signIn', 'signIn')}</span>
 //               </Link>
-//               <Link
-//                 href="/auth/register"
-//                 className="hidden sm:flex items-center gap-1 px-3 py-1.5 rounded-full bg-accent text-text-inverse text-xs font-bold shadow-glow-gold-sm hover:bg-accent-light hover:-translate-y-0.5 transition-all"
-//               >
+//               <Link href="/auth/register" className="hidden sm:flex items-center gap-1 px-3 py-1.5 rounded-full bg-accent text-text-inverse text-xs font-bold shadow-glow-gold-sm hover:bg-accent-light hover:-translate-y-0.5 transition-all">
 //                 <Zap className="w-3.5 h-3.5" />
 //                 {resolveLabel(t, 'nav.enroll', 'enroll')}
 //               </Link>
@@ -410,97 +372,115 @@
 //         </div>
 //       </div>
 
-//       {/* Mobile menu */}
+//       {/* 
+//         MOBILE MENU — Floating Panel with Explicit RGBA Opacity
+        
+//         Using style={{ backgroundColor: 'rgba(...)' }} because Tailwind's
+//         `/opacity` modifier cannot be applied to `bg-bg-card-solid` (which
+//         resolves to a hex CSS variable). This gives full control over the
+//         exact opacity value right here in the code.
+//       */}
 //       {isMobileOpen && (
-//         <div
-//           className="md:hidden absolute top-[72px] left-0 right-0
-//                      bg-bg-mobile-menu backdrop-blur-2xl
-//                      border-b border-border-mobile-link
-//                      px-5 pt-4 pb-6 flex flex-col gap-1
-//                      z-40"
-//         >
-//           {isAuthenticated && (
-//             <div className="mb-2 p-3 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-between">
-//               <div className="flex items-center gap-2 text-accent">
-//                 <Wallet className="w-4 h-4" />
-//                 <span className="text-xs font-bold uppercase tracking-wider">Wallet Balance</span>
+//         <>
+//           {/* Blurred Backdrop Overlay */}
+//           <div 
+//             className="fixed inset-0 top-[72px] bg-black/40 backdrop-blur-sm z-30 md:hidden animate-fade-in"
+//             onClick={() => setIsMobileOpen(false)}
+//             aria-hidden="true"
+//           />
+
+//           {/* Floating Menu Panel */}
+//           <div
+//             className="fixed z-40 md:hidden
+//                        top-[84px] left-4 right-4
+//                        border border-border-medium
+//                        rounded-2xl
+//                        shadow-2xl shadow-black/60
+//                        max-h-[75vh]
+//                        overflow-y-auto
+//                        px-4 pt-4 pb-6
+//                        flex flex-col gap-1
+//                        animate-fade-in-up
+//                        backdrop-blur-3xl"
+//             style={{ backgroundColor: 'rgba(15, 23, 42, 0.93)' }}
+//           >
+//             {isAuthenticated && (
+//               <div className="mb-3 p-3 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-between">
+//                 <div className="flex items-center gap-2 text-accent">
+//                   <Wallet className="w-4 h-4" />
+//                   <span className="text-xs font-bold uppercase tracking-wider">Wallet Balance</span>
+//                 </div>
+//                 <span className="text-sm font-extrabold text-accent font-mono">
+//                   {balanceLoading ? '...' : balance !== null ? `${balance.toLocaleString()} ETB` : '0 ETB'}
+//                 </span>
 //               </div>
-//               <span className="text-sm font-extrabold text-accent font-mono">
-//                 {balanceLoading ? '...' : balance !== null ? `${balance.toLocaleString()} ETB` : '0 ETB'}
-//               </span>
-//             </div>
-//           )}
+//             )}
 
-//           {pills.map((pill) => {
-//             const active = isActive(pill.href, pill.exact);
-//             return (
-//               <Link
-//                 key={pill.href}
-//                 href={pill.href}
-//                 className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors
-//                             ${active
-//                               ? 'bg-accent/10 text-accent font-semibold'
-//                               : 'text-text-nav-link hover:text-text-nav-link-hover hover:bg-bg-ghost-hover'}`}
-//               >
-//                 {pill.label}
-//                 {pill.dot ? (
-//                   <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" aria-hidden="true" />
-//                 ) : null}
-//               </Link>
-//             );
-//           })}
+//             {pills.map((pill) => {
+//               const active = isActive(pill.href, pill.exact);
+//               return (
+//                 <Link
+//                   key={pill.href}
+//                   href={pill.href}
+//                   className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors
+//                               ${active
+//                                 ? 'bg-accent/10 text-accent font-semibold'
+//                                 : 'text-text-nav-link hover:text-text-nav-link-hover hover:bg-bg-ghost-hover'}`}
+//                 >
+//                   {pill.label}
+//                   {pill.dot ? (
+//                     <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" aria-hidden="true" />
+//                   ) : null}
+//                 </Link>
+//               );
+//             })}
 
-//           <div className="h-px bg-border-mobile-link my-2" />
+//             <div className="h-px bg-border-light my-2" />
 
-//           {isAuthenticated ? (
-//             <>
-//               <div className="flex justify-center py-2">
-//                 <NotificationBell />
-//               </div>
-//               <div className="h-px bg-border-mobile-link my-2" />
-//               <Link href="/profile" className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-text-nav-link hover:text-text-nav-link-hover hover:bg-bg-ghost-hover transition-colors">
-//                 <User className="w-4 h-4" />
-//                 {resolveLabel(t, 'nav.myProfile', 'myProfile')}
-//               </Link>
-//               <Link href="/profile/reseller" className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-text-nav-link hover:text-text-nav-link-hover hover:bg-bg-ghost-hover transition-colors">
-//                 <Store className="w-4 h-4" />
-//                 {resolveLabel(t, 'nav.myResellerStore', 'myResellerStore')}
-//               </Link>
-//               <Link href="/profile/scholarships" className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-text-nav-link hover:text-text-nav-link-hover hover:bg-bg-ghost-hover transition-colors">
-//                 <GraduationCap className="w-4 h-4" />
-//                 {resolveLabel(t, 'scholarships.myApplications.pageTitle', 'myScholarships')}
-//               </Link>
-//               <Link href="/profile/referrals" className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-text-nav-link hover:text-text-nav-link-hover hover:bg-bg-ghost-hover transition-colors">
-//                 <Share2 className="w-4 h-4" />
-//                 {resolveLabel(t, 'nav.referralDashboard', 'referralDashboard')}
-//               </Link>
-//               <button
-//                 type="button"
-//                 onClick={handleLogout}
-//                 className="flex items-center gap-3 w-full text-left px-4 py-3 rounded-xl text-sm text-error hover:bg-error/10 transition-colors mt-1"
-//               >
-//                 <LogOut className="w-4 h-4" />
-//                 {resolveLabel(t, 'nav.logout', 'logout')}
-//               </button>
-//             </>
-//           ) : (
-//             <>
-//               <Link
-//                 href="/auth/login"
-//                 className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold text-text-nav-link hover:bg-bg-ghost-hover transition-colors"
-//               >
-//                 {resolveLabel(t, 'nav.signIn', 'signIn')}
-//               </Link>
-//               <Link
-//                 href="/auth/register"
-//                 className="flex items-center justify-center gap-2 px-4 py-3 rounded-full bg-accent text-text-inverse text-sm font-bold shadow-glow-gold-sm mt-2"
-//               >
-//                 <Zap className="w-4 h-4" />
-//                 {resolveLabel(t, 'nav.enroll', 'enroll')}
-//               </Link>
-//             </>
-//           )}
-//         </div>
+//             {isAuthenticated ? (
+//               <>
+//                 <div className="flex justify-center py-2">
+//                   <NotificationBell />
+//                 </div>
+//                 <div className="h-px bg-border-light my-2" />
+//                 <Link href="/profile" className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-text-nav-link hover:text-text-nav-link-hover hover:bg-bg-ghost-hover transition-colors">
+//                   <User className="w-4 h-4" />
+//                   {resolveLabel(t, 'nav.myProfile', 'myProfile')}
+//                 </Link>
+//                 <Link href="/profile/reseller" className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-text-nav-link hover:text-text-nav-link-hover hover:bg-bg-ghost-hover transition-colors">
+//                   <Store className="w-4 h-4" />
+//                   {resolveLabel(t, 'nav.myResellerStore', 'myResellerStore')}
+//                 </Link>
+//                 <Link href="/profile/scholarships" className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-text-nav-link hover:text-text-nav-link-hover hover:bg-bg-ghost-hover transition-colors">
+//                   <GraduationCap className="w-4 h-4" />
+//                   {resolveLabel(t, 'scholarships.myApplications.pageTitle', 'myScholarships')}
+//                 </Link>
+//                 <Link href="/profile/referrals" className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-text-nav-link hover:text-text-nav-link-hover hover:bg-bg-ghost-hover transition-colors">
+//                   <Share2 className="w-4 h-4" />
+//                   {resolveLabel(t, 'nav.referralDashboard', 'referralDashboard')}
+//                 </Link>
+//                 <button
+//                   type="button"
+//                   onClick={handleLogout}
+//                   className="flex items-center gap-3 w-full text-left px-4 py-3 rounded-xl text-sm text-error hover:bg-error/10 transition-colors mt-1"
+//                 >
+//                   <LogOut className="w-4 h-4" />
+//                   {resolveLabel(t, 'nav.logout', 'logout')}
+//                 </button>
+//               </>
+//             ) : (
+//               <>
+//                 <Link href="/auth/login" className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold text-text-nav-link hover:bg-bg-ghost-hover transition-colors">
+//                   {resolveLabel(t, 'nav.signIn', 'signIn')}
+//                 </Link>
+//                 <Link href="/auth/register" className="flex items-center justify-center gap-2 px-4 py-3 rounded-full bg-accent text-text-inverse text-sm font-bold shadow-glow-gold-sm mt-2">
+//                   <Zap className="w-4 h-4" />
+//                   {resolveLabel(t, 'nav.enroll', 'enroll')}
+//                 </Link>
+//               </>
+//             )}
+//           </div>
+//         </>
 //       )}
 //     </header>
 //   );
@@ -515,15 +495,14 @@
 
 
 
-
-
-
 /**
- * @fileoverview Main Navigation Header (Tailwind, Mobile-First)
+ * @fileoverview Main Navigation Header
  *
- * Navigation sits BELOW the banner when the banner is visible, and
- * slides to top-0 when the banner is dismissed. The top offset is
- * driven by BannerContext so the two components stay in lockstep.
+ * Pure Tailwind implementation. The mobile menu uses a theme-aware RGBA
+ * background so it matches both light and dark modes, and includes a
+ * styled in-panel close button. The notification bell is intentionally
+ * omitted inside the mobile dropdown because it already lives in the
+ * navbar (top-right) and remains visible at all breakpoints.
  *
  * Path: apps/web/components/shared/Navigation.jsx
  */
@@ -637,10 +616,20 @@ const Navigation = () => {
 
   const activeLogo = useMemo(() => {
     if (!themeMounted) return brand.logo;
-    return theme === 'light'
-      ? brand.logoLight || brand.logo
-      : brand.logo;
+    return theme === 'light' ? brand.logoLight || brand.logo : brand.logo;
   }, [theme, themeMounted, brand.logo, brand.logoLight]);
+
+  /**
+   * Mobile menu background — theme-aware RGBA.
+   * Kept identical to the previous version so no visual regressions.
+   */
+  const mobileMenuBackground = useMemo(
+    () =>
+      theme === 'light'
+        ? 'rgba(255, 255, 255, 0.93)'
+        : 'rgba(15, 23, 42, 0.93)',
+    [theme]
+  );
 
   const pills = useMemo(() => {
     const configured = Array.isArray(landingConfig?.navLinks)
@@ -698,6 +687,16 @@ const Navigation = () => {
     return () => document.removeEventListener('click', handleOutside);
   }, [isProfileOpen]);
 
+  /* Lock body scroll when the mobile menu is open */
+  useEffect(() => {
+    if (isMobileOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [isMobileOpen]);
+
   const handleLogout = useCallback(async () => {
     if (typeof logout === 'function') await logout();
     setIsProfileOpen(false);
@@ -714,15 +713,12 @@ const Navigation = () => {
     setLogoError(false);
   }, [theme]);
 
-  /* Top offset: 40px when banner visible, 0 when dismissed */
   const topOffset = bannerVisible ? bannerHeight : 0;
 
   return (
     <header
-      className={`fixed left-0 right-0 z-50 h-[72px]
-                  flex items-center px-4 sm:px-6 lg:px-10
-                  backdrop-blur-xl saturate-150
-                  border-b transition-all duration-300
+      className={`fixed left-0 right-0 z-50 h-[72px] flex items-center px-4 sm:px-6 lg:px-10
+                  backdrop-blur-xl saturate-150 border-b transition-all duration-300
                   ${isScrolled
                     ? 'bg-bg-nav-scrolled border-accent/20 shadow-lg'
                     : 'bg-bg-nav border-transparent'}`}
@@ -733,11 +729,7 @@ const Navigation = () => {
     >
       <div className="w-full max-w-7xl mx-auto flex items-center justify-between gap-3">
         {/* Brand */}
-        <Link
-          href="/"
-          className="flex items-center gap-2.5 shrink-0 group"
-          aria-label={brandName}
-        >
+        <Link href="/" className="flex items-center gap-2.5 shrink-0 group" aria-label={brandName}>
           {activeLogo && !logoError ? (
             <div className="relative h-10 w-auto min-w-[140px] flex items-center">
               <Image
@@ -757,22 +749,15 @@ const Navigation = () => {
                 <Code2 className="w-5 h-5 text-text-inverse" />
               </div>
               <div className="hidden sm:flex flex-col leading-none">
-                <span className="text-base font-extrabold text-text-main tracking-tight">
-                  {brandName}
-                </span>
-                <span className="text-[10px] tracking-[0.12em] text-text-dim uppercase font-medium mt-0.5">
-                  {brandSuffix}
-                </span>
+                <span className="text-base font-extrabold text-text-main tracking-tight">{brandName}</span>
+                <span className="text-[10px] tracking-[0.12em] text-text-dim uppercase font-medium mt-0.5">{brandSuffix}</span>
               </div>
             </>
           )}
         </Link>
 
         {/* Desktop pills */}
-        <nav
-          className="hidden md:flex items-center gap-0.5 bg-bg-pill-container p-1 rounded-full border border-border-pill"
-          aria-label="Primary"
-        >
+        <nav className="hidden md:flex items-center gap-0.5 bg-bg-pill-container p-1 rounded-full border border-border-pill" aria-label="Primary">
           {pills.map((pill) => {
             const active = isActive(pill.href, pill.exact);
             return (
@@ -786,10 +771,7 @@ const Navigation = () => {
               >
                 {pill.label}
                 {pill.dot ? (
-                  <span
-                    className="inline-block w-1.5 h-1.5 rounded-full bg-success ml-1.5 align-middle animate-pulse"
-                    aria-hidden="true"
-                  />
+                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-success ml-1.5 align-middle animate-pulse" aria-hidden="true" />
                 ) : null}
               </Link>
             );
@@ -818,11 +800,7 @@ const Navigation = () => {
             >
               <Wallet className="w-3.5 h-3.5" />
               <span className="text-xs font-bold font-mono">
-                {balanceLoading
-                  ? '...'
-                  : balance !== null
-                    ? `${balance.toLocaleString()} ETB`
-                    : '0 ETB'}
+                {balanceLoading ? '...' : balance !== null ? `${balance.toLocaleString()} ETB` : '0 ETB'}
               </span>
             </Link>
           )}
@@ -841,27 +819,16 @@ const Navigation = () => {
                 <span className="w-8 h-8 rounded-full bg-gradient-to-br from-accent to-accent-dark flex items-center justify-center text-text-inverse text-xs font-bold shrink-0">
                   {(user?.full_name || user?.fullName || 'A').charAt(0).toUpperCase()}
                 </span>
-                <ChevronDown
-                  size={14}
-                  className={`text-text-nav-icon transition-transform duration-200 ${isProfileOpen ? 'rotate-180' : ''}`}
-                />
+                <ChevronDown size={14} className={`text-text-nav-icon transition-transform duration-200 ${isProfileOpen ? 'rotate-180' : ''}`} />
               </button>
 
               {isProfileOpen && (
-                <div
-                  role="menu"
-                  className="absolute top-[calc(100%+8px)] right-0 w-60 rounded-xl border border-border-nav-scrolled bg-bg-card-solid backdrop-blur-xl shadow-xl p-2 z-[55] animate-fade-in-up"
-                >
+                <div role="menu" className="absolute top-[calc(100%+8px)] right-0 w-60 rounded-xl border border-border-nav-scrolled bg-bg-card-solid backdrop-blur-xl shadow-xl p-2 z-[55] animate-fade-in-up">
                   <div className="px-3 pt-2 pb-2">
-                    <p className="text-xs font-bold text-text-main truncate">
-                      {user?.full_name || user?.fullName || ''}
-                    </p>
-                    <p className="text-[11px] text-text-dim truncate mt-0.5">
-                      {user?.email || user?.phone || ''}
-                    </p>
+                    <p className="text-xs font-bold text-text-main truncate">{user?.full_name || user?.fullName || ''}</p>
+                    <p className="text-[11px] text-text-dim truncate mt-0.5">{user?.email || user?.phone || ''}</p>
                   </div>
                   <div className="h-px bg-border-light my-1" />
-
                   <Link href="/profile" role="menuitem" className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-text-muted hover:text-text-main hover:bg-bg-ghost-hover transition-colors">
                     <User className="w-4 h-4" />
                     {resolveLabel(t, 'nav.myProfile', 'myProfile')}
@@ -882,15 +849,8 @@ const Navigation = () => {
                     <BookOpen className="w-4 h-4" />
                     {resolveLabel(t, 'nav.portal', 'portal')}
                   </Link>
-
                   <div className="h-px bg-border-light my-1" />
-
-                  <button
-                    type="button"
-                    role="menuitem"
-                    onClick={handleLogout}
-                    className="flex items-center gap-2.5 w-full text-left px-3 py-2 rounded-lg text-xs font-medium text-error hover:bg-error/10 transition-colors"
-                  >
+                  <button type="button" role="menuitem" onClick={handleLogout} className="flex items-center gap-2.5 w-full text-left px-3 py-2 rounded-lg text-xs font-medium text-error hover:bg-error/10 transition-colors">
                     <LogOut className="w-4 h-4" />
                     {resolveLabel(t, 'nav.logout', 'logout')}
                   </button>
@@ -899,17 +859,11 @@ const Navigation = () => {
             </div>
           ) : (
             <div className="flex items-center gap-1">
-              <Link
-                href="/auth/login"
-                className="hidden sm:flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold text-text-nav-icon hover:text-text-nav-icon-hover hover:bg-bg-icon-btn-hover transition-colors"
-              >
+              <Link href="/auth/login" className="hidden sm:flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold text-text-nav-icon hover:text-text-nav-icon-hover hover:bg-bg-icon-btn-hover transition-colors">
                 <LogIn className="w-4 h-4" />
                 <span>{resolveLabel(t, 'nav.signIn', 'signIn')}</span>
               </Link>
-              <Link
-                href="/auth/register"
-                className="hidden sm:flex items-center gap-1 px-3 py-1.5 rounded-full bg-accent text-text-inverse text-xs font-bold shadow-glow-gold-sm hover:bg-accent-light hover:-translate-y-0.5 transition-all"
-              >
+              <Link href="/auth/register" className="hidden sm:flex items-center gap-1 px-3 py-1.5 rounded-full bg-accent text-text-inverse text-xs font-bold shadow-glow-gold-sm hover:bg-accent-light hover:-translate-y-0.5 transition-all">
                 <Zap className="w-3.5 h-3.5" />
                 {resolveLabel(t, 'nav.enroll', 'enroll')}
               </Link>
@@ -928,97 +882,134 @@ const Navigation = () => {
         </div>
       </div>
 
-      {/* Mobile menu */}
+      {/* MOBILE MENU — Floating Panel with theme-aware RGBA and in-panel close button */}
       {isMobileOpen && (
-        <div
-          className="md:hidden absolute top-[72px] left-0 right-0
-                     bg-bg-mobile-menu backdrop-blur-2xl
-                     border-b border-border-mobile-link
-                     px-5 pt-4 pb-6 flex flex-col gap-1
-                     z-40"
-        >
-          {isAuthenticated && (
-            <div className="mb-2 p-3 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-between">
-              <div className="flex items-center gap-2 text-accent">
-                <Wallet className="w-4 h-4" />
-                <span className="text-xs font-bold uppercase tracking-wider">Wallet Balance</span>
+        <>
+          {/* Blurred Backdrop Overlay */}
+          <div
+            className="fixed inset-0 top-[72px] bg-black/40 backdrop-blur-sm z-30 md:hidden animate-fade-in"
+            onClick={() => setIsMobileOpen(false)}
+            aria-hidden="true"
+          />
+
+          {/* Floating Menu Panel */}
+          <div
+            className="fixed z-40 md:hidden
+                       top-[84px] left-4 right-4
+                       border border-border-medium
+                       rounded-2xl
+                       shadow-2xl shadow-black/60
+                       max-h-[75vh]
+                       overflow-y-auto
+                       flex flex-col
+                       animate-fade-in-up
+                       backdrop-blur-3xl"
+            style={{ backgroundColor: mobileMenuBackground }}
+          >
+            {/* Panel header: title + in-panel close button */}
+            <div className="flex items-center justify-between px-4 pt-3 pb-3 border-b border-border-light">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-accent animate-pulse" aria-hidden="true" />
+                <span className="text-xs font-bold uppercase tracking-wider text-text-muted">
+                  Menu
+                </span>
               </div>
-              <span className="text-sm font-extrabold text-accent font-mono">
-                {balanceLoading ? '...' : balance !== null ? `${balance.toLocaleString()} ETB` : '0 ETB'}
-              </span>
-            </div>
-          )}
-
-          {pills.map((pill) => {
-            const active = isActive(pill.href, pill.exact);
-            return (
-              <Link
-                key={pill.href}
-                href={pill.href}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors
-                            ${active
-                              ? 'bg-accent/10 text-accent font-semibold'
-                              : 'text-text-nav-link hover:text-text-nav-link-hover hover:bg-bg-ghost-hover'}`}
-              >
-                {pill.label}
-                {pill.dot ? (
-                  <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" aria-hidden="true" />
-                ) : null}
-              </Link>
-            );
-          })}
-
-          <div className="h-px bg-border-mobile-link my-2" />
-
-          {isAuthenticated ? (
-            <>
-              <div className="flex justify-center py-2">
-                <NotificationBell />
-              </div>
-              <div className="h-px bg-border-mobile-link my-2" />
-              <Link href="/profile" className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-text-nav-link hover:text-text-nav-link-hover hover:bg-bg-ghost-hover transition-colors">
-                <User className="w-4 h-4" />
-                {resolveLabel(t, 'nav.myProfile', 'myProfile')}
-              </Link>
-              <Link href="/profile/reseller" className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-text-nav-link hover:text-text-nav-link-hover hover:bg-bg-ghost-hover transition-colors">
-                <Store className="w-4 h-4" />
-                {resolveLabel(t, 'nav.myResellerStore', 'myResellerStore')}
-              </Link>
-              <Link href="/profile/scholarships" className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-text-nav-link hover:text-text-nav-link-hover hover:bg-bg-ghost-hover transition-colors">
-                <GraduationCap className="w-4 h-4" />
-                {resolveLabel(t, 'scholarships.myApplications.pageTitle', 'myScholarships')}
-              </Link>
-              <Link href="/profile/referrals" className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-text-nav-link hover:text-text-nav-link-hover hover:bg-bg-ghost-hover transition-colors">
-                <Share2 className="w-4 h-4" />
-                {resolveLabel(t, 'nav.referralDashboard', 'referralDashboard')}
-              </Link>
               <button
                 type="button"
-                onClick={handleLogout}
-                className="flex items-center gap-3 w-full text-left px-4 py-3 rounded-xl text-sm text-error hover:bg-error/10 transition-colors mt-1"
+                onClick={() => setIsMobileOpen(false)}
+                aria-label="Close menu"
+                className="flex items-center justify-center w-8 h-8 rounded-lg
+                           text-text-muted
+                           hover:text-text-main
+                           hover:bg-bg-ghost-hover
+                           active:scale-95
+                           transition-all duration-150"
               >
-                <LogOut className="w-4 h-4" />
-                {resolveLabel(t, 'nav.logout', 'logout')}
+                <X size={18} />
               </button>
-            </>
-          ) : (
-            <>
-              <Link
-                href="/auth/login"
-                className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold text-text-nav-link hover:bg-bg-ghost-hover transition-colors"
-              >
-                {resolveLabel(t, 'nav.signIn', 'signIn')}
-              </Link>
-              <Link
-                href="/auth/register"
-                className="flex items-center justify-center gap-2 px-4 py-3 rounded-full bg-accent text-text-inverse text-sm font-bold shadow-glow-gold-sm mt-2"
-              >
-                <Zap className="w-4 h-4" />
-                {resolveLabel(t, 'nav.enroll', 'enroll')}
-              </Link>
-            </>
-          )}
-        </div>
+            </div>
+
+            {/* Panel body */}
+            <div className="flex flex-col gap-1 px-4 pt-3 pb-6">
+              {isAuthenticated && (
+                <div className="mb-3 p-3 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-accent">
+                    <Wallet className="w-4 h-4" />
+                    <span className="text-xs font-bold uppercase tracking-wider">Wallet Balance</span>
+                  </div>
+                  <span className="text-sm font-extrabold text-accent font-mono">
+                    {balanceLoading ? '...' : balance !== null ? `${balance.toLocaleString()} ETB` : '0 ETB'}
+                  </span>
+                </div>
+              )}
+
+              {pills.map((pill) => {
+                const active = isActive(pill.href, pill.exact);
+                return (
+                  <Link
+                    key={pill.href}
+                    href={pill.href}
+                    className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors
+                                ${active
+                                  ? 'bg-accent/10 text-accent font-semibold'
+                                  : 'text-text-nav-link hover:text-text-nav-link-hover hover:bg-bg-ghost-hover'}`}
+                  >
+                    {pill.label}
+                    {pill.dot ? (
+                      <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" aria-hidden="true" />
+                    ) : null}
+                  </Link>
+                );
+              })}
+
+              <div className="h-px bg-border-light my-2" />
+
+              {/*
+                Note: The NotificationBell is intentionally NOT rendered inside
+                the mobile dropdown. It remains in the top navbar at all
+                breakpoints so users still have access to it.
+              */}
+              {isAuthenticated ? (
+                <>
+                  <Link href="/profile" className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-text-nav-link hover:text-text-nav-link-hover hover:bg-bg-ghost-hover transition-colors">
+                    <User className="w-4 h-4" />
+                    {resolveLabel(t, 'nav.myProfile', 'myProfile')}
+                  </Link>
+                  <Link href="/profile/reseller" className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-text-nav-link hover:text-text-nav-link-hover hover:bg-bg-ghost-hover transition-colors">
+                    <Store className="w-4 h-4" />
+                    {resolveLabel(t, 'nav.myResellerStore', 'myResellerStore')}
+                  </Link>
+                  <Link href="/profile/scholarships" className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-text-nav-link hover:text-text-nav-link-hover hover:bg-bg-ghost-hover transition-colors">
+                    <GraduationCap className="w-4 h-4" />
+                    {resolveLabel(t, 'scholarships.myApplications.pageTitle', 'myScholarships')}
+                  </Link>
+                  <Link href="/profile/referrals" className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-text-nav-link hover:text-text-nav-link-hover hover:bg-bg-ghost-hover transition-colors">
+                    <Share2 className="w-4 h-4" />
+                    {resolveLabel(t, 'nav.referralDashboard', 'referralDashboard')}
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    className="flex items-center gap-3 w-full text-left px-4 py-3 rounded-xl text-sm text-error hover:bg-error/10 transition-colors mt-1"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    {resolveLabel(t, 'nav.logout', 'logout')}
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link href="/auth/login" className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold text-text-nav-link hover:bg-bg-ghost-hover transition-colors">
+                    {resolveLabel(t, 'nav.signIn', 'signIn')}
+                  </Link>
+                  <Link href="/auth/register" className="flex items-center justify-center gap-2 px-4 py-3 rounded-full bg-accent text-text-inverse text-sm font-bold shadow-glow-gold-sm mt-2">
+                    <Zap className="w-4 h-4" />
+                    {resolveLabel(t, 'nav.enroll', 'enroll')}
+                  </Link>
+                </>
+              )}
+            </div>
+          </div>
+        </>
       )}
     </header>
   );

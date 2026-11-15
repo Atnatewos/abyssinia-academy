@@ -1,67 +1,100 @@
 /**
- * @fileoverview Language Toggle — Dropdown Variant
+ * @fileoverview Language Toggle — Dropdown Variant (Tailwind)
  *
- * Renders a globe icon button that opens a dropdown listing every locale
- * discovered by the LanguageContext. Fully driven by `supportedLanguages`
- * from context — adding a new locale requires no changes to this file.
+ * Renders a globe icon button that opens a dropdown listing every locale.
  *
- * Features:
- *   - Auto-positioned dropdown (left/right edge-aware)
- *   - Outside-click dismiss
- *   - Escape key dismiss
- *   - Keyboard navigation (arrow up/down, enter, space)
- *   - ARIA `listbox` / `option` roles for screen readers
- *   - Active locale highlighted with gold accent
- *   - Uses design-system CSS variables for theme safety
+ * When used in the footer (placement="top"), the dropdown is rendered
+ * inside a full-screen portal with a transparent backdrop. The dropdown
+ * anchors to the bottom of the viewport using `bottom` (not `top` +
+ * translate) so it NEVER pushes the page content or creates a scroll gap.
  *
  * Path: apps/web/components/shared/LanguageToggle.jsx
  */
-import { useState, useEffect, useRef, useCallback } from 'react';
+
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { Globe, Check } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
+import { useTheme } from '../../context/ThemeContext';
 
-const LanguageToggle = () => {
+const LanguageToggle = ({ placement = 'bottom' }) => {
   const { language, setLanguage, supportedLanguages, mounted } = useLanguage();
+  const { theme } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
+  const [coords, setCoords] = useState({ bottom: 0, right: 16 });
+  
   const containerRef = useRef(null);
   const triggerRef = useRef(null);
+  const menuRef = useRef(null);
   const optionRefs = useRef([]);
 
-  /**
-   * The currently active locale descriptor (for label + nativeLabel display).
-   * Falls back to the first entry if the active locale is somehow missing.
-   */
   const activeLocale =
     supportedLanguages.find((entry) => entry.code === language) ||
     supportedLanguages[0] ||
     null;
 
+  const dropdownBackground = useMemo(
+    () =>
+      theme === 'light'
+        ? 'rgba(255, 255, 255, 0.98)'
+        : 'rgba(15, 23, 42, 0.98)',
+    [theme]
+  );
+
   /**
-   * Close the dropdown when clicking anywhere outside the container.
-   * Active only while the menu is open — no persistent listeners.
+   * Calculate precise coordinates for the fixed-position dropdown.
+   * 
+   * We anchor from the BOTTOM of the viewport using `bottom` instead
+   * of `top + translateY(-100%)`. This avoids the browser thinking
+   * the element extends the document height, which causes the "footer
+   * pushed down" bug.
    */
+  const updatePosition = useCallback(() => {
+    if (placement === 'top' && triggerRef.current) {
+      const rect = triggerRef.current.getBoundingClientRect();
+      const viewportHeight = window.innerHeight;
+      
+      // Distance from the trigger's top edge to the viewport bottom
+      const bottomOffset = viewportHeight - rect.top + 8;
+      
+      setCoords({
+        bottom: bottomOffset,
+        right: window.innerWidth - rect.right,
+      });
+    }
+  }, [placement]);
+
   useEffect(() => {
     if (!isOpen) return undefined;
 
+    updatePosition();
+
     const handleOutside = (event) => {
-      if (!containerRef.current) return;
-      if (!containerRef.current.contains(event.target)) {
+      if (
+        containerRef.current && !containerRef.current.contains(event.target) &&
+        menuRef.current && !menuRef.current.contains(event.target)
+      ) {
         setIsOpen(false);
       }
     };
 
+    const handleScrollOrResize = () => {
+      if (placement === 'top') setIsOpen(false);
+    };
+
     document.addEventListener('mousedown', handleOutside);
     document.addEventListener('touchstart', handleOutside, { passive: true });
+    window.addEventListener('resize', updatePosition);
+    window.addEventListener('scroll', handleScrollOrResize, { passive: true });
+
     return () => {
       document.removeEventListener('mousedown', handleOutside);
       document.removeEventListener('touchstart', handleOutside);
+      window.removeEventListener('resize', updatePosition);
+      window.removeEventListener('scroll', handleScrollOrResize);
     };
-  }, [isOpen]);
+  }, [isOpen, placement, updatePosition]);
 
-  /**
-   * Close on Escape key. Returns focus to the trigger so keyboard users
-   * don't get stranded inside a dismissed menu.
-   */
   useEffect(() => {
     if (!isOpen) return undefined;
 
@@ -76,10 +109,6 @@ const LanguageToggle = () => {
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isOpen]);
 
-  /**
-   * When the menu opens, move focus to the currently active option so
-   * keyboard users land on their current selection.
-   */
   useEffect(() => {
     if (!isOpen) return;
     const activeIndex = supportedLanguages.findIndex(
@@ -91,9 +120,6 @@ const LanguageToggle = () => {
     });
   }, [isOpen, language, supportedLanguages]);
 
-  /**
-   * Arrow-key navigation inside the open listbox. Wraps around top/bottom.
-   */
   const handleOptionKeyDown = useCallback(
     (event, index) => {
       if (event.key === 'ArrowDown') {
@@ -116,9 +142,6 @@ const LanguageToggle = () => {
     [supportedLanguages.length]
   );
 
-  /**
-   * Select a locale and close the menu. Restores focus to the trigger.
-   */
   const handleSelect = useCallback(
     (code) => {
       if (typeof setLanguage === 'function' && code !== language) {
@@ -130,81 +153,122 @@ const LanguageToggle = () => {
     [setLanguage, language]
   );
 
-  /* Don't render until client-side hydration completes (avoids mismatch) */
+  /* Placeholder while SSR hydration is in progress */
   if (!mounted || !activeLocale) {
     return (
       <button
         type="button"
-        className="nav-icon-btn"
-        aria-label="Language"
+        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-text-nav-icon opacity-50 cursor-wait transition-colors"
+        aria-label="Language loading"
         disabled
       >
-        <Globe />
-        <span>EN</span>
+        <Globe className="w-4 h-4" />
+        <span className="text-xs font-semibold uppercase tracking-wider">EN</span>
       </button>
     );
   }
 
+  /**
+   * The dropdown menu markup.
+   * Uses `bottom` positioning to prevent viewport/document height expansion.
+   */
+  const renderMenu = () => (
+    <ul
+      className={`flex flex-col py-1.5 rounded-xl border border-border-medium backdrop-blur-xl shadow-2xl shadow-black/40 z-[9999] animate-fade-in-up w-44 ${
+        placement === 'top'
+          ? 'fixed origin-bottom-right'
+          : 'absolute top-full right-0 mt-2 origin-top-right'
+      }`}
+      style={{
+        backgroundColor: dropdownBackground,
+        ...(placement === 'top' ? {
+          bottom: coords.bottom,
+          right: coords.right,
+        } : {}),
+      }}
+      ref={menuRef}
+      role="listbox"
+      aria-label="Select language"
+      tabIndex={-1}
+    >
+      {supportedLanguages.map((entry, index) => {
+        const isActive = entry.code === language;
+        return (
+          <li key={entry.code} role="none">
+            <button
+              ref={(el) => {
+                optionRefs.current[index] = el;
+              }}
+              type="button"
+              role="option"
+              aria-selected={isActive}
+              className={`flex items-center gap-3 w-full px-3 py-2 text-sm transition-colors outline-none
+                ${
+                  isActive
+                    ? 'bg-accent/10 text-accent font-semibold'
+                    : 'text-text-muted hover:text-text-main hover:bg-bg-ghost-hover focus:bg-bg-ghost-hover focus:text-text-main'
+                }`}
+              onClick={() => handleSelect(entry.code)}
+              onKeyDown={(event) => handleOptionKeyDown(event, index)}
+            >
+              <span className="text-xs font-bold font-mono w-6">
+                {entry.code.toUpperCase()}
+              </span>
+              <span className="flex-1 text-left">
+                {entry.nativeLabel}
+              </span>
+              {isActive && (
+                <Check
+                  size={14}
+                  className="text-accent shrink-0"
+                  aria-hidden="true"
+                />
+              )}
+            </button>
+          </li>
+        );
+      })}
+    </ul>
+  );
+
   return (
-    <div className="language-dropdown" ref={containerRef}>
+    <div className="relative" ref={containerRef}>
+      {/* Trigger Button */}
       <button
         ref={triggerRef}
         type="button"
-        className={`nav-icon-btn language-dropdown-trigger ${
-          isOpen ? 'open' : ''
+        className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-text-nav-icon hover:text-text-nav-icon-hover hover:bg-bg-icon-btn-hover transition-colors ${
+          isOpen ? 'bg-bg-icon-btn-hover text-text-nav-icon-hover' : ''
         }`}
         onClick={() => setIsOpen((prev) => !prev)}
         aria-haspopup="listbox"
         aria-expanded={isOpen}
         aria-label={`Change language — current: ${activeLocale.label}`}
       >
-        <Globe />
-        <span>{activeLocale.code.toUpperCase()}</span>
+        <Globe className="w-4 h-4" />
+        <span className="text-xs font-bold font-mono tracking-wider">
+          {activeLocale.code.toUpperCase()}
+        </span>
       </button>
 
-      {isOpen && (
-        <ul
-          className="language-dropdown-menu"
-          role="listbox"
-          aria-label="Select language"
-          tabIndex={-1}
-        >
-          {supportedLanguages.map((entry, index) => {
-            const isActive = entry.code === language;
-            return (
-              <li key={entry.code} role="none">
-                <button
-                  ref={(el) => {
-                    optionRefs.current[index] = el;
-                  }}
-                  type="button"
-                  role="option"
-                  aria-selected={isActive}
-                  className={`language-dropdown-option ${
-                    isActive ? 'active' : ''
-                  }`}
-                  onClick={() => handleSelect(entry.code)}
-                  onKeyDown={(event) => handleOptionKeyDown(event, index)}
-                >
-                  <span className="language-dropdown-option-code">
-                    {entry.code.toUpperCase()}
-                  </span>
-                  <span className="language-dropdown-option-label">
-                    {entry.nativeLabel}
-                  </span>
-                  {isActive && (
-                    <Check
-                      size={14}
-                      className="language-dropdown-option-check"
-                      aria-hidden="true"
-                    />
-                  )}
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-      )}
+      {/* 
+        For placement="top" (footer), we portal the menu into a 
+        fixed full-screen overlay. This prevents the browser from 
+        extending the document height, so the footer never gets pushed.
+      */}
+      {isOpen && placement === 'top' && typeof document !== 'undefined'
+        ? createPortal(
+            <div
+              className="fixed inset-0 z-[9998]"
+              onClick={() => setIsOpen(false)}
+            >
+              {renderMenu()}
+            </div>,
+            document.body
+          )
+        : isOpen
+          ? renderMenu()
+          : null}
     </div>
   );
 };
