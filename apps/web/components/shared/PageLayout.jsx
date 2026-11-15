@@ -44,16 +44,11 @@
 
 
 
-
 /**
  * @fileoverview Page Layout Wrapper
  *
- * Consistent layout shell for every page. Renders Banner, FloatingGlow,
- * Navigation, and Footer around the page content.
- *
- * The <main> padding-top is driven by BannerContext.headerHeight so it
- * automatically adjusts when the banner is dismissed (112px → 72px) with
- * a smooth transition. No page ever has to guess the header height.
+ * Enforces a Flexbox column layout (min-h-screen) so the footer
+ * is always pushed to the bottom of the viewport on short pages.
  *
  * Path: apps/web/components/shared/PageLayout.jsx
  */
@@ -64,29 +59,17 @@ import Navigation from './Navigation';
 import Footer from './Footer';
 import { useBanner } from '../../context/BannerContext';
 
-/**
- * PageLayout — Standard page wrapper used by ALL pages.
- *
- * @param {object} props
- * @param {React.ReactNode} props.children
- */
 const PageLayout = ({ children }) => {
   const { headerHeight, animationDurationMs } = useBanner();
 
   return (
-    <div className="page-wrapper">
-      {/* Ambient background glow orbs — present on every page */}
+    <div className="min-h-screen flex flex-col bg-bg-main text-text-main relative overflow-hidden">
       <FloatingGlow />
-
-      {/* Top promotional banner — dismissible, positioned below nav */}
       <Banner />
-
-      {/* Main navigation header — always on top */}
       <Navigation />
 
-      {/* Page-specific content — padding driven by live header height */}
       <main
-        className="page-content transition-[padding] ease-out motion-reduce:transition-none"
+        className="flex-1 flex flex-col relative z-10 transition-[padding] ease-out motion-reduce:transition-none"
         style={{
           paddingTop: `${headerHeight}px`,
           transitionDuration: `${animationDurationMs}ms`,
@@ -95,7 +78,6 @@ const PageLayout = ({ children }) => {
         {children}
       </main>
 
-      {/* Site footer */}
       <Footer />
     </div>
   );

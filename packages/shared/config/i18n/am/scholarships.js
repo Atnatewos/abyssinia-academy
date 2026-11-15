@@ -67,7 +67,7 @@ module.exports = {
       rejected: 'አልጸደቀም',
       withdrawn: 'ተቀብሏል',
       revoked: 'ተሰርዟል',
-      pendingDescription: 'ክፍያዎን ተቀብለናል። ቡድናችን አሁን በማረጋገጥ ላይ ነው — አብዛኛውን ጊዜ ከ24 ሰዓት በታች።',
+      pendingDescription: 'ክፍያዎን ተቀብለናል። ቡድናችን አሁን በማረጋገጥ ላይ ነው - አብዛኛውን ጊዜ ከ24 ሰዓት በታች።',
       paymentVerifiedDescription: 'ክፍያዎ ተረጋግጧል። ቡድናችን ማመልከቻዎን አሁን በመገምገም ላይ ነው።',
       approvedDescription: 'እንኳን ደስ አለዎት! ምዝገባዎ ንቁ ሆኗል።',
       rejectedDescription: 'ማመልከቻዎ አልጸደቀም።',
