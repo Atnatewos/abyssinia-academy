@@ -217,7 +217,7 @@ const platformConfig = {
         process.env.BRAND_YOUTUBE ||
         'https://youtube.com/@AbyssiniaAcademy',
       github:
-        process.env.BRAND_GITHUB || 'https://github.com/AbyssiniaAcademy',
+        process.env.BRAND_GITHUB || 'https://t.me/abyssinia_tech_academy',
     },
   },
 
