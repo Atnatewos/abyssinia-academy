@@ -321,11 +321,14 @@ function resolveBaseURL(url) {
     u.startsWith('/referrals') ||
     u.startsWith('/agents') ||
     u.startsWith('/mlm') ||
+    u.startsWith('/access') ||
+    u.startsWith('/progress') ||
+    u.startsWith('/courses') ||
     u === '/profile' ||
     u.startsWith('/profile/');
 
   if (isNextjsRoute) {
-    return '/api'; // Same-origin Next.js
+    return '/api';
   }
 
   return EXPRESS_BASE_URL || '/api';

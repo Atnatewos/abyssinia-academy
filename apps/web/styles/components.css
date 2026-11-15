@@ -9820,3 +9820,192 @@ button .spinner,
     padding: 1.5rem 1.25rem 2rem 1.25rem;
   }
 }
+
+
+
+
+/* ============================================================================
+   PORTAL — NOTES / RESOURCES / VIDEO FRAME
+   New additions to support the full accordion. Paste at the bottom of
+   components.css.
+   ============================================================================ */
+
+.senior-phase-subtitle {
+  font-size: 0.688rem;
+  color: var(--text-muted);
+  font-style: italic;
+  margin-top: 0.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.senior-lesson-empty {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  text-align: center;
+  padding: 1rem;
+  font-style: italic;
+}
+
+/* Class notes + resources section */
+.senior-class-notes,
+.senior-class-resources {
+  padding: 0 0.5rem 0.5rem 2rem;
+}
+
+.senior-section-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  width: 100%;
+  padding: 0.375rem 0.5rem;
+  font-size: 0.625rem;
+  font-weight: 700;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: color 0.2s;
+  text-align: left;
+}
+
+.senior-section-toggle:hover {
+  color: var(--accent-gold);
+}
+
+.senior-section-body {
+  padding: 0.5rem 0.75rem;
+  margin-top: 0.25rem;
+  background: var(--surface-secondary);
+  border: 1px solid var(--border-light);
+  border-radius: 0.375rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+.senior-resource-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.375rem 0;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border-light);
+}
+
+.senior-resource-row:last-child {
+  border-bottom: none;
+}
+
+.senior-resource-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-main);
+}
+
+.senior-resource-type {
+  font-size: 0.563rem;
+  padding: 0.125rem 0.375rem;
+  border-radius: 0.25rem;
+  background: rgba(245, 158, 11, 0.1);
+  color: var(--accent-gold);
+  font-weight: 600;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+
+/* Video frame wrapper ensures the iframe fills a 16:9 aspect box */
+.senior-video-frame {
+  aspect-ratio: 16 / 9;
+  width: 100%;
+  background: #000;
+  overflow: hidden;
+}
+
+.senior-video-frame iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+
+
+/* ============================================================================
+   PORTAL LAYOUT OVERRIDES — Video Left, Weeks Right, Video Sticky
+   
+   This block re-declares the two-column layout with the video column on
+   the LEFT and the accordion on the RIGHT. It overrides the existing
+   `.senior-phase-layout`, `.senior-accordion-column`, and
+   `.senior-video-column` rules above by using the same selectors (last
+   declaration in the cascade wins).
+   
+   Paste at the bottom of components.css.
+   ============================================================================ */
+
+/* ── Two-column layout: 45% video / 55% accordion ── */
+.senior-phase-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+  gap: 1.25rem;
+  align-items: start;
+  overflow: visible;   /* allow sticky to escape this container */
+}
+
+/* ── Video column — LEFT side, sticky on desktop ── */
+.senior-video-column {
+  order: 1;
+  position: sticky;
+  top: 88px;            /* clears the fixed navigation bar */
+  align-self: start;
+  max-height: calc(100vh - 100px);
+  z-index: 5;
+}
+
+/* ── Accordion column — RIGHT side, scrolls independently ── */
+.senior-accordion-column {
+  order: 2;
+  overflow-y: auto;
+  max-height: calc(100vh - 120px);
+  padding-right: 0.5rem;
+  padding-left: 0;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(245, 158, 11, 0.3) transparent;
+}
+
+.senior-accordion-column::-webkit-scrollbar {
+  width: 5px;
+}
+
+.senior-accordion-column::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.senior-accordion-column::-webkit-scrollbar-thumb {
+  background: rgba(245, 158, 11, 0.3);
+  border-radius: 10px;
+}
+
+/* ── Mobile: stack vertically, video on top ── */
+@media (max-width: 1023px) {
+  .senior-phase-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .senior-video-column {
+    position: static;
+    order: 1;
+    max-height: none;
+    margin-bottom: 1rem;
+  }
+
+  .senior-accordion-column {
+    order: 2;
+    max-height: none;
+    overflow-y: visible;
+    padding-right: 0;
+  }
+}
