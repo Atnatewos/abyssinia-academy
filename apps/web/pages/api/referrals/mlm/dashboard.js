@@ -302,6 +302,7 @@ export default async function handler(req, res) {
 
         user: userResult.rows[0] || null,
 
+
         /* Money Model v2 wallet fields */
         wallet: {
           availableNow,

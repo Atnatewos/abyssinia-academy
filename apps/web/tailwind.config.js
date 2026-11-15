@@ -140,6 +140,10 @@ module.exports = {
         'border-pill': 'var(--border-pill)',
         'border-badge': 'var(--border-badge)',
         'border-mobile-link': 'var(--border-mobile-link)',
+
+        /* Skeleton Loading */
+        'bg-skeleton': 'var(--bg-skeleton)',
+        'bg-skeleton-strong': 'var(--bg-skeleton-strong)',
       },
 
       /*

@@ -20,7 +20,7 @@ import { ArrowLeft, Award, RefreshCw } from 'lucide-react';
 import SEOHead from '../../components/shared/SEOHead';
 import PageLayout from '../../components/shared/PageLayout';
 import ScholarshipCard from '../../components/scholarships/ScholarshipCard';
-import { SkeletonCard, SkeletonWrapper } from '../../components/shared/Skeleton';
+import { SkeletonCard } from '../../components/shared/Skeleton';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
 import { getItem } from '../../lib/storage';
@@ -28,13 +28,17 @@ import { getItem } from '../../lib/storage';
 /**
  * Loading skeleton grid — matches the visual shape of the card grid
  * to prevent layout shift.
+ *
+ * The grid container is a plain <div> (NOT SkeletonWrapper), because
+ * SkeletonWrapper enforces `w-full` which breaks the grid layout.
+ * Instead, each SkeletonCard handles its own accessibility wrapper.
  */
 const BrowseSkeleton = () => (
-  <SkeletonWrapper className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
     {Array.from({ length: 6 }).map((_, i) => (
       <SkeletonCard key={i} showIcon bodyLines={3} />
     ))}
-  </SkeletonWrapper>
+  </div>
 );
 
 /**

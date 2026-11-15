@@ -473,20 +473,53 @@ const daysUntil = (value) => {
   }
 };
 
+/**
+ * Loading skeleton grid — matches the visual shape of the ScholarshipCard
+ * exactly, including the floating icon that overlaps the cover image
+ * and the content body. Prevents layout shift on load.
+ */
 const BrowseSkeleton = () => (
-  <SkeletonWrapper className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
     {[0, 1, 2, 3, 4, 5].map((i) => (
-      <div key={i} className="rounded-2xl overflow-hidden border border-border-light bg-bg-card-solid">
-        <SkeletonBase style={{ height: '8rem', borderRadius: 0 }} />
-        <div className="p-4 flex flex-col gap-2">
-          <SkeletonBase className="skeleton-line skeleton-line-medium" />
-          <SkeletonBase className="skeleton-line skeleton-line-short" />
-          <SkeletonBase style={{ height: '1.5rem', borderRadius: '9999px' }} />
-          <SkeletonBase style={{ height: '2.25rem', borderRadius: '0.5rem' }} />
+      <div
+        key={i}
+        className="rounded-2xl overflow-hidden border border-border-light bg-bg-card-solid"
+      >
+        {/* Cover image placeholder with floating icon */}
+        <div className="relative h-32">
+          <SkeletonBase className="w-full h-full rounded-none" />
+          
+          {/* Floating icon placeholder — matches the GraduationCap position */}
+          <div className="absolute -bottom-5 left-4 w-12 h-12 rounded-xl bg-bg-card-solid border-4 border-bg-card-solid flex items-center justify-center">
+            <SkeletonBase className="w-8 h-8 rounded-lg" />
+          </div>
+        </div>
+
+        <div className="pt-8 px-4 pb-4 flex flex-col gap-3">
+          {/* Title + description */}
+          <div className="flex flex-col gap-2">
+            <SkeletonBase className="h-4 w-[80%] rounded-md" />
+            <SkeletonBase className="h-3 w-[60%] rounded-md" />
+          </div>
+
+          {/* Badge row */}
+          <div className="flex gap-2">
+            <SkeletonBase className="h-5 w-20 rounded-full" />
+            <SkeletonBase className="h-5 w-16 rounded-full" />
+          </div>
+
+          {/* Progress bar (quota) */}
+          <div className="flex flex-col gap-1.5">
+            <SkeletonBase className="h-2.5 w-full rounded-md" />
+            <SkeletonBase className="h-1.5 w-full rounded-full" />
+          </div>
+
+          {/* CTA button */}
+          <SkeletonBase className="h-9 w-full rounded-lg mt-auto" />
         </div>
       </div>
     ))}
-  </SkeletonWrapper>
+  </div>
 );
 
 const ScholarshipCard = ({ campaign, isAuthenticated, index }) => {
