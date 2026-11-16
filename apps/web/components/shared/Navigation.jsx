@@ -538,7 +538,6 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { useRouter } from 'next/router';
 import {
   Code2,
@@ -657,7 +656,6 @@ const Navigation = () => {
   );
 
   const pills = useMemo(() => {
-    // Fallback guarantees that core navigation always renders even if config is empty
     const fallback = [
       { href: '/', labelKey: 'nav.overview', exact: true },
       { href: '/courses', labelKey: 'nav.courses' },
@@ -756,13 +754,11 @@ const Navigation = () => {
         <Link href="/" className="flex items-center gap-2.5 shrink-0 group" aria-label={brandName}>
           {activeLogo && !logoError ? (
             <div className="relative h-10 w-auto min-w-[140px] flex items-center">
-              <Image
+              {/* Standard img tag used to prevent Vercel image optimization 404s on dynamic config paths */}
+              <img
                 key={activeLogo}
                 src={activeLogo}
                 alt={brandLogoAlt}
-                width={brand.logoWidth || 140}
-                height={brand.logoHeight || 40}
-                priority
                 onError={() => setLogoError(true)}
                 className="object-contain h-full w-auto group-hover:scale-[1.02] transition-transform duration-300"
               />

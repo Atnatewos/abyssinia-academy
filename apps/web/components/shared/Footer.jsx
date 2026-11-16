@@ -316,7 +316,6 @@
 
 import { useState, useCallback } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import {
   Code2,
   Mail,
@@ -419,7 +418,6 @@ const Footer = () => {
     ([, href]) => typeof href === 'string' && href.length > 0
   );
 
-  // Fallback guarantees the grid always renders, fixing the empty footer bug
   const columns = Array.isArray(footer.columns) && footer.columns.length > 0
     ? footer.columns
     : FOOTER_COLUMNS_FALLBACK;
@@ -467,12 +465,11 @@ const Footer = () => {
             <Link href="/" className="flex items-center gap-2.5 group" aria-label={brandName}>
               {activeLogo && !logoError ? (
                 <div className="relative h-10 w-auto min-w-[140px] flex items-center">
-                  <Image
+                  {/* Standard img tag used to prevent Vercel image optimization 404s on dynamic config paths */}
+                  <img
                     key={activeLogo}
                     src={activeLogo}
                     alt={brandLogoAlt}
-                    width={brand.footerLogoWidth || 140}
-                    height={brand.logoHeight || 40}
                     onError={() => setLogoError(true)}
                     className="object-contain h-full w-auto group-hover:scale-[1.02] transition-transform duration-300"
                   />
