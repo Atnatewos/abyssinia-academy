@@ -7,14 +7,21 @@ module.exports = {
   nav: {
     overview: 'Overview',
     courses: 'Courses',
+    scholarships: 'Scholarships',
+    earn: 'Earn',
     portal: 'Classroom Portal',
     tuition: 'Tuition',
     enrollNow: 'Enroll Now',
     claimDiscount: 'Claim Discount →',
     myResellerStore: 'My Store',
+    contact: 'Contact',
+    signIn: 'Sign In',
+    myProfile: 'My Profile',
+    referralDashboard: 'Referral Dashboard',
+    myScholarships: 'My Scholarships',
+    logout: 'Logout',
   },
   banner: {
-    /* Income-first announcement — {percent} injected at render */
     text: '💰 Students earn while they learn — up to {total} ETB per sale · Withdraw in {hours}h.',
     claimDiscount: 'See How You Earn →',
   },

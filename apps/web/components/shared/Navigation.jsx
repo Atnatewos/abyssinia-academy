@@ -1,10 +1,11 @@
 // /**
 //  * @fileoverview Main Navigation Header
 //  *
-//  * Pure Tailwind implementation. The mobile menu uses an explicit RGBA
-//  * background color so the opacity is controllable directly in code
-//  * (adjust the 0.98 in the style prop). Backdrop blur adds the premium
-//  * glass feel without sacrificing readability.
+//  * Pure Tailwind implementation. The mobile menu uses a theme-aware RGBA
+//  * background so it matches both light and dark modes, and includes a
+//  * styled in-panel close button. The notification bell is intentionally
+//  * omitted inside the mobile dropdown because it already lives in the
+//  * navbar (top-right) and remains visible at all breakpoints.
 //  *
 //  * Path: apps/web/components/shared/Navigation.jsx
 //  */
@@ -120,6 +121,18 @@
 //     if (!themeMounted) return brand.logo;
 //     return theme === 'light' ? brand.logoLight || brand.logo : brand.logo;
 //   }, [theme, themeMounted, brand.logo, brand.logoLight]);
+
+//   /**
+//    * Mobile menu background — theme-aware RGBA.
+//    * Kept identical to the previous version so no visual regressions.
+//    */
+//   const mobileMenuBackground = useMemo(
+//     () =>
+//       theme === 'light'
+//         ? 'rgba(255, 255, 255, 0.93)'
+//         : 'rgba(15, 23, 42, 0.93)',
+//     [theme]
+//   );
 
 //   const pills = useMemo(() => {
 //     const configured = Array.isArray(landingConfig?.navLinks)
@@ -372,18 +385,11 @@
 //         </div>
 //       </div>
 
-//       {/* 
-//         MOBILE MENU — Floating Panel with Explicit RGBA Opacity
-        
-//         Using style={{ backgroundColor: 'rgba(...)' }} because Tailwind's
-//         `/opacity` modifier cannot be applied to `bg-bg-card-solid` (which
-//         resolves to a hex CSS variable). This gives full control over the
-//         exact opacity value right here in the code.
-//       */}
+//       {/* MOBILE MENU — Floating Panel with theme-aware RGBA and in-panel close button */}
 //       {isMobileOpen && (
 //         <>
 //           {/* Blurred Backdrop Overlay */}
-//           <div 
+//           <div
 //             className="fixed inset-0 top-[72px] bg-black/40 backdrop-blur-sm z-30 md:hidden animate-fade-in"
 //             onClick={() => setIsMobileOpen(false)}
 //             aria-hidden="true"
@@ -398,87 +404,113 @@
 //                        shadow-2xl shadow-black/60
 //                        max-h-[75vh]
 //                        overflow-y-auto
-//                        px-4 pt-4 pb-6
-//                        flex flex-col gap-1
+//                        flex flex-col
 //                        animate-fade-in-up
 //                        backdrop-blur-3xl"
-//             style={{ backgroundColor: 'rgba(15, 23, 42, 0.93)' }}
+//             style={{ backgroundColor: mobileMenuBackground }}
 //           >
-//             {isAuthenticated && (
-//               <div className="mb-3 p-3 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-between">
-//                 <div className="flex items-center gap-2 text-accent">
-//                   <Wallet className="w-4 h-4" />
-//                   <span className="text-xs font-bold uppercase tracking-wider">Wallet Balance</span>
-//                 </div>
-//                 <span className="text-sm font-extrabold text-accent font-mono">
-//                   {balanceLoading ? '...' : balance !== null ? `${balance.toLocaleString()} ETB` : '0 ETB'}
+//             {/* Panel header: title + in-panel close button */}
+//             <div className="flex items-center justify-between px-4 pt-3 pb-3 border-b border-border-light">
+//               <div className="flex items-center gap-2">
+//                 <div className="w-2 h-2 rounded-full bg-accent animate-pulse" aria-hidden="true" />
+//                 <span className="text-xs font-bold uppercase tracking-wider text-text-muted">
+//                   Menu
 //                 </span>
 //               </div>
-//             )}
+//               <button
+//                 type="button"
+//                 onClick={() => setIsMobileOpen(false)}
+//                 aria-label="Close menu"
+//                 className="flex items-center justify-center w-8 h-8 rounded-lg
+//                            text-text-muted
+//                            hover:text-text-main
+//                            hover:bg-bg-ghost-hover
+//                            active:scale-95
+//                            transition-all duration-150"
+//               >
+//                 <X size={18} />
+//               </button>
+//             </div>
 
-//             {pills.map((pill) => {
-//               const active = isActive(pill.href, pill.exact);
-//               return (
-//                 <Link
-//                   key={pill.href}
-//                   href={pill.href}
-//                   className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors
-//                               ${active
-//                                 ? 'bg-accent/10 text-accent font-semibold'
-//                                 : 'text-text-nav-link hover:text-text-nav-link-hover hover:bg-bg-ghost-hover'}`}
-//                 >
-//                   {pill.label}
-//                   {pill.dot ? (
-//                     <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" aria-hidden="true" />
-//                   ) : null}
-//                 </Link>
-//               );
-//             })}
-
-//             <div className="h-px bg-border-light my-2" />
-
-//             {isAuthenticated ? (
-//               <>
-//                 <div className="flex justify-center py-2">
-//                   <NotificationBell />
+//             {/* Panel body */}
+//             <div className="flex flex-col gap-1 px-4 pt-3 pb-6">
+//               {isAuthenticated && (
+//                 <div className="mb-3 p-3 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-between">
+//                   <div className="flex items-center gap-2 text-accent">
+//                     <Wallet className="w-4 h-4" />
+//                     <span className="text-xs font-bold uppercase tracking-wider">Wallet Balance</span>
+//                   </div>
+//                   <span className="text-sm font-extrabold text-accent font-mono">
+//                     {balanceLoading ? '...' : balance !== null ? `${balance.toLocaleString()} ETB` : '0 ETB'}
+//                   </span>
 //                 </div>
-//                 <div className="h-px bg-border-light my-2" />
-//                 <Link href="/profile" className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-text-nav-link hover:text-text-nav-link-hover hover:bg-bg-ghost-hover transition-colors">
-//                   <User className="w-4 h-4" />
-//                   {resolveLabel(t, 'nav.myProfile', 'myProfile')}
-//                 </Link>
-//                 <Link href="/profile/reseller" className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-text-nav-link hover:text-text-nav-link-hover hover:bg-bg-ghost-hover transition-colors">
-//                   <Store className="w-4 h-4" />
-//                   {resolveLabel(t, 'nav.myResellerStore', 'myResellerStore')}
-//                 </Link>
-//                 <Link href="/profile/scholarships" className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-text-nav-link hover:text-text-nav-link-hover hover:bg-bg-ghost-hover transition-colors">
-//                   <GraduationCap className="w-4 h-4" />
-//                   {resolveLabel(t, 'scholarships.myApplications.pageTitle', 'myScholarships')}
-//                 </Link>
-//                 <Link href="/profile/referrals" className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-text-nav-link hover:text-text-nav-link-hover hover:bg-bg-ghost-hover transition-colors">
-//                   <Share2 className="w-4 h-4" />
-//                   {resolveLabel(t, 'nav.referralDashboard', 'referralDashboard')}
-//                 </Link>
-//                 <button
-//                   type="button"
-//                   onClick={handleLogout}
-//                   className="flex items-center gap-3 w-full text-left px-4 py-3 rounded-xl text-sm text-error hover:bg-error/10 transition-colors mt-1"
-//                 >
-//                   <LogOut className="w-4 h-4" />
-//                   {resolveLabel(t, 'nav.logout', 'logout')}
-//                 </button>
-//               </>
-//             ) : (
-//               <>
-//                 <Link href="/auth/login" className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold text-text-nav-link hover:bg-bg-ghost-hover transition-colors">
-//                   {resolveLabel(t, 'nav.signIn', 'signIn')}
-//                 </Link>
-//                 <Link href="/auth/register" className="flex items-center justify-center gap-2 px-4 py-3 rounded-full bg-accent text-text-inverse text-sm font-bold shadow-glow-gold-sm mt-2">
-//                   <Zap className="w-4 h-4" />
-//                   {resolveLabel(t, 'nav.enroll', 'enroll')}
-//                 </Link>
-//               </>
-//             )}
+//               )}
+
+//               {pills.map((pill) => {
+//                 const active = isActive(pill.href, pill.exact);
+//                 return (
+//                   <Link
+//                     key={pill.href}
+//                     href={pill.href}
+//                     className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors
+//                                 ${active
+//                                   ? 'bg-accent/10 text-accent font-semibold'
+//                                   : 'text-text-nav-link hover:text-text-nav-link-hover hover:bg-bg-ghost-hover'}`}
+//                   >
+//                     {pill.label}
+//                     {pill.dot ? (
+//                       <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" aria-hidden="true" />
+//                     ) : null}
+//                   </Link>
+//                 );
+//               })}
+
+//               <div className="h-px bg-border-light my-2" />
+
+//               {/*
+//                 Note: The NotificationBell is intentionally NOT rendered inside
+//                 the mobile dropdown. It remains in the top navbar at all
+//                 breakpoints so users still have access to it.
+//               */}
+//               {isAuthenticated ? (
+//                 <>
+//                   <Link href="/profile" className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-text-nav-link hover:text-text-nav-link-hover hover:bg-bg-ghost-hover transition-colors">
+//                     <User className="w-4 h-4" />
+//                     {resolveLabel(t, 'nav.myProfile', 'myProfile')}
+//                   </Link>
+//                   <Link href="/profile/reseller" className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-text-nav-link hover:text-text-nav-link-hover hover:bg-bg-ghost-hover transition-colors">
+//                     <Store className="w-4 h-4" />
+//                     {resolveLabel(t, 'nav.myResellerStore', 'myResellerStore')}
+//                   </Link>
+//                   <Link href="/profile/scholarships" className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-text-nav-link hover:text-text-nav-link-hover hover:bg-bg-ghost-hover transition-colors">
+//                     <GraduationCap className="w-4 h-4" />
+//                     {resolveLabel(t, 'scholarships.myApplications.pageTitle', 'myScholarships')}
+//                   </Link>
+//                   <Link href="/profile/referrals" className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-text-nav-link hover:text-text-nav-link-hover hover:bg-bg-ghost-hover transition-colors">
+//                     <Share2 className="w-4 h-4" />
+//                     {resolveLabel(t, 'nav.referralDashboard', 'referralDashboard')}
+//                   </Link>
+//                   <button
+//                     type="button"
+//                     onClick={handleLogout}
+//                     className="flex items-center gap-3 w-full text-left px-4 py-3 rounded-xl text-sm text-error hover:bg-error/10 transition-colors mt-1"
+//                   >
+//                     <LogOut className="w-4 h-4" />
+//                     {resolveLabel(t, 'nav.logout', 'logout')}
+//                   </button>
+//                 </>
+//               ) : (
+//                 <>
+//                   <Link href="/auth/login" className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold text-text-nav-link hover:bg-bg-ghost-hover transition-colors">
+//                     {resolveLabel(t, 'nav.signIn', 'signIn')}
+//                   </Link>
+//                   <Link href="/auth/register" className="flex items-center justify-center gap-2 px-4 py-3 rounded-full bg-accent text-text-inverse text-sm font-bold shadow-glow-gold-sm mt-2">
+//                     <Zap className="w-4 h-4" />
+//                     {resolveLabel(t, 'nav.enroll', 'enroll')}
+//                   </Link>
+//                 </>
+//               )}
+//             </div>
 //           </div>
 //         </>
 //       )}
@@ -487,9 +519,6 @@
 // };
 
 // export default Navigation;
-
-
-
 
 
 
@@ -619,10 +648,6 @@ const Navigation = () => {
     return theme === 'light' ? brand.logoLight || brand.logo : brand.logo;
   }, [theme, themeMounted, brand.logo, brand.logoLight]);
 
-  /**
-   * Mobile menu background — theme-aware RGBA.
-   * Kept identical to the previous version so no visual regressions.
-   */
   const mobileMenuBackground = useMemo(
     () =>
       theme === 'light'
@@ -632,21 +657,21 @@ const Navigation = () => {
   );
 
   const pills = useMemo(() => {
-    const configured = Array.isArray(landingConfig?.navLinks)
-      ? landingConfig.navLinks
-      : [];
-
+    // Fallback guarantees that core navigation always renders even if config is empty
     const fallback = [
       { href: '/', labelKey: 'nav.overview', exact: true },
       { href: '/courses', labelKey: 'nav.courses' },
       { href: '/scholarships', labelKey: 'scholarships.nav.scholarships' },
+      { href: '/#earn', labelKey: 'nav.earn' },
       { href: '/pricing', labelKey: 'nav.tuition' },
       { href: '/contact', labelKey: 'nav.contact' },
     ];
 
-    const source = configured.length > 0 ? configured : fallback;
+    const configured = Array.isArray(landingConfig?.navLinks) && landingConfig.navLinks.length > 0
+      ? landingConfig.navLinks
+      : fallback;
 
-    return source
+    return configured
       .filter((item) => {
         if (item.requiresAuth && !isAuthenticated) return false;
         if (item.configGate) {
@@ -687,7 +712,6 @@ const Navigation = () => {
     return () => document.removeEventListener('click', handleOutside);
   }, [isProfileOpen]);
 
-  /* Lock body scroll when the mobile menu is open */
   useEffect(() => {
     if (isMobileOpen) {
       document.body.style.overflow = 'hidden';
@@ -756,15 +780,15 @@ const Navigation = () => {
           )}
         </Link>
 
-        {/* Desktop pills */}
-        <nav className="hidden md:flex items-center gap-0.5 bg-bg-pill-container p-1 rounded-full border border-border-pill" aria-label="Primary">
+        {/* Desktop pills - isolated to prevent background bleed */}
+        <nav className="hidden md:flex items-center gap-1.5 p-1 rounded-full border border-transparent" aria-label="Primary">
           {pills.map((pill) => {
             const active = isActive(pill.href, pill.exact);
             return (
               <Link
                 key={pill.href}
                 href={pill.href}
-                className={`relative px-3.5 py-1.5 rounded-full text-sm font-medium transition-all duration-200 whitespace-nowrap
+                className={`relative px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200 whitespace-nowrap
                             ${active
                               ? 'bg-accent text-text-inverse font-semibold shadow-glow-gold-sm'
                               : 'text-text-nav-link hover:text-text-nav-link-hover hover:bg-bg-ghost-hover'}`}
@@ -882,17 +906,15 @@ const Navigation = () => {
         </div>
       </div>
 
-      {/* MOBILE MENU — Floating Panel with theme-aware RGBA and in-panel close button */}
+      {/* MOBILE MENU — Floating Panel with theme-aware RGBA */}
       {isMobileOpen && (
         <>
-          {/* Blurred Backdrop Overlay */}
           <div
             className="fixed inset-0 top-[72px] bg-black/40 backdrop-blur-sm z-30 md:hidden animate-fade-in"
             onClick={() => setIsMobileOpen(false)}
             aria-hidden="true"
           />
 
-          {/* Floating Menu Panel */}
           <div
             className="fixed z-40 md:hidden
                        top-[84px] left-4 right-4
@@ -906,7 +928,6 @@ const Navigation = () => {
                        backdrop-blur-3xl"
             style={{ backgroundColor: mobileMenuBackground }}
           >
-            {/* Panel header: title + in-panel close button */}
             <div className="flex items-center justify-between px-4 pt-3 pb-3 border-b border-border-light">
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full bg-accent animate-pulse" aria-hidden="true" />
@@ -919,17 +940,14 @@ const Navigation = () => {
                 onClick={() => setIsMobileOpen(false)}
                 aria-label="Close menu"
                 className="flex items-center justify-center w-8 h-8 rounded-lg
-                           text-text-muted
-                           hover:text-text-main
-                           hover:bg-bg-ghost-hover
-                           active:scale-95
+                           text-text-muted hover:text-text-main
+                           hover:bg-bg-ghost-hover active:scale-95
                            transition-all duration-150"
               >
                 <X size={18} />
               </button>
             </div>
 
-            {/* Panel body */}
             <div className="flex flex-col gap-1 px-4 pt-3 pb-6">
               {isAuthenticated && (
                 <div className="mb-3 p-3 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-between">
@@ -964,11 +982,6 @@ const Navigation = () => {
 
               <div className="h-px bg-border-light my-2" />
 
-              {/*
-                Note: The NotificationBell is intentionally NOT rendered inside
-                the mobile dropdown. It remains in the top navbar at all
-                breakpoints so users still have access to it.
-              */}
               {isAuthenticated ? (
                 <>
                   <Link href="/profile" className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-text-nav-link hover:text-text-nav-link-hover hover:bg-bg-ghost-hover transition-colors">
