@@ -527,11 +527,9 @@
 /**
  * @fileoverview Main Navigation Header
  *
- * Pure Tailwind implementation. The mobile menu uses a theme-aware RGBA
- * background so it matches both light and dark modes, and includes a
- * styled in-panel close button. The notification bell is intentionally
- * omitted inside the mobile dropdown because it already lives in the
- * navbar (top-right) and remains visible at all breakpoints.
+ * Uses a native HTML img tag for the brand logo to bypass Next.js image
+ * optimization and prevent build-time 404s on dynamically resolved CDN
+ * paths. The mobile menu uses theme-aware RGBA for opacity control.
  *
  * Path: apps/web/components/shared/Navigation.jsx
  */
@@ -754,7 +752,12 @@ const Navigation = () => {
         <Link href="/" className="flex items-center gap-2.5 shrink-0 group" aria-label={brandName}>
           {activeLogo && !logoError ? (
             <div className="relative h-10 w-auto min-w-[140px] flex items-center">
-              {/* Standard img tag used to prevent Vercel image optimization 404s on dynamic config paths */}
+              {/* 
+                Native img tag used intentionally here. 
+                This bypasses Vercel's serverless image optimizer which 
+                fails on dynamic relative paths or unconfigured Cloudinary 
+                URL variables during builds. 
+              */}
               <img
                 key={activeLogo}
                 src={activeLogo}

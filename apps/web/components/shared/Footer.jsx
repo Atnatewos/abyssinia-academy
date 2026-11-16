@@ -465,7 +465,10 @@ const Footer = () => {
             <Link href="/" className="flex items-center gap-2.5 group" aria-label={brandName}>
               {activeLogo && !logoError ? (
                 <div className="relative h-10 w-auto min-w-[140px] flex items-center">
-                  {/* Standard img tag used to prevent Vercel image optimization 404s on dynamic config paths */}
+                  {/* 
+                    Native img tag used here for the same reason as in Navigation: 
+                    prevents Vercel build-time asset resolution failures.
+                  */}
                   <img
                     key={activeLogo}
                     src={activeLogo}
