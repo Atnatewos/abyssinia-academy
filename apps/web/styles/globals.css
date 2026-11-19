@@ -13,8 +13,9 @@
  *   4. Design system primitives (design-system.css)
  *   5. Layout, components, responsive overrides
  *   6. Feature-specific stylesheets (landing 3D, admin, referral, MLM, etc.)
- *   7. Tailwind utilities — MUST be last so atomic utilities win the
- *      cascade when a developer explicitly writes a class
+ *   7. Base resets and page-level primitives (below)
+ *   8. Tailwind utilities — MUST be the final import so atomic utilities
+ *      win the cascade over every reset and legacy component class
  *
  * Path: apps/web/styles/globals.css
  */
@@ -23,7 +24,7 @@
    EXTERNAL FONTS
    ============================================================================ */
 @import url('https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,600,700,800,900&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300,400,500,600,700,800,900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 
 /* ============================================================================
@@ -41,17 +42,8 @@
 @import '../styles/admin-godmode.css';
 @import './referral.css';
 @import './admin-mlm.css';
-/* @import './skeleton.css'; */
 @import './admin-announcements.css';
 @import '../styles/confirm.css';
-
-/* ============================================================================
-   TAILWIND UTILITIES — MUST LOAD LAST
-   Atomic utilities intentionally override semantic component classes when a
-   developer explicitly applies them. Placing this import at the end of the
-   cascade is what makes that guarantee hold.
-   ============================================================================ */
-@import './tailwind.css';
 
 /* ============================================================================
    CSS RESET
@@ -340,3 +332,12 @@ p, h1, h2, h3, h4, h5, h6 {
 .top-banner-sparkle {
   animation: spin 4s linear infinite;
 }
+
+/* ============================================================================
+   TAILWIND UTILITIES — FINAL IMPORT (cascade winner)
+   Atomic utilities intentionally override every reset and semantic
+   component class above when a developer explicitly applies them.
+   This import MUST remain the last statement in this file; moving it
+   earlier silently breaks every Tailwind-styled surface platform-wide.
+   ============================================================================ */
+@import './tailwind.css';

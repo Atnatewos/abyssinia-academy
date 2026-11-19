@@ -97,6 +97,7 @@
 //         'text-muted': 'var(--text-muted)',
 //         'text-dim': 'var(--text-dim)',
 //         'text-inverse': 'var(--text-inverse)',
+//         'on-accent': 'var(--text-on-accent)',
 //         'text-nav-link': 'var(--text-nav-link)',
 //         'text-nav-link-hover': 'var(--text-nav-link-hover)',
 //         'text-nav-icon': 'var(--text-nav-icon)',
@@ -142,7 +143,6 @@
 //         'border-mobile-link': 'var(--border-mobile-link)',
 
 //         /* Skeleton Loading */
-//         'bg-skeleton': 'var(--bg-skeleton)',
 //         'bg-skeleton-strong': 'var(--bg-skeleton-strong)',
 //       },
 
@@ -178,9 +178,9 @@
 //         nav: 'var(--shadow-nav)',
 //         glow: '0 0 20px var(--glow-color)',
 //         'glow-strong': '0 0 32px var(--glow-strong)',
-//         'glow-gold': '0 4px 20px rgba(var(--accent-gold-rgb) / 0.25)',
-//         'glow-gold-lg': '0 6px 25px rgba(var(--accent-gold-rgb) / 0.4)',
-//         'glow-gold-sm': '0 0 20px rgba(var(--accent-gold-rgb) / 0.3)',
+//         'glow-gold': '0 4px 20px rgb(var(--accent-gold-rgb) / 0.25)',
+//         'glow-gold-lg': '0 6px 25px rgb(var(--accent-gold-rgb) / 0.4)',
+//         'glow-gold-sm': '0 0 20px rgb(var(--accent-gold-rgb) / 0.3)',
 //         none: 'none',
 //       },
 
@@ -194,7 +194,6 @@
 //         sans: ['var(--font-primary)'],
 //         mono: ['var(--font-mono)'],
 //       },
-
 //       fontSize: {
 //         '2xs': ['var(--font-size-2xs)', { lineHeight: 'var(--line-height-2xs)' }],
 //         xs: ['var(--font-size-xs)', { lineHeight: 'var(--line-height-xs)' }],
@@ -252,9 +251,8 @@
 //       /*
 //        * ANIMATION
 //        * Map the design system's named animations to Tailwind utilities.
-//        * Keyframes themselves live in styles/animations.css; here we expose
-//        * them as `animate-<name>` classes. Colors inside keyframes resolve
-//        * through `rgb(var(--accent-gold-rgb) / alpha)` so they rebrand
+//        * Colors inside keyframes resolve through
+//        * `rgb(var(--accent-gold-rgb) / alpha)` so they rebrand
 //        * automatically with the accent color.
 //        */
 //       keyframes: {
@@ -345,6 +343,10 @@
 //    */
 //   plugins: [],
 // };
+
+
+
+
 
 
 
@@ -660,6 +662,14 @@ module.exports = {
           '0%': { opacity: '0', transform: 'translateY(20px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
         },
+        heroWindowFloat: {
+          '0%, 100%': {
+            transform: 'perspective(1200px) rotateY(-2deg) translateY(0)',
+          },
+          '50%': {
+            transform: 'perspective(1200px) rotateY(-2deg) translateY(-10px)',
+          },
+        },
       },
       animation: {
         float: 'float 5s ease-in-out infinite',
@@ -668,6 +678,7 @@ module.exports = {
         'spin-slow': 'spin 8s linear infinite',
         blob: 'blob 7s infinite',
         'fade-in-up': 'fade-in-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+        'hero-window-float': 'heroWindowFloat 6s ease-in-out infinite',
       },
     },
   },

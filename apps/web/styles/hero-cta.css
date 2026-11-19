@@ -1,0 +1,111 @@
+/**
+ * @fileoverview Hero Primary CTA — Isolated Nuclear Stylesheet
+ *
+ * Self-contained styling for the hero's primary "Explore Courses" CTA.
+ * Deliberately isolated from every other stylesheet in the platform:
+ *
+ *   - Unique class namespace (`hcta-*`) — no legacy selector matches it.
+ *   - Loaded last in pages/_app.jsx — wins source-order ties.
+ *   - `!important` on ink + surface — immune to any cascade inversion,
+ *     global reset, or utility-layer ordering issue.
+ *
+ * Every color resolves from the design tokens in themes.css, so dark
+ * and light themes stay in sync and rebranding propagates automatically.
+ * The ink uses --text-inverse (dark navy in dark mode) which is the
+ * platform's canonical "text on gold" value.
+ *
+ * Path: apps/web/styles/hero-cta.css
+ */
+
+/* ── Primary CTA shell ─────────────────────────────────────────────── */
+.hcta-primary {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.5rem !important;
+  width: 100%;
+  padding: 0.875rem 2rem !important;
+  border: none !important;
+  border-radius: 0.75rem !important;
+  background: linear-gradient(
+    135deg,
+    var(--accent-gold-light) 0%,
+    var(--accent-gold) 50%,
+    var(--accent-gold-dark) 100%
+  ) !important;
+  box-shadow: 0 10px 25px -5px var(--accent-gold-glow) !important;
+  font-family: var(--font-primary) !important;
+  font-size: 0.875rem !important;
+  font-weight: 700 !important;
+  line-height: 1.25 !important;
+  text-decoration: none !important;
+  cursor: pointer !important;
+  transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+}
+
+@media (min-width: 640px) {
+  .hcta-primary {
+    width: auto;
+  }
+}
+
+.hcta-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 15px 30px -5px var(--accent-gold-glow) !important;
+}
+
+.hcta-primary:active {
+  transform: translateY(0);
+}
+
+/* ── Ink: label + icon forced to the canonical on-gold token ───────── */
+.hcta-primary,
+.hcta-primary .hcta-label,
+.hcta-primary .hcta-icon,
+.hcta-primary svg {
+  color: var(--text-inverse) !important;
+  -webkit-text-fill-color: var(--text-inverse) !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+.hcta-primary .hcta-label {
+  display: inline-block !important;
+  background: none !important;
+  -webkit-background-clip: initial !important;
+  background-clip: initial !important;
+}
+
+.hcta-primary .hcta-icon,
+.hcta-primary svg {
+  flex-shrink: 0 !important;
+  stroke: var(--text-inverse) !important;
+}
+
+/* ── Light theme parity ────────────────────────────────────────────── */
+.light-theme .hcta-primary,
+.light-theme .hcta-primary .hcta-label,
+.light-theme .hcta-primary .hcta-icon,
+.light-theme .hcta-primary svg {
+  color: #0f172a !important;
+  -webkit-text-fill-color: #0f172a !important;
+}
+
+.light-theme .hcta-primary .hcta-icon,
+.light-theme .hcta-primary svg {
+  stroke: #0f172a !important;
+}
+
+/* ── Reduced motion ────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .hcta-primary {
+    transition: none !important;
+  }
+  .hcta-primary:hover,
+  .hcta-primary:active {
+    transform: none !important;
+  }
+}
+
+
+

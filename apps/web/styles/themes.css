@@ -88,6 +88,8 @@
   --text-nav-icon: rgba(148, 163, 184, 0.7);
   --text-nav-icon-hover: #cbd5e1;
 
+    --text-on-accent: #0f172a;
+
   /* Gold Scale */
   --gold-50: #fffbeb;
   --gold-100: #fef3c7;
@@ -287,6 +289,8 @@
   --text-nav-link-hover: #1a1815;
   --text-nav-icon: rgba(60, 50, 35, 0.7);
   --text-nav-icon-hover: #2d2a25;
+
+    --text-on-accent: #0f172a;
 
   /* Accent */
   --accent-gold: #d97706;
