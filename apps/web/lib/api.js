@@ -1,25 +1,12 @@
 // /**
 //  * @fileoverview API Client with Global Confirmation Interceptor
 //  *
-//  * All confirmation copy is sourced from the shared i18n confirmations
-//  * namespace. Zero hardcoded strings in this file.
-//  *
-//  * Base URL resolution logic:
-//  *   The platform uses a dual-backend architecture during migration:
-//  *   1. Express API (`NEXT_PUBLIC_API_URL`) — handles legacy routes.
-//  *   2. Next.js API Routes (`/api`) — handles new feature modules.
-//  *
-//  * Modules that live entirely in Next.js MUST bypass the Express URL
-//  * and route to the same-origin Next.js backend.
-//  *
 //  * Path: apps/web/lib/api.js
 //  */
 
 // import axios from 'axios';
 // import { getItem, removeItem } from './storage';
 // import { requestConfirm } from './confirmBridge';
-
-// /* ── i18n resolver ─────────────────────────────────────────────────── */
 
 // function getCurrentLanguage() {
 //   if (typeof window === 'undefined') return 'en';
@@ -59,26 +46,20 @@
 //   }
 // }
 
-// /* ── Base axios instance ───────────────────────────────────────────── */
-
 // const EXPRESS_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '';
 
 // /**
 //  * Determine the correct base URL for a given endpoint.
 //  *
-//  * All endpoints that live entirely in Next.js API routes must bypass
-//  * the Express URL. Everything else routes to Express if configured.
+//  * Next.js-only modules (which have their own `pages/api/*` routes) must
+//  * bypass the Express URL. Everything else goes to Express if configured.
 //  *
-//  * @param {string} url - The request path
-//  * @returns {string} The base URL
+//  * @param {string} url
+//  * @returns {string}
 //  */
 // function resolveBaseURL(url) {
 //   const u = String(url || '');
 
-//   /* 
-//    * Next.js-only modules. These must hit the same-origin Next.js API,
-//    * completely bypassing the Express proxy.
-//    */
 //   const isNextjsRoute =
 //     u.startsWith('/admin/scholarships') ||
 //     u.startsWith('/scholarships') ||
@@ -88,13 +69,17 @@
 //     u.startsWith('/reseller') ||
 //     u.startsWith('/referrals') ||
 //     u.startsWith('/agents') ||
-//     u.startsWith('/mlm');
+//     u.startsWith('/mlm') ||
+//     u.startsWith('/access') ||
+//     u.startsWith('/progress') ||
+//     u.startsWith('/courses') ||
+//     u === '/profile' ||
+//     u.startsWith('/profile/');
 
 //   if (isNextjsRoute) {
-//     return '/api'; // Same-origin Next.js
+//     return '/api';
 //   }
 
-//   /* Everything else goes to Express if configured, or same-origin fallback */
 //   return EXPRESS_BASE_URL || '/api';
 // }
 
@@ -107,7 +92,6 @@
 //   const token = getItem('auth_token');
 //   const adminToken = getItem('admin_token');
 
-//   /* Dynamically resolve the base URL per request */
 //   config.baseURL = resolveBaseURL(config.url);
 
 //   if (config.url && config.url.startsWith('/admin') && adminToken) {
@@ -134,8 +118,6 @@
 //     return Promise.reject(error);
 //   }
 // );
-
-// /* ── Pattern → i18n key mapping ─────────────────────────────────────── */
 
 // const DELETE_PATTERNS = [
 //   [/\/admin\/courses\/[^/]+$/, 'actions.deleteCourse'],
@@ -205,8 +187,6 @@
 //   return null;
 // }
 
-// /* ── Interceptor wrapper ───────────────────────────────────────────── */
-
 // const CANCELLED_RESPONSE = Object.freeze({
 //   success: false,
 //   cancelled: true,
@@ -224,8 +204,6 @@
 
 //   return axiosInstance.request({ method, url, data, ...axiosOptions });
 // }
-
-// /* ── Public API client ─────────────────────────────────────────────── */
 
 // const apiClient = {
 //   get: (url, options = {}) =>
@@ -247,10 +225,28 @@
 
 
 
-
-
 /**
  * @fileoverview API Client with Global Confirmation Interceptor
+ *
+ * Base URL resolution — dual-backend routing contract:
+ *
+ *   NEXT.JS (same-origin `/api`) owns:
+ *     - All student-facing feature modules (scholarships, referrals,
+ *       reseller, agents, notifications, progress, access, courses, profile)
+ *     - Admin: dashboard, users (incl. God Mode), referrals, payments,
+ *       enrollments, analytics, audit, admins, agents, discounts,
+ *       course-videos, discussions, notifications, resellers, settings,
+ *       scholarships
+ *
+ *   EXPRESS (`NEXT_PUBLIC_API_URL`) owns:
+ *     - Admin curriculum CRUD: /admin/courses, /admin/phases,
+ *       /admin/weeks, /admin/lessons (nested create/publish routes)
+ *     - Legacy /admin/students surface
+ *     - Student auth, payment submission, legacy course reads
+ *
+ * Any endpoint whose handler lives in `pages/api/*` MUST be listed in
+ * NEXT_ADMIN_PREFIXES or NEXT_STUDENT_PREFIXES below, otherwise it will
+ * be sent to Express and 404.
  *
  * Path: apps/web/lib/api.js
  */
@@ -258,6 +254,8 @@
 import axios from 'axios';
 import { getItem, removeItem } from './storage';
 import { requestConfirm } from './confirmBridge';
+
+/* ── i18n resolver ─────────────────────────────────────────────────── */
 
 function getCurrentLanguage() {
   if (typeof window === 'undefined') return 'en';
@@ -297,42 +295,74 @@ function getConfirmCopy(keyPath) {
   }
 }
 
+/* ── Base URL resolution ───────────────────────────────────────────── */
+
 const EXPRESS_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '';
+
+/**
+ * Admin modules implemented as Next.js API routes (`pages/api/admin/*`).
+ * These must never be sent to Express.
+ */
+const NEXT_ADMIN_PREFIXES = [
+  '/admin/dashboard',
+  '/admin/users',
+  '/admin/referrals',
+  '/admin/payments',
+  '/admin/enrollments',
+  '/admin/analytics',
+  '/admin/audit',
+  '/admin/admins',
+  '/admin/agents',
+  '/admin/discounts',
+  '/admin/course-videos',
+  '/admin/discussions',
+  '/admin/notifications',
+  '/admin/resellers',
+  '/admin/settings',
+  '/admin/scholarships',
+];
+
+/**
+ * Student-facing modules implemented as Next.js API routes.
+ */
+const NEXT_STUDENT_PREFIXES = [
+  '/scholarships',
+  '/public/scholarships',
+  '/notifications',
+  '/settings/public',
+  '/reseller',
+  '/referrals',
+  '/agents',
+  '/mlm',
+  '/access',
+  '/progress',
+  '/courses',
+  '/profile',
+];
 
 /**
  * Determine the correct base URL for a given endpoint.
  *
- * Next.js-only modules (which have their own `pages/api/*` routes) must
- * bypass the Express URL. Everything else goes to Express if configured.
- *
- * @param {string} url
- * @returns {string}
+ * @param {string} url - The request path (may include a query string)
+ * @returns {string} The base URL
  */
 function resolveBaseURL(url) {
   const u = String(url || '');
 
-  const isNextjsRoute =
-    u.startsWith('/admin/scholarships') ||
-    u.startsWith('/scholarships') ||
-    u.startsWith('/public/scholarships') ||
-    u.startsWith('/notifications') ||
-    u.startsWith('/settings/public') ||
-    u.startsWith('/reseller') ||
-    u.startsWith('/referrals') ||
-    u.startsWith('/agents') ||
-    u.startsWith('/mlm') ||
-    u.startsWith('/access') ||
-    u.startsWith('/progress') ||
-    u.startsWith('/courses') ||
-    u === '/profile' ||
-    u.startsWith('/profile/');
+  const isNextAdminRoute = NEXT_ADMIN_PREFIXES.some(
+    (prefix) => u === prefix || u.startsWith(`${prefix}/`) || u.startsWith(`${prefix}?`)
+  );
+  if (isNextAdminRoute) return '/api';
 
-  if (isNextjsRoute) {
-    return '/api';
-  }
+  const isNextStudentRoute = NEXT_STUDENT_PREFIXES.some(
+    (prefix) => u === prefix || u.startsWith(`${prefix}/`) || u.startsWith(`${prefix}?`)
+  );
+  if (isNextStudentRoute) return '/api';
 
   return EXPRESS_BASE_URL || '/api';
 }
+
+/* ── Axios instance ────────────────────────────────────────────────── */
 
 const axiosInstance = axios.create({
   timeout: 30000,
@@ -350,6 +380,7 @@ axiosInstance.interceptors.request.use((config) => {
   } else if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+
   return config;
 });
 
@@ -369,6 +400,8 @@ axiosInstance.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+/* ── Pattern → i18n key mapping ────────────────────────────────────── */
 
 const DELETE_PATTERNS = [
   [/\/admin\/courses\/[^/]+$/, 'actions.deleteCourse'],
@@ -404,28 +437,22 @@ function getDefaultConfirm(method, url) {
     }
     return hydrate(getConfirmCopy('actions.deleteGeneric'));
   }
-
   if (m === 'patch' && /\/admin\/payments\/[^/]+\/approve$/.test(u))
     return hydrate(getConfirmCopy('actions.approvePayment'));
   if (m === 'patch' && /\/admin\/payments\/[^/]+\/reject$/.test(u))
     return hydrate(getConfirmCopy('actions.rejectPayment'));
   if (m === 'post' && /\/admin\/payments\/bulk-approve$/.test(u))
     return hydrate(getConfirmCopy('actions.bulkApprovePayments'));
-
   if (m === 'patch' && /\/admin\/referrals\/mlm\/withdrawals\/[^/]+$/.test(u))
     return hydrate(getConfirmCopy('actions.processWithdrawal'));
-
   if (m === 'post' && /\/admin\/users\/bulk$/.test(u))
     return hydrate(getConfirmCopy('actions.bulkUserAction'));
-
   if (m === 'put' && /\/admin\/settings$/.test(u))
     return hydrate(getConfirmCopy('actions.saveSettings'));
   if (m === 'post' && /\/admin\/settings$/.test(u))
     return hydrate(getConfirmCopy('actions.resetSettings'));
-
   if (m === 'post' && /\/admin\/notifications\/broadcast$/.test(u))
     return hydrate(getConfirmCopy('actions.broadcastAnnouncement'));
-
   if (m === 'post' && /\/referrals\/mlm\/withdrawals$/.test(u))
     return hydrate(getConfirmCopy('actions.requestWithdrawal'));
   if (m === 'post' && /\/payments\/submit$/.test(u))
@@ -434,9 +461,10 @@ function getDefaultConfirm(method, url) {
     return hydrate(getConfirmCopy('actions.changePassword'));
   if (m === 'put' && /\/profile$/.test(u))
     return hydrate(getConfirmCopy('actions.saveProfile'));
-
   return null;
 }
+
+/* ── Interceptor wrapper ───────────────────────────────────────────── */
 
 const CANCELLED_RESPONSE = Object.freeze({
   success: false,
@@ -455,6 +483,8 @@ async function interceptedRequest(method, url, data, options = {}) {
 
   return axiosInstance.request({ method, url, data, ...axiosOptions });
 }
+
+/* ── Public API client ─────────────────────────────────────────────── */
 
 const apiClient = {
   get: (url, options = {}) =>

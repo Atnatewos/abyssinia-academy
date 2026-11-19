@@ -20,6 +20,7 @@
  *   - Accent / primary color:    --accent-gold (+ light / dark / glow / rgb)
  *   - Page background:           --bg-main (+ secondary / card / card-solid)
  *   - Text hierarchy:            --text-main / -secondary / -muted / -dim
+ *   - Ink on accent surfaces:    --text-on-accent
  *   - Success / error / warning: --color-success / -error / -warning (+ -rgb)
  *   - Font family:               --font-primary / --font-mono
  *   - Type scale:                --font-size-xs through --font-size-6xl
@@ -81,6 +82,7 @@
   --text-muted: #94a3b8;
   --text-dim: #64748b;
   --text-inverse: #0f172a;
+  --text-on-accent: #0f172a;
   --text-nav-link: rgba(148, 163, 184, 0.8);
   --text-nav-link-hover: #e2e8f0;
   --text-nav-icon: rgba(148, 163, 184, 0.7);
@@ -167,7 +169,6 @@
      The fix: declare each alpha-modifiable color as an `R G B` triplet
      (space-separated, no commas), then expose it in tailwind.config.js
      as `rgb(var(--X-rgb) / <alpha-value>)`. Now every one of these works:
-
        bg-success/10        →  rgb(16 185 129 / 0.1)
        border-error/50      →  rgb(239 68 68 / 0.5)
        text-accent/70       →  rgb(245 158 11 / 0.7)
@@ -193,14 +194,11 @@
      These values do NOT differ between dark and light mode. They live in
      :root only and are inherited by every scope, including .light-theme.
      Making them CSS variables means tailwind.config.js can bridge to them
-     (Wave 2) so a single edit here updates both systems.
-
-     Type scale, border radius, transition duration, and extended z-index
-     are the four categories that were previously hardcoded in tailwind.config.js.
+     so a single edit here updates both systems.
      ========================================================================== */
 
   /* Type scale — line heights bundled so Tailwind utilities compose them
-     automatically. Matching the exact values currently in tailwind.config.js. */
+     automatically. */
   --font-size-2xs: 0.625rem;
   --line-height-2xs: 0.875rem;
   --font-size-xs: 0.75rem;
@@ -284,6 +282,7 @@
   --text-muted: #5c554a;
   --text-dim: #8a8275;
   --text-inverse: #faf9f6;
+  --text-on-accent: #0f172a;
   --text-nav-link: rgba(60, 50, 35, 0.75);
   --text-nav-link-hover: #1a1815;
   --text-nav-icon: rgba(60, 50, 35, 0.7);
@@ -342,7 +341,6 @@
   --accent-gold-rgb: 217 119 6;
   --accent-gold-light-rgb: 245 158 11;
   --accent-gold-dark-rgb: 180 83 9;
-
   --color-success-rgb: 5 150 105;
   --color-error-rgb: 220 38 38;
   --color-warning-rgb: 217 119 6;

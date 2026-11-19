@@ -117,11 +117,109 @@
 
 
 
+// /**
+//  * @fileoverview Shared Database Connection Pool (Next.js API routes)
+//  *
+//  * Optimized for Vercel Serverless Functions. 
+//  * 
+//  * Path: apps/web/lib/db.js
+//  */
+
+// const { Pool } = require('pg');
+
+// const connectionString = process.env.DATABASE_URL;
+
+// if (!connectionString) {
+//   throw new Error(
+//     'DATABASE_URL is not set. Please check your Vercel Environment Variables.'
+//   );
+// }
+
+// const isNeon = connectionString.includes('neon.tech');
+
+// const pool = new Pool({
+//   connectionString,
+//   ssl: isNeon ? { rejectUnauthorized: false } : false,
+//   // Serverless functions should keep the pool small to avoid exhausting DB connections
+//   max: 3, 
+//   min: 0,
+//   idleTimeoutMillis: 30000,
+//   connectionTimeoutMillis: 15000,
+//   keepAlive: true,
+// });
+
+// pool.on('error', (err) => {
+//   console.warn('[db] pool error:', err.message);
+// });
+
+// const isRetryableError = (error) => {
+//   const message = String(error?.message || '');
+//   const code = String(error?.code || '');
+
+//   return (
+//     message.includes('Connection terminated') ||
+//     message.includes('ECONNRESET') ||
+//     message.includes('ETIMEDOUT') ||
+//     code === 'ECONNREFUSED' ||
+//     code === 'ETIMEDOUT' ||
+//     code === '57P01'
+//   );
+// };
+
+// const query = async (text, params) => {
+//   const maxRetries = 2;
+//   let lastError;
+
+//   for (let attempt = 0; attempt < maxRetries; attempt++) {
+//     try {
+//       return await pool.query(text, params);
+//     } catch (error) {
+//       lastError = error;
+
+//       if (!isRetryableError(error) || attempt === maxRetries - 1) {
+//         throw error;
+//       }
+
+//       const delayMs = 500 * Math.pow(2, attempt);
+//       console.warn(
+//         `[db] query failed (attempt ${attempt + 1}/${maxRetries}), retrying in ${delayMs}ms...`
+//       );
+//       await new Promise((resolve) => setTimeout(resolve, delayMs));
+//     }
+//   }
+
+//   throw lastError;
+// };
+
+// module.exports = { pool, query };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /**
  * @fileoverview Shared Database Connection Pool (Next.js API routes)
  *
- * Optimized for Vercel Serverless Functions. 
- * 
+ * CommonJS module consumed by every Next.js API route via
+ * `import { query } from '<relative>/lib/db'` (webpack interop).
+ *
+ * Serverless-aware:
+ *   - Small pool cap so concurrent lambdas never exhaust Neon's limit.
+ *   - Retry wrapper absorbs Neon idle disconnects (ECONNRESET, 57P01…).
+ *   - In development, the pool is cached on globalThis so Next.js hot
+ *     reloads do not leak a new pool on every module re-evaluation.
+ *
  * Path: apps/web/lib/db.js
  */
 
@@ -131,27 +229,45 @@ const connectionString = process.env.DATABASE_URL;
 
 if (!connectionString) {
   throw new Error(
-    'DATABASE_URL is not set. Please check your Vercel Environment Variables.'
+    'DATABASE_URL is not set. Configure it in apps/web/.env.local (dev) or Vercel Environment Variables (prod).'
   );
 }
 
 const isNeon = connectionString.includes('neon.tech');
 
-const pool = new Pool({
+const poolConfig = {
   connectionString,
   ssl: isNeon ? { rejectUnauthorized: false } : false,
-  // Serverless functions should keep the pool small to avoid exhausting DB connections
-  max: 3, 
-  min: 0,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 15000,
+  max: Number(process.env.DB_POOL_MAX) || 3,
+  min: Number(process.env.DB_POOL_MIN) || 0,
+  idleTimeoutMillis: Number(process.env.DB_IDLE_TIMEOUT) || 30000,
+  connectionTimeoutMillis: Number(process.env.DB_CONNECTION_TIMEOUT) || 15000,
   keepAlive: true,
-});
+};
 
-pool.on('error', (err) => {
-  console.warn('[db] pool error:', err.message);
-});
+const globalForDb = globalThis;
 
+const pool = globalForDb.__abyssiniaPgPool || new Pool(poolConfig);
+
+if (process.env.NODE_ENV !== 'production') {
+  globalForDb.__abyssiniaPgPool = pool;
+}
+
+if (!pool.__abyssiniaErrorHandlerAttached) {
+  pool.on('error', (err) => {
+    console.warn('[db] pool error (will retry on next query):', err.message);
+  });
+  pool.__abyssiniaErrorHandlerAttached = true;
+}
+
+/**
+ * Distinguish transient connection errors (retryable) from real query
+ * errors (must surface to the caller). Retrying a bad SQL statement
+ * burns round-trips and masks the actual problem.
+ *
+ * @param {Error} error
+ * @returns {boolean}
+ */
 const isRetryableError = (error) => {
   const message = String(error?.message || '');
   const code = String(error?.code || '');
@@ -160,14 +276,24 @@ const isRetryableError = (error) => {
     message.includes('Connection terminated') ||
     message.includes('ECONNRESET') ||
     message.includes('ETIMEDOUT') ||
+    message.includes('Client has encountered a connection error') ||
+    message.includes('Connection terminated unexpectedly') ||
     code === 'ECONNREFUSED' ||
     code === 'ETIMEDOUT' ||
     code === '57P01'
   );
 };
 
+/**
+ * Execute a parameterized query with retry on transient connection
+ * errors. Exponential backoff between attempts.
+ *
+ * @param {string} text - SQL with $1, $2 placeholders
+ * @param {Array} [params] - Query parameters
+ * @returns {Promise<import('pg').QueryResult>}
+ */
 const query = async (text, params) => {
-  const maxRetries = 2;
+  const maxRetries = Number(process.env.DB_QUERY_RETRIES) || 2;
   let lastError;
 
   for (let attempt = 0; attempt < maxRetries; attempt++) {
@@ -182,7 +308,7 @@ const query = async (text, params) => {
 
       const delayMs = 500 * Math.pow(2, attempt);
       console.warn(
-        `[db] query failed (attempt ${attempt + 1}/${maxRetries}), retrying in ${delayMs}ms...`
+        `[db] query failed (attempt ${attempt + 1}/${maxRetries}), retrying in ${delayMs}ms: ${error.message}`
       );
       await new Promise((resolve) => setTimeout(resolve, delayMs));
     }

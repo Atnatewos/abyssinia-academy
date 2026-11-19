@@ -2,6 +2,7 @@
  * @fileoverview Afaan Oromoo — Admin Namespace
  *
  * Contains admin-specific UI copy including:
+ *   - Sidebar navigation (chrome, sections, items, accessibility)
  *   - Coming Soon stub labels (one per unfinished CRUD route)
  *   - Announcements composer labels
  *   - Agent management labels
@@ -14,6 +15,40 @@
 
 module.exports = {
   admin: {
+    /* ── NAVIGATION ── */
+    nav: {
+      panelSuffix: 'Paanaalii Bulchiinsaa',
+      viewSite: 'Marsariitii Ilaali',
+      logout: "Ba'i",
+
+      sections: {
+        main: 'Ijoo',
+        management: 'Bulchiinsa',
+        programs: 'Sagantaawwan',
+        marketing: 'Maarkeetingii',
+        insights: 'Hubannoo',
+        system: 'Sirna',
+      },
+
+      dashboard: 'Daashboordii',
+      payments: 'Kaffaltiiwwan',
+      students: 'Barattoota',
+      resellers: 'Gurgurtoota Deebisanii',
+      mlmTree: 'Raadaarii Noodee Neetwoorkii',
+      discussions: 'Mariiwwan',
+      courseVideos: 'Viidiyoowwan Koorsii',
+      analytics: 'Xiinxala',
+      audit: 'Galmee Odiitii',
+      settings: "Qindaa'inoota",
+      admins: 'Herregoota Bulchaa',
+
+      a11y: {
+        openSidebar: 'Baraa cinaa bani',
+        closeSidebar: 'Baraa cinaa cufi',
+        languageToggle: 'Afaan ammaa: {language}. Afaan jijjiiruuf cuqaasi.',
+      },
+    },
+
     comingSoon: {
       eyebrow: 'Hojii Irra Jira',
       heading: 'Amasumasun kun ijaaramaa jira',

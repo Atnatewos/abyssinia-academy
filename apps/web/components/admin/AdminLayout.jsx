@@ -1,9 +1,18 @@
 /**
  * @fileoverview Admin Layout Component
  *
- * Consistent wrapper for all admin pages with a responsive sidebar
- * and header. Navigation sections are data-driven so a new admin
- * surface is a one-line array entry — no component edits required.
+ * Pure renderer of `packages/shared/config/admin-nav.config.js`. The
+ * component owns no navigation data and no copy — every section, path,
+ * icon, gate, and label resolves from config plus the shared i18n
+ * bundles.
+ *
+ * Label resolution chain:
+ *   1. Active locale bundle (`t`) via the config `labelKey` dot-path.
+ *   2. English base bundle (`TRANSLATIONS.en`) when the active locale
+ *      lacks the key — canonical cross-namespace keys that exist only
+ *      in English still render correctly in every locale.
+ *   3. Empty string guard — only strings ever reach the render tree,
+ *      so a namespace reshape can never crash server-side rendering.
  *
  * Sidebar behavior:
  *   - md+ : fixed sidebar, always visible
@@ -12,7 +21,7 @@
  * Path: apps/web/components/admin/AdminLayout.jsx
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import {
@@ -41,20 +50,92 @@ import {
   GraduationCap,
   Store,
 } from 'lucide-react';
-import { useLanguage } from '../../context/LanguageContext';
-import { getItem } from '../../lib/storage';
+import {
+  useLanguage,
+  TRANSLATIONS,
+  DEFAULT_LANGUAGE,
+} from '../../context/LanguageContext';
+import { getItem, removeItem } from '../../lib/storage';
+import adminNavConfig from '../../../../packages/shared/config/admin-nav.config';
 
 /**
- * AdminLayout — Provides the sidebar + header shell for all admin pages.
+ * Icon registry — maps config icon names to lucide components.
+ * Unknown names degrade to the configured default icon.
+ */
+const ICON_REGISTRY = {
+  LayoutDashboard,
+  CreditCard,
+  Users,
+  BookOpen,
+  Briefcase,
+  Settings,
+  Tag,
+  Share2,
+  TrendingUp,
+  UserCog,
+  FileText,
+  Video,
+  Banknote,
+  Network,
+  BarChart3,
+  Megaphone,
+  GraduationCap,
+  Store,
+};
+
+/** English base bundle used as the universal fallback locale. */
+const ENGLISH_BUNDLE = TRANSLATIONS[DEFAULT_LANGUAGE] || {};
+
+/**
+ * Whether a value is a renderable, non-empty label string.
+ * @param {*} value
+ * @returns {boolean}
+ */
+const isLabelString = (value) =>
+  typeof value === 'string' && value.trim().length > 0;
+
+/**
+ * Resolve a dot-notation path on a translation bundle.
+ * @param {object} source
+ * @param {string|undefined} path
+ * @returns {*}
+ */
+const getByPath = (source, path) => {
+  if (!source || !path) return undefined;
+  return path.split('.').reduce((node, key) => {
+    if (node === null || node === undefined) return undefined;
+    return node[key];
+  }, source);
+};
+
+/**
+ * Read the persisted admin profile defensively. Corrupted storage
+ * values degrade to null instead of throwing during render.
+ * @returns {object|null}
+ */
+const readAdminProfile = () => {
+  const stored = getItem('admin_user');
+  if (!stored) return null;
+  if (typeof stored === 'object') return stored;
+  try {
+    return JSON.parse(stored);
+  } catch {
+    return null;
+  }
+};
+
+/**
+ * AdminLayout — Sidebar + header shell for all admin pages.
  *
  * @param {object} props
  * @param {React.ReactNode} props.children - Page content to render
  * @param {string} props.title - Page title for the header
  * @param {string} props.subtitle - Page subtitle for the header
  */
-const AdminLayout = ({ children, title = 'Dashboard', subtitle = '' }) => {
+const AdminLayout = ({ children, title = '', subtitle = '' }) => {
   const router = useRouter();
-  const { t, language, toggleLanguage } = useLanguage();
+  const { t, language, toggleLanguage, supportedLanguages } = useLanguage();
+
   const [adminUser, setAdminUser] = useState(null);
   const [expandedSections, setExpandedSections] = useState({});
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
@@ -62,16 +143,11 @@ const AdminLayout = ({ children, title = 'Dashboard', subtitle = '' }) => {
   /* Authentication gate */
   useEffect(() => {
     const token = getItem('admin_token');
-    const user = getItem('admin_user');
-
     if (!token) {
       router.push('/admin/login');
       return;
     }
-
-    if (user) {
-      setAdminUser(typeof user === 'string' ? JSON.parse(user) : user);
-    }
+    setAdminUser(readAdminProfile());
   }, [router]);
 
   /* Close mobile drawer on route change */
@@ -80,8 +156,8 @@ const AdminLayout = ({ children, title = 'Dashboard', subtitle = '' }) => {
   }, [router.pathname]);
 
   const handleLogout = () => {
-    localStorage.removeItem('admin_token');
-    localStorage.removeItem('admin_user');
+    removeItem('admin_token');
+    removeItem('admin_user');
     setMobileSidebarOpen(false);
     router.push('/admin/login');
   };
@@ -98,146 +174,43 @@ const AdminLayout = ({ children, title = 'Dashboard', subtitle = '' }) => {
     return router.pathname.startsWith(path);
   };
 
-  /*
-   * Navigation sections. Each entry is pure data so a new admin surface
-   * is a one-line config edit. `superadminOnly` gates an item behind
-   * adminUser.role === 'superadmin'.
+  /**
+   * Resolve a config labelKey: active locale first, English base second,
+   * empty string last. Guarantees a renderable string for any key shape.
+   * @param {string} key - Dot-notation i18n path from the nav config
+   * @returns {string}
    */
-  const navSections = [
-    {
-      id: 'main',
-      label: 'Main',
-      items: [
-        {
-          path: '/admin',
-          label: t.admin?.dashboard || 'Dashboard',
-          icon: LayoutDashboard,
-          exact: true,
-        },
-      ],
+  const label = useCallback(
+    (key) => {
+      const active = getByPath(t, key);
+      if (isLabelString(active)) return active;
+      const fallback = getByPath(ENGLISH_BUNDLE, key);
+      return isLabelString(fallback) ? fallback : '';
     },
-    {
-      id: 'management',
-      label: 'Management',
-      items: [
-        {
-          path: '/admin/payments',
-          label: t.admin?.payments || 'Payments',
-          icon: CreditCard,
-        },
-        {
-          path: '/admin/users',
-          label: t.admin?.students || 'Students',
-          icon: Users,
-        },
-        {
-          path: '/admin/agents',
-          label: t.admin?.agentsTitle || 'Agents',
-          icon: Briefcase,
-        },
-        {
-          path: '/admin/resellers',
-          label: 'Resellers',
-          icon: Store,
-        },
-        {
-          path: '/admin/courses',
-          label: t.admin?.courses || 'Courses',
-          icon: BookOpen,
-        },
-        {
-          path: '/admin/referrals/mlm/withdrawals',
-          label: t.referrals?.mlm?.adminWithdrawalsTitle || 'MLM Withdrawals',
-          icon: Banknote,
-        },
-      ],
-    },
-    {
-      id: 'programs',
-      label: 'Programs',
-      items: [
-        {
-          path: '/admin/scholarships',
-          label: t.scholarships?.admin?.sectionLabel || 'Scholarships',
-          icon: GraduationCap,
-        },
-      ],
-    },
-    {
-      id: 'marketing',
-      label: 'Marketing',
-      items: [
-        {
-          path: '/admin/discounts',
-          label: t.discounts?.adminTitle || 'Discount Codes',
-          icon: Tag,
-        },
-        {
-          path: '/admin/referrals',
-          label: t.referrals?.dashboardTitle || 'Referrals',
-          icon: Share2,
-        },
-        {
-          path: '/admin/referrals/mlm/stats',
-          label: t.referrals?.mlm?.adminMlmStatsTitle || 'MLM Stats',
-          icon: BarChart3,
-        },
-        {
-          path: '/admin/referrals/mlm/tree',
-          label: 'Network Node Radar',
-          icon: Network,
-        },
-        {
-          path: '/admin/announcements',
-          label: t.admin?.announcements?.navLabel || 'Announcements',
-          icon: Megaphone,
-        },
-        {
-          path: '/admin/discussions',
-          label: 'Discussions',
-          icon: Video,
-        },
-        {
-          path: '/admin/course-videos',
-          label: 'Course Videos',
-          icon: Video,
-        },
-      ],
-    },
-    {
-      id: 'insights',
-      label: 'Insights',
-      items: [
-        {
-          path: '/admin/analytics',
-          label: 'Analytics',
-          icon: TrendingUp,
-        },
-        {
-          path: '/admin/audit',
-          label: 'Audit Logs',
-          icon: FileText,
-        },
-      ],
-    },
-    {
-      id: 'system',
-      label: 'System',
-      items: [
-        {
-          path: '/admin/settings',
-          label: t.admin?.settings || 'Settings',
-          icon: Settings,
-        },
-        {
-          path: '/admin/admins',
-          label: 'Admin Accounts',
-          icon: UserCog,
-          superadminOnly: true,
-        },
-      ],
-    },
-  ];
+    [t]
+  );
+
+  /**
+   * Resolve an icon component from the registry with a safe default.
+   * @param {string} name - Config icon name
+   * @returns {React.ComponentType}
+   */
+  const resolveIcon = (name) =>
+    ICON_REGISTRY[name] ||
+    ICON_REGISTRY[adminNavConfig.defaultIcon] ||
+    LayoutDashboard;
+
+  const currentLanguageName =
+    supportedLanguages.find((entry) => entry.code === language)?.nativeLabel ||
+    language;
+
+  const languageToggleLabel = label(
+    adminNavConfig.a11y.languageToggleKey
+  ).replace('{language}', currentLanguageName);
+
+  const brandName = isLabelString(adminNavConfig.brand?.name)
+    ? adminNavConfig.brand.name
+    : '';
 
   return (
     <div className="admin-layout">
@@ -249,7 +222,9 @@ const AdminLayout = ({ children, title = 'Dashboard', subtitle = '' }) => {
       />
 
       {/* Sidebar */}
-      <aside className={`admin-sidebar ${mobileSidebarOpen ? 'mobile-open' : ''}`}>
+      <aside
+        className={`admin-sidebar ${mobileSidebarOpen ? 'mobile-open' : ''}`}
+      >
         <Link
           href="/admin"
           className="admin-sidebar-brand"
@@ -260,33 +235,42 @@ const AdminLayout = ({ children, title = 'Dashboard', subtitle = '' }) => {
           </div>
           <div>
             <span className="admin-sidebar-name">
-              <span className="text-gradient-gold">ABYSSiNIA</span>
+              <span className="text-gradient-gold">{brandName}</span>
             </span>
-            <span className="admin-sidebar-suffix">Admin Panel</span>
+            <span className="admin-sidebar-suffix">
+              {label(adminNavConfig.chrome.panelSuffixKey)}
+            </span>
           </div>
         </Link>
 
         <nav className="admin-nav">
-          {navSections.map((section) => {
+          {adminNavConfig.sections.map((section) => {
             const isExpanded = expandedSections[section.id] !== false;
-
             return (
               <div key={section.id} className="admin-nav-section">
                 <button
+                  type="button"
                   onClick={() => toggleSection(section.id)}
                   className="admin-nav-section-header"
+                  aria-expanded={isExpanded}
                 >
-                  <span>{section.label}</span>
-                  {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                  <span>{label(section.labelKey)}</span>
+                  {isExpanded ? (
+                    <ChevronDown size={14} />
+                  ) : (
+                    <ChevronRight size={14} />
+                  )}
                 </button>
-
                 {isExpanded && (
                   <div className="admin-nav-section-items">
                     {section.items.map((item) => {
-                      const IconComponent = item.icon;
+                      const IconComponent = resolveIcon(item.icon);
                       const active = isActive(item.path, item.exact);
 
-                      if (item.superadminOnly && adminUser?.role !== 'superadmin') {
+                      if (
+                        item.superadminOnly &&
+                        adminUser?.role !== 'superadmin'
+                      ) {
                         return null;
                       }
 
@@ -298,7 +282,7 @@ const AdminLayout = ({ children, title = 'Dashboard', subtitle = '' }) => {
                           onClick={() => setMobileSidebarOpen(false)}
                         >
                           <IconComponent size={18} />
-                          <span>{item.label}</span>
+                          <span>{label(item.labelKey)}</span>
                         </Link>
                       );
                     })}
@@ -318,11 +302,15 @@ const AdminLayout = ({ children, title = 'Dashboard', subtitle = '' }) => {
             onClick={() => setMobileSidebarOpen(false)}
           >
             <LayoutDashboard size={18} />
-            <span>View Site</span>
+            <span>{label(adminNavConfig.chrome.viewSiteKey)}</span>
           </Link>
-          <button onClick={handleLogout} className="admin-nav-logout">
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="admin-nav-logout"
+          >
             <LogOut size={18} />
-            <span>{t.auth?.logout || 'Logout'}</span>
+            <span>{label(adminNavConfig.chrome.logoutKey)}</span>
           </button>
         </div>
       </aside>
@@ -330,16 +318,20 @@ const AdminLayout = ({ children, title = 'Dashboard', subtitle = '' }) => {
       {/* Main content */}
       <div className="admin-main">
         <header className="admin-header">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <div className="flex items-center gap-3">
             <button
+              type="button"
               className="admin-mobile-toggle"
               onClick={() => setMobileSidebarOpen(!mobileSidebarOpen)}
-              aria-label={mobileSidebarOpen ? 'Close sidebar' : 'Open sidebar'}
+              aria-label={label(
+                mobileSidebarOpen
+                  ? adminNavConfig.a11y.closeSidebarKey
+                  : adminNavConfig.a11y.openSidebarKey
+              )}
               aria-expanded={mobileSidebarOpen}
             >
               {mobileSidebarOpen ? <X size={18} /> : <Menu size={18} />}
             </button>
-
             <div>
               <h1 className="admin-header-title">{title}</h1>
               {subtitle && <p className="admin-header-subtitle">{subtitle}</p>}
@@ -348,19 +340,20 @@ const AdminLayout = ({ children, title = 'Dashboard', subtitle = '' }) => {
 
           <div className="admin-header-actions">
             <button
+              type="button"
               onClick={toggleLanguage}
               className="admin-header-lang-btn"
-              title={language === 'en' ? 'Switch to Amharic' : 'Switch to English'}
+              title={languageToggleLabel}
+              aria-label={languageToggleLabel}
             >
-              {language === 'en' ? 'EN' : 'አማ'}
+              {language.toUpperCase()}
             </button>
-
             <div className="admin-header-user">
               <div className="admin-header-avatar">
-                {(adminUser?.username || 'A').charAt(0).toUpperCase()}
+                {(adminUser?.username || '').charAt(0).toUpperCase()}
               </div>
               <span className="admin-header-username">
-                {adminUser?.username || 'Admin'}
+                {adminUser?.username || ''}
               </span>
             </div>
           </div>

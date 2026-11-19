@@ -1,152 +1,10 @@
-/**
- * @fileoverview Language Context
- * Multilingual EN/AM/TI/OM support with translations loaded from shared i18n
- * config files.
- *
- * Uses Next.js router for client-side transitions to prevent hydration
- * mismatches and full-page reloads when the language is toggled.
- *
- * Path: apps/web/context/LanguageContext.js
- */
-
-import { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
-import { useRouter } from 'next/router';
-import { getItem, setItem } from '../lib/storage';
-
-const LOCALE_REGISTRY = {
-  en: { label: 'English', nativeLabel: 'English', load: () => require('../../../packages/shared/config/i18n/en') },
-  am: { label: 'Amharic', nativeLabel: 'አማርኛ', load: () => require('../../../packages/shared/config/i18n/am') },
-  ti: { label: 'Tigrinya', nativeLabel: 'ትግርኛ', load: () => require('../../../packages/shared/config/i18n/ti') },
-  om: { label: 'Oromo', nativeLabel: 'Afaan Oromoo', load: () => require('../../../packages/shared/config/i18n/om') },
-};
-
-const DEFAULT_LANGUAGE = 'en';
-
-const TRANSLATIONS = Object.fromEntries(
-  Object.entries(LOCALE_REGISTRY).map(([code, { load }]) => {
-    try {
-      return [code, load()];
-    } catch (error) {
-      console.error(`[i18n] Failed to load locale "${code}":`, error);
-      return [code, {}];
-    }
-  })
-);
-
-const LANGUAGE_ORDER = Object.keys(LOCALE_REGISTRY);
-
-const SUPPORTED_LANGUAGES = LANGUAGE_ORDER.map((code) => ({
-  code,
-  label: LOCALE_REGISTRY[code].label,
-  nativeLabel: LOCALE_REGISTRY[code].nativeLabel,
-}));
-
-const LanguageContext = createContext(null);
-
-const LanguageProvider = ({ children }) => {
-  const router = useRouter();
-  const [language, setLanguageState] = useState(DEFAULT_LANGUAGE);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    const savedLanguage = getItem('abyssinia_language', DEFAULT_LANGUAGE);
-    const isValidLanguage =
-      LANGUAGE_ORDER.includes(savedLanguage) &&
-      TRANSLATIONS[savedLanguage] &&
-      Object.keys(TRANSLATIONS[savedLanguage]).length > 0;
-
-    setLanguageState(isValidLanguage ? savedLanguage : DEFAULT_LANGUAGE);
-    setMounted(true);
-  }, []);
-
-  const t = useMemo(() => {
-    const active = TRANSLATIONS[language];
-    if (active && Object.keys(active).length > 0) return active;
-    return TRANSLATIONS[DEFAULT_LANGUAGE] || {};
-  }, [language]);
-
-  const toggleLanguage = useCallback(() => {
-    setLanguageState((prev) => {
-      const currentIndex = LANGUAGE_ORDER.indexOf(prev);
-      const nextIndex = (currentIndex + 1) % LANGUAGE_ORDER.length;
-      const nextLanguage = LANGUAGE_ORDER[nextIndex];
-      
-      setItem('abyssinia_language', nextLanguage);
-      
-      /* 
-       * Trigger a shallow client-side route refresh.
-       * This prevents full page reloads while forcing Next.js to 
-       * re-render the tree with the new translations.
-       */
-      if (router.isReady) {
-        router.replace(router.asPath, undefined, { scroll: false, shallow: true });
-      }
-      
-      return nextLanguage;
-    });
-  }, [router]);
-
-  const setLanguage = useCallback((lang) => {
-    const isKnown = LANGUAGE_ORDER.includes(lang);
-    const isLoaded = isKnown && TRANSLATIONS[lang] && Object.keys(TRANSLATIONS[lang]).length > 0;
-    
-    if (isLoaded && lang !== language) {
-      setLanguageState(lang);
-      setItem('abyssinia_language', lang);
-      
-      /* Same shallow refresh for explicit language selection */
-      if (router.isReady) {
-        router.replace(router.asPath, undefined, { scroll: false, shallow: true });
-      }
-    }
-  }, [language, router]);
-
-  const value = useMemo(() => ({
-    language, 
-    t, 
-    toggleLanguage, 
-    setLanguage, 
-    mounted, 
-    supportedLanguages: SUPPORTED_LANGUAGES,
-  }), [language, t, toggleLanguage, setLanguage, mounted]);
-
-  return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>;
-};
-
-const useLanguage = () => {
-  const context = useContext(LanguageContext);
-  if (context === null) {
-    return {
-      language: DEFAULT_LANGUAGE, 
-      t: TRANSLATIONS[DEFAULT_LANGUAGE] || {},
-      toggleLanguage: () => {}, 
-      setLanguage: () => {}, 
-      mounted: false,
-      supportedLanguages: SUPPORTED_LANGUAGES,
-    };
-  }
-  return context;
-};
-
-export { LanguageProvider, useLanguage, TRANSLATIONS, SUPPORTED_LANGUAGES, LANGUAGE_ORDER, DEFAULT_LANGUAGE };
-
-
-
-
-
-
 // /**
 //  * @fileoverview Language Context
-//  * 
-//  * AUTO-DETECTS LANGUAGES
-//  * This file uses Webpack's `require.context` to automatically load 
-//  * every `.config.js` file in the i18n directory. 
-//  * 
-//  * TO ADD A NEW LANGUAGE:
-//  *   1. Create `packages/shared/config/i18n/[code].config.js`
-//  *   2. Export an object with: `{ code, name, nativeName, ...translations }`
-//  *   3. That's it. The app will auto-detect it, add it to the toggle, 
-//  *      and load the translations.
+//  * Multilingual EN/AM/TI/OM support with translations loaded from shared i18n
+//  * config files.
+//  *
+//  * Uses Next.js router for client-side transitions to prevent hydration
+//  * mismatches and full-page reloads when the language is toggled.
 //  *
 //  * Path: apps/web/context/LanguageContext.js
 //  */
@@ -155,62 +13,27 @@ export { LanguageProvider, useLanguage, TRANSLATIONS, SUPPORTED_LANGUAGES, LANGU
 // import { useRouter } from 'next/router';
 // import { getItem, setItem } from '../lib/storage';
 
+// const LOCALE_REGISTRY = {
+//   en: { label: 'English', nativeLabel: 'English', load: () => require('../../../packages/shared/config/i18n/en') },
+//   am: { label: 'Amharic', nativeLabel: 'አማርኛ', load: () => require('../../../packages/shared/config/i18n/am') },
+//   ti: { label: 'Tigrinya', nativeLabel: 'ትግርኛ', load: () => require('../../../packages/shared/config/i18n/ti') },
+//   om: { label: 'Oromo', nativeLabel: 'Afaan Oromoo', load: () => require('../../../packages/shared/config/i18n/om') },
+// };
+
 // const DEFAULT_LANGUAGE = 'en';
 
-// /* 
-//  * AUTO-DISCOVERY: 
-//  * This tells Webpack to look inside the i18n directory and grab all
-//  * `.config.js` files. It ignores `index.js` and any config maps.
-//  */
-// const i18nContext = require.context(
-//   '../../../packages/shared/config/i18n', 
-//   false, 
-//   /\.config\.js$/
+// const TRANSLATIONS = Object.fromEntries(
+//   Object.entries(LOCALE_REGISTRY).map(([code, { load }]) => {
+//     try {
+//       return [code, load()];
+//     } catch (error) {
+//       console.error(`[i18n] Failed to load locale "${code}":`, error);
+//       return [code, {}];
+//     }
+//   })
 // );
 
-// /* Build the registry and translations dynamically */
-// const LOCALE_REGISTRY = {};
-// const TRANSLATIONS = {};
-
-// i18nContext.keys().forEach((key) => {
-//   try {
-//     const module = i18nContext(key);
-//     const config = module.default || module;
-
-//     /* 
-//      * We use the `code` from inside the file. 
-//      * If it's missing, we fallback to the filename (e.g. 'fr' from 'fr.config.js')
-//      */
-//     const code = config.code || key.replace('./', '').replace('.config.js', '');
-    
-//     if (code && config) {
-//       LOCALE_REGISTRY[code] = {
-//         label: config.name || code.toUpperCase(),
-//         nativeLabel: config.nativeName || config.name || code.toUpperCase(),
-//       };
-//       TRANSLATIONS[code] = config;
-//     }
-//   } catch (error) {
-//     console.error(`[i18n] Failed to load locale file: ${key}`, error);
-//   }
-// });
-
-// /* 
-//  * Fallback safety net if no files are found.
-//  * Ensures the app never fully crashes on a missing translation folder.
-//  */
-// if (Object.keys(TRANSLATIONS).length === 0) {
-//   console.warn('[i18n] No locale files found. Falling back to empty English.');
-//   TRANSLATIONS[DEFAULT_LANGUAGE] = {};
-//   LOCALE_REGISTRY[DEFAULT_LANGUAGE] = { label: 'English', nativeLabel: 'English' };
-// }
-
-// /* Sort languages alphabetically by their native label for the dropdown */
-// const LANGUAGE_ORDER = Object.keys(LOCALE_REGISTRY).sort((a, b) => {
-//   if (a === DEFAULT_LANGUAGE) return -1;
-//   if (b === DEFAULT_LANGUAGE) return 1;
-//   return LOCALE_REGISTRY[a].nativeLabel.localeCompare(LOCALE_REGISTRY[b].nativeLabel);
-// });
+// const LANGUAGE_ORDER = Object.keys(LOCALE_REGISTRY);
 
 // const SUPPORTED_LANGUAGES = LANGUAGE_ORDER.map((code) => ({
 //   code,
@@ -227,8 +50,6 @@ export { LanguageProvider, useLanguage, TRANSLATIONS, SUPPORTED_LANGUAGES, LANGU
 
 //   useEffect(() => {
 //     const savedLanguage = getItem('abyssinia_language', DEFAULT_LANGUAGE);
-    
-//     /* Validate against dynamically loaded languages */
 //     const isValidLanguage =
 //       LANGUAGE_ORDER.includes(savedLanguage) &&
 //       TRANSLATIONS[savedLanguage] &&
@@ -238,7 +59,6 @@ export { LanguageProvider, useLanguage, TRANSLATIONS, SUPPORTED_LANGUAGES, LANGU
 //     setMounted(true);
 //   }, []);
 
-//   /* Memoized translations object */
 //   const t = useMemo(() => {
 //     const active = TRANSLATIONS[language];
 //     if (active && Object.keys(active).length > 0) return active;
@@ -253,7 +73,11 @@ export { LanguageProvider, useLanguage, TRANSLATIONS, SUPPORTED_LANGUAGES, LANGU
       
 //       setItem('abyssinia_language', nextLanguage);
       
-//       /* Instant client-side swap without losing scroll position */
+//       /* 
+//        * Trigger a shallow client-side route refresh.
+//        * This prevents full page reloads while forcing Next.js to 
+//        * re-render the tree with the new translations.
+//        */
 //       if (router.isReady) {
 //         router.replace(router.asPath, undefined, { scroll: false, shallow: true });
 //       }
@@ -270,6 +94,7 @@ export { LanguageProvider, useLanguage, TRANSLATIONS, SUPPORTED_LANGUAGES, LANGU
 //       setLanguageState(lang);
 //       setItem('abyssinia_language', lang);
       
+//       /* Same shallow refresh for explicit language selection */
 //       if (router.isReady) {
 //         router.replace(router.asPath, undefined, { scroll: false, shallow: true });
 //       }
@@ -304,3 +129,448 @@ export { LanguageProvider, useLanguage, TRANSLATIONS, SUPPORTED_LANGUAGES, LANGU
 // };
 
 // export { LanguageProvider, useLanguage, TRANSLATIONS, SUPPORTED_LANGUAGES, LANGUAGE_ORDER, DEFAULT_LANGUAGE };
+
+
+
+
+
+
+
+
+// /**
+//  * @fileoverview Language Context
+//  *
+//  * Multilingual EN/AM/TI/OM support. Every locale bundle is deep-merged
+//  * over the English base so a missing key in any locale renders the
+//  * English copy instead of a blank string. The locale's own admin
+//  * namespace is overlaid last, making admin.godMode and every admin
+//  * label deterministic regardless of aggregator ordering.
+//  *
+//  * Language switches use a shallow router replace so the tree re-renders
+//  * with new copy without a full page reload or scroll jump.
+//  *
+//  * Path: apps/web/context/LanguageContext.js
+//  */
+
+// import {
+//   createContext,
+//   useContext,
+//   useState,
+//   useEffect,
+//   useCallback,
+//   useMemo,
+// } from 'react';
+// import { useRouter } from 'next/router';
+// import { getItem, setItem } from '../lib/storage';
+
+// const { deepMerge } = require('../../../packages/shared/config/i18n/merge');
+
+// const DEFAULT_LANGUAGE = 'en';
+// const LANGUAGE_STORAGE_KEY = 'abyssinia_language';
+
+// /**
+//  * Locale registry. `load` resolves the full namespace bundle; `admin`
+//  * resolves the authoritative admin namespace directly from its source
+//  * file so it can never be shadowed by another namespace.
+//  */
+// const LOCALE_REGISTRY = {
+//   en: {
+//     label: 'English',
+//     nativeLabel: 'English',
+//     load: () => require('../../../packages/shared/config/i18n/en'),
+//     admin: () => require('../../../packages/shared/config/i18n/en/admin'),
+//   },
+//   am: {
+//     label: 'Amharic',
+//     nativeLabel: 'አማርኛ',
+//     load: () => require('../../../packages/shared/config/i18n/am'),
+//     admin: () => require('../../../packages/shared/config/i18n/am/admin'),
+//   },
+//   ti: {
+//     label: 'Tigrinya',
+//     nativeLabel: 'ትግርኛ',
+//     load: () => require('../../../packages/shared/config/i18n/ti'),
+//     admin: () => require('../../../packages/shared/config/i18n/ti/admin'),
+//   },
+//   om: {
+//     label: 'Oromo',
+//     nativeLabel: 'Afaan Oromoo',
+//     load: () => require('../../../packages/shared/config/i18n/om'),
+//     admin: () => require('../../../packages/shared/config/i18n/om/admin'),
+//   },
+// };
+
+// /**
+//  * Safely evaluate a locale loader, logging and degrading on failure.
+//  * @param {Function} loader
+//  * @param {string} code
+//  * @returns {object}
+//  */
+// const safeLoad = (loader, code) => {
+//   try {
+//     const bundle = loader();
+//     return bundle && typeof bundle === 'object' ? bundle : {};
+//   } catch (error) {
+//     console.error(`[i18n] Failed to load locale "${code}":`, error);
+//     return {};
+//   }
+// };
+
+// const ENGLISH_BASE = safeLoad(LOCALE_REGISTRY.en.load, 'en');
+
+// /**
+//  * Build every locale bundle: English base → locale bundle → locale
+//  * admin namespace (authoritative). Inputs are never mutated.
+//  */
+// const TRANSLATIONS = Object.fromEntries(
+//   Object.entries(LOCALE_REGISTRY).map(([code, { load, admin }]) => {
+//     const localeBundle = safeLoad(load, code);
+//     const adminNamespace = safeLoad(admin, code);
+//     return [code, deepMerge(ENGLISH_BASE, localeBundle, adminNamespace)];
+//   })
+// );
+
+// const LANGUAGE_ORDER = Object.keys(LOCALE_REGISTRY);
+
+// const SUPPORTED_LANGUAGES = LANGUAGE_ORDER.map((code) => ({
+//   code,
+//   label: LOCALE_REGISTRY[code].label,
+//   nativeLabel: LOCALE_REGISTRY[code].nativeLabel,
+// }));
+
+// const LanguageContext = createContext(null);
+
+// const LanguageProvider = ({ children }) => {
+//   const router = useRouter();
+//   const [language, setLanguageState] = useState(DEFAULT_LANGUAGE);
+//   const [mounted, setMounted] = useState(false);
+
+//   useEffect(() => {
+//     const savedLanguage = getItem(LANGUAGE_STORAGE_KEY, DEFAULT_LANGUAGE);
+//     const isValidLanguage =
+//       LANGUAGE_ORDER.includes(savedLanguage) &&
+//       TRANSLATIONS[savedLanguage] &&
+//       Object.keys(TRANSLATIONS[savedLanguage]).length > 0;
+
+//     setLanguageState(isValidLanguage ? savedLanguage : DEFAULT_LANGUAGE);
+//     setMounted(true);
+//   }, []);
+
+//   const t = useMemo(() => {
+//     const active = TRANSLATIONS[language];
+//     if (active && Object.keys(active).length > 0) return active;
+//     return TRANSLATIONS[DEFAULT_LANGUAGE] || {};
+//   }, [language]);
+
+//   /**
+//    * Persist a language choice and refresh the route shallowly so the
+//    * whole tree re-renders with the new copy without losing scroll.
+//    * @param {string} nextLanguage
+//    */
+//   const applyLanguage = useCallback(
+//     (nextLanguage) => {
+//       setItem(LANGUAGE_STORAGE_KEY, nextLanguage);
+//       if (router.isReady) {
+//         router.replace(router.asPath, undefined, {
+//           scroll: false,
+//           shallow: true,
+//         });
+//       }
+//     },
+//     [router]
+//   );
+
+//   const toggleLanguage = useCallback(() => {
+//     setLanguageState((prev) => {
+//       const currentIndex = LANGUAGE_ORDER.indexOf(prev);
+//       const nextLanguage =
+//         LANGUAGE_ORDER[(currentIndex + 1) % LANGUAGE_ORDER.length];
+//       applyLanguage(nextLanguage);
+//       return nextLanguage;
+//     });
+//   }, [applyLanguage]);
+
+//   const setLanguage = useCallback(
+//     (lang) => {
+//       const isKnown = LANGUAGE_ORDER.includes(lang);
+//       const isLoaded =
+//         isKnown &&
+//         TRANSLATIONS[lang] &&
+//         Object.keys(TRANSLATIONS[lang]).length > 0;
+
+//       if (isLoaded && lang !== language) {
+//         setLanguageState(lang);
+//         applyLanguage(lang);
+//       }
+//     },
+//     [language, applyLanguage]
+//   );
+
+//   const value = useMemo(
+//     () => ({
+//       language,
+//       t,
+//       toggleLanguage,
+//       setLanguage,
+//       mounted,
+//       supportedLanguages: SUPPORTED_LANGUAGES,
+//     }),
+//     [language, t, toggleLanguage, setLanguage, mounted]
+//   );
+
+//   return (
+//     <LanguageContext.Provider value={value}>
+//       {children}
+//     </LanguageContext.Provider>
+//   );
+// };
+
+// /**
+//  * Consume the language context. Outside a provider, returns the English
+//  * bundle with inert mutators so isolated renders never crash.
+//  */
+// const useLanguage = () => {
+//   const context = useContext(LanguageContext);
+//   if (context === null) {
+//     return {
+//       language: DEFAULT_LANGUAGE,
+//       t: TRANSLATIONS[DEFAULT_LANGUAGE] || {},
+//       toggleLanguage: () => {},
+//       setLanguage: () => {},
+//       mounted: false,
+//       supportedLanguages: SUPPORTED_LANGUAGES,
+//     };
+//   }
+//   return context;
+// };
+
+// export {
+//   LanguageProvider,
+//   useLanguage,
+//   TRANSLATIONS,
+//   SUPPORTED_LANGUAGES,
+//   LANGUAGE_ORDER,
+//   DEFAULT_LANGUAGE,
+// };
+
+
+
+
+
+
+
+/**
+ * @fileoverview Language Context
+ *
+ * Multilingual EN/AM/TI/OM support. Every locale bundle is deep-merged
+ * over the English base so a missing key in any locale renders the
+ * English copy instead of a blank string. The locale's own admin
+ * namespace is overlaid last, making admin.godMode and every admin
+ * label deterministic regardless of aggregator ordering.
+ *
+ * Language switches use a shallow router replace so the tree re-renders
+ * with new copy without a full page reload or scroll jump.
+ *
+ * Path: apps/web/context/LanguageContext.js
+ */
+
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+} from 'react';
+import { useRouter } from 'next/router';
+import { getItem, setItem } from '../lib/storage';
+
+const { deepMerge } = require('../../../packages/shared/config/i18n/merge');
+
+const DEFAULT_LANGUAGE = 'en';
+const LANGUAGE_STORAGE_KEY = 'abyssinia_language';
+
+/**
+ * Locale registry. `load` resolves the full namespace bundle; `admin`
+ * resolves the authoritative admin namespace directly from its source
+ * file so it can never be shadowed by another namespace.
+ */
+const LOCALE_REGISTRY = {
+  en: {
+    label: 'English',
+    nativeLabel: 'English',
+    load: () => require('../../../packages/shared/config/i18n/en'),
+    admin: () => require('../../../packages/shared/config/i18n/en/admin'),
+  },
+  am: {
+    label: 'Amharic',
+    nativeLabel: 'አማርኛ',
+    load: () => require('../../../packages/shared/config/i18n/am'),
+    admin: () => require('../../../packages/shared/config/i18n/am/admin'),
+  },
+  ti: {
+    label: 'Tigrinya',
+    nativeLabel: 'ትግርኛ',
+    load: () => require('../../../packages/shared/config/i18n/ti'),
+    admin: () => require('../../../packages/shared/config/i18n/ti/admin'),
+  },
+  om: {
+    label: 'Oromo',
+    nativeLabel: 'Afaan Oromoo',
+    load: () => require('../../../packages/shared/config/i18n/om'),
+    admin: () => require('../../../packages/shared/config/i18n/om/admin'),
+  },
+};
+
+/**
+ * Safely evaluate a locale loader, logging and degrading on failure.
+ * @param {Function} loader
+ * @param {string} code
+ * @returns {object}
+ */
+const safeLoad = (loader, code) => {
+  try {
+    const bundle = loader();
+    return bundle && typeof bundle === 'object' ? bundle : {};
+  } catch (error) {
+    console.error(`[i18n] Failed to load locale "${code}":`, error);
+    return {};
+  }
+};
+
+const ENGLISH_BASE = safeLoad(LOCALE_REGISTRY.en.load, 'en');
+
+/**
+ * Build every locale bundle: English base → locale bundle → locale
+ * admin namespace (authoritative). Inputs are never mutated.
+ */
+const TRANSLATIONS = Object.fromEntries(
+  Object.entries(LOCALE_REGISTRY).map(([code, { load, admin }]) => {
+    const localeBundle = safeLoad(load, code);
+    const adminNamespace = safeLoad(admin, code);
+    return [code, deepMerge(ENGLISH_BASE, localeBundle, adminNamespace)];
+  })
+);
+
+const LANGUAGE_ORDER = Object.keys(LOCALE_REGISTRY);
+
+const SUPPORTED_LANGUAGES = LANGUAGE_ORDER.map((code) => ({
+  code,
+  label: LOCALE_REGISTRY[code].label,
+  nativeLabel: LOCALE_REGISTRY[code].nativeLabel,
+}));
+
+const LanguageContext = createContext(null);
+
+const LanguageProvider = ({ children }) => {
+  const router = useRouter();
+  const [language, setLanguageState] = useState(DEFAULT_LANGUAGE);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    const savedLanguage = getItem(LANGUAGE_STORAGE_KEY, DEFAULT_LANGUAGE);
+    const isValidLanguage =
+      LANGUAGE_ORDER.includes(savedLanguage) &&
+      TRANSLATIONS[savedLanguage] &&
+      Object.keys(TRANSLATIONS[savedLanguage]).length > 0;
+
+    setLanguageState(isValidLanguage ? savedLanguage : DEFAULT_LANGUAGE);
+    setMounted(true);
+  }, []);
+
+  const t = useMemo(() => {
+    const active = TRANSLATIONS[language];
+    if (active && Object.keys(active).length > 0) return active;
+    return TRANSLATIONS[DEFAULT_LANGUAGE] || {};
+  }, [language]);
+
+  /**
+   * Persist a language choice and refresh the route shallowly so the
+   * whole tree re-renders with the new copy without losing scroll.
+   * @param {string} nextLanguage
+   */
+  const applyLanguage = useCallback(
+    (nextLanguage) => {
+      setItem(LANGUAGE_STORAGE_KEY, nextLanguage);
+      if (router.isReady) {
+        router.replace(router.asPath, undefined, {
+          scroll: false,
+          shallow: true,
+        });
+      }
+    },
+    [router]
+  );
+
+  const toggleLanguage = useCallback(() => {
+    setLanguageState((prev) => {
+      const currentIndex = LANGUAGE_ORDER.indexOf(prev);
+      const nextLanguage =
+        LANGUAGE_ORDER[(currentIndex + 1) % LANGUAGE_ORDER.length];
+      applyLanguage(nextLanguage);
+      return nextLanguage;
+    });
+  }, [applyLanguage]);
+
+  const setLanguage = useCallback(
+    (lang) => {
+      const isKnown = LANGUAGE_ORDER.includes(lang);
+      const isLoaded =
+        isKnown &&
+        TRANSLATIONS[lang] &&
+        Object.keys(TRANSLATIONS[lang]).length > 0;
+
+      if (isLoaded && lang !== language) {
+        setLanguageState(lang);
+        applyLanguage(lang);
+      }
+    },
+    [language, applyLanguage]
+  );
+
+  const value = useMemo(
+    () => ({
+      language,
+      t,
+      toggleLanguage,
+      setLanguage,
+      mounted,
+      supportedLanguages: SUPPORTED_LANGUAGES,
+    }),
+    [language, t, toggleLanguage, setLanguage, mounted]
+  );
+
+  return (
+    <LanguageContext.Provider value={value}>
+      {children}
+    </LanguageContext.Provider>
+  );
+};
+
+/**
+ * Consume the language context. Outside a provider, returns the English
+ * bundle with inert mutators so isolated renders never crash.
+ */
+const useLanguage = () => {
+  const context = useContext(LanguageContext);
+  if (context === null) {
+    return {
+      language: DEFAULT_LANGUAGE,
+      t: TRANSLATIONS[DEFAULT_LANGUAGE] || {},
+      toggleLanguage: () => {},
+      setLanguage: () => {},
+      mounted: false,
+      supportedLanguages: SUPPORTED_LANGUAGES,
+    };
+  }
+  return context;
+};
+
+export {
+  LanguageProvider,
+  useLanguage,
+  TRANSLATIONS,
+  SUPPORTED_LANGUAGES,
+  LANGUAGE_ORDER,
+  DEFAULT_LANGUAGE,
+};

@@ -1,8 +1,9 @@
 /**
  * @fileoverview English — Admin Namespace
  *
- * Contains every admin-specific UI copy: coming-soon stubs, announcements,
- * agent management, god-mode user detail, and courses management.
+ * Contains every admin-specific UI copy: sidebar navigation, coming-soon
+ * stubs, announcements, agent management, god-mode user detail, and
+ * courses management.
  *
  * All copy is config-driven — no hardcoded strings in JSX components.
  *
@@ -11,6 +12,41 @@
 
 module.exports = {
   admin: {
+    /* ── NAVIGATION (sidebar chrome, sections, items, a11y) ─────────── */
+    nav: {
+      panelSuffix: 'Admin Panel',
+      viewSite: 'View Site',
+      logout: 'Logout',
+
+      sections: {
+        main: 'Main',
+        management: 'Management',
+        programs: 'Programs',
+        marketing: 'Marketing',
+        insights: 'Insights',
+        system: 'System',
+      },
+
+      dashboard: 'Dashboard',
+      payments: 'Payments',
+      students: 'Students',
+      resellers: 'Resellers',
+      mlmTree: 'Network Node Radar',
+      discussions: 'Discussions',
+      courseVideos: 'Course Videos',
+      analytics: 'Analytics',
+      audit: 'Audit Logs',
+      settings: 'Settings',
+      admins: 'Admin Accounts',
+
+      a11y: {
+        openSidebar: 'Open sidebar',
+        closeSidebar: 'Close sidebar',
+        languageToggle:
+          'Current language: {language}. Activate to cycle languages.',
+      },
+    },
+
     /* ── COMING SOON ────────────────────────────────────────────────── */
     comingSoon: {
       eyebrow: 'Work in Progress',

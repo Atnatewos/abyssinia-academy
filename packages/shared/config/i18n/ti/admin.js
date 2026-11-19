@@ -2,6 +2,7 @@
  * @fileoverview ትግርኛ — Admin Namespace
  *
  * Contains admin-specific UI copy including:
+ *   - Sidebar navigation (chrome, sections, items, accessibility)
  *   - Coming Soon stub labels (one per unfinished CRUD route)
  *   - Announcements composer labels
  *   - Agent management labels
@@ -14,6 +15,40 @@
 
 module.exports = {
   admin: {
+    /* ── NAVIGATION ── */
+    nav: {
+      panelSuffix: 'ፓነል ምምሕዳር',
+      viewSite: 'ሳይት ርአ',
+      logout: 'ውጻእ',
+
+      sections: {
+        main: 'ቀንዲ',
+        management: 'ምምሕዳር',
+        programs: 'መደባት',
+        marketing: 'ማርኬቲንግ',
+        insights: 'ርድኢታት',
+        system: 'ስርዓት',
+      },
+
+      dashboard: 'ዳሽቦርድ',
+      payments: 'ክፍሊታት',
+      students: 'ተምሃሮ',
+      resellers: 'ዳግም ሸየጥቲ',
+      mlmTree: 'ራዳር ኖድ ኔትወርክ',
+      discussions: 'ምይይጣት',
+      courseVideos: 'ቪድዮታት ኮርስ',
+      analytics: 'ትንተና',
+      audit: 'መዝገብ ኦዲት',
+      settings: 'ቅጥዕታት',
+      admins: 'መለያታት ኣማሓደርቲ',
+
+      a11y: {
+        openSidebar: 'ጎናዊ መስመር ክፈት',
+        closeSidebar: 'ጎናዊ መስመር ዕጾ',
+        languageToggle: 'ናይ ሕጂ ቋንቋ: {language}። ቋንቋ ንምቕያር ጠውቕ።',
+      },
+    },
+
     comingSoon: {
       eyebrow: 'ኣብ ስራሕ ይገበር ኣሎ',
       heading: 'እዚ ባህሪ ይስራሕ ኣሎ',
