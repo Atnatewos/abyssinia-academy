@@ -1,811 +1,463 @@
-// /**
-//  * @fileoverview Public Scholarships Browse Page
-//  *
-//  * Guest + authenticated scholarship browse surface. Uses the public
-//  * endpoint for guests and the authenticated endpoint for signed-in
-//  * users (which merges the visitor's application statuses into the
-//  * campaign list).
-//  *
-//  * Design system compliance:
-//  *   - Design tokens only
-//  *   - Skeleton grid during load
-//  *   - Staggered entrance on cards
-//  *   - Zero hardcoded strings (i18n with safe English fallbacks)
-//  *
-//  * Path: apps/web/pages/scholarships/index.jsx
-//  */
-
-// import { useCallback, useEffect, useState } from 'react';
-// import Link from 'next/link';
-// import {
-//   GraduationCap,
-//   Award,
-//   Gift,
-//   Users,
-//   Clock,
-//   ArrowRight,
-//   RefreshCw,
-//   Sparkles,
-// } from 'lucide-react';
-// import SEOHead from '../../components/shared/SEOHead';
-// import PageLayout from '../../components/shared/PageLayout';
-// import { SkeletonBase, SkeletonWrapper } from '../../components/shared/Skeleton';
-// import { useLanguage } from '../../context/LanguageContext';
-// import { useAuth } from '../../context/AuthContext';
-// import { getItem } from '../../lib/storage';
-
-// const shortDate = (value) => {
-//   if (!value) return '';
-//   try {
-//     return new Date(value).toLocaleDateString(undefined, {
-//       month: 'short',
-//       day: 'numeric',
-//     });
-//   } catch {
-//     return '';
-//   }
-// };
-
-// const daysUntil = (value) => {
-//   if (!value) return null;
-//   try {
-//     const diff = new Date(value).getTime() - Date.now();
-//     if (diff < 0) return null;
-//     return Math.max(0, Math.ceil(diff / (24 * 60 * 60 * 1000)));
-//   } catch {
-//     return null;
-//   }
-// };
-
-// const BrowseSkeleton = () => (
-//   <SkeletonWrapper className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-//     {[0, 1, 2, 3, 4, 5].map((i) => (
-//       <div
-//         key={i}
-//         className="rounded-2xl overflow-hidden border border-border-light bg-bg-card-solid"
-//       >
-//         <SkeletonBase style={{ height: '8rem', borderRadius: 0 }} />
-//         <div className="p-4 flex flex-col gap-2">
-//           <SkeletonBase className="skeleton-line skeleton-line-medium" />
-//           <SkeletonBase className="skeleton-line skeleton-line-short" />
-//           <SkeletonBase style={{ height: '1.5rem', borderRadius: '9999px' }} />
-//           <SkeletonBase style={{ height: '2.25rem', borderRadius: '0.5rem' }} />
-//         </div>
-//       </div>
-//     ))}
-//   </SkeletonWrapper>
-// );
-
-// const ScholarshipCard = ({ campaign, isAuthenticated, index }) => {
-//   const { t, language } = useLanguage();
-
-//   const name = language === 'am' && campaign.nameAm ? campaign.nameAm : campaign.name;
-//   const description =
-//     language === 'am' && campaign.descriptionAm
-//       ? campaign.descriptionAm
-//       : campaign.description;
-
-//   const fee = Number(campaign.registrationFeeETB) || 0;
-//   const hasQuota = Number(campaign.quota) > 0;
-//   const remaining = hasQuota
-//     ? Math.max(0, Number(campaign.quota) - Number(campaign.approvedCount || 0))
-//     : 0;
-//   const quotaPct = hasQuota
-//     ? Math.min(
-//         100,
-//         Math.round(
-//           (Number(campaign.approvedCount || 0) / Number(campaign.quota)) * 100
-//         )
-//       )
-//     : 0;
-//   const isFull = hasQuota && remaining <= 0;
-//   const isClosed =
-//     Boolean(campaign.applicationsCloseAt) &&
-//     new Date(campaign.applicationsCloseAt) < new Date();
-//   const daysLeft = daysUntil(campaign.applicationsCloseAt);
-//   const myApp = campaign.myApplication || null;
-//   const status = myApp?.status || null;
-
-//   const statusLabel = (s) => {
-//     const map = {
-//       pending: t.scholarships?.statusLabel?.pending || 'Pending Review',
-//       pending_payment: t.scholarships?.statusLabel?.pendingPayment || 'Awaiting Payment',
-//       approved: t.scholarships?.statusLabel?.approved || 'Approved',
-//       rejected: t.scholarships?.statusLabel?.rejected || 'Not Approved',
-//       withdrawn: t.scholarships?.statusLabel?.withdrawn || 'Withdrawn',
-//       revoked: t.scholarships?.statusLabel?.revoked || 'Revoked',
-//     };
-//     return map[s] || s;
-//   };
-
-//   let cta;
-//   if (status) {
-//     cta = (
-//       <Link
-//         href={`/scholarships/${encodeURIComponent(campaign.slug)}`}
-//         className="group/cta inline-flex items-center justify-between gap-2 w-full px-4 py-2.5 rounded-lg bg-bg-pill border border-border-medium text-text-muted text-xs font-bold hover:border-accent/40 hover:text-accent transition-colors"
-//       >
-//         <span className="truncate">{statusLabel(status)}</span>
-//         <ArrowRight size={12} className="shrink-0 group-hover/cta:translate-x-0.5 transition-transform" />
-//       </Link>
-//     );
-//   } else if (isClosed || isFull) {
-//     cta = (
-//       <div className="inline-flex items-center justify-center gap-1.5 w-full px-4 py-2.5 rounded-lg border border-border-medium bg-bg-pill text-text-dim text-xs font-bold cursor-not-allowed">
-//         {isClosed
-//           ? t.scholarships?.card?.closed || 'Applications Closed'
-//           : t.scholarships?.card?.full || 'Quota Full'}
-//       </div>
-//     );
-//   } else if (!isAuthenticated) {
-//     cta = (
-//       <Link
-//         href={`/auth/register?redirect=${encodeURIComponent(
-//           `/scholarships/${campaign.slug}`
-//         )}`}
-//         className="group/cta inline-flex items-center justify-between gap-2 w-full px-4 py-2.5 rounded-lg bg-accent text-text-inverse text-xs font-bold hover:bg-accent-light shadow-glow-gold-sm hover:shadow-glow-gold hover:-translate-y-0.5 transition-all"
-//       >
-//         <span>{t.scholarships?.card?.applyNow || 'Apply Now'}</span>
-//         <ArrowRight size={12} className="group-hover/cta:translate-x-0.5 transition-transform" />
-//       </Link>
-//     );
-//   } else {
-//     cta = (
-//       <Link
-//         href={`/scholarships/${encodeURIComponent(campaign.slug)}`}
-//         className="group/cta inline-flex items-center justify-between gap-2 w-full px-4 py-2.5 rounded-lg bg-accent text-text-inverse text-xs font-bold hover:bg-accent-light shadow-glow-gold-sm hover:shadow-glow-gold hover:-translate-y-0.5 transition-all"
-//       >
-//         <span>{t.scholarships?.card?.applyNow || 'Apply Now'}</span>
-//         <ArrowRight size={12} className="group-hover/cta:translate-x-0.5 transition-transform" />
-//       </Link>
-//     );
-//   }
-
-//   return (
-//     <article
-//       className="group flex flex-col rounded-2xl overflow-hidden border border-border-light bg-bg-card-solid hover:-translate-y-1 hover:border-accent/40 hover:shadow-glow-gold transition-all duration-300 animate-fade-in-up"
-//       style={{ animationDelay: `${index * 70}ms` }}
-//     >
-//       {/* Cover */}
-//       <div className="relative h-32 overflow-hidden">
-//         {campaign.coverImageUrl ? (
-//           <>
-//             <img
-//               src={campaign.coverImageUrl}
-//               alt=""
-//               aria-hidden="true"
-//               className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-//             />
-//             <div className="absolute inset-0 bg-gradient-to-t from-bg-card-solid via-bg-card-solid/60 to-transparent" />
-//           </>
-//         ) : (
-//           <div className="absolute inset-0 bg-gradient-to-br from-accent/40 via-accent/15 to-bg-card-solid" />
-//         )}
-
-//         {status && (
-//           <span className="absolute top-3 right-3 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-bg-card-solid/95 border border-accent/40 text-2xs font-extrabold uppercase tracking-wider text-accent">
-//             {t.scholarships?.card?.applied || 'Applied'}
-//           </span>
-//         )}
-
-//         {daysLeft !== null && daysLeft <= 7 && !status && (
-//           <span className="absolute top-3 left-3 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-warning/20 border border-warning/40 text-warning text-2xs font-extrabold uppercase tracking-wider animate-pulse">
-//             <Clock size={9} />
-//             {daysLeft === 0 ? 'Closes today' : `${daysLeft}d left`}
-//           </span>
-//         )}
-
-//         <div className="absolute -bottom-5 left-4 w-12 h-12 rounded-xl bg-accent text-text-inverse flex items-center justify-center shadow-glow-gold-sm border-4 border-bg-card-solid">
-//           <GraduationCap size={20} />
-//         </div>
-//       </div>
-
-//       {/* Body */}
-//       <div className="pt-8 px-4 pb-4 flex flex-col gap-3 flex-1">
-//         <div>
-//           <h3 className="text-sm font-extrabold text-text-main leading-tight line-clamp-2">
-//             {name}
-//           </h3>
-//           {description && (
-//             <p className="text-2xs text-text-muted mt-1 line-clamp-2 leading-relaxed">
-//               {description}
-//             </p>
-//           )}
-//         </div>
-
-//         <div className="flex flex-wrap gap-1.5">
-//           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-accent/10 text-accent text-2xs font-bold border border-accent/30">
-//             <Award size={9} />
-//             {campaign.grantsFullCourse
-//               ? t.scholarships?.card?.fullCourse || 'Full Course'
-//               : (t.scholarships?.card?.phases || '{count} Phase(s)').replace(
-//                   '{count}',
-//                   String((campaign.grantsPhases || []).length)
-//                 )}
-//           </span>
-//           <span
-//             className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-2xs font-bold border ${
-//               fee > 0
-//                 ? 'bg-warning/10 text-warning border-warning/30'
-//                 : 'bg-success/10 text-success border-success/30'
-//             }`}
-//           >
-//             <Gift size={9} />
-//             {fee > 0
-//               ? (t.scholarships?.card?.registrationFee || '{amount} ETB').replace(
-//                   '{amount}',
-//                   fee.toLocaleString()
-//                 )
-//               : t.scholarships?.card?.registrationFree || 'Free'}
-//           </span>
-//         </div>
-
-//         {hasQuota && (
-//           <div className="flex flex-col gap-1">
-//             <div className="flex items-center justify-between text-2xs">
-//               <span className="inline-flex items-center gap-1 text-text-muted font-semibold">
-//                 <Users size={10} />
-//                 {remaining} of {campaign.quota} left
-//               </span>
-//               <span className="text-text-dim font-bold font-mono">{quotaPct}%</span>
-//             </div>
-//             <div className="h-1.5 rounded-full bg-bg-input border border-border-light overflow-hidden">
-//               <div
-//                 className={`h-full rounded-full transition-all duration-700 ${
-//                   quotaPct >= 90
-//                     ? 'bg-gradient-to-r from-warning to-error'
-//                     : 'bg-gradient-to-r from-accent to-accent-light'
-//                 }`}
-//                 style={{ width: `${quotaPct}%` }}
-//               />
-//             </div>
-//           </div>
-//         )}
-
-//         {campaign.applicationsCloseAt && (
-//           <div className="flex items-center gap-1 text-2xs text-text-dim">
-//             <Clock size={10} />
-//             {(t.scholarships?.card?.endsOn || 'Ends {date}').replace(
-//               '{date}',
-//               shortDate(campaign.applicationsCloseAt)
-//             )}
-//           </div>
-//         )}
-
-//         <div className="mt-auto pt-1">{cta}</div>
-//       </div>
-//     </article>
-//   );
-// };
-
-// const ScholarshipsBrowsePage = () => {
-//   const { t } = useLanguage();
-//   const { isAuthenticated } = useAuth();
-
-//   const [campaigns, setCampaigns] = useState([]);
-//   const [loading, setLoading] = useState(true);
-//   const [error, setError] = useState(null);
-
-//   const fetchCampaigns = useCallback(async () => {
-//     setLoading(true);
-//     setError(null);
-//     try {
-//       const token = getItem('auth_token');
-//       const endpoint =
-//         isAuthenticated && token
-//           ? '/api/scholarships'
-//           : '/api/public/scholarships/active';
-//       const headers = { Accept: 'application/json' };
-//       if (isAuthenticated && token) headers.Authorization = `Bearer ${token}`;
-
-//       const response = await fetch(endpoint, { headers });
-//       const payload = await response.json();
-//       if (!response.ok || !payload?.success) {
-//         setError(
-//           t.scholarships?.browse?.errorTitle || 'Could not load scholarships'
-//         );
-//         return;
-//       }
-//       setCampaigns(payload.data?.campaigns || []);
-//     } catch (err) {
-//       console.error('[scholarships/browse] fetch failed:', err);
-//       setError(t.scholarships?.browse?.errorTitle || 'Could not load scholarships');
-//     } finally {
-//       setLoading(false);
-//     }
-//   }, [isAuthenticated, t]);
-
-//   useEffect(() => {
-//     fetchCampaigns();
-//   }, [fetchCampaigns]);
-
-//   return (
-//     <>
-//       <SEOHead
-//         title={t.scholarships?.browse?.pageTitle || 'Scholarships'}
-//         description={
-//           t.scholarships?.browse?.pageSubtitle || 'Financial assistance for aspiring developers'
-//         }
-//       />
-//       <PageLayout>
-//         <div className="container-xl py-12 flex flex-col gap-8">
-//           {/* Hero */}
-//           <header className="relative overflow-hidden rounded-3xl border border-accent/30 bg-gradient-to-br from-accent/20 via-bg-card-solid to-bg-card-solid p-8 md:p-10 animate-fade-in-up">
-//             <div
-//               aria-hidden="true"
-//               className="absolute -top-24 -right-24 w-72 h-72 rounded-full bg-accent/30 blur-3xl pointer-events-none animate-blob"
-//             />
-//             <div
-//               aria-hidden="true"
-//               className="absolute -bottom-32 -left-32 w-96 h-96 rounded-full bg-warning/20 blur-3xl pointer-events-none animate-blob"
-//               style={{ animationDelay: '2s' }}
-//             />
-//             <div className="relative flex flex-col gap-4 max-w-2xl">
-//               <span className="inline-flex items-center gap-1.5 self-start px-3 py-1 rounded-full bg-accent/15 border border-accent/40 text-accent text-2xs font-extrabold uppercase tracking-widest">
-//                 <Sparkles size={10} />
-//                 {t.scholarships?.page?.title || 'Scholarships'}
-//               </span>
-//               <h1 className="text-3xl md:text-5xl font-extrabold text-text-main leading-tight">
-//                 {t.scholarships?.browse?.pageTitle || 'Scholarships'}
-//               </h1>
-//               <p className="text-sm md:text-base text-text-muted leading-relaxed">
-//                 {t.scholarships?.browse?.pageSubtitle ||
-//                   'Financial assistance for aspiring developers'}
-//               </p>
-//             </div>
-//           </header>
-
-//           {/* Grid */}
-//           {loading ? (
-//             <BrowseSkeleton />
-//           ) : error ? (
-//             <div className="flex flex-col items-center gap-3 py-12 text-center">
-//               <div className="w-14 h-14 rounded-2xl bg-error/10 border border-error/30 flex items-center justify-center text-error">
-//                 <RefreshCw size={22} />
-//               </div>
-//               <h2 className="text-base font-bold text-text-main">{error}</h2>
-//               <button
-//                 type="button"
-//                 onClick={fetchCampaigns}
-//                 className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-accent text-text-inverse text-xs font-bold hover:bg-accent-light transition-colors"
-//               >
-//                 <RefreshCw size={12} />
-//                 {t.scholarships?.browse?.retryButton || 'Try Again'}
-//               </button>
-//             </div>
-//           ) : campaigns.length === 0 ? (
-//             <div className="flex flex-col items-center gap-3 py-16 text-center animate-fade-in-up">
-//               <div className="w-16 h-16 rounded-2xl bg-accent/10 border border-accent/30 flex items-center justify-center text-accent animate-pulse-glow">
-//                 <GraduationCap size={28} />
-//               </div>
-//               <h2 className="text-lg font-extrabold text-text-main">
-//                 {t.scholarships?.browse?.emptyTitle || 'No Scholarships Available'}
-//               </h2>
-//               <p className="text-sm text-text-muted max-w-md">
-//                 {t.scholarships?.browse?.emptyDescription ||
-//                   'Check back soon — new campaigns are announced regularly.'}
-//               </p>
-//             </div>
-//           ) : (
-//             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-//               {campaigns.map((campaign, idx) => (
-//                 <ScholarshipCard
-//                   key={campaign.slug}
-//                   campaign={campaign}
-//                   isAuthenticated={isAuthenticated}
-//                   index={idx}
-//                 />
-//               ))}
-//             </div>
-//           )}
-
-//           {/* Guest CTA */}
-//           {!isAuthenticated && campaigns.length > 0 && (
-//             <div className="relative overflow-hidden rounded-2xl border border-accent/30 bg-gradient-to-r from-accent/15 via-accent/5 to-transparent p-6 text-center animate-fade-in-up">
-//               <div
-//                 aria-hidden="true"
-//                 className="absolute -top-16 -right-16 w-56 h-56 rounded-full bg-accent/20 blur-3xl pointer-events-none"
-//               />
-//               <p className="relative text-sm font-bold text-text-main mb-1">
-//                 {t.scholarships?.browse?.sectionSubtitle ||
-//                   'Create an account to apply for a scholarship'}
-//               </p>
-//               <Link
-//                 href="/auth/register"
-//                 className="relative inline-flex items-center gap-1.5 px-5 py-2.5 rounded-lg mt-3 bg-accent text-text-inverse text-xs font-bold hover:bg-accent-light hover:-translate-y-0.5 shadow-glow-gold-sm transition-all"
-//               >
-//                 {t.auth?.register || 'Create Account'}
-//                 <ArrowRight size={12} />
-//               </Link>
-//             </div>
-//           )}
-//         </div>
-//       </PageLayout>
-//     </>
-//   );
-// };
-
-// export default ScholarshipsBrowsePage;
-
-
-
-
 /**
- * @fileoverview Public Scholarships Browse Page
+ * @fileoverview Admin Scholarship Campaigns — List Page
  *
- * Renders the list of active campaigns. Uses the public API route for
- * guests and the authenticated route for logged-in users.
+ * Card-grid campaign management on shared admin primitives. Fetching
+ * runs through useAdminQuery (auth gate, stale guard, 401 redirect);
+ * pause/activate/delete run through useAdminMutation with styled
+ * confirmations and optimistic updates that revert on failure.
  *
- * Path: apps/web/pages/scholarships/index.jsx
+ * All copy resolves from admin.scholarships.* / scholarships.admin.*
+ * i18n; every visual value flows through the Tailwind token bridge.
+ *
+ * Path: apps/web/pages/admin/scholarships/index.jsx
  */
 
-import { useCallback, useEffect, useState } from 'react';
-import Link from 'next/link';
+import { useMemo, useState } from 'react';
+import { useRouter } from 'next/router';
 import {
-  GraduationCap, Award, Gift, Users, Clock, ArrowRight, RefreshCw, Sparkles,
+  Plus,
+  Edit,
+  Trash2,
+  Power,
+  PowerOff,
+  ArrowRight,
+  GraduationCap,
+  Award,
+  Users,
+  Gift,
 } from 'lucide-react';
-import SEOHead from '../../components/shared/SEOHead';
-import PageLayout from '../../components/shared/PageLayout';
-import { SkeletonBase, SkeletonWrapper } from '../../components/shared/Skeleton';
-import { useLanguage } from '../../context/LanguageContext';
-import { useAuth } from '../../context/AuthContext';
-import { getItem } from '../../lib/storage';
+import SEOHead from '../../../components/shared/SEOHead';
+import AdminLayout from '../../../components/admin/AdminLayout';
+import ScholarshipCampaignForm from '../../../components/admin/scholarships/ScholarshipCampaignForm';
+import AdminToolbar from '../../../components/admin/ui/AdminToolbar';
+import AdminTabs from '../../../components/admin/ui/AdminTabs';
+import AdminButton from '../../../components/admin/ui/AdminButton';
+import AdminBadge from '../../../components/admin/ui/AdminBadge';
+import AdminEmptyState from '../../../components/admin/ui/AdminEmptyState';
+import { AdminSkeletonBase } from '../../../components/admin/ui/AdminSkeleton';
+import { useLanguage } from '../../../context/LanguageContext';
+import useAdminQuery, { useDebouncedValue } from '../../../lib/admin/useAdminQuery';
+import useAdminMutation from '../../../lib/admin/useAdminMutation';
+import { resolveLabel, interpolate } from '../../../lib/admin/labels';
+import { getScholarshipAdminConfig } from '../../../lib/config';
 
-const shortDate = (value) => {
-  if (!value) return '';
-  try {
-    return new Date(value).toLocaleDateString(undefined, {
-      month: 'short', day: 'numeric',
-    });
-  } catch {
-    return '';
+/* ── Helpers ──────────────────────────────────────────────────────── */
+
+const campaignStatus = (campaign) => {
+  if (
+    campaign.applications_close_at &&
+    new Date(campaign.applications_close_at) < new Date()
+  ) {
+    return 'closed';
   }
+  return campaign.is_active ? 'active' : 'paused';
 };
 
-const daysUntil = (value) => {
-  if (!value) return null;
-  try {
-    const diff = new Date(value).getTime() - Date.now();
-    if (diff < 0) return null;
-    return Math.max(0, Math.ceil(diff / (24 * 60 * 60 * 1000)));
-  } catch {
-    return null;
-  }
-};
+const QUOTA_WARNING_THRESHOLD = 90;
 
-/**
- * Loading skeleton grid — matches the visual shape of the ScholarshipCard
- * exactly, including the floating icon that overlaps the cover image
- * and the content body. Prevents layout shift on load.
- */
-const BrowseSkeleton = () => (
-  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-    {[0, 1, 2, 3, 4, 5].map((i) => (
+/* ── Skeleton grid ────────────────────────────────────────────────── */
+
+const CampaignSkeleton = () => (
+  <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-5" aria-busy="true">
+    {Array.from({ length: 3 }).map((_, index) => (
       <div
-        key={i}
-        className="rounded-2xl overflow-hidden border border-border-light bg-bg-card-solid"
+        key={`campaign-skeleton-${index}`}
+        className="rounded-2xl border border-solid border-border-light bg-bg-card-solid p-5 flex flex-col gap-3"
       >
-        {/* Cover image placeholder with floating icon */}
-        <div className="relative h-32">
-          <SkeletonBase className="w-full h-full rounded-none" />
-          
-          {/* Floating icon placeholder — matches the GraduationCap position */}
-          <div className="absolute -bottom-5 left-4 w-12 h-12 rounded-xl bg-bg-card-solid border-4 border-bg-card-solid flex items-center justify-center">
-            <SkeletonBase className="w-8 h-8 rounded-lg" />
-          </div>
-        </div>
-
-        <div className="pt-8 px-4 pb-4 flex flex-col gap-3">
-          {/* Title + description */}
-          <div className="flex flex-col gap-2">
-            <SkeletonBase className="h-4 w-[80%] rounded-md" />
-            <SkeletonBase className="h-3 w-[60%] rounded-md" />
-          </div>
-
-          {/* Badge row */}
-          <div className="flex gap-2">
-            <SkeletonBase className="h-5 w-20 rounded-full" />
-            <SkeletonBase className="h-5 w-16 rounded-full" />
-          </div>
-
-          {/* Progress bar (quota) */}
-          <div className="flex flex-col gap-1.5">
-            <SkeletonBase className="h-2.5 w-full rounded-md" />
-            <SkeletonBase className="h-1.5 w-full rounded-full" />
-          </div>
-
-          {/* CTA button */}
-          <SkeletonBase className="h-9 w-full rounded-lg mt-auto" />
+        <AdminSkeletonBase className="h-28 w-full rounded-xl" />
+        <AdminSkeletonBase className="h-4 w-3/5" />
+        <AdminSkeletonBase className="h-3 w-2/5" />
+        <div className="flex gap-2">
+          <AdminSkeletonBase className="h-5 w-20 rounded-full" />
+          <AdminSkeletonBase className="h-5 w-20 rounded-full" />
         </div>
       </div>
     ))}
   </div>
 );
 
-const ScholarshipCard = ({ campaign, isAuthenticated, index }) => {
-  const { t, language } = useLanguage();
+/* ── Campaign card ────────────────────────────────────────────────── */
 
-  const name = language === 'am' && campaign.nameAm ? campaign.nameAm : campaign.name;
-  const description = language === 'am' && campaign.descriptionAm ? campaign.descriptionAm : campaign.description;
-
-  const fee = Number(campaign.registrationFeeETB) || 0;
-  const hasQuota = Number(campaign.quota) > 0;
-  const remaining = hasQuota ? Math.max(0, Number(campaign.quota) - Number(campaign.approvedCount || 0)) : 0;
-  const quotaPct = hasQuota ? Math.min(100, Math.round((Number(campaign.approvedCount || 0) / Number(campaign.quota)) * 100)) : 0;
-  const isFull = hasQuota && remaining <= 0;
-  const isClosed = Boolean(campaign.applicationsCloseAt) && new Date(campaign.applicationsCloseAt) < new Date();
-  const daysLeft = daysUntil(campaign.applicationsCloseAt);
-  const myApp = campaign.myApplication || null;
-  const status = myApp?.status || null;
-
-  const statusLabel = (s) => {
-    const map = {
-      pending: t.scholarships?.statusLabel?.pending || 'Pending Review',
-      pending_payment: t.scholarships?.statusLabel?.pendingPayment || 'Awaiting Payment',
-      payment_verified: t.scholarships?.statusLabel?.paymentVerified || 'Awaiting Decision',
-      approved: t.scholarships?.statusLabel?.approved || 'Approved',
-      rejected: t.scholarships?.statusLabel?.rejected || 'Not Approved',
-      withdrawn: t.scholarships?.statusLabel?.withdrawn || 'Withdrawn',
-      revoked: t.scholarships?.statusLabel?.revoked || 'Revoked',
-    };
-    return map[s] || s;
-  };
-
-  let cta;
-  if (status) {
-    cta = (
-      <Link
-        href={`/scholarships/${encodeURIComponent(campaign.slug)}`}
-        className="group/cta inline-flex items-center justify-between gap-2 w-full px-4 py-2.5 rounded-lg bg-bg-pill border border-border-medium text-text-muted text-xs font-bold hover:border-accent/40 hover:text-accent transition-colors"
-      >
-        <span className="truncate">{statusLabel(status)}</span>
-        <ArrowRight size={12} className="shrink-0 group-hover/cta:translate-x-0.5 transition-transform" />
-      </Link>
-    );
-  } else if (isClosed || isFull) {
-    cta = (
-      <div className="inline-flex items-center justify-center gap-1.5 w-full px-4 py-2.5 rounded-lg border border-border-medium bg-bg-pill text-text-dim text-xs font-bold cursor-not-allowed">
-        {isClosed ? t.scholarships?.card?.closed || 'Applications Closed' : t.scholarships?.card?.full || 'Quota Full'}
-      </div>
-    );
-  } else if (!isAuthenticated) {
-    cta = (
-      <Link
-        href={`/auth/register?redirect=${encodeURIComponent(`/scholarships/${campaign.slug}`)}`}
-        className="group/cta inline-flex items-center justify-between gap-2 w-full px-4 py-2.5 rounded-lg bg-accent text-text-inverse text-xs font-bold hover:bg-accent-light shadow-glow-gold-sm hover:shadow-glow-gold hover:-translate-y-0.5 transition-all"
-      >
-        <span>{t.scholarships?.card?.applyNow || 'Apply Now'}</span>
-        <ArrowRight size={12} className="group-hover/cta:translate-x-0.5 transition-transform" />
-      </Link>
-    );
-  } else {
-    cta = (
-      <Link
-        href={`/scholarships/${encodeURIComponent(campaign.slug)}`}
-        className="group/cta inline-flex items-center justify-between gap-2 w-full px-4 py-2.5 rounded-lg bg-accent text-text-inverse text-xs font-bold hover:bg-accent-light shadow-glow-gold-sm hover:shadow-glow-gold hover:-translate-y-0.5 transition-all"
-      >
-        <span>{t.scholarships?.card?.applyNow || 'Apply Now'}</span>
-        <ArrowRight size={12} className="group-hover/cta:translate-x-0.5 transition-transform" />
-      </Link>
-    );
-  }
+const CampaignCard = ({
+  campaign,
+  busy,
+  onEdit,
+  onToggleActive,
+  onDelete,
+  onViewApplications,
+  label,
+  currency,
+}) => {
+  const status = campaignStatus(campaign);
+  const approvedCount = Number(campaign.approved_count) || 0;
+  const quota = Number(campaign.quota) || 0;
+  const remaining = Math.max(0, quota - approvedCount);
+  const quotaPct =
+    quota > 0 ? Math.min(100, Math.round((approvedCount / quota) * 100)) : 0;
+  const fee = Number(campaign.registration_fee_etb) || 0;
 
   return (
-    <article
-      className="group flex flex-col rounded-2xl overflow-hidden border border-border-light bg-bg-card-solid hover:-translate-y-1 hover:border-accent/40 hover:shadow-glow-gold transition-all duration-300 animate-fade-in-up"
-      style={{ animationDelay: `${index * 70}ms` }}
-    >
-      <div className="relative h-32 overflow-hidden">
-        {campaign.coverImageUrl ? (
-          <>
-            <img src={campaign.coverImageUrl} alt="" aria-hidden="true" className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-            <div className="absolute inset-0 bg-gradient-to-t from-bg-card-solid via-bg-card-solid/60 to-transparent" />
-          </>
-        ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-accent/40 via-accent/15 to-bg-card-solid" />
+    <article className="group relative rounded-2xl border border-solid border-border-light bg-bg-card-solid overflow-hidden hover:-translate-y-1 hover:border-accent/40 hover:shadow-glow-gold transition-all duration-slow motion-reduce:hover:translate-y-0 motion-reduce:transition-none flex flex-col">
+      {/* Cover band */}
+      <div className="relative h-28 overflow-hidden bg-bg-input">
+        {campaign.cover_image_url && (
+          <img
+            src={campaign.cover_image_url}
+            alt=""
+            className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-slower motion-reduce:transition-none motion-reduce:group-hover:scale-100"
+          />
         )}
-
-        {status && (
-          <span className="absolute top-3 right-3 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-bg-card-solid/95 border border-accent/40 text-2xs font-extrabold uppercase tracking-wider text-accent">
-            {t.scholarships?.card?.applied || 'Applied'}
-          </span>
-        )}
-
-        {daysLeft !== null && daysLeft <= 7 && !status && (
-          <span className="absolute top-3 left-3 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-warning/20 border border-warning/40 text-warning text-2xs font-extrabold uppercase tracking-wider animate-pulse">
-            <Clock size={9} />
-            {daysLeft === 0 ? 'Closes today' : `${daysLeft}d left`}
-          </span>
-        )}
-
-        <div className="absolute -bottom-5 left-4 w-12 h-12 rounded-xl bg-accent text-text-inverse flex items-center justify-center shadow-glow-gold-sm border-4 border-bg-card-solid">
-          <GraduationCap size={20} />
+        <div className="absolute inset-0 bg-gradient-to-t from-bg-card-solid via-bg-card-solid/40 to-transparent" />
+        <div className="absolute top-4 right-4">
+          <AdminBadge status={status} pulse={status === 'active'}>
+            {label(`admin.common.statuses.${status}`) || status}
+          </AdminBadge>
         </div>
       </div>
 
-      <div className="pt-8 px-4 pb-4 flex flex-col gap-3 flex-1">
-        <div>
-          <h3 className="text-sm font-extrabold text-text-main leading-tight line-clamp-2">{name}</h3>
-          {description && <p className="text-2xs text-text-muted mt-1 line-clamp-2 leading-relaxed">{description}</p>}
+      <div className="pt-2 px-5 pb-5 flex flex-col gap-4 flex-1">
+        {/* Identity */}
+        <div className="-mt-6 relative z-above">
+          <div className="w-12 h-12 rounded-xl bg-accent text-on-accent flex items-center justify-center shadow-glow-gold-sm border-4 border-solid border-bg-card-solid mb-2">
+            <GraduationCap size={20} aria-hidden="true" />
+          </div>
+          <h3 className="m-0 text-lg font-extrabold text-text-main leading-tight line-clamp-1">
+            {campaign.name}
+          </h3>
+          <p className="m-0 mt-0.5 text-2xs text-text-dim font-mono truncate">
+            /{campaign.slug}
+          </p>
         </div>
 
-        <div className="flex flex-wrap gap-1.5">
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-accent/10 text-accent text-2xs font-bold border border-accent/30">
-            <Award size={9} />
-            {campaign.grantsFullCourse ? t.scholarships?.card?.fullCourse || 'Full Course' : (t.scholarships?.card?.phases || '{count} Phase(s)').replace('{count}', String((campaign.grantsPhases || []).length))}
-          </span>
-          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-2xs font-bold border ${fee > 0 ? 'bg-warning/10 text-warning border-warning/30' : 'bg-success/10 text-success border-success/30'}`}>
-            <Gift size={9} />
-            {fee > 0 ? (t.scholarships?.card?.registrationFee || '{amount} ETB').replace('{amount}', fee.toLocaleString()) : t.scholarships?.card?.registrationFree || 'Free'}
-          </span>
+        {/* Grant + fee badges */}
+        <div className="flex flex-wrap gap-2">
+          <AdminBadge tone="accent">
+            <Award size={12} aria-hidden="true" />
+            {campaign.grants_full_course
+              ? label('admin.scholarships.fullCourse')
+              : label('admin.scholarships.specificPhases')}
+          </AdminBadge>
+          <AdminBadge tone={fee > 0 ? 'warning' : 'success'}>
+            <Gift size={12} aria-hidden="true" />
+            {fee > 0
+              ? interpolate(label('admin.scholarships.feeAmount'), {
+                  amount: fee.toLocaleString(),
+                })
+              : label('admin.scholarships.freeEntry')}
+          </AdminBadge>
         </div>
 
-        {hasQuota && (
-          <div className="flex flex-col gap-1">
-            <div className="flex items-center justify-between text-2xs">
-              <span className="inline-flex items-center gap-1 text-text-muted font-semibold">
-                <Users size={10} />
-                {remaining} of {campaign.quota} left
+        {/* Quota progress */}
+        {quota > 0 && (
+          <div className="bg-bg-input/50 p-3 rounded-xl border border-solid border-border-light">
+            <div className="flex items-center justify-between text-2xs mb-1.5">
+              <span className="text-text-muted font-semibold flex items-center gap-1">
+                <Users size={12} aria-hidden="true" />
+                {interpolate(label('admin.scholarships.approvedProgress'), {
+                  approved: approvedCount,
+                  quota,
+                })}
               </span>
-              <span className="text-text-dim font-bold font-mono">{quotaPct}%</span>
+              <span className="text-text-main font-bold">
+                {interpolate(label('admin.scholarships.spotsLeft'), { count: remaining })}
+              </span>
             </div>
-            <div className="h-1.5 rounded-full bg-bg-input border border-border-light overflow-hidden">
-              <div className={`h-full rounded-full transition-all duration-700 ${quotaPct >= 90 ? 'bg-gradient-to-r from-warning to-error' : 'bg-gradient-to-r from-accent to-accent-light'}`} style={{ width: `${quotaPct}%` }} />
+            <div
+              role="progressbar"
+              aria-valuenow={quotaPct}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              className="h-1.5 rounded-full bg-border-light overflow-hidden"
+            >
+              <div
+                className={`h-full rounded-full transition-all duration-slower motion-reduce:transition-none ${
+                  quotaPct >= QUOTA_WARNING_THRESHOLD
+                    ? 'bg-gradient-to-r from-warning to-error'
+                    : 'bg-gradient-to-r from-accent to-accent-light'
+                }`}
+                style={{ width: `${quotaPct}%` }}
+              />
             </div>
           </div>
         )}
 
-        {campaign.applicationsCloseAt && (
-          <div className="flex items-center gap-1 text-2xs text-text-dim">
-            <Clock size={10} />
-            {(t.scholarships?.card?.endsOn || 'Ends {date}').replace('{date}', shortDate(campaign.applicationsCloseAt))}
+        {/* Actions */}
+        <div className="flex items-center gap-2 mt-auto pt-2">
+          <AdminButton
+            variant="primary"
+            size="sm"
+            className="flex-1"
+            onClick={onViewApplications}
+          >
+            {label('admin.scholarships.viewApplications')}
+            <ArrowRight size={14} aria-hidden="true" />
+          </AdminButton>
+          <div className="flex items-center bg-bg-input rounded-xl border border-solid border-border-light p-1">
+            <AdminButton
+              variant="ghost"
+              size="sm"
+              iconOnly
+              onClick={onEdit}
+              aria-label={label('admin.scholarships.editCampaign')}
+              title={label('admin.scholarships.editCampaign')}
+            >
+              <Edit size={16} aria-hidden="true" />
+            </AdminButton>
+            <AdminButton
+              variant="ghost"
+              size="sm"
+              iconOnly
+              loading={busy}
+              onClick={onToggleActive}
+              aria-label={
+                campaign.is_active
+                  ? label('admin.scholarships.pauseCampaign')
+                  : label('admin.scholarships.activateCampaign')
+              }
+              title={
+                campaign.is_active
+                  ? label('admin.scholarships.pauseCampaign')
+                  : label('admin.scholarships.activateCampaign')
+              }
+            >
+              {campaign.is_active ? <PowerOff size={16} /> : <Power size={16} />}
+            </AdminButton>
+            <AdminButton
+              variant="ghost"
+              size="sm"
+              iconOnly
+              loading={busy}
+              onClick={onDelete}
+              aria-label={label('admin.scholarships.deleteCampaign')}
+              title={label('admin.scholarships.deleteCampaign')}
+              className="hover:text-error hover:bg-error/10"
+            >
+              <Trash2 size={16} aria-hidden="true" />
+            </AdminButton>
           </div>
-        )}
-
-        <div className="mt-auto pt-1">{cta}</div>
+        </div>
       </div>
     </article>
   );
 };
 
-const ScholarshipsBrowsePage = () => {
+/* ── Page ─────────────────────────────────────────────────────────── */
+
+const AdminScholarshipsPage = () => {
+  const router = useRouter();
   const { t } = useLanguage();
-  const { isAuthenticated } = useAuth();
+  const { mutate, busy } = useAdminMutation();
+  const adminConfig = getScholarshipAdminConfig();
 
-  const [campaigns, setCampaigns] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [formOpen, setFormOpen] = useState(false);
+  const [editingCampaign, setEditingCampaign] = useState(null);
+  const [actionId, setActionId] = useState(null);
+  const [optimistic, setOptimistic] = useState(null);
 
-  const fetchCampaigns = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const token = getItem('auth_token');
-      
-      /* Determine endpoint based on auth state */
-      const endpoint =
-        isAuthenticated && token
-          ? '/api/scholarships'
-          : '/api/public/scholarships/active';
-          
-      const headers = { Accept: 'application/json' };
-      if (isAuthenticated && token) headers.Authorization = `Bearer ${token}`;
+  const debouncedSearch = useDebouncedValue(searchTerm);
+  const label = (key) => resolveLabel(t, key);
+  const currency = label('admin.common.labels.currency');
+  const pageSize = Number(adminConfig.applicationsPerPage) || 200;
 
-      /* 
-       * Force the fetch to bypass browser cache.
-       * This guarantees freshly logged-out users don't see stale data.
-       */
-      const response = await fetch(endpoint, { 
-        headers,
-        cache: 'no-store' 
-      });
-      
-      const payload = await response.json();
-      
-      if (!response.ok || !payload?.success) {
-        setError(t.scholarships?.browse?.errorTitle || 'Could not load scholarships');
-        return;
-      }
-      
-      setCampaigns(payload.data?.campaigns || []);
-    } catch (err) {
-      console.error('[scholarships/browse] fetch failed:', err);
-      setError(t.scholarships?.browse?.errorTitle || 'Could not load scholarships');
-    } finally {
-      setLoading(false);
+  const { data, loading, refetch } = useAdminQuery({
+    url: `/admin/scholarships?pageSize=${pageSize}`,
+    select: (response) => response.data?.campaigns || [],
+    initialData: [],
+    errorKey: 'admin.scholarships.loadFailed',
+  });
+
+  const campaigns = optimistic ?? data ?? [];
+
+  const counts = useMemo(() => {
+    const base = { all: campaigns.length, active: 0, paused: 0, closed: 0 };
+    for (const campaign of campaigns) base[campaignStatus(campaign)] += 1;
+    return base;
+  }, [campaigns]);
+
+  const filteredCampaigns = useMemo(() => {
+    const term = debouncedSearch.toLowerCase();
+    return campaigns.filter((campaign) => {
+      const status = campaignStatus(campaign);
+      if (statusFilter !== 'all' && status !== statusFilter) return false;
+      if (!term) return true;
+      return (
+        campaign.name?.toLowerCase().includes(term) ||
+        campaign.slug?.toLowerCase().includes(term)
+      );
+    });
+  }, [campaigns, statusFilter, debouncedSearch]);
+
+  const filterTabs = [
+    { id: 'all', label: label('admin.common.filters.all'), count: counts.all },
+    { id: 'active', label: label('admin.common.statuses.active'), count: counts.active },
+    { id: 'paused', label: label('admin.common.statuses.paused'), count: counts.paused },
+    { id: 'closed', label: label('admin.common.statuses.expired'), count: counts.closed },
+  ];
+
+  const handleToggleActive = async (campaign) => {
+    const wasActive = campaign.is_active;
+    setActionId(campaign.id);
+    setOptimistic(
+      campaigns.map((c) =>
+        c.id === campaign.id ? { ...c, is_active: !wasActive } : c
+      )
+    );
+
+    const response = await mutate({
+      method: 'put',
+      url: `/admin/scholarships/${campaign.id}`,
+      payload: { isActive: !wasActive },
+      confirm: {
+        title: wasActive
+          ? label('admin.scholarships.confirmPauseTitle')
+          : label('admin.scholarships.confirmActivateTitle'),
+        message: label('admin.scholarships.confirmToggleMessage'),
+        confirmText: wasActive
+          ? label('admin.scholarships.pauseCampaign')
+          : label('admin.scholarships.activateCampaign'),
+        variant: 'warning',
+      },
+      successKey: wasActive
+        ? 'admin.scholarships.paused'
+        : 'admin.scholarships.activated',
+      errorKey: 'admin.scholarships.toggleFailed',
+      onSuccess: () => {
+        setOptimistic(null);
+        refetch();
+      },
+    });
+
+    if (!response) {
+      setOptimistic(null);
+      refetch();
     }
-  }, [isAuthenticated, t]);
+    setActionId(null);
+  };
 
-  useEffect(() => {
-    fetchCampaigns();
-  }, [fetchCampaigns]);
+  const handleDelete = async (campaign) => {
+    setActionId(campaign.id);
+    setOptimistic(campaigns.filter((c) => c.id !== campaign.id));
+
+    const response = await mutate({
+      method: 'delete',
+      url: `/admin/scholarships/${campaign.id}`,
+      confirm: {
+        title: label('admin.scholarships.confirmDeleteTitle'),
+        message: interpolate(label('admin.scholarships.confirmDeleteMessage'), {
+          name: campaign.name,
+        }),
+        confirmText: label('admin.common.actions.delete'),
+        variant: 'danger',
+      },
+      successKey: 'admin.scholarships.deleted',
+      errorKey: 'admin.scholarships.deleteFailed',
+      onSuccess: () => {
+        setOptimistic(null);
+        refetch();
+      },
+    });
+
+    if (!response) {
+      setOptimistic(null);
+      refetch();
+    }
+    setActionId(null);
+  };
+
+  const hasActiveFilters = Boolean(debouncedSearch) || statusFilter !== 'all';
 
   return (
     <>
-      <SEOHead
-        title={t.scholarships?.browse?.pageTitle || 'Scholarships'}
-        description={t.scholarships?.browse?.pageSubtitle || 'Financial assistance for aspiring developers'}
+      <SEOHead title={label('admin.scholarships.pageTitle')} />
+      <AdminLayout
+        title={label('admin.scholarships.pageTitle')}
+        subtitle={label('admin.scholarships.pageSubtitle')}
+      >
+        <AdminTabs
+          tabs={filterTabs}
+          active={statusFilter}
+          onChange={setStatusFilter}
+          ariaLabel={label('admin.scholarships.pageTitle')}
+        />
+
+        <AdminToolbar
+          searchValue={searchTerm}
+          onSearchChange={setSearchTerm}
+          searchPlaceholder={label('admin.scholarships.searchPlaceholder')}
+          actions={
+            <AdminButton
+              variant="primary"
+              onClick={() => {
+                setEditingCampaign(null);
+                setFormOpen(true);
+              }}
+            >
+              <Plus size={18} aria-hidden="true" />
+              {label('admin.scholarships.createCampaign')}
+            </AdminButton>
+          }
+        />
+
+        {loading ? (
+          <CampaignSkeleton />
+        ) : filteredCampaigns.length === 0 ? (
+          <AdminEmptyState
+            icon={GraduationCap}
+            title={label('admin.scholarships.emptyTitle')}
+            description={
+              hasActiveFilters
+                ? label('admin.scholarships.emptyFiltered')
+                : label('admin.scholarships.emptyAll')
+            }
+            action={
+              !hasActiveFilters ? (
+                <AdminButton
+                  variant="primary"
+                  onClick={() => {
+                    setEditingCampaign(null);
+                    setFormOpen(true);
+                  }}
+                >
+                  <Plus size={16} aria-hidden="true" />
+                  {label('admin.scholarships.createCampaign')}
+                </AdminButton>
+              ) : undefined
+            }
+          />
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-5">
+            {filteredCampaigns.map((campaign) => (
+              <CampaignCard
+                key={campaign.id}
+                campaign={campaign}
+                busy={busy && actionId === campaign.id}
+                label={label}
+                currency={currency}
+                onEdit={() => {
+                  setEditingCampaign(campaign);
+                  setFormOpen(true);
+                }}
+                onToggleActive={() => handleToggleActive(campaign)}
+                onDelete={() => handleDelete(campaign)}
+                onViewApplications={() =>
+                  router.push(`/admin/scholarships/${campaign.id}/applications`)
+                }
+              />
+            ))}
+          </div>
+        )}
+      </AdminLayout>
+
+      <ScholarshipCampaignForm
+        isOpen={formOpen}
+        onClose={() => setFormOpen(false)}
+        onSaved={refetch}
+        campaign={editingCampaign}
       />
-      <PageLayout>
-        <div className="container-xl py-12 flex flex-col gap-8">
-          <header className="relative overflow-hidden rounded-3xl border border-accent/30 bg-gradient-to-br from-accent/20 via-bg-card-solid to-bg-card-solid p-8 md:p-10 animate-fade-in-up">
-            <div aria-hidden="true" className="absolute -top-24 -right-24 w-72 h-72 rounded-full bg-accent/30 blur-3xl pointer-events-none animate-blob" />
-            <div aria-hidden="true" className="absolute -bottom-32 -left-32 w-96 h-96 rounded-full bg-warning/20 blur-3xl pointer-events-none animate-blob" style={{ animationDelay: '2s' }} />
-            <div className="relative flex flex-col gap-4 max-w-2xl">
-              <span className="inline-flex items-center gap-1.5 self-start px-3 py-1 rounded-full bg-accent/15 border border-accent/40 text-accent text-2xs font-extrabold uppercase tracking-widest">
-                <Sparkles size={10} />
-                {t.scholarships?.page?.title || 'Scholarships'}
-              </span>
-              <h1 className="text-3xl md:text-5xl font-extrabold text-text-main leading-tight">
-                {t.scholarships?.browse?.pageTitle || 'Scholarships'}
-              </h1>
-              <p className="text-sm md:text-base text-text-muted leading-relaxed">
-                {t.scholarships?.browse?.pageSubtitle || 'Financial assistance for aspiring developers'}
-              </p>
-            </div>
-          </header>
-
-          {loading ? (
-            <BrowseSkeleton />
-          ) : error ? (
-            <div className="flex flex-col items-center gap-3 py-12 text-center">
-              <div className="w-14 h-14 rounded-2xl bg-error/10 border border-error/30 flex items-center justify-center text-error">
-                <RefreshCw size={22} />
-              </div>
-              <h2 className="text-base font-bold text-text-main">{error}</h2>
-              <button
-                type="button"
-                onClick={fetchCampaigns}
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-accent text-text-inverse text-xs font-bold hover:bg-accent-light transition-colors"
-              >
-                <RefreshCw size={12} />
-                {t.scholarships?.browse?.retryButton || 'Try Again'}
-              </button>
-            </div>
-          ) : campaigns.length === 0 ? (
-            <div className="flex flex-col items-center gap-3 py-16 text-center animate-fade-in-up">
-              <div className="w-16 h-16 rounded-2xl bg-accent/10 border border-accent/30 flex items-center justify-center text-accent animate-pulse-glow">
-                <GraduationCap size={28} />
-              </div>
-              <h2 className="text-lg font-extrabold text-text-main">
-                {t.scholarships?.browse?.emptyTitle || 'No Scholarships Available'}
-              </h2>
-              <p className="text-sm text-text-muted max-w-md">
-                {t.scholarships?.browse?.emptyDescription || 'Check back soon — new campaigns are announced regularly.'}
-              </p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-              {campaigns.map((campaign, idx) => (
-                <ScholarshipCard
-                  key={campaign.slug}
-                  campaign={campaign}
-                  isAuthenticated={isAuthenticated}
-                  index={idx}
-                />
-              ))}
-            </div>
-          )}
-
-          {!isAuthenticated && campaigns.length > 0 && (
-            <div className="relative overflow-hidden rounded-2xl border border-accent/30 bg-gradient-to-r from-accent/15 via-accent/5 to-transparent p-6 text-center animate-fade-in-up">
-              <div aria-hidden="true" className="absolute -top-16 -right-16 w-56 h-56 rounded-full bg-accent/20 blur-3xl pointer-events-none" />
-              <p className="relative text-sm font-bold text-text-main mb-1">
-                {t.scholarships?.browse?.sectionSubtitle || 'Create an account to apply for a scholarship'}
-              </p>
-              <Link
-                href="/auth/register"
-                className="relative inline-flex items-center gap-1.5 px-5 py-2.5 rounded-lg mt-3 bg-accent text-text-inverse text-xs font-bold hover:bg-accent-light hover:-translate-y-0.5 shadow-glow-gold-sm transition-all"
-              >
-                {t.auth?.register || 'Create Account'}
-                <ArrowRight size={12} />
-              </Link>
-            </div>
-          )}
-        </div>
-      </PageLayout>
     </>
   );
 };
 
-export default ScholarshipsBrowsePage;
+export default AdminScholarshipsPage;
