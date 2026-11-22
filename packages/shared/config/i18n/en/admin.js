@@ -742,5 +742,30 @@ module.exports = {
         allPurchases: 'All Purchases',
       },
     },
+
+
+        /* ── PAYMENT DETAIL MODAL ──────────────────────────────────────── */
+    paymentDetail: {
+      title: 'Payment Details',
+      student: 'Student',
+      phone: 'Phone',
+      email: 'Email',
+      amount: 'Amount',
+      method: 'Method',
+      reference: 'Reference',
+      submitted: 'Submitted',
+      status: 'Status',
+      course: 'Course',
+      screenshot: 'Payment Screenshot',
+      viewFullSize: 'View full size',
+      noScreenshot: 'No screenshot uploaded',
+      discountBreakdown: 'Discount Breakdown',
+      baseAmount: 'Base Amount',
+      referralDiscount: 'Referral Discount',
+      codeDiscount: 'Discount Code',
+      creditApplied: 'Credit Applied',
+      finalAmount: 'Final Amount',
+      close: 'Close',
+    },
   },
 };
