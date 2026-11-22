@@ -3144,3 +3144,161 @@
   color: #ef4444;
 }
 
+
+
+
+/* ============================================================================
+   ADMIN SETTINGS + DISCOUNT SURFACES
+   Token-driven replacements for previously inline-styled blocks.
+   ========================================================================== */
+.admin-settings-discount-note {
+  margin: 0 0 1.5rem;
+  font-size: 0.75rem;
+  color: var(--color-success);
+}
+
+.admin-settings-tier-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.admin-settings-tier-input {
+  width: 5rem;
+}
+
+.admin-settings-tier-separator {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+}
+
+.admin-settings-method-card {
+  padding: 1rem;
+  border-radius: 0.75rem;
+  border: 1px solid var(--border-light);
+  background: var(--surface-secondary);
+  margin-bottom: 0.75rem;
+}
+
+.admin-settings-method-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.admin-settings-method-name {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.admin-discount-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1.25rem;
+  background: var(--glass-bg);
+  border: 1px solid var(--border-light);
+  border-radius: 0.75rem;
+  transition: border-color 0.2s ease;
+}
+
+.admin-discount-card:hover {
+  border-color: var(--border-main);
+}
+
+.admin-discount-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.admin-discount-card-identity {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.admin-discount-code-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.375rem 0.75rem;
+  border-radius: 0.5rem;
+  background: rgba(var(--accent-gold-rgb) / 0.08);
+  border: 1px solid rgba(var(--accent-gold-rgb) / 0.2);
+  color: var(--accent-gold);
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+}
+
+.admin-discount-usage-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.375rem;
+  font-size: 0.6875rem;
+  color: var(--text-dim);
+}
+
+.admin-discount-usage-track {
+  height: 6px;
+  border-radius: 9999px;
+  background: var(--border-light);
+  overflow: hidden;
+}
+
+.admin-discount-usage-fill {
+  height: 100%;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, var(--accent-gold), var(--accent-gold-light));
+  transition: width 0.5s ease;
+}
+
+.admin-discount-modal {
+  max-width: 36rem;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.admin-discount-code-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.admin-discount-phase-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+
+.admin-discount-phase-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.375rem 0.75rem;
+  border-radius: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: 1px solid var(--border-light);
+  background: transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.admin-discount-phase-chip.selected {
+  border-color: var(--accent-gold);
+  background: rgba(var(--accent-gold-rgb) / 0.1);
+  color: var(--accent-gold);
+}
