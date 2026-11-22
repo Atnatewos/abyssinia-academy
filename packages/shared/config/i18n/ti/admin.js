@@ -50,7 +50,7 @@ module.exports = {
     },
 
 
-        common: {
+    common: {
       actions: {
         save: 'ለውጥታት ኣቐምጥ',
         saving: 'የቐምጥ ኣሎ...',
@@ -139,6 +139,77 @@ module.exports = {
         emDash: '—',
         currency: 'ብር',
       },
+    },
+
+
+    dashboard: {
+      title: 'ዳሽቦርድ',
+      subtitle: 'ሓፈሻዊ ትርኢት መድረኽን ቀንዲ መለክዒታትን',
+      stats: {
+        totalStudents: 'ጠቕላላ ተምሃሮ',
+        totalRevenue: 'ጠቕላላ ኣታዊ',
+        activeCourses: 'ንጡፋት ኮርሳት',
+        pendingPayments: 'ኣብ ትጽቢት ዘለዉ ክፍሊታት',
+      },
+      recentPayments: 'ናይ ቀረባ ግዜ ኣብ ትጽቢት ዘለዉ ክፍሊታት',
+      topReferrers: 'ብሉጻት ሪፈራላት',
+      viewAll: 'ኩሎም ርአ',
+      noPendingPayments: 'ኣብ ትጽቢት ዘሎ ክፍሊት የለን',
+      noReferrers: 'ክሳብ ሕጂ ሓበሬታ ሪፈራል የለን',
+      referralsCount: '{count} ሪፈራላት',
+      loadFailed: 'ሓበሬታ ዳሽቦርድ ምጽዓን ኣይተዓወተን።',
+    },
+
+    users: {
+      title: 'ምምሕዳር ተጠቀምቲ',
+      subtitle: 'ኩሎም ተጠቀምቲ መድረኽ ርአን ኣመሓድርን',
+      searchPlaceholder: 'ብስም፣ ብኢመይል ወይ ብተሌፎን ድለ...',
+      filters: {
+        allRoles: 'ኩሎም ተራታት',
+        students: 'ተምሃሮ',
+        referrers: 'ሪፈራላት',
+        enrolled: 'ዝተመዝገቡ',
+        registered: 'ዝተመዝገቡ ጥራይ',
+        banned: 'ዝተኸልከሉ',
+      },
+      meta: {
+        phone: 'ተሌፎን',
+        joined: 'ዝተጸምበረ',
+        referrals: 'ሪፈራላት',
+        lastActive: 'መወዳእታ ንጡፍ',
+      },
+      emptyTitle: 'ተጠቃሚ ኣይተረኸበን',
+      emptyFiltered: 'ምስ መጻረዪታትካ ዝሰማማዕ ተጠቃሚ የለን።',
+      viewDetails: 'ዝርዝራት ርአ',
+      loadFailed: 'ተጠቀምቲ ምጽዓን ኣይተዓወተን',
+    },
+
+    payments: {
+      title: 'ምምሕዳር ክፍሊታት',
+      subtitle: 'ክፍሊታት ተምሃሮ ገምግም፣ ኣጽድቕን ኣመሓድርን',
+      tabs: {
+        all: 'ኩሎም ክፍሊታት',
+        pending: 'ኣብ ትጽቢት',
+        approved: 'ጸዲቑ',
+        rejected: 'ተነጺጉ',
+      },
+      searchPlaceholder: 'ብስም፣ ብተሌፎን ወይ ብመወከሲ ድለ...',
+      export: 'ስደድ',
+      copy: 'ቅዳሕ',
+      reference: 'መወከሲ',
+      viewDetails: 'ዝርዝራት ርአ',
+      approve: 'ኣጽድቕ',
+      reject: 'ንጸግ',
+      emptyTitle: 'ክፍሊት ኣይተረኸበን',
+      emptyFiltered: 'ምስ ምድላይካ ዝሰማማዕ ክፍሊት የለን።',
+      loadFailed: 'ክፍሊታት ምጽዓን ኣይተዓወተን',
+      approveSuccess: 'ክፍሊት ብዓወት ጸዲቑ',
+      rejectSuccess: 'ክፍሊት ብዓወት ተነጺጉ',
+      actionFailed: 'ክፍሊት ምስራሕ ኣይተዓወተን',
+      confirmApproveTitle: 'ነዚ ክፍሊት ከተጽድቕ?',
+      confirmApproveMessage: 'እቲ ተምሃራይ ብቕጽበት መእተዊ ኮርስ ክረክብ እዩ።',
+      confirmRejectTitle: 'ነዚ ክፍሊት ክትነጽግ?',
+      confirmRejectMessage: 'እቲ ተምሃራይ ክፍሊቱ ተቐባልነት ከም ዘይረኸበ ምልክት ክበጽሖ እዩ።',
     },
 
     comingSoon: {

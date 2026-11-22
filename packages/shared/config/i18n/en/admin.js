@@ -139,6 +139,80 @@ module.exports = {
       },
     },
 
+
+        /* ── DASHBOARD ─────────────────────────────────────────────────── */
+    dashboard: {
+      title: 'Dashboard',
+      subtitle: 'Platform overview and key metrics',
+      stats: {
+        totalStudents: 'Total Students',
+        totalRevenue: 'Total Revenue',
+        activeCourses: 'Active Courses',
+        pendingPayments: 'Pending Payments',
+      },
+      recentPayments: 'Recent Pending Payments',
+      topReferrers: 'Top Referrers',
+      viewAll: 'View All',
+      noPendingPayments: 'No pending payments',
+      noReferrers: 'No referrer data yet',
+      referralsCount: '{count} referrals',
+      loadFailed: 'Failed to load dashboard data.',
+    },
+
+    /* ── USERS LIST ────────────────────────────────────────────────── */
+    users: {
+      title: 'Users Management',
+      subtitle: 'View and manage all platform users',
+      searchPlaceholder: 'Search by name, email, or phone...',
+      filters: {
+        allRoles: 'All Roles',
+        students: 'Students',
+        referrers: 'Referrers',
+        enrolled: 'Enrolled',
+        registered: 'Registered',
+        banned: 'Banned',
+      },
+      meta: {
+        phone: 'Phone',
+        joined: 'Joined',
+        referrals: 'Referrals',
+        lastActive: 'Last active',
+      },
+      emptyTitle: 'No users found',
+      emptyFiltered: 'No users match your filters.',
+      viewDetails: 'View details',
+      loadFailed: 'Failed to load users',
+    },
+
+    /* ── PAYMENTS ──────────────────────────────────────────────────── */
+    payments: {
+      title: 'Payments Management',
+      subtitle: 'Review, approve, and manage student payments',
+      tabs: {
+        all: 'All Payments',
+        pending: 'Pending',
+        approved: 'Approved',
+        rejected: 'Rejected',
+      },
+      searchPlaceholder: 'Search by name, phone, or reference...',
+      export: 'Export',
+      copy: 'Copy',
+      reference: 'Ref',
+      viewDetails: 'View Details',
+      approve: 'Approve',
+      reject: 'Reject',
+      emptyTitle: 'No payments found',
+      emptyFiltered: 'No payments match your search.',
+      loadFailed: 'Failed to load payments',
+      approveSuccess: 'Payment approved successfully',
+      rejectSuccess: 'Payment rejected successfully',
+      actionFailed: 'Failed to process payment',
+      confirmApproveTitle: 'Approve this payment?',
+      confirmApproveMessage: 'The student will receive course access immediately.',
+      confirmRejectTitle: 'Reject this payment?',
+      confirmRejectMessage: 'The student will be notified that their payment was not accepted.',
+    },
+
     /* ── COMING SOON ────────────────────────────────────────────────── */
     comingSoon: {
       eyebrow: 'Work in Progress',

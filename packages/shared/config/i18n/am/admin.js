@@ -50,7 +50,7 @@ module.exports = {
     },
 
 
-        common: {
+    common: {
       actions: {
         save: 'ለውጦችን አስቀምጥ',
         saving: 'በማስቀመጥ ላይ...',
@@ -139,6 +139,77 @@ module.exports = {
         emDash: '-',
         currency: 'ብር',
       },
+    },
+
+
+    dashboard: {
+      title: 'ዳሽቦርድ',
+      subtitle: 'የመድረክ አጠቃላይ እይታ እና ቁልፍ መለኪያዎች',
+      stats: {
+        totalStudents: 'ጠቅላላ ተማሪዎች',
+        totalRevenue: 'ጠቅላላ ገቢ',
+        activeCourses: 'ንቁ ኮርሶች',
+        pendingPayments: 'በመጠባበቅ ላይ ያሉ ክፍያዎች',
+      },
+      recentPayments: 'የቅርብ ጊዜ በመጠባበቅ ላይ ያሉ ክፍያዎች',
+      topReferrers: 'ምርጥ ሪፈራሎች',
+      viewAll: 'ሁሉንም ይመልከቱ',
+      noPendingPayments: 'በመጠባበቅ ላይ ያለ ክፍያ የለም',
+      noReferrers: 'እስካሁን የሪፈራል መረጃ የለም',
+      referralsCount: '{count} ሪፈራሎች',
+      loadFailed: 'የዳሽቦርድ መረጃ መጫን አልተሳካም።',
+    },
+
+    users: {
+      title: 'የተጠቃሚዎች አስተዳደር',
+      subtitle: 'ሁሉንም የመድረክ ተጠቃሚዎች ይመልከቱ እና ያስተዳድሩ',
+      searchPlaceholder: 'በስም፣ በኢሜይል ወይም በስልክ ይፈልጉ...',
+      filters: {
+        allRoles: 'ሁሉም ሚናዎች',
+        students: 'ተማሪዎች',
+        referrers: 'ሪፈራሎች',
+        enrolled: 'የተመዘገቡ',
+        registered: 'የተመዘገቡ ብቻ',
+        banned: 'የተከለከሉ',
+      },
+      meta: {
+        phone: 'ስልክ',
+        joined: 'የተቀላቀለ',
+        referrals: 'ሪፈራሎች',
+        lastActive: 'መጨረሻ ንቁ',
+      },
+      emptyTitle: 'ተጠቃሚ አልተገኘም',
+      emptyFiltered: 'ከማጣሪያዎችዎ ጋር የሚዛመድ ተጠቃሚ የለም።',
+      viewDetails: 'ዝርዝሮችን ይመልከቱ',
+      loadFailed: 'ተጠቃሚዎችን መጫን አልተሳካም',
+    },
+
+    payments: {
+      title: 'የክፍያዎች አስተዳደር',
+      subtitle: 'የተማሪ ክፍያዎችን ይገምግሙ፣ ያጽድቁ እና ያስተዳድሩ',
+      tabs: {
+        all: 'ሁሉም ክፍያዎች',
+        pending: 'በመጠባበቅ ላይ',
+        approved: 'ጸድቋል',
+        rejected: 'ተቀባይነት አላገኘም',
+      },
+      searchPlaceholder: 'በስም፣ በስልክ ወይም በማጣቀሻ ይፈልጉ...',
+      export: 'ላክ',
+      copy: 'ቅዳ',
+      reference: 'ማጣቀሻ',
+      viewDetails: 'ዝርዝሮችን ይመልከቱ',
+      approve: 'አጽድቅ',
+      reject: 'ውድቅ አድርግ',
+      emptyTitle: 'ክፍያ አልተገኘም',
+      emptyFiltered: 'ከፍለጋዎ ጋር የሚዛመድ ክፍያ የለም።',
+      loadFailed: 'ክፍያዎችን መጫን አልተሳካም',
+      approveSuccess: 'ክፍያ በተሳካ ሁኔታ ጸድቋል',
+      rejectSuccess: 'ክፍያ በተሳካ ሁኔታ ውድቅ ተደርጓል',
+      actionFailed: 'ክፍያን ማከናወን አልተሳካም',
+      confirmApproveTitle: 'ይህን ክፍያ ያጽድቁ?',
+      confirmApproveMessage: 'ተማሪው ወዲያውኑ የኮርስ መዳረሻ ያገኛል።',
+      confirmRejectTitle: 'ይህን ክፍያ ውድቅ ያድርጉ?',
+      confirmRejectMessage: 'ተማሪው ክፍያው ተቀባይነት እንዳላገኘ ማሳወቂያ ይደርሰዋል።',
     },
 
     comingSoon: {

@@ -50,7 +50,7 @@ module.exports = {
     },
 
 
-        common: {
+    common: {
       actions: {
         save: 'Jijjiirama Olkaa\'i',
         saving: 'Olkaa\'aa jira...',
@@ -139,6 +139,77 @@ module.exports = {
         emDash: '—',
         currency: 'Birr',
       },
+    },
+
+
+    dashboard: {
+      title: 'Daashboordii',
+      subtitle: 'Ilaalcha waliigalaa fi safartuuwwan ijoo',
+      stats: {
+        totalStudents: 'Barattoota Waliigalaa',
+        totalRevenue: 'Galii Waliigalaa',
+        activeCourses: 'Koorsiiwwan Socho\'oo',
+        pendingPayments: 'Kaffaltiiwwan Eegaa Jiran',
+      },
+      recentPayments: 'Kaffaltiiwwan Dhiyoo Eegaa Jiran',
+      topReferrers: 'Ergamtoota Filatamoo',
+      viewAll: 'Hunda Ilaali',
+      noPendingPayments: 'Kaffaltiin eegaa jiru hin jiru',
+      noReferrers: 'Hanga ammaatti odeeffannoon ergamtootaa hin jiru',
+      referralsCount: 'Ergamtoota {count}',
+      loadFailed: 'Odeeffannoo daashboordii fe\'uun hin milkaa\'ine.',
+    },
+
+    users: {
+      title: 'Bulchiinsa Fayyadamtootaa',
+      subtitle: 'Fayyadamtoota marsariitii hunda ilaali fi bulchi',
+      searchPlaceholder: 'Maqaa, imeelii yookaan bilbilaan barbaadi...',
+      filters: {
+        allRoles: 'Gahee Hunda',
+        students: 'Barattoota',
+        referrers: 'Ergamtoota',
+        enrolled: 'Galmaa\'an',
+        registered: 'Galmaa\'an qofa',
+        banned: 'Dhorkaman',
+      },
+      meta: {
+        phone: 'Bilbila',
+        joined: 'Kan makame',
+        referrals: 'Ergamtoota',
+        lastActive: 'Yeroo dhuma socho\'e',
+      },
+      emptyTitle: 'Fayyadamaan hin argamne',
+      emptyFiltered: 'Fayyadamaan filtarii keetiin walsimu hin jiru.',
+      viewDetails: 'Bal\'ina ilaali',
+      loadFailed: 'Fayyadamtoota fe\'uun hin milkaa\'ine',
+    },
+
+    payments: {
+      title: 'Bulchiinsa Kaffaltii',
+      subtitle: 'Kaffaltii barattootaa gamaggami, raggaasi fi bulchi',
+      tabs: {
+        all: 'Kaffaltii Hunda',
+        pending: 'Eegaa jira',
+        approved: 'Ragga\'e',
+        rejected: 'Didame',
+      },
+      searchPlaceholder: 'Maqaa, bilbila yookaan wabiidhaan barbaadi...',
+      export: 'Ergi',
+      copy: 'Garagalchi',
+      reference: 'Wabii',
+      viewDetails: 'Bal\'ina Ilaali',
+      approve: 'Raggaasi',
+      reject: 'Didi',
+      emptyTitle: 'Kaffaltiin hin argamne',
+      emptyFiltered: 'Kaffaltiin barbaacha keetiin walsimu hin jiru.',
+      loadFailed: 'Kaffaltiiwwan fe\'uun hin milkaa\'ine',
+      approveSuccess: 'Kaffaltiin milkaa\'inaan ragga\'e',
+      rejectSuccess: 'Kaffaltiin milkaa\'inaan didame',
+      actionFailed: 'Kaffaltii raawwachuun hin milkaa\'ine',
+      confirmApproveTitle: 'Kaffaltii kana raggaasuu?',
+      confirmApproveMessage: 'Barataan battalumatti argannoo koorsii argata.',
+      confirmRejectTitle: 'Kaffaltii kana diduu?',
+      confirmRejectMessage: 'Barataan kaffaltiin isaa fudhatama akka hin arganne beeksifama.',
     },
 
     comingSoon: {

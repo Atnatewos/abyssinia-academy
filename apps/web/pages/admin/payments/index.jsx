@@ -1,335 +1,684 @@
+// /**
+//  * @fileoverview Admin Payments Page
+//  *
+//  * Full payment management with search, filter, tabs, approve/reject,
+//  * detail modal, and inline copy buttons for quick data access.
+//  *
+//  * Loading state uses shape-matched SkeletonTableRows so the shimmer
+//  * columns align with the real table columns.
+//  *
+//  * Path: apps/web/pages/admin/payments/index.jsx
+//  */
+// import { useState, useEffect, useCallback } from 'react';
+// import { useRouter } from 'next/router';
+// import {
+//   Search,
+//   Check,
+//   X,
+//   Eye,
+//   Download,
+//   Copy,
+//   Check as CheckIcon,
+// } from 'lucide-react';
+// import SEOHead from '../../../components/shared/SEOHead';
+// import AdminLayout from '../../../components/admin/AdminLayout';
+// import PaymentDetailModal from '../../../components/admin/payments/PaymentDetailModal';
+// import { useLanguage } from '../../../context/LanguageContext';
+// import { useToast } from '../../../context/ToastContext';
+// import apiClient from '../../../lib/api';
+// import { getItem } from '../../../lib/storage';
+// import { SkeletonTableRows } from '../../../components/shared/Skeleton';
+
+// /**
+//  * Payment column shape for skeleton alignment.
+//  * Each entry's width mirrors the real table's grid template.
+//  */
+// const PAYMENT_SKELETON_COLUMNS = [
+//   { width: '2fr', type: 'avatar-text' },
+//   { width: '1.5fr', type: 'text' },
+//   { width: '1fr', type: 'pill' },
+//   { width: '1.2fr', type: 'text' },
+//   { width: '0.8fr', type: 'text' },
+// ];
+
+// /**
+//  * Inline mini copy button for table cells.
+//  *
+//  * @param {object} props - Component props
+//  * @param {string} props.text - Text to copy to clipboard
+//  */
+// const MiniCopyButton = ({ text }) => {
+//   const [copied, setCopied] = useState(false);
+
+//   const handleCopy = useCallback(async (e) => {
+//     e.stopPropagation();
+//     if (!text) return;
+//     try {
+//       await navigator.clipboard.writeText(text);
+//       setCopied(true);
+//       setTimeout(() => setCopied(false), 1500);
+//     } catch {
+//       const textArea = document.createElement('textarea');
+//       textArea.value = text;
+//       textArea.style.position = 'fixed';
+//       textArea.style.opacity = '0';
+//       document.body.appendChild(textArea);
+//       textArea.select();
+//       try {
+//         document.execCommand('copy');
+//         setCopied(true);
+//         setTimeout(() => setCopied(false), 1500);
+//       } catch {
+//         /* silent */
+//       }
+//       document.body.removeChild(textArea);
+//     }
+//   }, [text]);
+
+//   return (
+//     <button
+//       type="button"
+//       onClick={handleCopy}
+//       className="admin-table-copy-btn"
+//       title="Copy"
+//     >
+//       {copied ? (
+//         <CheckIcon size={11} style={{ color: '#10b981' }} />
+//       ) : (
+//         <Copy size={11} />
+//       )}
+//     </button>
+//   );
+// };
+
+// /**
+//  * AdminPaymentsPage — Complete payment management interface.
+//  */
+// const AdminPaymentsPage = () => {
+//   const router = useRouter();
+//   const { t } = useLanguage();
+//   const toast = useToast();
+
+//   const [payments, setPayments] = useState([]);
+//   const [loading, setLoading] = useState(true);
+//   const [activeTab, setActiveTab] = useState('all');
+//   const [searchTerm, setSearchTerm] = useState('');
+//   const [actionLoading, setActionLoading] = useState(null);
+//   const [selectedPayment, setSelectedPayment] = useState(null);
+//   const [showDetailModal, setShowDetailModal] = useState(false);
+
+//   const tabs = [
+//     { id: 'all', label: 'All Payments' },
+//     { id: 'pending', label: t.admin?.pending || 'Pending' },
+//     { id: 'approved', label: t.admin?.approved || 'Approved' },
+//     { id: 'rejected', label: t.admin?.rejected || 'Rejected' },
+//   ];
+
+//   const fetchPayments = useCallback(async () => {
+//     const token = getItem('admin_token');
+//     if (!token) {
+//       router.push('/admin/login');
+//       return;
+//     }
+
+//     setLoading(true);
+//     try {
+//       const endpoint =
+//         activeTab === 'all'
+//           ? '/admin/payments'
+//           : `/admin/payments?status=${activeTab}`;
+//       const response = await apiClient.get(endpoint);
+//       if (response.success) {
+//         setPayments(response.data || []);
+//       } else {
+//         toast.error(response.message || 'Failed to load payments');
+//       }
+//     } catch (err) {
+//       if (err?.response?.status === 401) {
+//         router.push('/admin/login');
+//       } else {
+//         toast.error('Failed to load payments');
+//       }
+//     } finally {
+//       setLoading(false);
+//     }
+//   }, [activeTab, router, toast]);
+
+//   useEffect(() => {
+//     fetchPayments();
+//   }, [fetchPayments]);
+
+//   const handleAction = async (paymentId, action) => {
+//     setActionLoading(paymentId);
+//     try {
+//       /* 
+//        * IMPORTANT: The backend API route requires a PATCH request 
+//        * to successfully approve or reject a payment. Using POST here
+//        * will result in a 405 Method Not Allowed error.
+//        */
+//       const response = await apiClient.patch(`/admin/payments/${paymentId}/${action}`);
+//       if (response.success) {
+//         toast.success(response.message || `Payment ${action}d successfully`);
+//         fetchPayments();
+//         if (action === 'approve' || action === 'reject') {
+//           setShowDetailModal(false);
+//           setSelectedPayment(null);
+//         }
+//       } else {
+//         toast.error(response.message || `Failed to ${action} payment`);
+//       }
+//     } catch (err) {
+//       console.error(`Failed to ${action} payment:`, err?.response?.data?.message || err.message);
+//       toast.error(err?.response?.data?.message || `Failed to ${action} payment`);
+//     } finally {
+//       setActionLoading(null);
+//     }
+//   };
+
+//   const handleViewDetail = (payment) => {
+//     setSelectedPayment(payment);
+//     setShowDetailModal(true);
+//   };
+
+//   const handleCloseDetail = () => {
+//     setShowDetailModal(false);
+//     setSelectedPayment(null);
+//   };
+
+//   const getStatusClass = (status) => {
+//     if (status === 'approved') return 'status-badge approved';
+//     if (status === 'rejected') return 'status-badge rejected';
+//     return 'status-badge pending';
+//   };
+
+//   const filteredPayments = payments.filter((payment) => {
+//     if (!searchTerm) return true;
+//     const search = searchTerm.toLowerCase();
+//     return (
+//       payment.user_name?.toLowerCase().includes(search) ||
+//       payment.full_name?.toLowerCase().includes(search) ||
+//       payment.user_phone?.toLowerCase().includes(search) ||
+//       payment.phone?.toLowerCase().includes(search) ||
+//       payment.reference?.toLowerCase().includes(search)
+//     );
+//   });
+
+//   return (
+//     <>
+//       <SEOHead title="Payments Management" />
+//       <AdminLayout
+//         title={t.admin?.payments?.title || 'Payments Management'}
+//         subtitle="Review, approve, and manage student payments"
+//       >
+//         {/* Toolbar */}
+//         <div className="admin-toolbar">
+//           <div className="admin-tabs">
+//             {tabs.map((tab) => (
+//               <button
+//                 key={tab.id}
+//                 className={`admin-tab ${activeTab === tab.id ? 'active' : ''}`}
+//                 onClick={() => setActiveTab(tab.id)}
+//               >
+//                 {tab.label}
+//                 <span className="admin-tab-count">
+//                   {tab.id === 'all'
+//                     ? payments.length
+//                     : payments.filter((p) => p.status === tab.id).length}
+//                 </span>
+//               </button>
+//             ))}
+//           </div>
+//           <div className="admin-search">
+//             <Search size={16} />
+//             <input
+//               type="text"
+//               value={searchTerm}
+//               onChange={(e) => setSearchTerm(e.target.value)}
+//               placeholder="Search by name, phone, or reference..."
+//             />
+//           </div>
+//           <button className="admin-toolbar-btn" onClick={() => {}}>
+//             <Download size={16} />
+//             <span>Export</span>
+//           </button>
+//         </div>
+
+//         {/* Payments List */}
+//         {loading ? (
+//           <SkeletonTableRows columns={PAYMENT_SKELETON_COLUMNS} rows={6} />
+//         ) : filteredPayments.length === 0 ? (
+//           <div className="empty-state">
+//             <p className="empty-state-desc">
+//               {searchTerm
+//                 ? 'No payments match your search.'
+//                 : 'No payments found.'}
+//             </p>
+//           </div>
+//         ) : (
+//           <div className="admin-table-wrapper">
+//             {filteredPayments.map((payment) => (
+//               <div key={payment.id} className="admin-table-row">
+//                 {/* Payment Info */}
+//                 <div className="admin-table-info">
+//                   <div className="admin-table-info-top">
+//                     <span className="admin-table-name">
+//                       {payment.user_name || payment.full_name || 'Unknown'}
+//                     </span>
+//                     <MiniCopyButton text={payment.user_name || payment.full_name || ''} />
+//                     <span className={getStatusClass(payment.status)}>
+//                       {payment.status}
+//                     </span>
+//                   </div>
+//                   <p className="admin-table-meta">
+//                     {payment.user_phone || payment.phone || 'N/A'}
+//                     <MiniCopyButton text={payment.user_phone || payment.phone || ''} />
+//                     {' · Ref: '}
+//                     {payment.reference || 'N/A'}
+//                     <MiniCopyButton text={payment.reference || ''} />
+//                   </p>
+//                   <p className="admin-table-meta">
+//                     {payment.method} ·{' '}
+//                     {new Date(payment.created_at).toLocaleDateString()}
+//                   </p>
+//                 </div>
+
+//                 {/* Amount + Actions */}
+//                 <div className="admin-table-actions-wrapper">
+//                   <span className="admin-table-amount">
+//                     {payment.amount?.toLocaleString()} ETB
+//                   </span>
+//                   <div className="admin-table-action-btns">
+//                     <button
+//                       onClick={() => handleViewDetail(payment)}
+//                       className="admin-action-btn view"
+//                       title={t.admin?.viewScreenshot || 'View Details'}
+//                     >
+//                       <Eye size={16} />
+//                     </button>
+//                     {payment.status === 'pending' && (
+//                       <>
+//                         <button
+//                           onClick={() => handleAction(payment.id, 'approve')}
+//                           disabled={actionLoading === payment.id}
+//                           className="admin-action-btn approve"
+//                           title={t.admin?.approve || 'Approve'}
+//                         >
+//                           <Check size={16} />
+//                         </button>
+//                         <button
+//                           onClick={() => handleAction(payment.id, 'reject')}
+//                           disabled={actionLoading === payment.id}
+//                           className="admin-action-btn reject"
+//                           title={t.admin?.reject || 'Reject'}
+//                         >
+//                           <X size={16} />
+//                         </button>
+//                       </>
+//                     )}
+//                   </div>
+//                 </div>
+//               </div>
+//             ))}
+//           </div>
+//         )}
+//       </AdminLayout>
+
+//       {/* Payment Detail Modal */}
+//       <PaymentDetailModal
+//         isOpen={showDetailModal}
+//         onClose={handleCloseDetail}
+//         payment={selectedPayment}
+//         onAction={handleAction}
+//         actionLoading={actionLoading}
+//       />
+//     </>
+//   );
+// };
+
+// export default AdminPaymentsPage;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /**
- * @fileoverview Admin Payments Page
+ * @fileoverview Admin Payments Management
  *
- * Full payment management with search, filter, tabs, approve/reject,
- * detail modal, and inline copy buttons for quick data access.
- *
- * Loading state uses shape-matched SkeletonTableRows so the shimmer
- * columns align with the real table columns.
+ * Payment review queue on the shared admin primitives. Status tabs
+ * drive a server-side filter through useAdminQuery; approve/reject
+ * run through useAdminMutation with styled confirmation dialogs.
+ * The detail modal contract (PaymentDetailModal) is preserved.
  *
  * Path: apps/web/pages/admin/payments/index.jsx
  */
-import { useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/router';
+
+import { useState, useCallback } from 'react';
 import {
-  Search,
   Check,
   X,
   Eye,
   Download,
   Copy,
   Check as CheckIcon,
+  CreditCard,
 } from 'lucide-react';
 import SEOHead from '../../../components/shared/SEOHead';
 import AdminLayout from '../../../components/admin/AdminLayout';
 import PaymentDetailModal from '../../../components/admin/payments/PaymentDetailModal';
+import AdminToolbar from '../../../components/admin/ui/AdminToolbar';
+import AdminTabs from '../../../components/admin/ui/AdminTabs';
+import AdminBadge from '../../../components/admin/ui/AdminBadge';
+import AdminButton from '../../../components/admin/ui/AdminButton';
+import { AdminRowList } from '../../../components/admin/ui/AdminTable';
 import { useLanguage } from '../../../context/LanguageContext';
 import { useToast } from '../../../context/ToastContext';
-import apiClient from '../../../lib/api';
-import { getItem } from '../../../lib/storage';
-import { SkeletonTableRows } from '../../../components/shared/Skeleton';
+import useAdminQuery, {
+  useDebouncedValue,
+} from '../../../lib/admin/useAdminQuery';
+import useAdminMutation from '../../../lib/admin/useAdminMutation';
+import { resolveLabel } from '../../../lib/admin/labels';
 
 /**
- * Payment column shape for skeleton alignment.
- * Each entry's width mirrors the real table's grid template.
+ * Inline clipboard button for identity/reference cells.
+ * Falls back to a temporary textarea when the Clipboard API is unavailable.
  */
-const PAYMENT_SKELETON_COLUMNS = [
-  { width: '2fr', type: 'avatar-text' },
-  { width: '1.5fr', type: 'text' },
-  { width: '1fr', type: 'pill' },
-  { width: '1.2fr', type: 'text' },
-  { width: '0.8fr', type: 'text' },
-];
-
-/**
- * Inline mini copy button for table cells.
- *
- * @param {object} props - Component props
- * @param {string} props.text - Text to copy to clipboard
- */
-const MiniCopyButton = ({ text }) => {
+const MiniCopyButton = ({ text, title }) => {
   const [copied, setCopied] = useState(false);
 
-  const handleCopy = useCallback(async (e) => {
-    e.stopPropagation();
-    if (!text) return;
-    try {
-      await navigator.clipboard.writeText(text);
+  const handleCopy = useCallback(
+    async (event) => {
+      event.stopPropagation();
+      if (!text) return;
+      try {
+        await navigator.clipboard.writeText(text);
+      } catch {
+        const area = document.createElement('textarea');
+        area.value = text;
+        area.style.position = 'fixed';
+        area.style.opacity = '0';
+        document.body.appendChild(area);
+        area.select();
+        document.execCommand('copy');
+        document.body.removeChild(area);
+      }
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
-    } catch {
-      const textArea = document.createElement('textarea');
-      textArea.value = text;
-      textArea.style.position = 'fixed';
-      textArea.style.opacity = '0';
-      document.body.appendChild(textArea);
-      textArea.select();
-      try {
-        document.execCommand('copy');
-        setCopied(true);
-        setTimeout(() => setCopied(false), 1500);
-      } catch {
-        /* silent */
-      }
-      document.body.removeChild(textArea);
-    }
-  }, [text]);
+    },
+    [text]
+  );
 
   return (
     <button
       type="button"
       onClick={handleCopy}
-      className="admin-table-copy-btn"
-      title="Copy"
+      title={title}
+      aria-label={title}
+      className="inline-flex items-center justify-center w-5 h-5 shrink-0 rounded bg-transparent border-0 cursor-pointer text-text-dim hover:text-accent hover:bg-accent/10 transition-colors duration-fast align-middle"
     >
       {copied ? (
-        <CheckIcon size={11} style={{ color: '#10b981' }} />
+        <CheckIcon size={11} className="text-success" aria-hidden="true" />
       ) : (
-        <Copy size={11} />
+        <Copy size={11} aria-hidden="true" />
       )}
     </button>
   );
 };
 
-/**
- * AdminPaymentsPage — Complete payment management interface.
- */
 const AdminPaymentsPage = () => {
-  const router = useRouter();
   const { t } = useLanguage();
   const toast = useToast();
+  const { mutate, busy } = useAdminMutation();
 
-  const [payments, setPayments] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
-  const [actionLoading, setActionLoading] = useState(null);
   const [selectedPayment, setSelectedPayment] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
+  const [actionId, setActionId] = useState(null);
+
+  const debouncedSearch = useDebouncedValue(searchTerm);
+  const label = (key) => resolveLabel(t, key);
+  const emDash = label('admin.common.labels.emDash');
+  const currency = label('admin.common.labels.currency');
+
+  const { data: payments, loading, refetch } = useAdminQuery({
+    url: () =>
+      activeTab === 'all'
+        ? '/admin/payments'
+        : `/admin/payments?status=${activeTab}`,
+    deps: [activeTab],
+    initialData: [],
+    errorKey: 'admin.payments.loadFailed',
+  });
+
+  const rows = payments || [];
 
   const tabs = [
-    { id: 'all', label: 'All Payments' },
-    { id: 'pending', label: t.admin?.pending || 'Pending' },
-    { id: 'approved', label: t.admin?.approved || 'Approved' },
-    { id: 'rejected', label: t.admin?.rejected || 'Rejected' },
+    { id: 'all', label: label('admin.payments.tabs.all'), count: rows.length },
+    {
+      id: 'pending',
+      label: label('admin.payments.tabs.pending'),
+      count: rows.filter((p) => p.status === 'pending').length,
+    },
+    {
+      id: 'approved',
+      label: label('admin.payments.tabs.approved'),
+      count: rows.filter((p) => p.status === 'approved').length,
+    },
+    {
+      id: 'rejected',
+      label: label('admin.payments.tabs.rejected'),
+      count: rows.filter((p) => p.status === 'rejected').length,
+    },
   ];
 
-  const fetchPayments = useCallback(async () => {
-    const token = getItem('admin_token');
-    if (!token) {
-      router.push('/admin/login');
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const endpoint =
-        activeTab === 'all'
-          ? '/admin/payments'
-          : `/admin/payments?status=${activeTab}`;
-      const response = await apiClient.get(endpoint);
-      if (response.success) {
-        setPayments(response.data || []);
-      } else {
-        toast.error(response.message || 'Failed to load payments');
-      }
-    } catch (err) {
-      if (err?.response?.status === 401) {
-        router.push('/admin/login');
-      } else {
-        toast.error('Failed to load payments');
-      }
-    } finally {
-      setLoading(false);
-    }
-  }, [activeTab, router, toast]);
-
-  useEffect(() => {
-    fetchPayments();
-  }, [fetchPayments]);
-
+  /**
+   * Approve or reject with a styled confirmation, then refresh the queue.
+   */
   const handleAction = async (paymentId, action) => {
-    setActionLoading(paymentId);
-    try {
-      /* 
-       * IMPORTANT: The backend API route requires a PATCH request 
-       * to successfully approve or reject a payment. Using POST here
-       * will result in a 405 Method Not Allowed error.
-       */
-      const response = await apiClient.patch(`/admin/payments/${paymentId}/${action}`);
-      if (response.success) {
-        toast.success(response.message || `Payment ${action}d successfully`);
-        fetchPayments();
-        if (action === 'approve' || action === 'reject') {
-          setShowDetailModal(false);
-          setSelectedPayment(null);
-        }
-      } else {
-        toast.error(response.message || `Failed to ${action} payment`);
-      }
-    } catch (err) {
-      console.error(`Failed to ${action} payment:`, err?.response?.data?.message || err.message);
-      toast.error(err?.response?.data?.message || `Failed to ${action} payment`);
-    } finally {
-      setActionLoading(null);
-    }
+    const isApprove = action === 'approve';
+    setActionId(paymentId);
+
+    await mutate({
+      method: 'patch',
+      url: `/admin/payments/${paymentId}/${action}`,
+      confirm: {
+        title: label(
+          isApprove
+            ? 'admin.payments.confirmApproveTitle'
+            : 'admin.payments.confirmRejectTitle'
+        ),
+        message: label(
+          isApprove
+            ? 'admin.payments.confirmApproveMessage'
+            : 'admin.payments.confirmRejectMessage'
+        ),
+        confirmText: label(
+          isApprove ? 'admin.payments.approve' : 'admin.payments.reject'
+        ),
+        variant: isApprove ? 'warning' : 'danger',
+      },
+      successKey: isApprove
+        ? 'admin.payments.approveSuccess'
+        : 'admin.payments.rejectSuccess',
+      errorKey: 'admin.payments.actionFailed',
+      onSuccess: () => {
+        refetch();
+        setShowDetailModal(false);
+        setSelectedPayment(null);
+      },
+    });
+
+    setActionId(null);
   };
 
-  const handleViewDetail = (payment) => {
-    setSelectedPayment(payment);
-    setShowDetailModal(true);
-  };
-
-  const handleCloseDetail = () => {
-    setShowDetailModal(false);
-    setSelectedPayment(null);
-  };
-
-  const getStatusClass = (status) => {
-    if (status === 'approved') return 'status-badge approved';
-    if (status === 'rejected') return 'status-badge rejected';
-    return 'status-badge pending';
-  };
-
-  const filteredPayments = payments.filter((payment) => {
-    if (!searchTerm) return true;
-    const search = searchTerm.toLowerCase();
+  const filteredRows = rows.filter((payment) => {
+    if (!debouncedSearch) return true;
+    const term = debouncedSearch.toLowerCase();
     return (
-      payment.user_name?.toLowerCase().includes(search) ||
-      payment.full_name?.toLowerCase().includes(search) ||
-      payment.user_phone?.toLowerCase().includes(search) ||
-      payment.phone?.toLowerCase().includes(search) ||
-      payment.reference?.toLowerCase().includes(search)
+      payment.user_name?.toLowerCase().includes(term) ||
+      payment.full_name?.toLowerCase().includes(term) ||
+      payment.user_phone?.toLowerCase().includes(term) ||
+      payment.phone?.toLowerCase().includes(term) ||
+      payment.reference?.toLowerCase().includes(term)
     );
   });
 
+  const formatDate = (value) => {
+    if (!value) return emDash;
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) return emDash;
+    return parsed.toLocaleDateString();
+  };
+
   return (
     <>
-      <SEOHead title="Payments Management" />
+      <SEOHead title={label('admin.payments.title')} />
       <AdminLayout
-        title={t.admin?.payments?.title || 'Payments Management'}
-        subtitle="Review, approve, and manage student payments"
+        title={label('admin.payments.title')}
+        subtitle={label('admin.payments.subtitle')}
       >
-        {/* Toolbar */}
-        <div className="admin-toolbar">
-          <div className="admin-tabs">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                className={`admin-tab ${activeTab === tab.id ? 'active' : ''}`}
-                onClick={() => setActiveTab(tab.id)}
-              >
-                {tab.label}
-                <span className="admin-tab-count">
-                  {tab.id === 'all'
-                    ? payments.length
-                    : payments.filter((p) => p.status === tab.id).length}
-                </span>
-              </button>
-            ))}
-          </div>
-          <div className="admin-search">
-            <Search size={16} />
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search by name, phone, or reference..."
-            />
-          </div>
-          <button className="admin-toolbar-btn" onClick={() => {}}>
-            <Download size={16} />
-            <span>Export</span>
-          </button>
-        </div>
+        <AdminTabs
+          tabs={tabs}
+          active={activeTab}
+          onChange={setActiveTab}
+          ariaLabel={label('admin.payments.title')}
+        />
 
-        {/* Payments List */}
-        {loading ? (
-          <SkeletonTableRows columns={PAYMENT_SKELETON_COLUMNS} rows={6} />
-        ) : filteredPayments.length === 0 ? (
-          <div className="empty-state">
-            <p className="empty-state-desc">
-              {searchTerm
-                ? 'No payments match your search.'
-                : 'No payments found.'}
-            </p>
-          </div>
-        ) : (
-          <div className="admin-table-wrapper">
-            {filteredPayments.map((payment) => (
-              <div key={payment.id} className="admin-table-row">
-                {/* Payment Info */}
-                <div className="admin-table-info">
-                  <div className="admin-table-info-top">
-                    <span className="admin-table-name">
-                      {payment.user_name || payment.full_name || 'Unknown'}
+        <AdminToolbar
+          searchValue={searchTerm}
+          onSearchChange={setSearchTerm}
+          searchPlaceholder={label('admin.payments.searchPlaceholder')}
+          actions={
+            <AdminButton
+              variant="secondary"
+              onClick={() => toast.info(label('admin.common.actions.export'))}
+            >
+              <Download size={16} aria-hidden="true" />
+              {label('admin.payments.export')}
+            </AdminButton>
+          }
+        />
+
+        <AdminRowList
+          loading={loading}
+          items={filteredRows}
+          keyOf={(payment) => payment.id}
+          emptyIcon={CreditCard}
+          emptyTitle={label('admin.payments.emptyTitle')}
+          emptyDescription={
+            debouncedSearch ? label('admin.payments.emptyFiltered') : undefined
+          }
+          renderItem={(payment) => {
+            const displayName =
+              payment.user_name || payment.full_name || emDash;
+            const phone = payment.user_phone || payment.phone || emDash;
+            const reference = payment.reference || emDash;
+            const isPending = payment.status === 'pending';
+            const isBusy = busy && actionId === payment.id;
+
+            return (
+              <>
+                {/* Identity + reference meta */}
+                <div className="flex flex-col gap-1 min-w-0 flex-1">
+                  <div className="flex items-center gap-2 flex-wrap min-w-0">
+                    <span className="text-sm font-bold text-text-main truncate">
+                      {displayName}
                     </span>
-                    <MiniCopyButton text={payment.user_name || payment.full_name || ''} />
-                    <span className={getStatusClass(payment.status)}>
-                      {payment.status}
-                    </span>
+                    <MiniCopyButton
+                      text={displayName}
+                      title={label('admin.payments.copy')}
+                    />
+                    <AdminBadge status={payment.status}>
+                      {label(`admin.common.statuses.${payment.status}`) ||
+                        payment.status}
+                    </AdminBadge>
                   </div>
-                  <p className="admin-table-meta">
-                    {payment.user_phone || payment.phone || 'N/A'}
-                    <MiniCopyButton text={payment.user_phone || payment.phone || ''} />
-                    {' · Ref: '}
-                    {payment.reference || 'N/A'}
-                    <MiniCopyButton text={payment.reference || ''} />
-                  </p>
-                  <p className="admin-table-meta">
-                    {payment.method} ·{' '}
-                    {new Date(payment.created_at).toLocaleDateString()}
-                  </p>
+                  <span className="inline-flex items-center gap-1 flex-wrap text-2xs text-text-dim">
+                    {phone}
+                    <MiniCopyButton text={phone} title={label('admin.payments.copy')} />
+                    · {label('admin.payments.reference')}: {reference}
+                    <MiniCopyButton
+                      text={reference}
+                      title={label('admin.payments.copy')}
+                    />
+                  </span>
+                  <span className="text-2xs text-text-dim">
+                    {payment.method || emDash} · {formatDate(payment.created_at)}
+                  </span>
                 </div>
 
-                {/* Amount + Actions */}
-                <div className="admin-table-actions-wrapper">
-                  <span className="admin-table-amount">
-                    {payment.amount?.toLocaleString()} ETB
+                {/* Amount + actions */}
+                <div className="flex items-center justify-between gap-4 md:justify-end">
+                  <span className="text-base font-extrabold text-accent whitespace-nowrap">
+                    {Number(payment.amount || 0).toLocaleString()} {currency}
                   </span>
-                  <div className="admin-table-action-btns">
-                    <button
-                      onClick={() => handleViewDetail(payment)}
-                      className="admin-action-btn view"
-                      title={t.admin?.viewScreenshot || 'View Details'}
+                  <div className="flex items-center gap-1.5">
+                    <AdminButton
+                      variant="secondary"
+                      iconOnly
+                      onClick={() => {
+                        setSelectedPayment(payment);
+                        setShowDetailModal(true);
+                      }}
+                      aria-label={label('admin.payments.viewDetails')}
+                      title={label('admin.payments.viewDetails')}
                     >
-                      <Eye size={16} />
-                    </button>
-                    {payment.status === 'pending' && (
+                      <Eye size={16} aria-hidden="true" />
+                    </AdminButton>
+                    {isPending && (
                       <>
-                        <button
+                        <AdminButton
+                          variant="primary"
+                          iconOnly
+                          loading={isBusy}
                           onClick={() => handleAction(payment.id, 'approve')}
-                          disabled={actionLoading === payment.id}
-                          className="admin-action-btn approve"
-                          title={t.admin?.approve || 'Approve'}
+                          aria-label={label('admin.payments.approve')}
+                          title={label('admin.payments.approve')}
                         >
-                          <Check size={16} />
-                        </button>
-                        <button
+                          <Check size={16} aria-hidden="true" />
+                        </AdminButton>
+                        <AdminButton
+                          variant="danger"
+                          iconOnly
+                          loading={isBusy}
                           onClick={() => handleAction(payment.id, 'reject')}
-                          disabled={actionLoading === payment.id}
-                          className="admin-action-btn reject"
-                          title={t.admin?.reject || 'Reject'}
+                          aria-label={label('admin.payments.reject')}
+                          title={label('admin.payments.reject')}
                         >
-                          <X size={16} />
-                        </button>
+                          <X size={16} aria-hidden="true" />
+                        </AdminButton>
                       </>
                     )}
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        )}
+              </>
+            );
+          }}
+        />
       </AdminLayout>
 
-      {/* Payment Detail Modal */}
       <PaymentDetailModal
         isOpen={showDetailModal}
-        onClose={handleCloseDetail}
+        onClose={() => {
+          setShowDetailModal(false);
+          setSelectedPayment(null);
+        }}
         payment={selectedPayment}
         onAction={handleAction}
-        actionLoading={actionLoading}
+        actionLoading={actionId}
       />
     </>
   );
